@@ -1,0 +1,6 @@
+baseURL = 'brighton-pool-league'
+languageCode = 'en-us'
+title = 'Brighton Pool League'
+theme = "hugo-book"
+[params]
+BookLogo = 'logo.png'
