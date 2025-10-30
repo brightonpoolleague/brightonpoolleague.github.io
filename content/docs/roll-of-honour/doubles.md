@@ -1,6 +1,6 @@
 # Doubles Roll of Honour
 
-| Season         | Winners 🏆                    | Runner-up                     |
+| Season         | Winners 🏆                    | Runners-up                    |
 |----------------|-------------------------------|-------------------------------|
 | Summer 2025    | Chris Kingham & Jon Sanders   | Ben Middleton & Mikey Booker  |
 | Winter 2024/25 | Mark Hedayat & Rich Hamill    | Pete Hazell & Connor Anderson |
