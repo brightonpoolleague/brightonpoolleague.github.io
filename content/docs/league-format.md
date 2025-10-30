@@ -7,9 +7,9 @@ a. All matches are 3 sets of 5 singles frame games (15 games in total).
 b. Player substitutions are allowed before the start of the 2nd & 3rd set (up to 15 different
 players can play in one match).
 
-c. d. The same player can play in each of the 3 sets (maximum of 3 games)
+c. The same player can play in each of the 3 sets (maximum of 3 games)
 
-The same player CAN NOT play multiple times in the same set i.e. play their 3 games in
+d. The same player CAN NOT play multiple times in the same set i.e. play their 3 games in
 set 1 and leave.
 
 ## 2) Time Keeping

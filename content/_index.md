@@ -4,6 +4,6 @@ weight = 1
 bookToC = false
 +++
 
-# Brighton Pool League
-
 Welcome to the Brighton Pool League site.
+
+![sets.png](/logo.png)
