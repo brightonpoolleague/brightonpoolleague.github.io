@@ -1,4 +1,4 @@
-baseURL = 'https://brightonpoolleague.github.io/'
+baseURL = '/'
 languageCode = 'en-us'
 title = 'Brighton Pool League'
 theme = "hugo-book"
