@@ -25,10 +25,10 @@
 | Winter 2008/09 | Kelly Dahr     | James Constable |
 | Winter 2007/08 | Darren Welfare | Clive Rayson    |
 | Winter 2006/07 | Morray Dolan   | John Cairns     |
-| Winter 2005/06 | Morray Dolan   |                 |
-| Winter 2004/05 | Damian Campsey |                 |
-| Winter 2003/04 | Morray Dolan   |                 |
+| Winter 2005/06 | Morray Dolan   | Damian Campsey  |
+| Winter 2004/05 | Damian Campsey | Pete Ashman     |
+| Winter 2003/04 | Morray Dolan   | Pete Ashman     |
 | Winter 2002/03 | Paul McNeil    | Paul Nicholas   |
 | Winter 2001/02 | Paul McNeil    | Shaun Southon   |
-| Winter 2000/01 | Alan Burchell  |                 |
+| Winter 2000/01 | Alan Burchell  | Paul McNeil     |
 | Winter 1999/00 | Paul Nicholas  | Shaun Southon   |
