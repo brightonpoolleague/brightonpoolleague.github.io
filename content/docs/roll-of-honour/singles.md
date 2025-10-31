@@ -9,8 +9,11 @@
 | Winter 2022/23 | Jake Paas      | Pete Hazell     |
 | Winter 2021/22 | Pete Hazell    | Jake Paas       |
 | Winter 2019/20 | Ben Middleton  | Chris Dolding   |
+| Summer 2019    | Jon Sanders    | Chris Dolding   |
 | Winter 2018/19 | Darren Welfare | Greg Lewis      |
+| Summer 2018    | Jake Paas      | Dan Booker      |
 | Winter 2017/18 | Ben Welfare    | Dean Torode     |
+| Summer 2017    | Jamie Lashmar  | Connor Anderson |
 | Winter 2016/17 | Jon Sanders    | Dean Torode     |
 | Winter 2015/16 | Allan Roberts  | Dean Torode     |
 | Winter 2014/15 | Greg Lewis     | Dean Torode     |
@@ -18,10 +21,10 @@
 | Winter 2012/13 | Jon Sanders    | Dan Stirling    |
 | Winter 2011/12 | Greg Lewis     | Jon Sanders     |
 | Winter 2010/11 | Paul Nicholas  | Paul Bailey     |
-| Winter 2009/10 | Paul McNeil    |                 |
+| Winter 2009/10 | Paul McNeil    | John Cairns     |
 | Winter 2008/09 | Kelly Dahr     | James Constable |
 | Winter 2007/08 | Darren Welfare | Clive Rayson    |
-| Winter 2006/07 | Morray Dolan   |                 |
+| Winter 2006/07 | Morray Dolan   | John Cairns     |
 | Winter 2005/06 | Morray Dolan   |                 |
 | Winter 2004/05 | Damian Campsey |                 |
 | Winter 2003/04 | Morray Dolan   |                 |
