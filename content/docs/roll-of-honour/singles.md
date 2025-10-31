@@ -14,12 +14,12 @@
 | Winter 2016/17 | Jon Sanders    | Dean Torode     |
 | Winter 2015/16 | Allan Roberts  | Dean Torode     |
 | Winter 2014/15 | Greg Lewis     | Dean Torode     |
-| Winter 2013/14 | Jon Sanders    |                 |
-| Winter 2012/13 | Jon Sanders    |                 |
+| Winter 2013/14 | Jon Sanders    | John Gillard    |
+| Winter 2012/13 | Jon Sanders    | Dan Stirling    |
 | Winter 2011/12 | Greg Lewis     | Jon Sanders     |
 | Winter 2010/11 | Paul Nicholas  |                 |
 | Winter 2009/10 | Paul McNeil    |                 |
-| Winter 2008/09 | Kelly Dahr     |                 |
+| Winter 2008/09 | Kelly Dahr     | James Constable |
 | Winter 2007/08 | Darren Welfare |                 |
 | Winter 2006/07 | Morray Dolan   |                 |
 | Winter 2005/06 | Morray Dolan   |                 |
