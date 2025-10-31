@@ -28,7 +28,7 @@
 | Winter 2005/06 | Morray Dolan   | Damian Campsey  |
 | Winter 2004/05 | Damian Campsey | Pete Ashman     |
 | Winter 2003/04 | Morray Dolan   | Pete Ashman     |
-| Winter 2002/03 | Paul McNeil    | Paul Nicholas   |
+| Winter 2002/03 | Paul McNeil    | Darren Welfare  |
 | Winter 2001/02 | Paul McNeil    | Shaun Southon   |
 | Winter 2000/01 | Alan Burchell  | Paul McNeil     |
 | Winter 1999/00 | Paul Nicholas  | Shaun Southon   |
