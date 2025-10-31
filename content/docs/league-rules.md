@@ -1,74 +1,54 @@
-# League Rules - effective from 4th November 2024
+# League Rules
+**Effective from 4th November 2024**
 
-By registering a team with the league - you are agreeing to the following rules
+By registering a team with the league, you agree to abide by the following rules.
 
-## 1) Registered Players
+---
 
-a. Only players who have been registered with the league can be played in
-matches.
+## 1. Registered Players
 
-b. If a team plays an un-registered player, their opponent will be awarded
-the win.
+a. Only players registered with the league are eligible to play in matches.  
+b. If a team fields an unregistered player, their opponent will be awarded the win.  
+c. All captains must register their full squad before the registration window closes.  
+d. The registration window closes approximately two weeks before the season starts.
 
-c. All Captains should register their squad with the league before the team
-registration window closes.
+---
 
-d. Registration window closes approximately 2 weeks before the season
-starts.
+## 2. New Signings
 
-## 2) New Signings
+a. New players who are not registered with another team may be signed at any point during the season.  
+b. Captains **must** notify the league of all new signings.  
+c. New signings must be registered with the league before playing (see Section 1).
 
-a. New players who are not registered with another team can, be signed at
-any point of the season.
+---
 
-b. Captains MUST notify the league of new signings.
+## 3. Player Transfers
 
-c. New signings must be registered with the league before playing - see
-section 1 above.
+a. Players registered with another team but who have **not made any appearances** for that team may be transferred at any time during the season.  
+b. Players who **have made at least one appearance** for another team may only be transferred during the **first half of the season**.  
+c. The halfway point of the season is determined **by date**, not by games played (to account for postponed matches).  
+d. All player transfers must be registered with the league before playing (see Section 1).
 
-## 3) Player Transfers
+---
 
-a. Players who are registered with another team but have not made any
-appearances for that team - can be transferred at any time during the
-season.
+## 4. Cup Semi-Finals & Finals
 
-b. Players who are registered with another team but have made at least 1
-appearance for that team - can ONLY be transferred in the 1st half of the
-season.
+a. Players may only participate in Cup Semi-Finals or Finals if they have played **a minimum of four (4) games** for that team during the season.  
+b. Games played for another team (prior to a transfer) do **not** count towards the four-game requirement.  
+c. If a player takes part in a Semi-Final or Final without meeting the eligibility criteria, their opponent will be awarded the win.
 
-c. Halfway stage is deemed by date, not games played (in case teams
-have any postponed games outstanding).
+---
 
-d. Player transfers must be registered with the league before playing - see
-section 1 above.
+## 5. New Teams
 
-## 4) Cup Semi Finals & Finals
+a. New teams entering the league will start in the **lowest division**.  
+b. The only exception is if the league determines it is in the league’s best interest for the new team to start in a **higher division**. This will be decided by the league.
 
-a. Players can ONLY play in cup Semi Finals & Finals IF they have played
-a minimum of 4 games for that team during the season.
+---
 
-b. Games played for another team (if transferred in) do not count towards
-the 4 games required.
+## 6. Teams Folding
 
-c. Any player who plays and does not meet the criteria, their opponent will
-be awarded the win.
-
-## 5) New Teams
-
-a. New teams entering the league - enter the league in division 1.
-
-b. The exception to this, is if it’s in the league’s best interest that new team
-to go straight to the premier league, then this will be decided by the
-league.
-
-## 6) Teams Folding
-
-a. If a team folds in the 1st half the season - all results will be expunged.
-
-b. If a team folds in the 2nd half of the season - 1st half results will be kept
-& all 2nd half results expunged.
-
-c. Each situation of a team folding will be reviewed by the league on a
-case-by-case basis.
-
-d. The league may decide to impose player / team bans and or relegations.
+a. If a team folds in the **first half** of the season, all results will be **expunged**.  
+b. If a team folds in the **second half** of the season, first-half results will stand and all second-half results will be **expunged**.  
+c. Each situation of a team folding will be reviewed by the league on a **case-by-case basis**.  
+d. The league may impose **player or team bans** and/or **relegations** as appropriate.

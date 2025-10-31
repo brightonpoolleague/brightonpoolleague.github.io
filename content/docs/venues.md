@@ -1,3 +1,3 @@
-# Winter 2025/2026 Venues
+# Winter 2025/26 Venues
 
 ![venues.png](/venues/venues-winter-25-26.png)

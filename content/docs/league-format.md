@@ -1,129 +1,124 @@
-# Guide to the change of format – effective 19th May 2025
+# League Format
+**Effective from 19th May 2025**
 
-## 1) Overview
+---
 
-a. All matches are 3 sets of 5 singles frame games (15 games in total).
+## 1. Overview
 
-b. Player substitutions are allowed before the start of the 2nd & 3rd set (up to 15 different
-players can play in one match).
+a. All matches consist of **3 sets** of **5 singles frame games** (15 games in total).  
+b. Player substitutions are allowed **before the start of the 2nd and 3rd sets** (up to 15 different players can play in one match).  
+c. The same player can play in each of the 3 sets (maximum of 3 games).  
+d. The same player **cannot** play multiple times in the same set (e.g., a player cannot play all 3 games in Set 1 and then leave).
 
-c. The same player can play in each of the 3 sets (maximum of 3 games)
+--- 
 
-d. The same player CAN NOT play multiple times in the same set i.e. play their 3 games in
-set 1 and leave.
+## 2. Points
 
-## 2) Time Keeping
+a. Each match win is worth **2 points**.  
+b. In a match, every 3 frames won is worth **1 point**.  
+c. The maximum number of points a team can earn from a single match is **7 points** (2 for the win + 5 for winning all 15 frames).  
+d. The possible outcomes are:
+- **15–0**: 7 points to the winner, 0 points to the loser
+- **14–1**: 6 points to the winner, 0 points to the loser
+- **13–2**: 6 points to the winner, 0 points to the loser
+- **12–3**: 6 points to the winner, 1 point to the loser
+- **11–4**: 5 points to the winner, 1 point to the loser
+- **10–5**: 5 points to the winner, 1 point to the loser
+- **9–6**: 5 points to the winner, 2 points to the loser
+- **8–7**: 4 points to the winner, 2 points to the loser
 
-a. Matches should start at 8pm sharp.
+---
 
-b. Captains are responsible for matches starting on time, maintaining the flow of the game
-through each set, and ensuring the match finishes before 11pm.
+## 3. Time Keeping
 
-c. Captains should allow a maximum of 1 hour per set, therefore if you haven’t started
-your 3rd set by 10pm, both captains need to hurry their teams up.
+a. Matches should start at **8:00 PM sharp**.  
+b. Captains are responsible for ensuring matches start on time, maintaining the flow of play through each set, and finishing the match before **11:00 PM**.  
+c. Captains should allow a **maximum of 1 hour per set**. If the 3rd set has not started by 10:00 PM, both captains must ensure play is speeded up.  
+d. **Shot clocks** are advised to be introduced at **10:30 PM** if the 3rd game (in the 3rd set) has not yet started. 
+The shot clock can be found [here](https://www.epa.org.uk/stopclock/epa/index.php).
 
-d. Shot clocks are advised to be introduced at 10:30pm, if the 3rd game (in the 3rd set)
-hasn’t yet started (link to shot clock is in the captains WhatsApp group)
+---
 
-## 3) Completing the score sheet
+## 4. Completing the Score Sheet
 
-a. Home captain writes their players name down IN FULL against numbers 1 -5 (running
-order in the first set).
-
-b. Bend the paper in half (to hide what has been written) and pass to away captain to write
-their names down in full across 1 - 5 (their running order in the first set).
-
-c. Put a "x" next to the player whose turn it is to break.
-
-d. Playing order doesn’t change for the home team in each set.
-
-e. Playing order does change for the away team (so opponents always differ) as follows
+a. The **home captain** writes their players’ full names against numbers **1–5** (running order in the first set).  
+b. Fold the paper in half (to hide what has been written) and pass it to the **away captain**, who writes their players’ full names against **1–5** (their running order in the first set).  
+c. Mark an **“X”** next to the player who will break first.  
+d. The **home team’s playing order** remains the same for all sets.  
+e. The **away team’s playing order** changes each set so that opponents always differ, as shown below:
 
 ![sets.png](/sets.png)
 
-f. As substitutions are allowed in sets 2 and 3, captains should not complete the player’s
-names for the following set, unless it’s confirmed no substitutions are being made for
-that set.
+f. Since substitutions are allowed in Sets 2 and 3, captains should not complete player names for the next set unless no substitutions are being made.  
+g. You do not need to write players’ full names for each set they play — initials are fine, provided they are unique within the team.  
+h. When introducing a substitute for the first time, write their **full name**.  
+i. After each game, record the result with **W** or **L** (you do not need to write 1–0).  
+j. Record each game that is won by a **dish** or **reverse dish**:
+- A **dish** is a clearance in one visit from the break.
+- A **reverse dish** occurs when your opponent fails to pot from the break (or foul breaks) and you clear up in one visit.
 
-g. You don’t need to write the players down in full for each set they play, you can enter
-initials instead (but be aware if the same initials are used for another player in your
-team).
+---
 
-h. When bringing on a substitute for the first time - write their name down in full.
+## 5. Substitutions
 
-i. Simply write W or L against each player’s name after each game (you don’t need to write
-1 vs 0)
+a. Before the 2nd and 3rd sets begin, captains may substitute as many players as they wish.  
+b. Substitutes take the **same position** as the player they replace (e.g., if Player 1 is replaced in Set 3, the substitute plays second in that set).  
+c. A player may be substituted out in Set 2 and substituted back in for Set 3.  
+d. Substituted players must **not** have played in the previous set (to prevent simply changing the playing order).
 
-j. Record each game that is won by a dish or reverse dish (Dish is a clearance in 1 visit
-from break, reverse dish is when your opponent fails to pot off break or foul breaks and
-you clear up in 1 visit)
+---
 
-## 4) Substitutions
+## 6. Lagging
 
-a. Before the 2nd & 3rd sets have started, captains can substitute as many players as they
-want.
+a. Only **Player 1** from each team lags — this determines the breaking order for the rest of the match.  
+b. Breaks alternate between teams: the team that breaks first gets **8 breaks**, while their opponents get **7**.
 
-b. Substituted players will take on order of the player coming off (i.e. if player 1 is being
-substituted in set 3, their replacement plays 2nd)
+---
 
-c. A Player can be substituted out, in set 2, and substituted back in for set 3.
+## 7. End of the Match
 
-d. Substituted players must NOT have played the previous set (as that’s simply changing
-the playing order)
+a. Record the number of games each team has won at the bottom of the score sheet (the total should be **15**).  
+b. The **winning captain** must take a clear photo of the completed sheet and either post it on Facebook or send it to the captains’ WhatsApp group **before 10:00 AM the following day**.
 
-## 5) Lagging
+---
 
-a. ONLY Player 1 from each team lags – this sets the breaking order for the rest of the
-match
+## 8. Additional Information for Teams Without 5 Players
 
-b. Breaks alternate between teams, so the team who broke first get 8 breaks in total, and
-their opponents break 7 times in total.
+### 1) Team with Only 4 Players
 
-## 6) End of the match
+a. Enter **BYE** in position 5 on the score sheet.  
+b. Any player facing a **BYE** is automatically awarded the win.
 
-a. Record how match games each team has won at the bottom of the score sheet (it
-should total 15).
+---
 
-b. Winning captains take responsibility for taking a photo of the sheet and either post on
-Facebook or send to the captains WhatsApp group before 10am the following day.
+### 2) Both Teams with Only 4 Players
 
-## 7) Additional information for teams without 5 players
+a. Both teams enter **BYE** in position 5 on the score sheet.  
+b. Any player facing a **BYE** is automatically awarded the win.  
+c. The team that wins the **lag** is awarded the win in **Set 1 (5 vs 5)**.
 
-### 1) Team with only 4 players
+---
 
-a. Enter BYE in position 5 of the score sheet.
+### 3) Team with Only 3 Players
 
-b. Any player who plays against a BYE is awarded the win.
+a. Enter **BYE** in positions 4 and 5.  
+b. Any player facing a **BYE** is automatically awarded the win.
 
-### 2) Both teams with only 4 players
+---
 
-a. Both teams enter BYE in position 5 of the score sheet.
+### 4) Team of 4 vs Team of 3
 
-b. Any player who plays against a BYE is awarded the win.
+a. The team of 3 enters **BYE** in positions 4 and 5.  
+b. The team of 4 enters **BYE** in position 5.  
+c. Any player facing a **BYE** is automatically awarded the win.  
+d. The team that wins the **lag** is awarded the win in **Set 1 (5 vs 5)**.
 
-c. The team who wins the lag is awarded the win in set 1 (5 vs 5)
+---
 
-### 3) Team with only 3 players
+### 5) Team of 3 vs Team of 3
 
-a. Enter BYE in positions 4 & 5
-
-b. Any player who plays against a BYE is awarded the win.
-
-### 4) Team of 4 vs a team of 3
-
-a. Team of 3 enters BYE in positions 4 & 5
-
-b. Team of 4 enters BYE in position 5
-
-c. Any player who plays against a BYE is awarded the win.
-
-d. The team who wins the lag is awarded the win in set 1 (5 vs 5)
-
-### 5) Team of 3 vs a team of 3
-
-a. Both teams enter BYE in positions 4 & 5 of the score sheet.
-
-b. Any player who plays against a BYE is awarded the win.
-
-c. The team who wins the lag is awarded both wins in set 1 (5 vs 5, 4 vs 4) and the win in
-set 3 (5 vs 4).
+a. Both teams enter **BYE** in positions 4 and 5 on the score sheet.  
+b. Any player facing a **BYE** is automatically awarded the win.  
+c. The team that wins the **lag** is awarded:
+- The wins in **Set 1 (5 vs 5)** and **(4 vs 4)**, and
+- The win in **Set 3 (5 vs 4)**.
