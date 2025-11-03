@@ -8,6 +8,7 @@
 | Winter 2024/25 | Jon Sanders    |
 | Summer 2024    | Pete Hazell    |
 | Winter 2023/24 | Ben Middleton  |
+| Summer 2023    | Jon Sanders    |
 | Winter 2022/23 | Jake Paas      |
 | Winter 2021/22 | Mikey Booker   |
 | Winter 2017/18 | Lee Martin     |
