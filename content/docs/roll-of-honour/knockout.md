@@ -14,3 +14,6 @@
 | Summer 2023 Plate                 | Castle 433            | Bear Old Boys       |
 | Summer 2022 Cup                   | Castle Lagers         | Castle Z            |
 | Summer 2022 Plate                 | Mile Oak Old Boys     | HPT C               |
+| Summer 2017 Cup                   | Castle Anthill        | HPT Ints            |
+| Summer 2016 Cup                   | Castle Anthill        | Aldrington Z        |
+| Summer 2015 Cup                   | Castle Anthill        | HPT Z               |

@@ -12,3 +12,6 @@
 | Summer 2018    | Darren Welfare & Ben Welfare  | Martin Portelli & Josh Manderson |
 | Winter 2017/18 | Darren Welfare & Ben Welfare  | Ben Middleton & Jamie Lashmar    |
 | Summer 2017    | Ben Middleton & Jamie Lashmar | Lee Butler & Rob Boulton         |
+| Winter 2015/16 | Lee Shepherd & Steve Owen     | Greg Lewis & Damian Campsey      |
+| Winter 2014/15 | Damian Campsey & Greg Lewis   | Darren Welfare & Ben Welfare     |
+| Winter 2013/14 | Dan Stirling & Olly Stewart   | Ronnie Beard & Brett Robertson   |
