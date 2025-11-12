@@ -12,7 +12,7 @@
 | Winter 2017/18 | Castle Z            | Castle Anthill |
 | Winter 2016/17 | Castle Anthill      | Castle Fokkers |
 | Winter 2015/16 | Castle Fokkers      | Castle Anthill |
-| Winter 2014/15 | Rileys F            | Castle XXX     |
+| Winter 2014/15 | Rileys Fokkers      | Castle XXX     |
 
 ## Division 1
 
