@@ -44,7 +44,7 @@ title = 'Winter Singles 2025/26'
 - Connor Anderson vs Cliona Saunders-Cooney
 - Dan Booker vs Dan Stein
 - Jon Sanders vs Ben Middleton
-- Teige Dillion vs Dean Torode
+- Teige Dillon vs Dean Torode
 - Ben Welfare vs Jacob Skinner
 - Brooklyn Adams vs Karim Hedayat
 - Gary Goodman vs Jacob King
