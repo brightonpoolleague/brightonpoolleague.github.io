@@ -8,12 +8,12 @@ title = 'Winter Doubles 2025/26'
 
 - Total: £290
 - Winner: £200 + trophy
-- Runner-up: £90 + trophy
+- Runners-up: £90 + trophy
 
 ## Format
 
 - Races to 5 all the way through
-- Scotch format
+- Scotch format (alternate shots)
 - Talk before first shot only
 - International rules
 - Randomly drawn each round
@@ -26,7 +26,7 @@ title = 'Winter Doubles 2025/26'
 
 - Chris Burton / Kev Boarer vs Tyrone Stoner / Matt Francis
 - Clark Lucas / Paul Wensley vs Kia White / Lee Anderton
-- Daniel Stoner / Gary Banks vs Craig Williams / Matt Yeoman
+- Daniel Stoner / Mark Irvine vs Craig Williams / Matt Yeoman
 - Jacob Skinner / Afshin Kianifard vs Mikey Booker / Ben Middleton
 - David Sakole / Matthew Howley vs Shaun McMahon / John Gillard
 - Shane Humphrey / Brooklyn Adams vs Teige Dillon / Ellis Wilson
