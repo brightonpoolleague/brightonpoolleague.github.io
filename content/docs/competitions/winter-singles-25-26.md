@@ -20,39 +20,23 @@ title = 'Winter Singles 2025/26'
 - If drawn as the home player, you must play from a Brighton league venue
 - Final to be played on presentation night (30th March 2026)
 
-## Round 1 Draw
+## Round 2 Draw
 
-**To be played by 1st January 2026**
+**To be played by 26th January 2026**
 
-- Arjet Doniku vs Chris Kingham
-- Simon Richardson vs Shaun Smith
-- Paul Taylor vs Chris Dolding
-- Rich Hamill vs Mikey Booker
-- Gary Banks vs Clark Lucas
-- Afshin Kianifard vs Lee Martin
-- Terry Haworth vs Anthony Potter
-- Daz Welfare vs Duane Cammock
-- Sue Ashton vs Lee Riley
-- Calvin Freeman vs Dwight Thomas
-- Tim Darbyshire vs Paul Wensley
-- Dan Pickering vs Craig Slater
-- Simon Lawrence vs Jake Paas
-- Pete Hazell vs Kia White
-- Paul Pitman vs Luke Robbins
-- Shane Humphrey vs Josh Manderson
-- Greg Lewis vs Jay Tanner
-- Connor Anderson vs Cliona Saunders-Cooney
-- Dan Booker vs Dan Stein
-- Jon Sanders vs Ben Middleton
-- Teige Dillon vs Dean Torode
-- Ben Welfare vs Jacob Skinner
-- Brooklyn Adams vs Karim Hedayat
-- Gary Goodman vs Jacob King
-- James Constable vs Martin Portelli
-- Matt King vs Richard Ashcroft
-- Phil Rogers vs Shaun McMahon
-- Stacy Smith vs Mark Hedayat
-- Matt Yeoman vs Tyrone Stoner
-- Craig Williams vs Louis McNeil
-- Allan Roberts vs Dan Stoner
-- Alex Martinez vs Chris Burton
+1. Mikey Booker v Simon Lawrence
+2. Stacy Smith v Allan Roberts
+3. Dwight Thomas v Dan Stein
+4. Jon Sanders v Teige Dillon
+5. Daniel Pickering v Greg Lewis
+6. Luke Robbins v Karim Hedayat
+7. Pete Hazell v Chris Kingham
+8. Chris Dolding v Craig Williams
+9. Alex Martinez v Shaun McMahon
+10. Lee Martin v Simon Richardson
+11. Lee Riley v Gary Goodman
+12. Richard Ascroft v James Constable
+13. Shane Humphrey v Tyrone Stoner
+14. Clark Lucas v Duane Cammock
+15. Anthony Potter v Paul Wensley
+16. Connor Anderson v Ben Welfare
