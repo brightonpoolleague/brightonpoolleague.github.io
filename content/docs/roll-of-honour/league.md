@@ -4,6 +4,7 @@
 
 | Season         | Winners 🏆          | Runners-up     |
 |----------------|---------------------|----------------|
+| Winter 2025/26 | LA Z                | Romans Lagers  |
 | Summer 2025    | LA Z                | Castle Lagers  |
 | Winter 2024/25 | Harbour Club Lagers | Castle Z Blood |
 | Winter 2023/24 | Castle Lagers       | Castle Z Blood |
@@ -18,6 +19,7 @@
 
 | Season         | Winners 🏆              | Runners-up         |
 |----------------|-------------------------|--------------------|
+| Winter 2025/26 | LA Mavericks            | LA Pool Club       |
 | Summer 2025    | Mileoakey Cokey         | LA Pool Club       |
 | Winter 2024/25 | Castle Unpredictables   | Goldstone BHA      |
 | Winter 2023/24 | HPT B                   | Mile Oak Gentlemen |
@@ -30,8 +32,9 @@
 
 ## Division 2
 
-| Season         | Winners 🏆         | Runners-up           |
-|----------------|--------------------|----------------------|
-| Winter 2017/18 | Mile Oak X         | Hove Park Tavern RLC |
-| Winter 2016/17 | Mile Oak Old Boys  | Mile Oak M           |
-| Winter 2015/16 | Hove Park Tavern L | Gather Inn           |
+| Season         | Winners 🏆          | Runners-up           |
+|----------------|---------------------|----------------------|
+| Winter 2025/26 | Castle IncrediBalls | LA Breakers          |
+| Winter 2017/18 | Mile Oak X          | Hove Park Tavern RLC |
+| Winter 2016/17 | Mile Oak Old Boys   | Mile Oak M           |
+| Winter 2015/16 | Hove Park Tavern L  | Gather Inn           |
