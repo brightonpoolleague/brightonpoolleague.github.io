@@ -2,6 +2,7 @@
 
 | Season         | Winners 🏆                    | Runners-up                       |
 |----------------|-------------------------------|----------------------------------|
+| Winter 2025/26 | Ben Middleton & Mikey Booker  | Pete Hazell & Connor Anderson    |
 | Summer 2025    | Chris Kingham & Jon Sanders   | Ben Middleton & Mikey Booker     |
 | Winter 2024/25 | Mark Hedayat & Rich Hamill    | Pete Hazell & Connor Anderson    |
 | Summer 2024    | Mark Hedayat & Rich Hamill    | Jake Paas & Mikey Booker         |

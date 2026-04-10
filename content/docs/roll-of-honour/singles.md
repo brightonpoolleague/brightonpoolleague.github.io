@@ -2,6 +2,7 @@
 
 | Season         | Winner 🏆      | Runner-up       |
 |----------------|----------------|-----------------|
+| Winter 2025/26 | Chris Kingham  | Greg Lewis      |
 | Summer 2025    | Pete Hazell    | Jake Paas       |
 | Winter 2024/25 | Ben Middleton  | Jake Paas       |
 | Summer 2024    | Lee Martin     | Connor Anderson |

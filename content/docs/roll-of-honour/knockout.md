@@ -2,6 +2,9 @@
 
 | Competition                       | Winners 🏆            | Runners-up          |
 |-----------------------------------|-----------------------|---------------------|
+| Winter 2025/26 Premier League Cup | Romans Lagers         | Classtle            |
+| Winter 2025/26 Division 1 Cup     | Aldrington Returnz    | LA Mavericks        |
+| Winter 2025/26 Division 2 Cup     | Give Us A Cue         | Castle IncrediBalls |
 | Summer 2025 Cup                   | LA Z                  | Castle Lagers       |
 | Summer 2025 Plate                 | Classtle              | Castle Commitmints  |
 | Winter 2024/25 Premier League Cup | Romans B              | Harbour Club Lagers |

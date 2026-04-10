@@ -82,7 +82,37 @@ b. The **winning captain** must take a clear photo of the completed sheet and ei
 
 ---
 
-## 8. Additional Information for Teams Without 5 Players
+## 8. League Tables
+
+a. The teams league table is sorted as follows: 
+- i. Total Points 
+- ii. Frame difference (Total frames won minus total frames lost)
+- iii. In the event of teams finishing the season with the same record
+    - 1. Head-to-head record 
+      - a. Total points won (both games combined)
+      - b. Frame difference (both games combined)
+    - 2. If that is also tied, then each team’s record against the highest placed team in the league
+      - a. Total points won (both games combined)
+      - b. Frame difference (both games combined)
+    - 3. If that is also tied, then this will be repeated down the league table until the teams can be separated.
+
+b. The players averages table is sorted as follows:
+- i. Total wins 
+- ii. Overall win percentage 
+- iii. Total number of dish’s made 
+- iv. If the averages winner cannot be determined, then the following is used to determine the winner
+    - 1. Head-to-head record
+    - 2. If that is still tied, then determined by whose team finished highest in
+   the league
+    - 3. If players are in the same team – then a single frame shoot out will be played on finals night
+
+c. The players dish table is sorted as follows:
+- i. Total number of dish’s + reverse dish’s made over the season 
+- ii. If the overall winner cannot be determined as its tied, then awarded to the player highest in the averages table
+
+---
+
+## 9. Additional Information for Teams Without 5 Players
 
 ### 1) Team with Only 4 Players
 
