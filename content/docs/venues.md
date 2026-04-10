@@ -1,3 +1,3 @@
-# Winter 2025/26 Venues
+# Summer 2026 Venues
 
-![venues.png](/venues/venues-winter-25-26.jpeg)
+![venues-summer-26.jpg](/venues/venues-summer-26.jpg)
