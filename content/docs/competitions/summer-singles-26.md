@@ -1,15 +1,15 @@
 +++
-title = 'Winter Singles 2025/26'
+title = 'Summer Singles 2026'
 +++
 
-# Winter Singles 2025/26
+# Summer Singles 2026
 
 ## Prize Pot
 
-- Total: £640
-- Winner: £320 + trophy
-- Runner-up: £160 + trophy 
-- Semi-Finalists: £80
+- Total: TBC
+- Winner: TBC
+- Runner-up: TBC
+- Semi-Finalists: TBC
 
 ## Format
 

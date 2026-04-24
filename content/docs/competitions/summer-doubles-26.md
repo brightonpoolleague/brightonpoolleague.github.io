@@ -1,14 +1,14 @@
 +++
-title = 'Winter Doubles 2025/26'
+title = 'Summer Doubles 2026'
 +++
 
-# Winter Doubles 2025/26
+# Summer Doubles 2026
 
 ## Prize Pot
 
-- Total: £290
-- Winner: £200 + trophy
-- Runners-up: £90 + trophy
+- Total: TBC
+- Winner: TBC
+- Runners-up: TBC
 
 ## Format
 
