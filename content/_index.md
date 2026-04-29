@@ -4,4 +4,4 @@ weight = 1
 bookToC = false
 +++
 
-![![logo.png](../static/logo.png)]
+![![logo.png](/static/logo.png)]
