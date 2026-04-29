@@ -17,5 +17,7 @@ title = 'Summer Doubles 2026'
 - Talk before first shot only
 - International rules
 - Randomly drawn each round
-- 3 week windows to arrange and play your matches
+- 3/4 week windows to arrange and play your matches - dependent on entries
 - If drawn as the home pair, you must play from a Brighton league venue
+
+### Contact Cliona Saunders-Cooney to enter
