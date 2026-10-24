@@ -45,6 +45,62 @@ export function generateRandomPin(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
+function mapSeasonRow(r: Record<string, unknown>): Season {
+  return {
+    id: String(r.id),
+    name: String(r.name),
+    isActive: Boolean(r.is_active),
+  };
+}
+
+function mapTeamRow(
+  r: Record<string, unknown>,
+  existingPin = '••••'
+): Team {
+  return {
+    id: String(r.id),
+    seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
+    division: r.division as Division,
+    name: String(r.name),
+    venue: String(r.venue),
+    address: String(r.address ?? ''),
+    captainName: String(r.captain_name ?? ''),
+    captainPin: existingPin,
+  };
+}
+
+function mapPlayerRow(r: Record<string, unknown>): Player {
+  return {
+    id: String(r.id),
+    teamId: String(r.team_id),
+    name: String(r.name),
+    active: Boolean(r.active ?? true),
+  };
+}
+
+function mapFixtureRow(r: Record<string, unknown>): Fixture {
+  return {
+    id: String(r.id),
+    seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
+    division: r.division as Division,
+    matchDate: String(r.match_date),
+    weekNumber: Number(r.week_number ?? 1),
+    homeTeamId: String(r.home_team_id),
+    awayTeamId: String(r.away_team_id),
+    status: r.status as Fixture['status'],
+    lagWinner: (r.lag_winner as 'home' | 'away' | null) ?? null,
+    homeSet1Locked: Boolean(r.home_set1_locked),
+    awaySet1Locked: Boolean(r.away_set1_locked),
+    lineups: (r.lineups as Fixture['lineups']) ?? createEmptyLineups(),
+    frames: (r.frames as Fixture['frames']) ?? createEmptyFrames(),
+    homeCaptainSigned: Boolean(r.home_captain_signed),
+    awayCaptainSigned: Boolean(r.away_captain_signed),
+    submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,
+    approvedAt: r.approved_at ? String(r.approved_at) : undefined,
+    updatedAt: String(r.updated_at ?? new Date().toISOString()),
+  };
+}
+
 interface LeagueContextValue {
   seasons: Season[];
   seasonId: string;
@@ -230,12 +286,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!seasonsRes.error && seasonsRes.data && seasonsRes.data.length > 0) {
-        const mappedSeasons: Season[] = seasonsRes.data.map(
-          (r: Record<string, unknown>) => ({
-            id: String(r.id),
-            name: String(r.name),
-            isActive: Boolean(r.is_active),
-          })
+        const mappedSeasons: Season[] = seasonsRes.data.map((r) =>
+          mapSeasonRow(r as Record<string, unknown>)
         );
         setSeasons(mappedSeasons);
         localStorage.setItem(
@@ -245,34 +297,18 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!teamsRes.error && teamsRes.data) {
-        const mappedTeams: Team[] = teamsRes.data.map(
-          (r: Record<string, unknown>) => {
-            const id = String(r.id);
-            return {
-              id,
-              seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
-              division: r.division as Division,
-              name: String(r.name),
-              venue: String(r.venue),
-              address: String(r.address ?? ''),
-              captainName: String(r.captain_name ?? ''),
-              // Only populated when Admin is authenticated; hidden from public!
-              captainPin: pinMap[id] ?? '••••',
-            };
-          }
-        );
+        const mappedTeams: Team[] = teamsRes.data.map((r) => {
+          const row = r as Record<string, unknown>;
+          const id = String(row.id);
+          return mapTeamRow(row, pinMap[id] ?? '••••');
+        });
         setAllTeams(mappedTeams);
         localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mappedTeams));
       }
 
       if (!playersRes.error && playersRes.data) {
-        const mappedPlayers: Player[] = playersRes.data.map(
-          (r: Record<string, unknown>) => ({
-            id: String(r.id),
-            teamId: String(r.team_id),
-            name: String(r.name),
-            active: Boolean(r.active ?? true),
-          })
+        const mappedPlayers: Player[] = playersRes.data.map((r) =>
+          mapPlayerRow(r as Record<string, unknown>)
         );
         setAllPlayers(mappedPlayers);
         localStorage.setItem(
@@ -282,27 +318,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!fixturesRes.error && fixturesRes.data) {
-        const mappedFixtures: Fixture[] = fixturesRes.data.map(
-          (r: Record<string, unknown>) => ({
-            id: String(r.id),
-            seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
-            division: r.division as Division,
-            matchDate: String(r.match_date),
-            weekNumber: Number(r.week_number ?? 1),
-            homeTeamId: String(r.home_team_id),
-            awayTeamId: String(r.away_team_id),
-            status: r.status as Fixture['status'],
-            lagWinner: (r.lag_winner as 'home' | 'away' | null) ?? null,
-            homeSet1Locked: Boolean(r.home_set1_locked),
-            awaySet1Locked: Boolean(r.away_set1_locked),
-            lineups: (r.lineups as Fixture['lineups']) ?? createEmptyLineups(),
-            frames: (r.frames as Fixture['frames']) ?? createEmptyFrames(),
-            homeCaptainSigned: Boolean(r.home_captain_signed),
-            awayCaptainSigned: Boolean(r.away_captain_signed),
-            submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,
-            approvedAt: r.approved_at ? String(r.approved_at) : undefined,
-            updatedAt: String(r.updated_at ?? new Date().toISOString()),
-          })
+        const mappedFixtures: Fixture[] = fixturesRes.data.map((r) =>
+          mapFixtureRow(r as Record<string, unknown>)
         );
         setAllFixtures(mappedFixtures);
         localStorage.setItem(
@@ -319,34 +336,194 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     const supabase = getSupabaseClient();
     if (!supabase) return;
 
-    refreshFromCloud();
+    let activeChannel: ReturnType<typeof supabase.channel> | null = null;
 
-    const channel = supabase
-      .channel('bpl-realtime-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'fixtures' },
-        () => refreshFromCloud()
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'teams' },
-        () => refreshFromCloud()
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'players' },
-        () => refreshFromCloud()
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'seasons' },
-        () => refreshFromCloud()
-      )
-      .subscribe();
+    const connectRealtime = () => {
+      if (activeChannel) return;
+      activeChannel = supabase
+        .channel('bpl-realtime-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'fixtures' },
+          (payload) => {
+            if (
+              (payload.eventType === 'INSERT' ||
+                payload.eventType === 'UPDATE') &&
+              payload.new
+            ) {
+              const updated = mapFixtureRow(
+                payload.new as Record<string, unknown>
+              );
+              setAllFixtures((prev) => {
+                const exists = prev.some((f) => f.id === updated.id);
+                const next = exists
+                  ? prev.map((f) => (f.id === updated.id ? updated : f))
+                  : [...prev, updated];
+                localStorage.setItem(
+                  STORAGE_KEYS.FIXTURES,
+                  JSON.stringify(next)
+                );
+                return next;
+              });
+            } else if (payload.eventType === 'DELETE' && payload.old) {
+              const deletedId = String(
+                (payload.old as Record<string, unknown>).id
+              );
+              setAllFixtures((prev) => {
+                const next = prev.filter((f) => f.id !== deletedId);
+                localStorage.setItem(
+                  STORAGE_KEYS.FIXTURES,
+                  JSON.stringify(next)
+                );
+                return next;
+              });
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'teams' },
+          (payload) => {
+            if (
+              (payload.eventType === 'INSERT' ||
+                payload.eventType === 'UPDATE') &&
+              payload.new
+            ) {
+              const row = payload.new as Record<string, unknown>;
+              const rowId = String(row.id);
+              setAllTeams((prev) => {
+                const existing = prev.find((t) => t.id === rowId);
+                const updated = mapTeamRow(
+                  row,
+                  existing?.captainPin ?? '••••'
+                );
+                const next = existing
+                  ? prev.map((t) => (t.id === rowId ? updated : t))
+                  : [...prev, updated];
+                localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(next));
+                return next;
+              });
+            } else if (payload.eventType === 'DELETE' && payload.old) {
+              const deletedId = String(
+                (payload.old as Record<string, unknown>).id
+              );
+              setAllTeams((prev) => {
+                const next = prev.filter((t) => t.id !== deletedId);
+                localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(next));
+                return next;
+              });
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'players' },
+          (payload) => {
+            if (
+              (payload.eventType === 'INSERT' ||
+                payload.eventType === 'UPDATE') &&
+              payload.new
+            ) {
+              const updated = mapPlayerRow(
+                payload.new as Record<string, unknown>
+              );
+              setAllPlayers((prev) => {
+                const exists = prev.some((p) => p.id === updated.id);
+                const next = exists
+                  ? prev.map((p) => (p.id === updated.id ? updated : fOrP(p)))
+                  : [...prev, updated];
+                localStorage.setItem(
+                  STORAGE_KEYS.PLAYERS,
+                  JSON.stringify(next)
+                );
+                return next;
+              });
+            } else if (payload.eventType === 'DELETE' && payload.old) {
+              const deletedId = String(
+                (payload.old as Record<string, unknown>).id
+              );
+              setAllPlayers((prev) => {
+                const next = prev.filter((p) => p.id !== deletedId);
+                localStorage.setItem(
+                  STORAGE_KEYS.PLAYERS,
+                  JSON.stringify(next)
+                );
+                return next;
+              });
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'seasons' },
+          (payload) => {
+            if (
+              (payload.eventType === 'INSERT' ||
+                payload.eventType === 'UPDATE') &&
+              payload.new
+            ) {
+              const updated = mapSeasonRow(
+                payload.new as Record<string, unknown>
+              );
+              setSeasons((prev) => {
+                const exists = prev.some((s) => s.id === updated.id);
+                const next = exists
+                  ? prev.map((s) => (s.id === updated.id ? updated : s))
+                  : [...prev, updated];
+                localStorage.setItem(
+                  STORAGE_KEYS.SEASONS,
+                  JSON.stringify(next)
+                );
+                return next;
+              });
+            }
+          }
+        )
+        .subscribe();
+    };
+
+    function fOrP(p: Player): Player {
+      return p;
+    }
+
+    const disconnectRealtime = () => {
+      if (activeChannel) {
+        supabase.removeChannel(activeChannel);
+        activeChannel = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // When user unlocks phone or switches back to tab, sync latest state and reconnect WebSocket
+        refreshFromCloud();
+        connectRealtime();
+      } else {
+        // Free up WebSocket connection while phone is locked / in pocket
+        disconnectRealtime();
+      }
+    };
+
+    refreshFromCloud();
+    if (
+      typeof document === 'undefined' ||
+      document.visibilityState === 'visible'
+    ) {
+      connectRealtime();
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange
+        );
+      }
+      disconnectRealtime();
     };
   }, [isCloudConnected, refreshFromCloud]);
 
@@ -560,7 +737,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             p_venue: t.venue,
             p_address: t.address,
             p_captain_name: t.captainName,
-            p_captain_pin: t.captainPin !== '••••' ? t.captainPin : generateRandomPin(),
+            p_captain_pin:
+              t.captainPin !== '••••' ? t.captainPin : generateRandomPin(),
           });
         }
         for (const p of clonedPlayers) {
