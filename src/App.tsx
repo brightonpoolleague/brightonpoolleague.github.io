@@ -20,7 +20,14 @@ import { RoleSwitcherModal } from './components/RoleSwitcherModal';
 type NavTab = 'fixtures' | 'table' | 'stats' | 'rules' | 'admin';
 
 const MainShell: React.FC = () => {
-  const { fixtures, session, isCloudConnected } = useLeague();
+  const {
+    seasons,
+    seasonId,
+    seasonName,
+    setSelectedSeasonId,
+    fixtures,
+    session,
+  } = useLeague();
   const [activeTab, setActiveTab] = useState<NavTab>('fixtures');
   const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(
     null
@@ -75,28 +82,39 @@ const MainShell: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-8">
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-3">
-          {/* Brand */}
-          <div
-            onClick={() => setActiveTab('fixtures')}
-            className="flex items-center gap-3 cursor-pointer min-w-0"
-          >
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3">
+          {/* Brand & Season Switcher */}
+          <div className="flex items-center gap-2.5 min-w-0">
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
               alt="Brighton Pool League Crest"
-              className="w-10 h-10 object-contain shrink-0"
+              onClick={() => setActiveTab('fixtures')}
+              className="w-10 h-10 object-contain shrink-0 cursor-pointer"
             />
             <div className="min-w-0">
-              <div className="font-black text-sm sm:text-base text-white truncate">
+              <div
+                onClick={() => setActiveTab('fixtures')}
+                className="font-black text-sm sm:text-base text-white truncate cursor-pointer"
+              >
                 Brighton &amp; Hove Pool League
               </div>
               <div className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
-                <Radio className="w-3 h-3" />
-                <span>Winter 2026/27</span>
-                <span className="text-slate-600">•</span>
-                <span className="text-slate-400">
-                  {isCloudConnected ? 'Supabase Live' : 'Local / Branch Mode'}
-                </span>
+                <Radio className="w-3 h-3 shrink-0" />
+                {seasons.length > 1 ? (
+                  <select
+                    value={seasonId}
+                    onChange={(e) => setSelectedSeasonId(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-emerald-300 font-bold"
+                  >
+                    {seasons.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span>{seasonName}</span>
+                )}
               </div>
             </div>
           </div>
@@ -129,7 +147,7 @@ const MainShell: React.FC = () => {
             })}
           </nav>
 
-          {/* Role Switcher Pill */}
+          {/* Role Switcher / PIN Login Pill */}
           <button
             type="button"
             onClick={() => setShowRoleModal(true)}
@@ -205,7 +223,7 @@ const MainShell: React.FC = () => {
         />
       )}
 
-      {/* Role Switcher Modal */}
+      {/* Role Switcher / PIN Login Modal */}
       {showRoleModal && (
         <RoleSwitcherModal onClose={() => setShowRoleModal(false)} />
       )}

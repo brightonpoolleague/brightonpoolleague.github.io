@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import {
   CalendarPlus,
   CheckCircle2,
+  Copy,
   Database,
   Edit3,
+  FolderPlus,
+  KeyRound,
   Plus,
+  RefreshCw,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -13,8 +17,8 @@ import {
   Users,
   Wand2,
 } from 'lucide-react';
-import { Division, DIVISIONS, Fixture, Team } from '../types/league';
-import { useLeague } from '../context/LeagueContext';
+import { Division, DIVISIONS, Fixture } from '../types/league';
+import { generateRandomPin, useLeague } from '../context/LeagueContext';
 import { calculateMatchScore } from '../utils/leagueEngine';
 import { getSupabaseConfig, saveSupabaseConfig } from '../lib/supabase';
 
@@ -26,12 +30,19 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   onSelectFixture,
 }) => {
   const {
+    seasons,
+    seasonId,
     seasonName,
+    setSelectedSeasonId,
+    createNewSeason,
     teams,
     players,
     fixtures,
+    adminPin,
     canManageLeague,
-    setRoleSession,
+    loginAsAdminWithPin,
+    updateAdminPin,
+    updateTeamPin,
     addTeam,
     deleteTeam,
     addPlayer,
@@ -48,8 +59,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   } = useLeague();
 
   const [activeTab, setActiveTab] = useState<
-    'teams' | 'fixtures' | 'approvals' | 'database'
+    'teams' | 'fixtures' | 'approvals' | 'seasons' | 'database'
   >('teams');
+
+  // Inline Admin PIN unlock when not yet logged in
+  const [unlockPinInput, setUnlockPinInput] = useState('');
+  const [unlockError, setUnlockError] = useState('');
 
   // Team creation form state
   const [teamDivision, setTeamDivision] = useState<Division>('Premier League');
@@ -57,7 +72,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [teamVenue, setTeamVenue] = useState('');
   const [teamAddress, setTeamAddress] = useState('');
   const [captainName, setCaptainName] = useState('');
+  const [captainPin, setCaptainPin] = useState('');
   const [initialPlayersInput, setInitialPlayersInput] = useState('');
+  const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
 
   // Per-team add player input state
   const [newPlayerByTeam, setNewPlayerByTeam] = useState<
@@ -74,6 +91,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [genStartDate, setGenStartDate] = useState('2026-11-02');
   const [genMessage, setGenMessage] = useState('');
 
+  // Seasons & Master PIN state
+  const [newSeasonName, setNewSeasonName] = useState('');
+  const [copyTeamsToNewSeason, setCopyTeamsToNewSeason] = useState(true);
+  const [seasonCreatedMsg, setSeasonCreatedMsg] = useState('');
+  const [newMasterPin, setNewMasterPin] = useState(adminPin);
+  const [pinSavedMsg, setPinSavedMsg] = useState('');
+
   // Supabase connection state
   const currentSb = getSupabaseConfig();
   const [sbUrl, setSbUrl] = useState(currentSb.url);
@@ -82,24 +106,46 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   if (!canManageLeague) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-lg mx-auto space-y-4">
-        <ShieldCheck className="w-12 h-12 text-amber-400 mx-auto" />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const ok = loginAsAdminWithPin(unlockPinInput);
+          if (!ok) setUnlockError('Incorrect League Admin PIN.');
+        }}
+        className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-md mx-auto space-y-4"
+      >
+        <ShieldCheck className="w-12 h-12 text-emerald-400 mx-auto" />
         <h2 className="text-xl font-bold text-white">
-          League Admin Access Required
+          Enter League Admin PIN
         </h2>
         <p className="text-xs sm:text-sm text-slate-400">
-          You are currently viewing the site as a read-only user or team
-          captain. Switch to the <strong>League Admin</strong> role to manage
-          teams, players, fixtures, and approve scorecards.
+          Enter the Master League Admin PIN to manage seasons, teams, players,
+          Team Captain PINs, and approve scorecards. (Default PIN:{' '}
+          <code>2026</code>)
         </p>
-        <button
-          type="button"
-          onClick={() => setRoleSession('admin')}
-          className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow"
-        >
-          Switch to League Admin Mode
-        </button>
-      </div>
+        <div className="flex items-center gap-2 max-w-xs mx-auto">
+          <input
+            type="password"
+            required
+            value={unlockPinInput}
+            onChange={(e) => {
+              setUnlockPinInput(e.target.value);
+              setUnlockError('');
+            }}
+            placeholder="Admin PIN (default: 2026)"
+            className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white text-center"
+          />
+          <button
+            type="submit"
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow"
+          >
+            Unlock
+          </button>
+        </div>
+        {unlockError && (
+          <p className="text-xs text-red-400 font-semibold">{unlockError}</p>
+        )}
+      </form>
     );
   }
 
@@ -112,9 +158,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       venue: teamVenue.trim(),
       address: teamAddress.trim(),
       captainName: captainName.trim(),
+      captainPin: captainPin.trim() || generateRandomPin(),
     });
 
-    // If initial comma/newline-separated player names were provided, add them right away
     const names = initialPlayersInput
       .split(/[\n,]+/)
       .map((s) => s.trim())
@@ -127,7 +173,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setTeamVenue('');
     setTeamAddress('');
     setCaptainName('');
+    setCaptainPin('');
     setInitialPlayersInput('');
+  };
+
+  const handleCopyCaptainInvite = (teamId: string, name: string, pin: string) => {
+    const text = `Brighton Pool League (${seasonName}) — ${name} Captain Login PIN: ${pin}`;
+    navigator.clipboard?.writeText(text);
+    setCopiedTeamId(teamId);
+    setTimeout(() => setCopiedTeamId(null), 2500);
   };
 
   const handleAddPlayerToTeam = async (teamId: string) => {
@@ -168,6 +222,28 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         `Generated ${count} fixtures (Home & Away round-robin) for ${division}!`
       );
     }
+  };
+
+  const handleCreateSeason = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSeasonName.trim()) return;
+    const created = await createNewSeason(
+      newSeasonName.trim(),
+      copyTeamsToNewSeason
+    );
+    setNewSeasonName('');
+    setSeasonCreatedMsg(
+      `Created & switched to season "${created.name}" (stored in the same database)!`
+    );
+    setTimeout(() => setSeasonCreatedMsg(''), 4000);
+  };
+
+  const handleSaveMasterPin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMasterPin.trim()) return;
+    await updateAdminPin(newMasterPin.trim());
+    setPinSavedMsg('Master League Admin PIN updated!');
+    setTimeout(() => setPinSavedMsg(''), 3000);
   };
 
   const handleSaveSupabase = async (e: React.FormEvent) => {
@@ -216,29 +292,29 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 text-xs font-semibold"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Clear All Season Data
+              Clear {seasonName} Data
             </button>
           </div>
         </div>
 
         {/* Admin Section Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button
             type="button"
             onClick={() => setActiveTab('teams')}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
               activeTab === 'teams'
                 ? 'bg-emerald-600 text-white'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            Teams &amp; Players ({teams.length})
+            Teams &amp; PINs ({teams.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('fixtures')}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
               activeTab === 'fixtures'
                 ? 'bg-emerald-600 text-white'
                 : 'text-slate-400 hover:text-white'
@@ -250,31 +326,43 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('approvals')}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
               activeTab === 'approvals'
                 ? 'bg-emerald-600 text-white'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Approve Scorecards
+            Scorecards
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('seasons')}
+            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              activeTab === 'seasons'
+                ? 'bg-emerald-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Seasons &amp; Admin PIN
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('database')}
-            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 col-span-2 sm:col-span-1 ${
               activeTab === 'database'
                 ? 'bg-emerald-600 text-white'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Database className="w-3.5 h-3.5" />
-            Cloud Database
+            Cloud DB
           </button>
         </div>
       </div>
 
-      {/* TAB 1: TEAMS & PLAYERS */}
+      {/* TAB 1: TEAMS, PLAYERS & CAPTAIN PINs */}
       {activeTab === 'teams' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Add Team Form */}
@@ -284,7 +372,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           >
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <Plus className="w-4 h-4 text-emerald-400" />
-              Add New Team
+              Add New Team ({seasonName})
             </h2>
 
             <div>
@@ -332,17 +420,31 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Team Captain Name (Optional)
-              </label>
-              <input
-                type="text"
-                value={captainName}
-                onChange={(e) => setCaptainName(e.target.value)}
-                placeholder="e.g. Lewes Pollington"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Captain Name
+                </label>
+                <input
+                  type="text"
+                  value={captainName}
+                  onChange={(e) => setCaptainName(e.target.value)}
+                  placeholder="Lewes Pollington"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Captain PIN (auto if blank)
+                </label>
+                <input
+                  type="text"
+                  value={captainPin}
+                  onChange={(e) => setCaptainPin(e.target.value)}
+                  placeholder="e.g. 4821"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono"
+                />
+              </div>
             </div>
 
             <div>
@@ -362,11 +464,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               type="submit"
               className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow"
             >
-              Create Team &amp; Squad
+              Create Team &amp; Generate Captain PIN
             </button>
           </form>
 
-          {/* Existing Teams & Squads List */}
+          {/* Existing Teams, Squads & Captain PINs */}
           <div className="lg:col-span-2 space-y-3.5">
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
               <button
@@ -398,8 +500,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
             {filteredTeams.length === 0 ? (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
-                No teams added yet. Use the form on the left to add teams for{' '}
-                {seasonName}.
+                No teams added for <strong>{seasonName}</strong> yet. Use the
+                form on the left to add teams and generate their Captain PINs.
               </div>
             ) : (
               filteredTeams.map((team) => {
@@ -409,7 +511,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     key={team.id}
                     className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3"
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
                           {team.division}
@@ -424,14 +526,56 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             : ''}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => deleteTeam(team.id)}
-                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
-                        title="Delete Team"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+
+                      {/* Team Captain PIN Controls */}
+                      <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="text-[11px] text-slate-400">
+                          Captain PIN:
+                        </span>
+                        <input
+                          type="text"
+                          value={team.captainPin}
+                          onChange={(e) =>
+                            updateTeamPin(team.id, e.target.value)
+                          }
+                          className="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
+                          title="Edit Captain PIN directly"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateTeamPin(team.id, generateRandomPin())
+                          }
+                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                          title="Generate new random 4-digit PIN"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleCopyCaptainInvite(
+                              team.id,
+                              team.name,
+                              team.captainPin
+                            )
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold"
+                          title="Copy PIN message for WhatsApp"
+                        >
+                          <Copy className="w-3 h-3" />
+                          {copiedTeamId === team.id ? 'Copied!' : 'Copy'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTeam(team.id)}
+                          className="p-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 ml-1"
+                          title="Delete Team"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Signed-On Players List */}
@@ -527,7 +671,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {activeTab === 'fixtures' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="space-y-4">
-            {/* Manual Single Fixture Form */}
             <form
               onSubmit={handleCreateFixture}
               className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5"
@@ -677,11 +820,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           {/* All Fixtures List */}
           <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <h3 className="text-sm font-bold text-white">
-              All Season Fixtures ({fixtures.length})
+              {seasonName} Fixtures ({fixtures.length})
             </h3>
             {fixtures.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center">
-                No fixtures created yet.
+                No fixtures created for {seasonName} yet.
               </p>
             ) : (
               <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
@@ -736,11 +879,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {activeTab === 'approvals' && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
           <h2 className="text-base font-bold text-white">
-            Scorecard Review &amp; Official Approval Queue
+            Scorecard Review &amp; Official Approval Queue ({seasonName})
           </h2>
           {fixtures.length === 0 ? (
             <p className="text-xs text-slate-400 py-6 text-center">
-              No matches recorded yet.
+              No matches recorded for {seasonName} yet.
             </p>
           ) : (
             <div className="space-y-2.5">
@@ -820,7 +963,150 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
       )}
 
-      {/* TAB 4: CLOUD DATABASE CONNECTION */}
+      {/* TAB 4: SEASONS & MASTER ADMIN PIN */}
+      {activeTab === 'seasons' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Seasons Manager (all in 1 database) */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <FolderPlus className="w-4 h-4 text-emerald-400" />
+                Manage Seasons (1 Unified Database)
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                All seasons and all 4 divisions live inside the same single
+                database. You can switch between seasons or create a new season
+                below.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-300">
+                Existing Seasons:
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {seasons.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSelectedSeasonId(s.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                      s.id === seasonId
+                        ? 'bg-emerald-600 border-emerald-500 text-white'
+                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    {s.name} {s.id === seasonId ? '(Selected)' : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleCreateSeason}
+              className="pt-3 border-t border-slate-800 space-y-3"
+            >
+              <label className="block text-xs font-semibold text-slate-300">
+                Create a Future Season
+              </label>
+              <input
+                type="text"
+                required
+                value={newSeasonName}
+                onChange={(e) => setNewSeasonName(e.target.value)}
+                placeholder="e.g. Summer 2027"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+              />
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={copyTeamsToNewSeason}
+                  onChange={(e) => setCopyTeamsToNewSeason(e.target.checked)}
+                  className="rounded border-slate-700 text-emerald-600 focus:ring-emerald-500"
+                />
+                Copy all teams, players &amp; Captain PINs from {seasonName}{' '}
+                into the new season
+              </label>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+              >
+                Create New Season
+              </button>
+              {seasonCreatedMsg && (
+                <p className="text-xs text-emerald-400 font-semibold">
+                  {seasonCreatedMsg}
+                </p>
+              )}
+            </form>
+          </div>
+
+          {/* Master Admin PIN & Captain PIN Directory */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <form onSubmit={handleSaveMasterPin} className="space-y-3">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-amber-400" />
+                Master League Admin PIN
+              </h2>
+              <p className="text-xs text-slate-400">
+                This PIN unlocks the League Admin portal. Team Captain PINs are
+                managed directly on each team card in the{' '}
+                <strong>Teams &amp; PINs</strong> tab.
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  required
+                  value={newMasterPin}
+                  onChange={(e) => setNewMasterPin(e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-amber-300"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                >
+                  Update Admin PIN
+                </button>
+              </div>
+              {pinSavedMsg && (
+                <p className="text-xs text-emerald-400 font-semibold">
+                  {pinSavedMsg}
+                </p>
+              )}
+            </form>
+
+            <div className="pt-3 border-t border-slate-800 space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                All Team Captain PINs ({seasonName})
+              </h3>
+              {teams.length === 0 ? (
+                <p className="text-xs text-slate-500 italic">
+                  No teams added yet.
+                </p>
+              ) : (
+                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                  {teams.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs"
+                    >
+                      <span className="font-semibold text-white">
+                        {t.name}{' '}
+                        <span className="text-slate-500">({t.division})</span>
+                      </span>
+                      <span className="font-mono font-bold text-amber-300">
+                        PIN: {t.captainPin}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: CLOUD DATABASE CONNECTION */}
       {activeTab === 'database' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <form
@@ -829,13 +1115,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           >
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <Database className="w-4 h-4 text-emerald-400" />
-              Supabase PostgreSQL Connection
+              Single Supabase PostgreSQL Database
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              The app works out-of-the-box using browser storage and multi-tab
-              live sync so you can test everything immediately. To sync across
-              all phones and devices in production, paste your free{' '}
-              <strong>Supabase Project URL</strong> and{' '}
+              One single Supabase project stores all seasons and all 4 divisions
+              (Premier League, Division 1, Division 2, Division 3). Paste your
+              free <strong>Supabase Project URL</strong> and{' '}
               <strong>Anon Public Key</strong> below (or set{' '}
               <code>VITE_SUPABASE_URL</code> and{' '}
               <code>VITE_SUPABASE_ANON_KEY</code> in your GitHub Actions
@@ -883,11 +1168,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 text-xs text-slate-300">
             <h3 className="text-sm font-bold text-white">
-              Quick Setup Guide (3 Minutes)
+              Quick Setup Guide (3 Minutes, Done Once Forever)
             </h3>
             <ol className="list-decimal list-inside space-y-2 text-slate-400">
               <li>
-                Create a free project at{' '}
+                Create <strong>1 free project</strong> at{' '}
                 <a
                   href="https://supabase.com"
                   target="_blank"

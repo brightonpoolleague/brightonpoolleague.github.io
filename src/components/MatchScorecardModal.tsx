@@ -158,7 +158,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         ...f,
         winner: toggledWinner,
         dish: toggledWinner ? f.dish : false,
-        reverseDish: toggledWinner ? f.reverseDish : false,
       };
     });
     await saveFixture({
@@ -167,17 +166,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     });
   };
 
-  const handleToggleDish = async (
-    frameNumber: number,
-    type: 'dish' | 'reverseDish'
-  ) => {
+  const handleToggleDish = async (frameNumber: number) => {
     if (!editable) return;
     const nextFrames = fixture.frames.map((f) => {
       if (f.frameNumber !== frameNumber || !f.winner) return f;
-      if (type === 'dish') {
-        return { ...f, dish: !f.dish, reverseDish: false };
-      }
-      return { ...f, reverseDish: !f.reverseDish, dish: false };
+      return { ...f, dish: !f.dish };
     });
     await saveFixture({
       ...fixture,
@@ -683,9 +676,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               Auto BYE Rule
                             </span>
                           )}
-                          {(frame.dish || frame.reverseDish) && (
+                          {frame.dish && (
                             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-                              {frame.dish ? '★ DISH' : '⚡ REVERSE DISH'}
+                              ★ DISH
                             </span>
                           )}
                         </div>
@@ -789,39 +782,25 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         </button>
                       </div>
 
-                      {/* Dish / Reverse Dish toggles when a winner is recorded */}
+                      {/* Dish toggle when a winner is recorded */}
                       {frame.winner && !isByeFrame && editable && (
                         <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex items-center justify-end gap-2">
                           <span className="text-[11px] text-slate-400 mr-auto">
-                            Clearance bonus for frame winner:
+                            Did the frame winner dish / reverse dish?
                           </span>
                           <button
                             type="button"
-                            onClick={() =>
-                              handleToggleDish(frame.frameNumber, 'dish')
-                            }
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border transition ${
+                            onClick={() => handleToggleDish(frame.frameNumber)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border transition ${
                               frame.dish
                                 ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
                                 : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                             }`}
                           >
-                            <Sparkles className="w-3 h-3" />
-                            Dish (Break & Clear)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleToggleDish(frame.frameNumber, 'reverseDish')
-                            }
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border transition ${
-                              frame.reverseDish
-                                ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <Trophy className="w-3 h-3" />
-                            Reverse Dish
+                            <Sparkles className="w-3.5 h-3.5" />
+                            {frame.dish
+                              ? '✓ Dish Recorded (Yes)'
+                              : 'Mark Dish / Reverse Dish'}
                           </button>
                         </div>
                       )}
@@ -946,11 +925,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             {breaker === 'away' ? 'X' : ''}
                           </td>
                           <td className="py-2 px-2 text-center font-bold text-emerald-400">
-                            {frame.dish
-                              ? 'Yes'
-                              : frame.reverseDish
-                              ? 'Rev'
-                              : ''}
+                            {frame.dish ? 'Yes' : ''}
                           </td>
                         </tr>
                       );

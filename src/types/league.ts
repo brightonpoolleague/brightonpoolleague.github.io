@@ -1,4 +1,8 @@
-export type Division = 'Premier League' | 'Division 1' | 'Division 2' | 'Division 3';
+export type Division =
+  | 'Premier League'
+  | 'Division 1'
+  | 'Division 2'
+  | 'Division 3';
 
 export const DIVISIONS: Division[] = [
   'Premier League',
@@ -12,8 +16,13 @@ export type UserRole = 'viewer' | 'captain' | 'admin';
 export interface UserSession {
   role: UserRole;
   teamId?: string;
-  email?: string;
   name: string;
+}
+
+export interface Season {
+  id: string;
+  name: string;
+  isActive: boolean;
 }
 
 export interface Player {
@@ -25,20 +34,17 @@ export interface Player {
 
 export interface Team {
   id: string;
+  seasonId: string;
   division: Division;
   name: string;
   venue: string;
   address: string;
   captainName: string;
+  captainPin: string;
 }
 
 // 'BYE' represents a missing player (No Player / BYE) in position 4 or 5
 export type SlotPlayerId = string | 'BYE' | null;
-
-export interface SetLineupSide {
-  // Always length 5 (indices 0..4 correspond to positions 1..5)
-  slots: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
-}
 
 export interface MatchLineups {
   set1: {
@@ -65,7 +71,6 @@ export interface FrameData {
   awaySlot: 1 | 2 | 3 | 4 | 5;
   winner: FrameWinner;
   dish: boolean;
-  reverseDish: boolean;
 }
 
 export type FixtureStatus = 'scheduled' | 'live' | 'submitted' | 'approved';
@@ -101,7 +106,6 @@ export interface LeagueTableRow {
   frameDiff: number;
   points: number;
   form: ('W' | 'L')[];
-  tieBreakNote?: string;
 }
 
 export interface PlayerStatsRow {
@@ -113,6 +117,4 @@ export interface PlayerStatsRow {
   lost: number;
   winPercentage: number;
   dishes: number;
-  reverseDishes: number;
-  totalDishes: number;
 }

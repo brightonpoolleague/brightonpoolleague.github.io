@@ -1,19 +1,26 @@
-import { Fixture, FrameData, MatchLineups, Player, Team } from '../types/league';
+import { Fixture, FrameData, MatchLineups, Player, Season, Team } from '../types/league';
 import { AWAY_SLOT_ORDER, HOME_SLOT_ORDER } from '../utils/leagueEngine';
 
 export const DEFAULT_SEASON_ID = 'winter-2026-27';
 export const DEFAULT_SEASON_NAME = 'Winter 2026/27';
+export const DEFAULT_ADMIN_PIN = '2026';
+
+export const INITIAL_SEASONS: Season[] = [
+  {
+    id: DEFAULT_SEASON_ID,
+    name: DEFAULT_SEASON_NAME,
+    isActive: true,
+  },
+];
 
 // Starts empty for the upcoming Winter 2026/27 season so League Admin can add all teams, players, and fixtures manually.
 export const INITIAL_TEAMS: Team[] = [];
 export const INITIAL_PLAYERS: Player[] = [];
 export const INITIAL_FIXTURES: Fixture[] = [];
 
-// Optional small sandbox/demo dataset that an Admin can load with 1 click to test scoring & tables, and clear anytime.
 function buildFramesFromWinners(
   winners: ('home' | 'away' | null)[],
-  dishes: number[] = [],
-  reverseDishes: number[] = []
+  dishes: number[] = []
 ): FrameData[] {
   const frames: FrameData[] = [];
   let frameNumber = 1;
@@ -29,7 +36,6 @@ function buildFramesFromWinners(
         awaySlot: awayOrder[i],
         winner: winners[frameNumber - 1] ?? null,
         dish: dishes.includes(frameNumber),
-        reverseDish: reverseDishes.includes(frameNumber),
       });
       frameNumber++;
     }
@@ -40,19 +46,23 @@ function buildFramesFromWinners(
 export const DEMO_TEAMS: Team[] = [
   {
     id: 'demo-team-home',
+    seasonId: DEFAULT_SEASON_ID,
     division: 'Division 1',
     name: 'Wilmy Lions (Demo)',
     venue: 'Longman of Wilmington',
     address: 'Brighton',
     captainName: 'Lewes Pollington',
+    captainPin: '1234',
   },
   {
     id: 'demo-team-away',
+    seasonId: DEFAULT_SEASON_ID,
     division: 'Division 1',
     name: 'LA Pool Club (Demo)',
     venue: 'LA Pool Club',
     address: 'Brighton Marina',
     captainName: 'Hamed Eslami',
+    captainPin: '5678',
   },
 ];
 
@@ -117,8 +127,7 @@ export const DEMO_FIXTURES: Fixture[] = [
         'home',
         'away',
       ],
-      [3, 9],
-      [11]
+      [3, 9, 11]
     ),
     homeCaptainSigned: true,
     awayCaptainSigned: true,

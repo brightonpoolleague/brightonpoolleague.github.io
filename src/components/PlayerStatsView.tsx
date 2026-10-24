@@ -172,22 +172,10 @@ export const PlayerStatsView: React.FC = () => {
                     Win %
                   </th>
                   <th
-                    className="py-3 px-2.5 text-center"
-                    title="Break & Clear Dishes"
-                  >
-                    Dish
-                  </th>
-                  <th
-                    className="py-3 px-2.5 text-center hidden sm:table-cell"
-                    title="Reverse Dishes"
-                  >
-                    Rev Dish
-                  </th>
-                  <th
                     className="py-3 px-2.5 text-center font-bold text-emerald-400"
-                    title="Total Dishes + Reverse Dishes"
+                    title="Dishes (including Reverse Dishes)"
                   >
-                    Total Dishes
+                    Dishes
                   </th>
                   <th
                     className="py-3 px-3 text-center hidden md:table-cell"
@@ -242,14 +230,8 @@ export const PlayerStatsView: React.FC = () => {
                       <td className="py-3 px-2.5 text-center tabular-nums font-semibold text-white">
                         {row.winPercentage.toFixed(1)}%
                       </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-emerald-300">
+                      <td className="py-3 px-2.5 text-center tabular-nums font-black text-emerald-300 bg-slate-950/40">
                         {row.dishes}
-                      </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-amber-300 hidden sm:table-cell">
-                        {row.reverseDishes}
-                      </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums font-black text-white bg-slate-950/40">
-                        {row.totalDishes}
                       </td>
                       <td className="py-3 px-3 text-center hidden md:table-cell">
                         <span

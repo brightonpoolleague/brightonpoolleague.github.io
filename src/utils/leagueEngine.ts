@@ -41,7 +41,6 @@ export function createEmptyFrames(): FrameData[] {
         awaySlot: awayOrder[i],
         winner: null,
         dish: false,
-        reverseDish: false,
       });
       frameNumber++;
     }
@@ -112,7 +111,6 @@ export function applyByeRulesToFrames(
         ...frame,
         winner: lagWinner ?? frame.winner,
         dish: false,
-        reverseDish: false,
       };
     }
     if (homePlayerId && homePlayerId !== 'BYE' && awayPlayerId === 'BYE') {
@@ -120,7 +118,6 @@ export function applyByeRulesToFrames(
         ...frame,
         winner: 'home',
         dish: false,
-        reverseDish: false,
       };
     }
     if (awayPlayerId && awayPlayerId !== 'BYE' && homePlayerId === 'BYE') {
@@ -128,7 +125,6 @@ export function applyByeRulesToFrames(
         ...frame,
         winner: 'away',
         dish: false,
-        reverseDish: false,
       };
     }
     return frame;
@@ -479,8 +475,6 @@ export function computePlayerStats(
       lost: 0,
       winPercentage: 0,
       dishes: 0,
-      reverseDishes: 0,
-      totalDishes: 0,
     };
     playerH2H[player.id] = {};
   });
@@ -500,8 +494,6 @@ export function computePlayerStats(
         if (frame.winner === 'home') {
           homeStats.won++;
           if (frame.dish) homeStats.dishes++;
-          if (frame.reverseDish) homeStats.reverseDishes++;
-          homeStats.totalDishes = homeStats.dishes + homeStats.reverseDishes;
         } else {
           homeStats.lost++;
         }
@@ -512,8 +504,6 @@ export function computePlayerStats(
         if (frame.winner === 'away') {
           awayStats.won++;
           if (frame.dish) awayStats.dishes++;
-          if (frame.reverseDish) awayStats.reverseDishes++;
-          awayStats.totalDishes = awayStats.dishes + awayStats.reverseDishes;
         } else {
           awayStats.lost++;
         }
@@ -567,12 +557,12 @@ export function computePlayerStats(
   });
 
   // Section 8c: Players Dish Table
-  // i. Total number of dishes + reverse dishes made over the season
+  // i. Total number of dishes (including reverse dishes) made over the season
   // ii. If tied, awarded to the player highest in the averages table
   const dishTable = [...allStats]
-    .filter((r) => r.totalDishes > 0 || r.played > 0)
+    .filter((r) => r.dishes > 0 || r.played > 0)
     .sort((a, b) => {
-      if (b.totalDishes !== a.totalDishes) return b.totalDishes - a.totalDishes;
+      if (b.dishes !== a.dishes) return b.dishes - a.dishes;
       const aAvgRank = avgRankMap[a.player.id] ?? 9999;
       const bAvgRank = avgRankMap[b.player.id] ?? 9999;
       if (aAvgRank !== bAvgRank) return aAvgRank - bAvgRank;
