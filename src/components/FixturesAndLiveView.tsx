@@ -3,13 +3,11 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
-  Clock,
   MapPin,
   PlayCircle,
   PlusCircle,
   Radio,
   ShieldAlert,
-  Sparkles,
 } from 'lucide-react';
 import { Division, DIVISIONS, Fixture } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
@@ -32,7 +30,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     canEditFixture,
     canManageLeague,
     approveFixture,
-    loadDemoData,
   } = useLeague();
 
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(
@@ -55,7 +52,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
       return true;
     })
     .sort((a, b) => {
-      // Live first, then submitted, then scheduled, then approved
       const order = { live: 0, submitted: 1, scheduled: 2, approved: 3 };
       if (order[a.status] !== order[b.status]) {
         return order[a.status] - order[b.status];
@@ -155,7 +151,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         </div>
       </div>
 
-      {/* Empty State when Winter 26/27 has no teams/fixtures yet */}
+      {/* Empty State when Season has no fixtures yet */}
       {fixtures.length === 0 ? (
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-10 text-center max-w-2xl mx-auto space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
@@ -163,33 +159,25 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           </div>
           <div className="space-y-1.5">
             <h2 className="text-lg sm:text-xl font-bold text-white">
-              {seasonName} Season Ready for Setup
+              {seasonName} Fixtures Not Published Yet
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-              No fixtures have been added for {seasonName} yet. Switch to{' '}
-              <strong>League Admin</strong> to add teams, players, and fixtures
-              for Premier League, Division 1, Division 2, and Division 3—or load
-              a sample match card to test live scoring right now.
+              Fixtures for {seasonName} will appear here once published by the
+              League Admin.
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onGoToAdmin}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow"
-            >
-              <PlusCircle className="w-4 h-4" />
-              Open League Admin Setup
-            </button>
-            <button
-              type="button"
-              onClick={loadDemoData}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-semibold"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Load Sample Match to Test
-            </button>
-          </div>
+          {canManageLeague && (
+            <div className="flex items-center justify-center pt-2">
+              <button
+                type="button"
+                onClick={onGoToAdmin}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Open League Admin Setup
+              </button>
+            </div>
+          )}
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
@@ -219,7 +207,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     : 'border-slate-800'
                 }`}
               >
-                {/* Card Top Meta */}
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-emerald-400">
@@ -247,7 +234,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                   </span>
                 </div>
 
-                {/* Teams & Score */}
                 <div
                   onClick={() => onSelectFixture(fix)}
                   className="cursor-pointer bg-slate-950/80 border border-slate-800/80 rounded-xl p-3.5 grid grid-cols-7 items-center gap-2"
@@ -301,7 +287,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                   </div>
                 </div>
 
-                {/* Venue & Action Buttons */}
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
                     <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />

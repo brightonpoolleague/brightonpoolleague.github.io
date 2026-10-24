@@ -9,9 +9,7 @@ import {
   KeyRound,
   Plus,
   RefreshCw,
-  RotateCcw,
   ShieldCheck,
-  Sparkles,
   Trash2,
   UserPlus,
   Users,
@@ -53,8 +51,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     deleteFixture,
     approveFixture,
     reopenFixture,
-    loadDemoData,
-    resetAllData,
     refreshFromCloud,
   } = useLeague();
 
@@ -62,11 +58,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     'teams' | 'fixtures' | 'approvals' | 'seasons' | 'database'
   >('teams');
 
-  // Inline Admin PIN unlock when not yet logged in
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  // Team creation form state
   const [teamDivision, setTeamDivision] = useState<Division>('Premier League');
   const [teamName, setTeamName] = useState('');
   const [teamVenue, setTeamVenue] = useState('');
@@ -76,13 +70,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [initialPlayersInput, setInitialPlayersInput] = useState('');
   const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
 
-  // Per-team add player input state
   const [newPlayerByTeam, setNewPlayerByTeam] = useState<
     Record<string, string>
   >({});
   const [filterDivision, setFilterDivision] = useState<Division | 'ALL'>('ALL');
 
-  // Fixture creation form state
   const [fixDivision, setFixDivision] = useState<Division>('Premier League');
   const [fixDate, setFixDate] = useState('2026-11-02');
   const [fixWeek, setFixWeek] = useState(1);
@@ -91,14 +83,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [genStartDate, setGenStartDate] = useState('2026-11-02');
   const [genMessage, setGenMessage] = useState('');
 
-  // Seasons & Master PIN state
   const [newSeasonName, setNewSeasonName] = useState('');
   const [copyTeamsToNewSeason, setCopyTeamsToNewSeason] = useState(true);
   const [seasonCreatedMsg, setSeasonCreatedMsg] = useState('');
   const [newMasterPin, setNewMasterPin] = useState(adminPin);
   const [pinSavedMsg, setPinSavedMsg] = useState('');
 
-  // Supabase connection state
   const currentSb = getSupabaseConfig();
   const [sbUrl, setSbUrl] = useState(currentSb.url);
   const [sbKey, setSbKey] = useState(currentSb.anonKey);
@@ -120,8 +110,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </h2>
         <p className="text-xs sm:text-sm text-slate-400">
           Enter the Master League Admin PIN to manage seasons, teams, players,
-          Team Captain PINs, and approve scorecards. (Default PIN:{' '}
-          <code>2026</code>)
+          Team Captain PINs, and approve scorecards.
         </p>
         <div className="flex items-center gap-2 max-w-xs mx-auto">
           <input
@@ -132,7 +121,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               setUnlockPinInput(e.target.value);
               setUnlockError('');
             }}
-            placeholder="Admin PIN (default: 2026)"
+            placeholder="Admin PIN"
             className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white text-center"
           />
           <button
@@ -177,7 +166,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setInitialPlayersInput('');
   };
 
-  const handleCopyCaptainInvite = (teamId: string, name: string, pin: string) => {
+  const handleCopyCaptainInvite = (
+    teamId: string,
+    name: string,
+    pin: string
+  ) => {
     const text = `Brighton Pool League (${seasonName}) — ${name} Captain Login PIN: ${pin}`;
     navigator.clipboard?.writeText(text);
     setCopiedTeamId(teamId);
@@ -233,7 +226,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     );
     setNewSeasonName('');
     setSeasonCreatedMsg(
-      `Created & switched to season "${created.name}" (stored in the same database)!`
+      `Created & switched to season "${created.name}"!`
     );
     setTimeout(() => setSeasonCreatedMsg(''), 4000);
   };
@@ -264,37 +257,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Header & Sub-navigation */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              League Admin Control Panel
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-              Manage {seasonName}
-            </h1>
+        <div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            League Admin Control Panel
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={loadDemoData}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              Load Sample Test Data
-            </button>
-            <button
-              type="button"
-              onClick={resetAllData}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 text-xs font-semibold"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Clear {seasonName} Data
-            </button>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
+            Manage {seasonName}
+          </h1>
         </div>
 
         {/* Admin Section Tabs */}
@@ -357,7 +328,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             }`}
           >
             <Database className="w-3.5 h-3.5" />
-            Cloud DB
+            Supabase DB
           </button>
         </div>
       </div>
@@ -365,7 +336,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {/* TAB 1: TEAMS, PLAYERS & CAPTAIN PINs */}
       {activeTab === 'teams' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Add Team Form */}
           <form
             onSubmit={handleCreateTeam}
             className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 h-fit"
@@ -468,7 +438,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </button>
           </form>
 
-          {/* Existing Teams, Squads & Captain PINs */}
           <div className="lg:col-span-2 space-y-3.5">
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
               <button
@@ -527,7 +496,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </p>
                       </div>
 
-                      {/* Team Captain PIN Controls */}
                       <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
                         <KeyRound className="w-3.5 h-3.5 text-amber-400" />
                         <span className="text-[11px] text-slate-400">
@@ -578,7 +546,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Signed-On Players List */}
                     <div className="space-y-2">
                       <div className="text-xs font-semibold text-slate-300">
                         Signed-On Players ({squad.length}):
@@ -629,7 +596,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         )}
                       </div>
 
-                      {/* Quick Add Player Input */}
                       <div className="flex items-center gap-2 pt-1">
                         <input
                           type="text"
@@ -776,7 +742,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </button>
             </form>
 
-            {/* Auto-Generate Round-Robin Schedule */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Wand2 className="w-4 h-4 text-amber-400" />
@@ -817,7 +782,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </div>
           </div>
 
-          {/* All Fixtures List */}
           <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <h3 className="text-sm font-bold text-white">
               {seasonName} Fixtures ({fixtures.length})
@@ -966,7 +930,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {/* TAB 4: SEASONS & MASTER ADMIN PIN */}
       {activeTab === 'seasons' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Seasons Manager (all in 1 database) */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
@@ -1041,7 +1004,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </form>
           </div>
 
-          {/* Master Admin PIN & Captain PIN Directory */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <form onSubmit={handleSaveMasterPin} className="space-y-3">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
@@ -1106,7 +1068,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
       )}
 
-      {/* TAB 5: CLOUD DATABASE CONNECTION */}
+      {/* TAB 5: SUPABASE DATABASE CONNECTION */}
       {activeTab === 'database' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <form
@@ -1115,16 +1077,14 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           >
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <Database className="w-4 h-4 text-emerald-400" />
-              Single Supabase PostgreSQL Database
+              Supabase PostgreSQL Connection
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              One single Supabase project stores all seasons and all 4 divisions
-              (Premier League, Division 1, Division 2, Division 3). Paste your
-              free <strong>Supabase Project URL</strong> and{' '}
-              <strong>Anon Public Key</strong> below (or set{' '}
-              <code>VITE_SUPABASE_URL</code> and{' '}
-              <code>VITE_SUPABASE_ANON_KEY</code> in your GitHub Actions
-              repository secrets).
+              Paste your <strong>Supabase Project URL</strong> and{' '}
+              <strong>Anon Public Key</strong> below, or add them to your GitHub
+              repository secrets (<code>VITE_SUPABASE_URL</code> and{' '}
+              <code>VITE_SUPABASE_ANON_KEY</code>) so every device connects
+              automatically.
             </p>
 
             <div>
@@ -1168,7 +1128,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 text-xs text-slate-300">
             <h3 className="text-sm font-bold text-white">
-              Quick Setup Guide (3 Minutes, Done Once Forever)
+              Supabase Setup Checklist
             </h3>
             <ol className="list-decimal list-inside space-y-2 text-slate-400">
               <li>
@@ -1185,14 +1145,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </li>
               <li>
                 Open the <strong>SQL Editor</strong> in Supabase and run the SQL
-                file located at <code>supabase/schema.sql</code> in this
-                repository.
+                script from <code>supabase/schema.sql</code>.
               </li>
               <li>
                 Copy your <strong>Project URL</strong> and{' '}
                 <strong>Anon Key</strong> from{' '}
-                <em>Project Settings → API</em> and paste them here (or add them
-                to GitHub Secrets).
+                <em>Project Settings → API</em> and add them to GitHub Actions
+                Secrets (or paste them here).
               </li>
             </ol>
           </div>

@@ -71,7 +71,6 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
         </div>
 
         <div className="space-y-3">
-          {/* 1. General Read-Only User */}
           <button
             type="button"
             onClick={() => {
@@ -96,7 +95,6 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
             </div>
           </button>
 
-          {/* 2. Team Captain Login with PIN */}
           <form
             onSubmit={handleCaptainLogin}
             className={`p-3.5 rounded-xl border transition space-y-2.5 ${
@@ -166,14 +164,12 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                 )}
               </div>
             ) : (
-              <p className="text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
-                No teams added yet—log in as League Admin below to add teams and
-                generate Team PINs.
+              <p className="text-[11px] text-slate-400 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
+                No teams registered for this season yet.
               </p>
             )}
           </form>
 
-          {/* 3. League Admin Login with Master PIN */}
           <form
             onSubmit={handleAdminLogin}
             className={`p-3.5 rounded-xl border transition space-y-2.5 ${
@@ -190,7 +186,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Manage seasons, teams, players, Team Captain PINs, and approve
-                  scorecards. (Default PIN: <code>2026</code>)
+                  scorecards.
                 </p>
               </div>
             </div>
@@ -206,7 +202,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                     setAdminPinInput(e.target.value);
                     setAdminError('');
                   }}
-                  placeholder="Enter Admin PIN (default: 2026)"
+                  placeholder="Enter Admin PIN"
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white"
                 />
               </div>

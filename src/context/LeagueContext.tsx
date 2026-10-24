@@ -18,9 +18,6 @@ import {
 import {
   DEFAULT_ADMIN_PIN,
   DEFAULT_SEASON_ID,
-  DEMO_FIXTURES,
-  DEMO_PLAYERS,
-  DEMO_TEAMS,
   INITIAL_FIXTURES,
   INITIAL_PLAYERS,
   INITIAL_SEASONS,
@@ -43,8 +40,6 @@ const STORAGE_KEYS = {
   FIXTURES: 'bpl_fixtures_v2',
   SESSION: 'bpl_session_v2',
 };
-
-const BROADCAST_CHANNEL_NAME = 'bpl_live_channel_v2';
 
 export function generateRandomPin(): string {
   return String(Math.floor(1000 + Math.random() * 9000));
@@ -71,7 +66,6 @@ interface LeagueContextValue {
   loginAsAdminWithPin: (pin: string) => boolean;
   updateAdminPin: (newPin: string) => Promise<void>;
   updateTeamPin: (teamId: string, newPin: string) => Promise<void>;
-  // Team & Player management (Admin)
   addTeam: (
     data: Omit<Team, 'id' | 'seasonId' | 'captainPin'> & {
       captainPin?: string;
@@ -82,7 +76,6 @@ interface LeagueContextValue {
   addPlayer: (teamId: string, name: string) => Promise<Player>;
   removePlayer: (playerId: string) => Promise<void>;
   transferPlayer: (playerId: string, toTeamId: string) => Promise<void>;
-  // Fixture & Scorecard management
   addFixture: (data: {
     division: Division;
     matchDate: string;
@@ -98,11 +91,7 @@ interface LeagueContextValue {
   saveFixture: (updated: Fixture) => Promise<void>;
   approveFixture: (fixtureId: string) => Promise<void>;
   reopenFixture: (fixtureId: string) => Promise<void>;
-  // Demo / Reset helpers
-  loadDemoData: () => Promise<void>;
-  resetAllData: () => Promise<void>;
   refreshFromCloud: () => Promise<void>;
-  // Permissions helpers
   canEditFixture: (fixture: Fixture) => boolean;
   canManageLeague: boolean;
 }
@@ -159,7 +148,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const seasonId = activeSeason.id;
   const seasonName = activeSeason.name;
 
-  // Filter teams, players, and fixtures to the currently selected season
   const teams = useMemo(
     () => allTeams.filter((t) => (t.seasonId || DEFAULT_SEASON_ID) === seasonId),
     [allTeams, seasonId]
@@ -194,8 +182,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       nextPlayers: Player[],
       nextFixtures: Fixture[],
       nextSeasons: Season[] = seasons,
-      nextAdminPin: string = adminPin,
-      broadcast = true
+      nextAdminPin: string = adminPin
     ) => {
       if (typeof window === 'undefined') return;
       localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(nextTeams));
@@ -206,36 +193,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         STORAGE_KEYS.ADMIN_PIN,
         JSON.stringify(nextAdminPin)
       );
-      if (broadcast && 'BroadcastChannel' in window) {
-        const ch = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-        ch.postMessage({
-          type: 'SYNC_STATE',
-          teams: nextTeams,
-          players: nextPlayers,
-          fixtures: nextFixtures,
-          seasons: nextSeasons,
-          adminPin: nextAdminPin,
-        });
-        ch.close();
-      }
     },
     [seasons, adminPin]
   );
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
-    const ch = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-    ch.onmessage = (ev) => {
-      if (ev.data?.type === 'SYNC_STATE') {
-        setAllTeams(ev.data.teams);
-        setAllPlayers(ev.data.players);
-        setAllFixtures(ev.data.fixtures);
-        if (ev.data.seasons) setSeasons(ev.data.seasons);
-        if (ev.data.adminPin) setAdminPin(ev.data.adminPin);
-      }
-    };
-    return () => ch.close();
-  }, []);
 
   const refreshFromCloud = useCallback(async () => {
     const supabase = getSupabaseClient();
@@ -486,10 +446,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       let nextTeams = [...allTeams];
       let nextPlayers = [...allPlayers];
+      const clonedTeams: Team[] = [];
+      const clonedPlayers: Player[] = [];
 
       if (copyTeamsFromCurrent) {
-        const clonedTeams: Team[] = [];
-        const clonedPlayers: Player[] = [];
         teams.forEach((oldTeam) => {
           const newTeamId = `team-${Date.now()}-${Math.random()
             .toString(36)
@@ -528,6 +488,30 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           name: newSeason.name,
           is_active: true,
         });
+        if (clonedTeams.length > 0) {
+          await supabase.from('teams').upsert(
+            clonedTeams.map((t) => ({
+              id: t.id,
+              season_id: t.seasonId,
+              division: t.division,
+              name: t.name,
+              venue: t.venue,
+              address: t.address,
+              captain_name: t.captainName,
+              captain_pin: t.captainPin,
+            }))
+          );
+        }
+        if (clonedPlayers.length > 0) {
+          await supabase.from('players').upsert(
+            clonedPlayers.map((p) => ({
+              id: p.id,
+              team_id: p.teamId,
+              name: p.name,
+              active: p.active,
+            }))
+          );
+        }
       }
 
       return newSeason;
@@ -810,6 +794,31 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const nextFixtures = [...allFixtures, ...generated];
       setAllFixtures(nextFixtures);
       persistLocal(allTeams, allPlayers, nextFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase && generated.length > 0) {
+        await supabase.from('fixtures').upsert(
+          generated.map((f) => ({
+            id: f.id,
+            season_id: f.seasonId,
+            division: f.division,
+            match_date: f.matchDate,
+            week_number: f.weekNumber,
+            home_team_id: f.homeTeamId,
+            away_team_id: f.awayTeamId,
+            status: f.status,
+            lag_winner: f.lagWinner,
+            home_set1_locked: f.homeSet1Locked,
+            away_set1_locked: f.awaySet1Locked,
+            lineups: f.lineups,
+            frames: f.frames,
+            home_captain_signed: f.homeCaptainSigned,
+            away_captain_signed: f.awayCaptainSigned,
+            updated_at: f.updatedAt,
+          }))
+        );
+      }
+
       return generated.length;
     },
     [seasonId, teams, allTeams, allPlayers, allFixtures, persistLocal]
@@ -914,35 +923,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [allFixtures, saveFixture]
   );
 
-  const loadDemoData = useCallback(async () => {
-    const demoTeamsForSeason = DEMO_TEAMS.map((t) => ({ ...t, seasonId }));
-    const demoFixturesForSeason = DEMO_FIXTURES.map((f) => ({
-      ...f,
-      seasonId,
-    }));
-    setAllTeams(demoTeamsForSeason);
-    setAllPlayers(DEMO_PLAYERS);
-    setAllFixtures(demoFixturesForSeason);
-    persistLocal(demoTeamsForSeason, DEMO_PLAYERS, demoFixturesForSeason);
-  }, [seasonId, persistLocal]);
-
-  const resetAllData = useCallback(async () => {
-    const remainingTeams = allTeams.filter((t) => t.seasonId !== seasonId);
-    const removedTeamIds = new Set(
-      allTeams.filter((t) => t.seasonId === seasonId).map((t) => t.id)
-    );
-    const remainingPlayers = allPlayers.filter(
-      (p) => !removedTeamIds.has(p.teamId)
-    );
-    const remainingFixtures = allFixtures.filter(
-      (f) => f.seasonId !== seasonId
-    );
-    setAllTeams(remainingTeams);
-    setAllPlayers(remainingPlayers);
-    setAllFixtures(remainingFixtures);
-    persistLocal(remainingTeams, remainingPlayers, remainingFixtures);
-  }, [seasonId, allTeams, allPlayers, allFixtures, persistLocal]);
-
   const canManageLeague = session.role === 'admin';
 
   const canEditFixture = useCallback(
@@ -991,8 +971,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         saveFixture,
         approveFixture,
         reopenFixture,
-        loadDemoData,
-        resetAllData,
         refreshFromCloud,
         canEditFixture,
         canManageLeague,
