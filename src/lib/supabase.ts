@@ -12,9 +12,15 @@ export function getSupabaseConfig(): {
   anonKey: string;
   isConfigured: boolean;
 } {
-  // When running locally via `npm run dev`, stay in local sandbox mode
+  // When running locally (localhost / 127.0.0.1 / local network IP), stay in local sandbox mode
   // so local testing never modifies the live production database.
-  if (import.meta.env.DEV) {
+  const isLocalHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('192.168.'));
+
+  if (import.meta.env.DEV || isLocalHost) {
     return {
       url: '',
       anonKey: '',

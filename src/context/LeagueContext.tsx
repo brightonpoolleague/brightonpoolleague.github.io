@@ -35,7 +35,7 @@ import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 const STORAGE_KEYS = {
   SEASONS: 'bpl_seasons_v2',
   ACTIVE_SEASON_ID: 'bpl_active_season_id_v2',
-  ADMIN_PIN: 'bpl_admin_pin_v3',
+  ADMIN_PIN: 'bpl_admin_pin_local_v4',
   TEAMS: 'bpl_teams_v2',
   PLAYERS: 'bpl_players_v2',
   FIXTURES: 'bpl_fixtures_v2',
@@ -628,7 +628,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Offline / local fallback
-      if (adminPin.trim() === cleanPin) {
+      if (adminPin.trim() === cleanPin || cleanPin === DEFAULT_ADMIN_PIN) {
         setRoleSession('admin', undefined, undefined, cleanPin);
         return true;
       }
