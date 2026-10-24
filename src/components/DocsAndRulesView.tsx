@@ -270,12 +270,54 @@ export const DocsAndRulesView: React.FC = () => {
                   that opponents always differ, as shown below:
                 </li>
               </ul>
-              <div className="py-2">
-                <img
-                  src={`${import.meta.env.BASE_URL}sets.png`}
-                  alt="Away Set Playing Order"
-                  className="rounded-xl border border-slate-800 max-w-xs bg-white p-2"
-                />
+              <div className="py-2 max-w-lg">
+                <div className="overflow-x-auto border border-slate-800 rounded-xl">
+                  <table className="w-full text-xs sm:text-sm border-collapse text-left">
+                    <thead>
+                      <tr className="bg-slate-950 text-slate-300 border-b border-slate-800">
+                        <th className="py-2.5 px-3 font-bold text-center border-r border-slate-800">
+                          Set 1
+                        </th>
+                        <th className="py-2.5 px-3 font-bold text-center border-r border-slate-800">
+                          Set 2
+                        </th>
+                        <th className="py-2.5 px-3 font-bold text-center">
+                          Set 3
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/70">
+                      {[
+                        { s1: ['1', 'Player A'], s2: ['3', 'Player C'], s3: ['4', 'Player D'] },
+                        { s1: ['2', 'Player B'], s2: ['4', 'Player D'], s3: ['1', 'Player A'] },
+                        { s1: ['3', 'Player C'], s2: ['5', 'Player E'], s3: ['2', 'Player B'] },
+                        { s1: ['4', 'Player D'], s2: ['2', 'Player B'], s3: ['5', 'Player E'] },
+                        { s1: ['5', 'Player E'], s2: ['1', 'Player A'], s3: ['3', 'Player C'] },
+                      ].map((row, idx) => (
+                        <tr key={idx} className="hover:bg-slate-800/30">
+                          <td className="py-2 px-3 border-r border-slate-800">
+                            <span className="inline-block w-5 font-bold text-emerald-400">
+                              {row.s1[0]}
+                            </span>
+                            <span className="text-white font-medium">{row.s1[1]}</span>
+                          </td>
+                          <td className="py-2 px-3 border-r border-slate-800">
+                            <span className="inline-block w-5 font-bold text-emerald-400">
+                              {row.s2[0]}
+                            </span>
+                            <span className="text-white font-medium">{row.s2[1]}</span>
+                          </td>
+                          <td className="py-2 px-3">
+                            <span className="inline-block w-5 font-bold text-emerald-400">
+                              {row.s3[0]}
+                            </span>
+                            <span className="text-white font-medium">{row.s3[1]}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               <ul className="space-y-1.5 list-none">
                 <li>
