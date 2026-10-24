@@ -26,10 +26,10 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
   const [adminPinInput, setAdminPinInput] = useState('');
   const [adminError, setAdminError] = useState('');
 
-  const handleCaptainLogin = (e: React.FormEvent) => {
+  const handleCaptainLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeamId) return;
-    const ok = loginAsCaptainWithPin(selectedTeamId, captainPinInput);
+    const ok = await loginAsCaptainWithPin(selectedTeamId, captainPinInput);
     if (ok) {
       setCaptainError('');
       onClose();
@@ -38,9 +38,9 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     }
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = loginAsAdminWithPin(adminPinInput);
+    const ok = await loginAsAdminWithPin(adminPinInput);
     if (ok) {
       setAdminError('');
       onClose();

@@ -62,8 +62,8 @@ interface LeagueContextValue {
   isCloudConnected: boolean;
   isSyncing: boolean;
   setRoleSession: (role: UserRole, teamId?: string, customName?: string) => void;
-  loginAsCaptainWithPin: (teamId: string, pin: string) => boolean;
-  loginAsAdminWithPin: (pin: string) => boolean;
+  loginAsCaptainWithPin: (teamId: string, pin: string) => Promise<boolean>;
+  loginAsAdminWithPin: (pin: string) => Promise<boolean>;
   updateAdminPin: (newPin: string) => Promise<void>;
   updateTeamPin: (teamId: string, newPin: string) => Promise<void>;
   addTeam: (
@@ -202,23 +202,26 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!supabase) return;
     setIsSyncing(true);
     try {
-      const [settingsRes, seasonsRes, teamsRes, playersRes, fixturesRes] =
-        await Promise.all([
-          supabase
-            .from('league_settings')
-            .select('*')
-            .eq('id', 'default')
-            .maybeSingle(),
-          supabase.from('seasons').select('*').order('created_at'),
-          supabase.from('teams').select('*').order('name'),
-          supabase.from('players').select('*').order('name'),
-          supabase.from('fixtures').select('*').order('match_date'),
-        ]);
+      const [seasonsRes, teamsRes, playersRes, fixturesRes] = await Promise.all([
+        supabase.from('seasons').select('*').order('created_at'),
+        supabase.from('teams').select('*').order('name'),
+        supabase.from('players').select('*').order('name'),
+        supabase.from('fixtures').select('*').order('match_date'),
+      ]);
 
-      if (!settingsRes.error && settingsRes.data?.admin_pin) {
-        const pin = String(settingsRes.data.admin_pin);
-        setAdminPin(pin);
-        localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify(pin));
+      // If logged in as Admin, fetch protected team PINs via server-side RPC
+      const pinMap: Record<string, string> = {};
+      if (session.role === 'admin' && adminPin) {
+        const pinsRes = await supabase.rpc('get_all_team_pins', {
+          p_admin_pin: adminPin,
+        });
+        if (!pinsRes.error && Array.isArray(pinsRes.data)) {
+          pinsRes.data.forEach(
+            (row: { team_id: string; captain_pin: string }) => {
+              pinMap[row.team_id] = row.captain_pin;
+            }
+          );
+        }
       }
 
       if (!seasonsRes.error && seasonsRes.data && seasonsRes.data.length > 0) {
@@ -238,16 +241,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (!teamsRes.error && teamsRes.data) {
         const mappedTeams: Team[] = teamsRes.data.map(
-          (r: Record<string, unknown>) => ({
-            id: String(r.id),
-            seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
-            division: r.division as Division,
-            name: String(r.name),
-            venue: String(r.venue),
-            address: String(r.address ?? ''),
-            captainName: String(r.captain_name ?? ''),
-            captainPin: String(r.captain_pin ?? '1111'),
-          })
+          (r: Record<string, unknown>) => {
+            const id = String(r.id);
+            return {
+              id,
+              seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
+              division: r.division as Division,
+              name: String(r.name),
+              venue: String(r.venue),
+              address: String(r.address ?? ''),
+              captainName: String(r.captain_name ?? ''),
+              // Only populated when Admin is authenticated; hidden from public!
+              captainPin: pinMap[id] ?? '••••',
+            };
+          }
         );
         setAllTeams(mappedTeams);
         localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mappedTeams));
@@ -301,7 +308,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setIsSyncing(false);
     }
-  }, []);
+  }, [session.role, adminPin]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -360,7 +367,21 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const loginAsCaptainWithPin = useCallback(
-    (teamId: string, pin: string): boolean => {
+    async (teamId: string, pin: string): Promise<boolean> => {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const { data, error } = await supabase.rpc('verify_captain_pin', {
+          p_team_id: teamId,
+          p_pin: pin.trim(),
+        });
+        if (!error && data === true) {
+          setRoleSession('captain', teamId);
+          return true;
+        }
+        return false;
+      }
+
+      // Offline / local fallback
       const team = allTeams.find((t) => t.id === teamId);
       if (!team) return false;
       if (
@@ -376,8 +397,43 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const loginAsAdminWithPin = useCallback(
-    (pin: string): boolean => {
-      if (adminPin.trim() === pin.trim()) {
+    async (pin: string): Promise<boolean> => {
+      const cleanPin = pin.trim();
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const { data, error } = await supabase.rpc('verify_admin_pin', {
+          p_pin: cleanPin,
+        });
+        if (!error && data === true) {
+          setAdminPin(cleanPin);
+          localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify(cleanPin));
+          setRoleSession('admin');
+
+          // Load protected team PINs for Admin view
+          const pinsRes = await supabase.rpc('get_all_team_pins', {
+            p_admin_pin: cleanPin,
+          });
+          if (!pinsRes.error && Array.isArray(pinsRes.data)) {
+            const pinMap: Record<string, string> = {};
+            pinsRes.data.forEach(
+              (row: { team_id: string; captain_pin: string }) => {
+                pinMap[row.team_id] = row.captain_pin;
+              }
+            );
+            setAllTeams((prev) =>
+              prev.map((t) => ({
+                ...t,
+                captainPin: pinMap[t.id] ?? t.captainPin,
+              }))
+            );
+          }
+          return true;
+        }
+        return false;
+      }
+
+      // Offline / local fallback
+      if (adminPin.trim() === cleanPin) {
         setRoleSession('admin');
         return true;
       }
@@ -390,19 +446,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     async (newPin: string): Promise<void> => {
       const clean = newPin.trim();
       if (!clean) return;
-      setAdminPin(clean);
-      persistLocal(allTeams, allPlayers, allFixtures, seasons, clean);
-
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('league_settings').upsert({
-          id: 'default',
-          admin_pin: clean,
-          updated_at: new Date().toISOString(),
+        await supabase.rpc('set_admin_pin', {
+          p_current_admin_pin: adminPin,
+          p_new_admin_pin: clean,
         });
       }
+      setAdminPin(clean);
+      persistLocal(allTeams, allPlayers, allFixtures, seasons, clean);
     },
-    [allTeams, allPlayers, allFixtures, seasons, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, seasons, persistLocal]
   );
 
   const updateTeamPin = useCallback(
@@ -417,13 +471,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase
-          .from('teams')
-          .update({ captain_pin: clean })
-          .eq('id', teamId);
+        await supabase.rpc('set_team_pin', {
+          p_admin_pin: adminPin,
+          p_team_id: teamId,
+          p_new_pin: clean,
+        });
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const createNewSeason = useCallback(
@@ -498,9 +553,15 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               venue: t.venue,
               address: t.address,
               captain_name: t.captainName,
-              captain_pin: t.captainPin,
             }))
           );
+          for (const t of clonedTeams) {
+            await supabase.rpc('set_team_pin', {
+              p_admin_pin: adminPin,
+              p_team_id: t.id,
+              p_new_pin: t.captainPin,
+            });
+          }
         }
         if (clonedPlayers.length > 0) {
           await supabase.from('players').upsert(
@@ -535,11 +596,12 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         captainPin?: string;
       }
     ): Promise<Team> => {
+      const generatedPin = data.captainPin?.trim() || generateRandomPin();
       const newTeam: Team = {
         ...data,
         id: `team-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         seasonId,
-        captainPin: data.captainPin?.trim() || generateRandomPin(),
+        captainPin: generatedPin,
       };
       const nextTeams = [...allTeams, newTeam];
       setAllTeams(nextTeams);
@@ -560,12 +622,24 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           venue: newTeam.venue,
           address: newTeam.address,
           captain_name: newTeam.captainName,
-          captain_pin: newTeam.captainPin,
+        });
+        await supabase.rpc('set_team_pin', {
+          p_admin_pin: adminPin,
+          p_team_id: newTeam.id,
+          p_new_pin: generatedPin,
         });
       }
       return newTeam;
     },
-    [seasonId, seasonName, allTeams, allPlayers, allFixtures, persistLocal]
+    [
+      seasonId,
+      seasonName,
+      adminPin,
+      allTeams,
+      allPlayers,
+      allFixtures,
+      persistLocal,
+    ]
   );
 
   const updateTeam = useCallback(
@@ -586,7 +660,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             venue: updatedTeam.venue,
             address: updatedTeam.address,
             captain_name: updatedTeam.captainName,
-            captain_pin: updatedTeam.captainPin,
           })
           .eq('id', updatedTeam.id);
       }
