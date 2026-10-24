@@ -61,7 +61,12 @@ interface LeagueContextValue {
   adminPin: string;
   isCloudConnected: boolean;
   isSyncing: boolean;
-  setRoleSession: (role: UserRole, teamId?: string, customName?: string) => void;
+  setRoleSession: (
+    role: UserRole,
+    teamId?: string,
+    customName?: string,
+    pin?: string
+  ) => void;
   loginAsCaptainWithPin: (teamId: string, pin: string) => Promise<boolean>;
   loginAsAdminWithPin: (pin: string) => Promise<boolean>;
   updateAdminPin: (newPin: string) => Promise<void>;
@@ -346,7 +351,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isCloudConnected, refreshFromCloud]);
 
   const setRoleSession = useCallback(
-    (role: UserRole, teamId?: string, customName?: string) => {
+    (role: UserRole, teamId?: string, customName?: string, pin?: string) => {
       const team = allTeams.find((t) => t.id === teamId);
       const name =
         customName ||
@@ -357,7 +362,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             ? `${team.name} Captain`
             : 'Team Captain'
           : 'General Spectator');
-      const next: UserSession = { role, teamId, name };
+      const next: UserSession = { role, teamId, name, pin };
       setSession(next);
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(next));
@@ -368,14 +373,15 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loginAsCaptainWithPin = useCallback(
     async (teamId: string, pin: string): Promise<boolean> => {
+      const cleanPin = pin.trim();
       const supabase = getSupabaseClient();
       if (supabase) {
         const { data, error } = await supabase.rpc('verify_captain_pin', {
           p_team_id: teamId,
-          p_pin: pin.trim(),
+          p_pin: cleanPin,
         });
         if (!error && data === true) {
-          setRoleSession('captain', teamId);
+          setRoleSession('captain', teamId, undefined, cleanPin);
           return true;
         }
         return false;
@@ -385,10 +391,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const team = allTeams.find((t) => t.id === teamId);
       if (!team) return false;
       if (
-        team.captainPin.trim() === pin.trim() ||
-        adminPin.trim() === pin.trim()
+        team.captainPin.trim() === cleanPin ||
+        adminPin.trim() === cleanPin
       ) {
-        setRoleSession('captain', teamId);
+        setRoleSession('captain', teamId, undefined, cleanPin);
         return true;
       }
       return false;
@@ -407,7 +413,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!error && data === true) {
           setAdminPin(cleanPin);
           localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify(cleanPin));
-          setRoleSession('admin');
+          setRoleSession('admin', undefined, undefined, cleanPin);
 
           // Load protected team PINs for Admin view
           const pinsRes = await supabase.rpc('get_all_team_pins', {
@@ -434,7 +440,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Offline / local fallback
       if (adminPin.trim() === cleanPin) {
-        setRoleSession('admin');
+        setRoleSession('admin', undefined, undefined, cleanPin);
         return true;
       }
       return false;
@@ -538,40 +544,33 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('seasons').upsert({
-          id: newSeason.id,
-          name: newSeason.name,
-          is_active: true,
+        await supabase.rpc('admin_upsert_season', {
+          p_admin_pin: adminPin,
+          p_id: newSeason.id,
+          p_name: newSeason.name,
+          p_is_active: true,
         });
-        if (clonedTeams.length > 0) {
-          await supabase.from('teams').upsert(
-            clonedTeams.map((t) => ({
-              id: t.id,
-              season_id: t.seasonId,
-              division: t.division,
-              name: t.name,
-              venue: t.venue,
-              address: t.address,
-              captain_name: t.captainName,
-            }))
-          );
-          for (const t of clonedTeams) {
-            await supabase.rpc('set_team_pin', {
-              p_admin_pin: adminPin,
-              p_team_id: t.id,
-              p_new_pin: t.captainPin,
-            });
-          }
+        for (const t of clonedTeams) {
+          await supabase.rpc('admin_upsert_team', {
+            p_admin_pin: adminPin,
+            p_id: t.id,
+            p_season_id: t.seasonId,
+            p_division: t.division,
+            p_name: t.name,
+            p_venue: t.venue,
+            p_address: t.address,
+            p_captain_name: t.captainName,
+            p_captain_pin: t.captainPin !== '••••' ? t.captainPin : generateRandomPin(),
+          });
         }
-        if (clonedPlayers.length > 0) {
-          await supabase.from('players').upsert(
-            clonedPlayers.map((p) => ({
-              id: p.id,
-              team_id: p.teamId,
-              name: p.name,
-              active: p.active,
-            }))
-          );
+        for (const p of clonedPlayers) {
+          await supabase.rpc('admin_upsert_player', {
+            p_admin_pin: adminPin,
+            p_id: p.id,
+            p_team_id: p.teamId,
+            p_name: p.name,
+            p_active: p.active,
+          });
         }
       }
 
@@ -609,24 +608,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('seasons').upsert({
-          id: seasonId,
-          name: seasonName,
-          is_active: true,
-        });
-        await supabase.from('teams').upsert({
-          id: newTeam.id,
-          season_id: newTeam.seasonId,
-          division: newTeam.division,
-          name: newTeam.name,
-          venue: newTeam.venue,
-          address: newTeam.address,
-          captain_name: newTeam.captainName,
-        });
-        await supabase.rpc('set_team_pin', {
+        await supabase.rpc('admin_upsert_season', {
           p_admin_pin: adminPin,
-          p_team_id: newTeam.id,
-          p_new_pin: generatedPin,
+          p_id: seasonId,
+          p_name: seasonName,
+          p_is_active: true,
+        });
+        await supabase.rpc('admin_upsert_team', {
+          p_admin_pin: adminPin,
+          p_id: newTeam.id,
+          p_season_id: newTeam.seasonId,
+          p_division: newTeam.division,
+          p_name: newTeam.name,
+          p_venue: newTeam.venue,
+          p_address: newTeam.address,
+          p_captain_name: newTeam.captainName,
+          p_captain_pin: generatedPin,
         });
       }
       return newTeam;
@@ -652,19 +649,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase
-          .from('teams')
-          .update({
-            division: updatedTeam.division,
-            name: updatedTeam.name,
-            venue: updatedTeam.venue,
-            address: updatedTeam.address,
-            captain_name: updatedTeam.captainName,
-          })
-          .eq('id', updatedTeam.id);
+        await supabase.rpc('admin_upsert_team', {
+          p_admin_pin: adminPin,
+          p_id: updatedTeam.id,
+          p_season_id: updatedTeam.seasonId,
+          p_division: updatedTeam.division,
+          p_name: updatedTeam.name,
+          p_venue: updatedTeam.venue,
+          p_address: updatedTeam.address,
+          p_captain_name: updatedTeam.captainName,
+          p_captain_pin: null,
+        });
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const deleteTeam = useCallback(
@@ -681,10 +679,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('teams').delete().eq('id', teamId);
+        await supabase.rpc('admin_delete_team', {
+          p_admin_pin: adminPin,
+          p_team_id: teamId,
+        });
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const addPlayer = useCallback(
@@ -701,16 +702,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('players').upsert({
-          id: newPlayer.id,
-          team_id: newPlayer.teamId,
-          name: newPlayer.name,
-          active: true,
+        await supabase.rpc('admin_upsert_player', {
+          p_admin_pin: adminPin,
+          p_id: newPlayer.id,
+          p_team_id: newPlayer.teamId,
+          p_name: newPlayer.name,
+          p_active: true,
         });
       }
       return newPlayer;
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const removePlayer = useCallback(
@@ -721,14 +723,18 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('players').delete().eq('id', playerId);
+        await supabase.rpc('admin_delete_player', {
+          p_admin_pin: adminPin,
+          p_player_id: playerId,
+        });
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const transferPlayer = useCallback(
     async (playerId: string, toTeamId: string): Promise<void> => {
+      const target = allPlayers.find((p) => p.id === playerId);
       const nextPlayers = allPlayers.map((p) =>
         p.id === playerId ? { ...p, teamId: toTeamId } : p
       );
@@ -736,14 +742,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       persistLocal(allTeams, nextPlayers, allFixtures);
 
       const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase
-          .from('players')
-          .update({ team_id: toTeamId })
-          .eq('id', playerId);
+      if (supabase && target) {
+        await supabase.rpc('admin_upsert_player', {
+          p_admin_pin: adminPin,
+          p_id: playerId,
+          p_team_id: toTeamId,
+          p_name: target.name,
+          p_active: target.active,
+        });
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const addFixture = useCallback(
@@ -778,28 +787,23 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('fixtures').upsert({
-          id: newFixture.id,
-          season_id: newFixture.seasonId,
-          division: newFixture.division,
-          match_date: newFixture.matchDate,
-          week_number: newFixture.weekNumber,
-          home_team_id: newFixture.homeTeamId,
-          away_team_id: newFixture.awayTeamId,
-          status: newFixture.status,
-          lag_winner: newFixture.lagWinner,
-          home_set1_locked: newFixture.homeSet1Locked,
-          away_set1_locked: newFixture.awaySet1Locked,
-          lineups: newFixture.lineups,
-          frames: newFixture.frames,
-          home_captain_signed: newFixture.homeCaptainSigned,
-          away_captain_signed: newFixture.awayCaptainSigned,
-          updated_at: newFixture.updatedAt,
+        await supabase.rpc('admin_upsert_fixture', {
+          p_admin_pin: adminPin,
+          p_id: newFixture.id,
+          p_season_id: newFixture.seasonId,
+          p_division: newFixture.division,
+          p_match_date: newFixture.matchDate,
+          p_week_number: newFixture.weekNumber,
+          p_home_team_id: newFixture.homeTeamId,
+          p_away_team_id: newFixture.awayTeamId,
+          p_status: newFixture.status,
+          p_lineups: newFixture.lineups,
+          p_frames: newFixture.frames,
         });
       }
       return newFixture;
     },
-    [seasonId, allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, seasonId, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const generateDivisionFixtures = useCallback(
@@ -870,31 +874,34 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase && generated.length > 0) {
-        await supabase.from('fixtures').upsert(
-          generated.map((f) => ({
-            id: f.id,
-            season_id: f.seasonId,
-            division: f.division,
-            match_date: f.matchDate,
-            week_number: f.weekNumber,
-            home_team_id: f.homeTeamId,
-            away_team_id: f.awayTeamId,
-            status: f.status,
-            lag_winner: f.lagWinner,
-            home_set1_locked: f.homeSet1Locked,
-            away_set1_locked: f.awaySet1Locked,
-            lineups: f.lineups,
-            frames: f.frames,
-            home_captain_signed: f.homeCaptainSigned,
-            away_captain_signed: f.awayCaptainSigned,
-            updated_at: f.updatedAt,
-          }))
-        );
+        for (const f of generated) {
+          await supabase.rpc('admin_upsert_fixture', {
+            p_admin_pin: adminPin,
+            p_id: f.id,
+            p_season_id: f.seasonId,
+            p_division: f.division,
+            p_match_date: f.matchDate,
+            p_week_number: f.weekNumber,
+            p_home_team_id: f.homeTeamId,
+            p_away_team_id: f.awayTeamId,
+            p_status: f.status,
+            p_lineups: f.lineups,
+            p_frames: f.frames,
+          });
+        }
       }
 
       return generated.length;
     },
-    [seasonId, teams, allTeams, allPlayers, allFixtures, persistLocal]
+    [
+      adminPin,
+      seasonId,
+      teams,
+      allTeams,
+      allPlayers,
+      allFixtures,
+      persistLocal,
+    ]
   );
 
   const deleteFixture = useCallback(
@@ -905,10 +912,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.from('fixtures').delete().eq('id', fixtureId);
+        await supabase.rpc('admin_delete_fixture', {
+          p_admin_pin: adminPin,
+          p_fixture_id: fixtureId,
+        });
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const saveFixture = useCallback(
@@ -948,25 +958,40 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase
-          .from('fixtures')
-          .update({
-            status: updated.status,
-            lag_winner: updated.lagWinner,
-            home_set1_locked: updated.homeSet1Locked,
-            away_set1_locked: updated.awaySet1Locked,
-            lineups: updated.lineups,
-            frames: updated.frames,
-            home_captain_signed: updated.homeCaptainSigned,
-            away_captain_signed: updated.awayCaptainSigned,
-            submitted_at: updated.submittedAt ?? null,
-            approved_at: updated.approvedAt ?? null,
-            updated_at: updated.updatedAt,
-          })
-          .eq('id', updated.id);
+        if (session.role === 'admin') {
+          await supabase.rpc('admin_save_fixture', {
+            p_admin_pin: adminPin,
+            p_fixture_id: updated.id,
+            p_status: updated.status,
+            p_lag_winner: updated.lagWinner,
+            p_home_set1_locked: updated.homeSet1Locked,
+            p_away_set1_locked: updated.awaySet1Locked,
+            p_lineups: updated.lineups,
+            p_frames: updated.frames,
+            p_home_captain_signed: updated.homeCaptainSigned,
+            p_away_captain_signed: updated.awayCaptainSigned,
+            p_submitted_at: updated.submittedAt ?? null,
+            p_approved_at: updated.approvedAt ?? null,
+          });
+        } else if (session.role === 'captain' && session.teamId) {
+          await supabase.rpc('captain_save_fixture', {
+            p_fixture_id: updated.id,
+            p_team_id: session.teamId,
+            p_pin: session.pin ?? '',
+            p_status: updated.status,
+            p_lag_winner: updated.lagWinner,
+            p_home_set1_locked: updated.homeSet1Locked,
+            p_away_set1_locked: updated.awaySet1Locked,
+            p_lineups: updated.lineups,
+            p_frames: updated.frames,
+            p_home_captain_signed: updated.homeCaptainSigned,
+            p_away_captain_signed: updated.awayCaptainSigned,
+            p_submitted_at: updated.submittedAt ?? null,
+          });
+        }
       }
     },
-    [allTeams, allPlayers, allFixtures, persistLocal]
+    [session, adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const approveFixture = useCallback(

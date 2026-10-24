@@ -17,6 +17,7 @@ export interface UserSession {
   role: UserRole;
   teamId?: string;
   name: string;
+  pin?: string;
 }
 
 export interface Season {
