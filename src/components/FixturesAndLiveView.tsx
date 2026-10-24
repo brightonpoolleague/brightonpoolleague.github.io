@@ -9,7 +9,7 @@ import {
   Radio,
   ShieldAlert,
 } from 'lucide-react';
-import { Division, DIVISIONS, Fixture } from '../types/league';
+import { Division, Fixture } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 import { calculateMatchScore } from '../utils/leagueEngine';
 
@@ -24,6 +24,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 }) => {
   const {
     seasonName,
+    divisions,
     teams,
     fixtures,
     session,
@@ -108,7 +109,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           >
             All Divisions
           </button>
-          {DIVISIONS.map((div) => (
+          {divisions.map((div) => (
             <button
               key={div}
               type="button"

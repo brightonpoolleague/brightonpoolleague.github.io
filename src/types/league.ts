@@ -1,15 +1,13 @@
-export type Division =
-  | 'Premier League'
-  | 'Division 1'
-  | 'Division 2'
-  | 'Division 3';
+export type Division = string;
 
-export const DIVISIONS: Division[] = [
+export const DEFAULT_DIVISIONS: Division[] = [
   'Premier League',
   'Division 1',
   'Division 2',
   'Division 3',
 ];
+
+export const DIVISIONS: Division[] = DEFAULT_DIVISIONS;
 
 export type UserRole = 'viewer' | 'captain' | 'admin';
 
@@ -24,6 +22,7 @@ export interface Season {
   id: string;
   name: string;
   isActive: boolean;
+  divisions?: Division[];
 }
 
 export interface Player {

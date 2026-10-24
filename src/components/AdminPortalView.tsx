@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CalendarPlus,
   CheckCircle2,
@@ -7,6 +7,7 @@ import {
   Edit3,
   FolderPlus,
   KeyRound,
+  Layers,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -15,7 +16,7 @@ import {
   Users,
   Wand2,
 } from 'lucide-react';
-import { Division, DIVISIONS, Fixture } from '../types/league';
+import { Division, Fixture } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
 import { calculateMatchScore } from '../utils/leagueEngine';
 import { getSupabaseConfig, saveSupabaseConfig } from '../lib/supabase';
@@ -31,8 +32,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     seasons,
     seasonId,
     seasonName,
+    divisions,
     setSelectedSeasonId,
     createNewSeason,
+    addDivision,
+    removeDivision,
     teams,
     players,
     fixtures,
@@ -61,7 +65,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  const [teamDivision, setTeamDivision] = useState<Division>('Premier League');
+  const [teamDivision, setTeamDivision] = useState<Division>(
+    divisions[0] || 'Premier League'
+  );
   const [teamName, setTeamName] = useState('');
   const [teamVenue, setTeamVenue] = useState('');
   const [teamAddress, setTeamAddress] = useState('');
@@ -75,7 +81,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   >({});
   const [filterDivision, setFilterDivision] = useState<Division | 'ALL'>('ALL');
 
-  const [fixDivision, setFixDivision] = useState<Division>('Premier League');
+  const [fixDivision, setFixDivision] = useState<Division>(
+    divisions[0] || 'Premier League'
+  );
   const [fixDate, setFixDate] = useState('2026-11-02');
   const [fixWeek, setFixWeek] = useState(1);
   const [fixHomeId, setFixHomeId] = useState('');
@@ -84,8 +92,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [genMessage, setGenMessage] = useState('');
 
   const [newSeasonName, setNewSeasonName] = useState('');
-  const [copyTeamsToNewSeason, setCopyTeamsToNewSeason] = useState(true);
+  const [newSeasonDivisionsInput, setNewSeasonDivisionsInput] = useState(
+    divisions.join(', ')
+  );
+  const [copyTeamsToNewSeason, setCopyTeamsToNewSeason] = useState(false);
   const [seasonCreatedMsg, setSeasonCreatedMsg] = useState('');
+
+  const [newDivisionInput, setNewDivisionInput] = useState('');
+  const [divisionError, setDivisionError] = useState('');
+
   const [newMasterPin, setNewMasterPin] = useState(adminPin);
   const [pinSavedMsg, setPinSavedMsg] = useState('');
 
@@ -93,6 +108,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [sbUrl, setSbUrl] = useState(currentSb.url);
   const [sbKey, setSbKey] = useState(currentSb.anonKey);
   const [sbSavedMsg, setSbSavedMsg] = useState('');
+
+  useEffect(() => {
+    if (divisions.length > 0) {
+      if (!divisions.includes(teamDivision)) {
+        setTeamDivision(divisions[0]);
+      }
+      if (!divisions.includes(fixDivision)) {
+        setFixDivision(divisions[0]);
+      }
+    }
+  }, [divisions, teamDivision, fixDivision]);
 
   if (!canManageLeague) {
     return (
@@ -109,8 +135,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           Enter League Admin PIN
         </h2>
         <p className="text-xs sm:text-sm text-slate-400">
-          Enter the Master League Admin PIN to manage seasons, teams, players,
-          Team Captain PINs, and approve scorecards.
+          Enter the Master League Admin PIN to manage seasons, divisions, teams,
+          players, Team Captain PINs, and approve scorecards.
         </p>
         <div className="flex items-center gap-2 max-w-xs mx-auto">
           <input
@@ -220,15 +246,49 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const handleCreateSeason = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSeasonName.trim()) return;
+    const parsedDivs = newSeasonDivisionsInput
+      .split(',')
+      .map((d) => d.trim())
+      .filter(Boolean);
     const created = await createNewSeason(
       newSeasonName.trim(),
-      copyTeamsToNewSeason
+      copyTeamsToNewSeason,
+      parsedDivs.length > 0 ? parsedDivs : divisions
     );
     setNewSeasonName('');
     setSeasonCreatedMsg(
       `Created & switched to season "${created.name}"!`
     );
     setTimeout(() => setSeasonCreatedMsg(''), 4000);
+  };
+
+  const handleAddDivision = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = newDivisionInput.trim();
+    if (!clean) return;
+    if (divisions.includes(clean)) {
+      setDivisionError(`"${clean}" already exists in ${seasonName}.`);
+      return;
+    }
+    setDivisionError('');
+    await addDivision(clean);
+    setNewDivisionInput('');
+  };
+
+  const handleRemoveDivision = async (div: Division) => {
+    const teamsInDiv = teams.filter((t) => t.division === div).length;
+    if (teamsInDiv > 0) {
+      setDivisionError(
+        `Cannot remove "${div}" while ${teamsInDiv} team(s) are assigned to it.`
+      );
+      return;
+    }
+    if (divisions.length <= 1) {
+      setDivisionError('A season must have at least 1 division.');
+      return;
+    }
+    setDivisionError('');
+    await removeDivision(div);
   };
 
   const handleSaveMasterPin = async (e: React.FormEvent) => {
@@ -315,8 +375,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <KeyRound className="w-3.5 h-3.5" />
-            Seasons &amp; Admin PIN
+            <Layers className="w-3.5 h-3.5" />
+            Seasons &amp; Divisions
           </button>
           <button
             type="button"
@@ -354,7 +414,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 onChange={(e) => setTeamDivision(e.target.value as Division)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
               >
-                {DIVISIONS.map((div) => (
+                {divisions.map((div) => (
                   <option key={div} value={div}>
                     {div}
                   </option>
@@ -451,7 +511,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               >
                 All ({teams.length})
               </button>
-              {DIVISIONS.map((div) => (
+              {divisions.map((div) => (
                 <button
                   key={div}
                   type="button"
@@ -659,7 +719,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   }}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
                 >
-                  {DIVISIONS.map((div) => (
+                  {divisions.map((div) => (
                     <option key={div} value={div}>
                       {div}
                     </option>
@@ -763,7 +823,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {DIVISIONS.map((div) => (
+                {divisions.map((div) => (
                   <button
                     key={div}
                     type="button"
@@ -927,84 +987,168 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
       )}
 
-      {/* TAB 4: SEASONS & MASTER ADMIN PIN */}
+      {/* TAB 4: SEASONS, DIVISIONS & MASTER ADMIN PIN */}
       {activeTab === 'seasons' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <FolderPlus className="w-4 h-4 text-emerald-400" />
-                Manage Seasons (1 Unified Database)
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                All seasons and all 4 divisions live inside the same single
-                database. You can switch between seasons or create a new season
-                below.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-300">
-                Existing Seasons:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {seasons.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setSelectedSeasonId(s.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                      s.id === seasonId
-                        ? 'bg-emerald-600 border-emerald-500 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                    }`}
-                  >
-                    {s.name} {s.id === seasonId ? '(Selected)' : ''}
-                  </button>
-                ))}
+          <div className="space-y-5">
+            {/* Manage Seasons Card */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <FolderPlus className="w-4 h-4 text-emerald-400" />
+                  Manage Seasons (1 Unified Database)
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  All seasons and divisions live inside the same single
+                  database. Switch between seasons or create a new season (e.g.
+                  Summer 2027) below.
+                </p>
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Existing Seasons:
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {seasons.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSelectedSeasonId(s.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                        s.id === seasonId
+                          ? 'bg-emerald-600 border-emerald-500 text-white'
+                          : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                      }`}
+                    >
+                      {s.name} {s.id === seasonId ? '(Selected)' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <form
+                onSubmit={handleCreateSeason}
+                className="pt-3 border-t border-slate-800 space-y-3"
+              >
+                <label className="block text-xs font-semibold text-slate-300">
+                  Create a New Season (e.g. Summer 2027)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newSeasonName}
+                  onChange={(e) => setNewSeasonName(e.target.value)}
+                  placeholder="e.g. Summer 2027"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                />
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Divisions for New Season (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={newSeasonDivisionsInput}
+                    onChange={(e) => setNewSeasonDivisionsInput(e.target.value)}
+                    placeholder="Premier League, Division 1, Division 2, Division 3"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={copyTeamsToNewSeason}
+                    onChange={(e) => setCopyTeamsToNewSeason(e.target.checked)}
+                    className="rounded border-slate-700 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  Copy all teams, players &amp; Captain PINs from {seasonName}{' '}
+                  into the new season
+                </label>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+                >
+                  Create New Season
+                </button>
+                {seasonCreatedMsg && (
+                  <p className="text-xs text-emerald-400 font-semibold">
+                    {seasonCreatedMsg}
+                  </p>
+                )}
+              </form>
             </div>
 
-            <form
-              onSubmit={handleCreateSeason}
-              className="pt-3 border-t border-slate-800 space-y-3"
-            >
-              <label className="block text-xs font-semibold text-slate-300">
-                Create a Future Season
-              </label>
-              <input
-                type="text"
-                required
-                value={newSeasonName}
-                onChange={(e) => setNewSeasonName(e.target.value)}
-                placeholder="e.g. Summer 2027"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-              />
-              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            {/* Manage Divisions for Current Season Card */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-emerald-400" />
+                  Divisions in {seasonName} ({divisions.length})
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Add or remove divisions for <strong>{seasonName}</strong>.
+                  Each season can have its own custom set of divisions.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {divisions.map((div) => {
+                  const count = teams.filter((t) => t.division === div).length;
+                  return (
+                    <div
+                      key={div}
+                      className="inline-flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white"
+                    >
+                      <span className="font-bold">{div}</span>
+                      <span className="text-[10px] text-slate-400">
+                        ({count} teams)
+                      </span>
+                      {divisions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDivision(div)}
+                          className="text-slate-500 hover:text-red-400 font-bold ml-1"
+                          title="Remove division"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <form onSubmit={handleAddDivision} className="flex gap-2">
                 <input
-                  type="checkbox"
-                  checked={copyTeamsToNewSeason}
-                  onChange={(e) => setCopyTeamsToNewSeason(e.target.checked)}
-                  className="rounded border-slate-700 text-emerald-600 focus:ring-emerald-500"
+                  type="text"
+                  value={newDivisionInput}
+                  onChange={(e) => {
+                    setNewDivisionInput(e.target.value);
+                    setDivisionError('');
+                  }}
+                  placeholder="e.g. Division 4 or Summer Group A"
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
                 />
-                Copy all teams, players &amp; Captain PINs from {seasonName}{' '}
-                into the new season
-              </label>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
-              >
-                Create New Season
-              </button>
-              {seasonCreatedMsg && (
-                <p className="text-xs text-emerald-400 font-semibold">
-                  {seasonCreatedMsg}
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Division
+                </button>
+              </form>
+
+              {divisionError && (
+                <p className="text-xs text-red-400 font-medium">
+                  {divisionError}
                 </p>
               )}
-            </form>
+            </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
             <form onSubmit={handleSaveMasterPin} className="space-y-3">
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <KeyRound className="w-4 h-4 text-amber-400" />
@@ -1080,11 +1224,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               Supabase PostgreSQL Connection
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Paste your <strong>Supabase Project URL</strong> and{' '}
-              <strong>Anon Public Key</strong> below, or add them to your GitHub
-              repository secrets (<code>VITE_SUPABASE_URL</code> and{' '}
-              <code>VITE_SUPABASE_ANON_KEY</code>) so every device connects
-              automatically.
+              Your Supabase Project URL and Publishable Key are connected below.
             </p>
 
             <div>
@@ -1102,13 +1242,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Supabase Anon Public Key
+                Supabase Publishable / Anon Public Key
               </label>
               <input
                 type="password"
                 value={sbKey}
                 onChange={(e) => setSbKey(e.target.value)}
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                placeholder="sb_publishable_..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
               />
             </div>
@@ -1117,7 +1257,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               type="submit"
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
             >
-              Save &amp; Connect Database
+              Save &amp; Sync Database
             </button>
             {sbSavedMsg && (
               <p className="text-xs text-emerald-400 font-semibold">
@@ -1132,26 +1272,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </h3>
             <ol className="list-decimal list-inside space-y-2 text-slate-400">
               <li>
-                Create <strong>1 free project</strong> at{' '}
-                <a
-                  href="https://supabase.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-emerald-400 underline"
-                >
-                  supabase.com
-                </a>
-                .
+                Open the <strong>SQL Editor</strong> in your Supabase dashboard
+                and run the SQL script from <code>supabase/schema.sql</code>.
               </li>
               <li>
-                Open the <strong>SQL Editor</strong> in Supabase and run the SQL
-                script from <code>supabase/schema.sql</code>.
-              </li>
-              <li>
-                Copy your <strong>Project URL</strong> and{' '}
-                <strong>Anon Key</strong> from{' '}
-                <em>Project Settings → API</em> and add them to GitHub Actions
-                Secrets (or paste them here).
+                Your Project URL and Publishable Key are already configured and
+                connected!
               </li>
             </ol>
           </div>

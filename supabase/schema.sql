@@ -1,5 +1,5 @@
 -- Brighton Pool League - Single Unified Supabase PostgreSQL Schema
--- Stores ALL Seasons, ALL Divisions (Premier League, Division 1, Division 2, Division 3),
+-- Stores ALL Seasons, Dynamic Divisions per Season (defaulting to Premier League, Division 1, Division 2, Division 3),
 -- Teams, Players, Fixtures, and Server-Side Protected PINs in ONE database.
 -- All database permissions strictly mirror UI permissions via Row Level Security + RPCs.
 
@@ -16,29 +16,41 @@ insert into public.league_settings (id, admin_pin)
 values ('default', '0000')
 on conflict (id) do nothing;
 
--- 2. Seasons (add new seasons anytime in the future within this same database)
+-- 2. Seasons (add new seasons & custom divisions anytime in the future within this same database)
 create table if not exists public.seasons (
   id text primary key,
   name text not null,
   is_active boolean not null default false,
+  divisions jsonb not null default '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb,
   created_at timestamptz not null default now()
 );
 
-insert into public.seasons (id, name, is_active)
-values ('winter-2026-27', 'Winter 2026/27', true)
+alter table public.seasons
+  add column if not exists divisions jsonb not null default '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb;
+
+insert into public.seasons (id, name, is_active, divisions)
+values (
+  'winter-2026-27',
+  'Winter 2026/27',
+  true,
+  '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb
+)
 on conflict (id) do nothing;
 
 -- 3. Teams (public team info; PINs are stored separately in private team_pins table)
 create table if not exists public.teams (
   id text primary key,
   season_id text not null references public.seasons(id) on delete cascade,
-  division text not null check (division in ('Premier League', 'Division 1', 'Division 2', 'Division 3')),
+  division text not null,
   name text not null,
   venue text not null,
   address text not null default '',
   captain_name text not null default '',
   created_at timestamptz not null default now()
 );
+
+-- Drop any legacy fixed division check constraint so Admins can add new divisions freely
+alter table public.teams drop constraint if exists teams_division_check;
 
 -- 4. Private Team Captain PINs (NO public read/write access so PINs are never exposed in DevTools!)
 create table if not exists public.team_pins (
@@ -60,7 +72,7 @@ create table if not exists public.players (
 create table if not exists public.fixtures (
   id text primary key,
   season_id text not null references public.seasons(id) on delete cascade,
-  division text not null check (division in ('Premier League', 'Division 1', 'Division 2', 'Division 3')),
+  division text not null,
   match_date date not null,
   week_number integer not null default 1,
   home_team_id text not null references public.teams(id) on delete cascade,
@@ -82,11 +94,37 @@ create table if not exists public.fixtures (
   updated_at timestamptz not null default now()
 );
 
--- Enable Realtime on public tables
-alter publication supabase_realtime add table public.seasons;
-alter publication supabase_realtime add table public.teams;
-alter publication supabase_realtime add table public.players;
-alter publication supabase_realtime add table public.fixtures;
+alter table public.fixtures drop constraint if exists fixtures_division_check;
+
+-- Enable Realtime on public tables (safe if already added)
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'seasons'
+  ) then
+    alter publication supabase_realtime add table public.seasons;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'teams'
+  ) then
+    alter publication supabase_realtime add table public.teams;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'players'
+  ) then
+    alter publication supabase_realtime add table public.players;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'fixtures'
+  ) then
+    alter publication supabase_realtime add table public.fixtures;
+  end if;
+end
+$$;
 
 -- Enable Row-Level Security on ALL tables
 alter table public.league_settings enable row level security;
@@ -103,6 +141,10 @@ drop policy if exists "Allow public access to seasons" on public.seasons;
 drop policy if exists "Allow public access to teams" on public.teams;
 drop policy if exists "Allow public access to players" on public.players;
 drop policy if exists "Allow public access to fixtures" on public.fixtures;
+drop policy if exists "Allow public read-only access to seasons" on public.seasons;
+drop policy if exists "Allow public read-only access to teams" on public.teams;
+drop policy if exists "Allow public read-only access to players" on public.players;
+drop policy if exists "Allow public read-only access to fixtures" on public.fixtures;
 
 create policy "Allow public read-only access to seasons" on public.seasons for select using (true);
 create policy "Allow public read-only access to teams" on public.teams for select using (true);
@@ -305,12 +347,13 @@ begin
 end;
 $$;
 
--- 8. Admin Upsert Season
+-- 8. Admin Upsert Season (with dynamic divisions per season)
 create or replace function public.admin_upsert_season(
   p_admin_pin text,
   p_id text,
   p_name text,
-  p_is_active boolean
+  p_is_active boolean,
+  p_divisions jsonb default '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb
 )
 returns boolean
 language plpgsql
@@ -325,11 +368,17 @@ begin
     update public.seasons set is_active = false where id <> p_id;
   end if;
 
-  insert into public.seasons (id, name, is_active)
-  values (p_id, trim(p_name), p_is_active)
+  insert into public.seasons (id, name, is_active, divisions)
+  values (
+    p_id,
+    trim(p_name),
+    p_is_active,
+    coalesce(p_divisions, '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb)
+  )
   on conflict (id) do update
     set name = excluded.name,
-        is_active = excluded.is_active;
+        is_active = excluded.is_active,
+        divisions = coalesce(p_divisions, public.seasons.divisions);
 
   return true;
 end;

@@ -7,6 +7,7 @@ import React, {
   useMemo,
 } from 'react';
 import {
+  DEFAULT_DIVISIONS,
   Division,
   Fixture,
   Player,
@@ -46,10 +47,16 @@ export function generateRandomPin(): string {
 }
 
 function mapSeasonRow(r: Record<string, unknown>): Season {
+  const rawDivs = r.divisions;
+  const divisions =
+    Array.isArray(rawDivs) && rawDivs.length > 0
+      ? rawDivs.map((d) => String(d))
+      : DEFAULT_DIVISIONS;
   return {
     id: String(r.id),
     name: String(r.name),
     isActive: Boolean(r.is_active),
+    divisions,
   };
 }
 
@@ -105,11 +112,15 @@ interface LeagueContextValue {
   seasons: Season[];
   seasonId: string;
   seasonName: string;
+  divisions: Division[];
   setSelectedSeasonId: (id: string) => void;
   createNewSeason: (
     name: string,
-    copyTeamsFromCurrent: boolean
+    copyTeamsFromCurrent: boolean,
+    customDivisions?: Division[]
   ) => Promise<Season>;
+  addDivision: (divisionName: string) => Promise<void>;
+  removeDivision: (divisionName: string) => Promise<void>;
   teams: Team[];
   players: Player[];
   fixtures: Fixture[];
@@ -208,6 +219,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const seasonId = activeSeason.id;
   const seasonName = activeSeason.name;
+  const divisions = useMemo(
+    () =>
+      activeSeason.divisions && activeSeason.divisions.length > 0
+        ? activeSeason.divisions
+        : DEFAULT_DIVISIONS,
+    [activeSeason]
+  );
 
   const teams = useMemo(
     () => allTeams.filter((t) => (t.seasonId || DEFAULT_SEASON_ID) === seasonId),
@@ -430,7 +448,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               setAllPlayers((prev) => {
                 const exists = prev.some((p) => p.id === updated.id);
                 const next = exists
-                  ? prev.map((p) => (p.id === updated.id ? updated : fOrP(p)))
+                  ? prev.map((p) => (p.id === updated.id ? updated : p))
                   : [...prev, updated];
                 localStorage.setItem(
                   STORAGE_KEYS.PLAYERS,
@@ -482,10 +500,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         .subscribe();
     };
 
-    function fOrP(p: Player): Player {
-      return p;
-    }
-
     const disconnectRealtime = () => {
       if (activeChannel) {
         supabase.removeChannel(activeChannel);
@@ -495,11 +509,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // When user unlocks phone or switches back to tab, sync latest state and reconnect WebSocket
         refreshFromCloud();
         connectRealtime();
       } else {
-        // Free up WebSocket connection while phone is locked / in pocket
         disconnectRealtime();
       }
     };
@@ -664,17 +676,98 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
+  const addDivision = useCallback(
+    async (divisionName: string): Promise<void> => {
+      const clean = divisionName.trim();
+      if (!clean || divisions.includes(clean)) return;
+      const nextDivisions = [...divisions, clean];
+      const nextSeasons = seasons.map((s) =>
+        s.id === seasonId ? { ...s, divisions: nextDivisions } : s
+      );
+      setSeasons(nextSeasons);
+      persistLocal(allTeams, allPlayers, allFixtures, nextSeasons, adminPin);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_upsert_season', {
+          p_admin_pin: adminPin,
+          p_id: seasonId,
+          p_name: seasonName,
+          p_is_active: activeSeason.isActive,
+          p_divisions: nextDivisions,
+        });
+      }
+    },
+    [
+      divisions,
+      seasons,
+      seasonId,
+      seasonName,
+      activeSeason.isActive,
+      allTeams,
+      allPlayers,
+      allFixtures,
+      adminPin,
+      persistLocal,
+    ]
+  );
+
+  const removeDivision = useCallback(
+    async (divisionName: string): Promise<void> => {
+      if (divisions.length <= 1) return;
+      const nextDivisions = divisions.filter((d) => d !== divisionName);
+      const nextSeasons = seasons.map((s) =>
+        s.id === seasonId ? { ...s, divisions: nextDivisions } : s
+      );
+      setSeasons(nextSeasons);
+      persistLocal(allTeams, allPlayers, allFixtures, nextSeasons, adminPin);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_upsert_season', {
+          p_admin_pin: adminPin,
+          p_id: seasonId,
+          p_name: seasonName,
+          p_is_active: activeSeason.isActive,
+          p_divisions: nextDivisions,
+        });
+      }
+    },
+    [
+      divisions,
+      seasons,
+      seasonId,
+      seasonName,
+      activeSeason.isActive,
+      allTeams,
+      allPlayers,
+      allFixtures,
+      adminPin,
+      persistLocal,
+    ]
+  );
+
   const createNewSeason = useCallback(
-    async (name: string, copyTeamsFromCurrent: boolean): Promise<Season> => {
+    async (
+      name: string,
+      copyTeamsFromCurrent: boolean,
+      customDivisions?: Division[]
+    ): Promise<Season> => {
       const slug = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
       const newSeasonId = `${slug}-${Date.now().toString(36).slice(-3)}`;
+      const seasonDivisions =
+        customDivisions && customDivisions.length > 0
+          ? customDivisions
+          : [...divisions];
+
       const newSeason: Season = {
         id: newSeasonId,
         name: name.trim(),
         isActive: true,
+        divisions: seasonDivisions,
       };
 
       const nextSeasons = [
@@ -726,6 +819,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_id: newSeason.id,
           p_name: newSeason.name,
           p_is_active: true,
+          p_divisions: seasonDivisions,
         });
         for (const t of clonedTeams) {
           await supabase.rpc('admin_upsert_team', {
@@ -755,6 +849,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       return newSeason;
     },
     [
+      divisions,
       seasons,
       allTeams,
       allPlayers,
@@ -791,6 +886,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_id: seasonId,
           p_name: seasonName,
           p_is_active: true,
+          p_divisions: divisions,
         });
         await supabase.rpc('admin_upsert_team', {
           p_admin_pin: adminPin,
@@ -809,6 +905,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [
       seasonId,
       seasonName,
+      divisions,
       adminPin,
       allTeams,
       allPlayers,
@@ -1221,8 +1318,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         seasons,
         seasonId,
         seasonName,
+        divisions,
         setSelectedSeasonId,
         createNewSeason,
+        addDivision,
+        removeDivision,
         teams,
         players,
         fixtures,

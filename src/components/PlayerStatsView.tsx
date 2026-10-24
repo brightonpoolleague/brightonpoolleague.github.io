@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { BarChart3, Search, ShieldCheck, Sparkles, Trophy } from 'lucide-react';
-import { Division, DIVISIONS } from '../types/league';
+import { Division } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 import { computePlayerStats } from '../utils/leagueEngine';
 
 export const PlayerStatsView: React.FC = () => {
-  const { seasonName, teams, players, fixtures } = useLeague();
+  const { seasonName, divisions, teams, players, fixtures } = useLeague();
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(
     'ALL'
   );
@@ -129,7 +129,7 @@ export const PlayerStatsView: React.FC = () => {
           >
             All Divisions
           </button>
-          {DIVISIONS.map((div) => (
+          {divisions.map((div) => (
             <button
               key={div}
               type="button"

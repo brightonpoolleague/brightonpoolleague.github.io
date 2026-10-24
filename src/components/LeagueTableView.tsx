@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Award, Info, ShieldCheck, Trophy } from 'lucide-react';
-import { Division, DIVISIONS } from '../types/league';
+import { Division } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 import { computeLeagueTable } from '../utils/leagueEngine';
 
 export const LeagueTableView: React.FC = () => {
-  const { seasonName, teams, fixtures } = useLeague();
-  const [selectedDivision, setSelectedDivision] =
-    useState<Division>('Premier League');
+  const { seasonName, divisions, teams, fixtures } = useLeague();
+  const [selectedDivision, setSelectedDivision] = useState<Division>(
+    divisions[0] || 'Premier League'
+  );
   const [includeLive, setIncludeLive] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (divisions.length > 0 && !divisions.includes(selectedDivision)) {
+      setSelectedDivision(divisions[0]);
+    }
+  }, [divisions, selectedDivision]);
 
   const rows = computeLeagueTable(
     selectedDivision,
@@ -60,7 +67,7 @@ export const LeagueTableView: React.FC = () => {
 
         {/* Division Selector */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {DIVISIONS.map((div) => {
+          {divisions.map((div) => {
             const count = teams.filter((t) => t.division === div).length;
             return (
               <button
