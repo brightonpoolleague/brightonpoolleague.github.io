@@ -113,9 +113,6 @@ export const DocsAndRulesView: React.FC = () => {
               <h2 className="text-lg sm:text-xl font-black text-white">
                 League Format
               </h2>
-              <p className="text-xs font-semibold text-emerald-400 mt-0.5">
-                Effective from 19th May 2025
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -562,9 +559,6 @@ export const DocsAndRulesView: React.FC = () => {
               <h2 className="text-lg sm:text-xl font-black text-white">
                 League Rules
               </h2>
-              <p className="text-xs font-semibold text-emerald-400 mt-0.5">
-                Effective from 4th November 2024
-              </p>
               <p className="text-xs text-slate-400 mt-1">
                 By registering a team with the league, you agree to abide by the
                 following rules.
@@ -778,9 +772,6 @@ export const DocsAndRulesView: React.FC = () => {
               <h2 className="text-lg sm:text-xl font-black text-white">
                 Champions of Champions
               </h2>
-              <p className="text-xs font-semibold text-emerald-400 mt-0.5">
-                Effective from 19th May 2025
-              </p>
               <p className="mt-2 text-slate-300">
                 The Champion of Champions event is usually played in November
                 each year and aims to find the top open singles player, the top
