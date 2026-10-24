@@ -1,34 +1,29 @@
 import React, { useState } from 'react';
 import {
+  AlertTriangle,
   CheckCircle2,
   Clock,
-  Eye,
   EyeOff,
   FileSpreadsheet,
   Lock,
+  RefreshCw,
   ShieldCheck,
   Smartphone,
   Sparkles,
-  Trophy,
   Unlock,
   Users,
   X,
 } from 'lucide-react';
 import {
   Fixture,
-  FrameData,
-  Player,
   SlotPlayerId,
-  Team,
 } from '../types/league';
 import {
-  AWAY_SLOT_ORDER,
   calculateMatchScore,
   getEligiblePlayersForSlot,
   getFrameBreaker,
   getFramePlayers,
   getSetKey,
-  HOME_SLOT_ORDER,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
 
@@ -50,6 +45,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     saveFixture,
     approveFixture,
     reopenFixture,
+    syncError,
+    retryPendingSync,
   } = useLeague();
 
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
@@ -85,10 +82,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleLagChange = async (winner: 'home' | 'away') => {
     if (!editable) return;
-    await saveFixture({
-      ...fixture,
-      lagWinner: fixture.lagWinner === winner ? null : winner,
-    });
+    await saveFixture(
+      {
+        ...fixture,
+        lagWinner: fixture.lagWinner === winner ? null : winner,
+      },
+      'frames'
+    );
   };
 
   const handleSlotChange = async (
@@ -125,24 +125,33 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       }
     }
 
-    await saveFixture({
-      ...fixture,
-      lineups: nextLineups,
-    });
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      side
+    );
   };
 
   const handleToggleLockSet1 = async (side: 'home' | 'away') => {
     if (!editable) return;
     if (side === 'home') {
-      await saveFixture({
-        ...fixture,
-        homeSet1Locked: !fixture.homeSet1Locked,
-      });
+      await saveFixture(
+        {
+          ...fixture,
+          homeSet1Locked: !fixture.homeSet1Locked,
+        },
+        'home'
+      );
     } else {
-      await saveFixture({
-        ...fixture,
-        awaySet1Locked: !fixture.awaySet1Locked,
-      });
+      await saveFixture(
+        {
+          ...fixture,
+          awaySet1Locked: !fixture.awaySet1Locked,
+        },
+        'away'
+      );
     }
   };
 
@@ -160,10 +169,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         dish: toggledWinner ? f.dish : false,
       };
     });
-    await saveFixture({
-      ...fixture,
-      frames: nextFrames,
-    });
+    await saveFixture(
+      {
+        ...fixture,
+        frames: nextFrames,
+      },
+      'frames'
+    );
   };
 
   const handleToggleDish = async (frameNumber: number) => {
@@ -172,10 +184,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       if (f.frameNumber !== frameNumber || !f.winner) return f;
       return { ...f, dish: !f.dish };
     });
-    await saveFixture({
-      ...fixture,
-      frames: nextFrames,
-    });
+    await saveFixture(
+      {
+        ...fixture,
+        frames: nextFrames,
+      },
+      'frames'
+    );
   };
 
   const handleToggleSign = async (side: 'home' | 'away') => {
@@ -186,21 +201,24 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       side === 'away' ? !fixture.awayCaptainSigned : fixture.awayCaptainSigned;
 
     const bothSigned = nextHomeSigned && nextAwaySigned;
-    await saveFixture({
-      ...fixture,
-      homeCaptainSigned: nextHomeSigned,
-      awayCaptainSigned: nextAwaySigned,
-      status:
-        bothSigned && score.completedFrames === 15
-          ? 'submitted'
-          : fixture.status === 'submitted' && !bothSigned
-          ? 'live'
-          : fixture.status,
-      submittedAt:
-        bothSigned && score.completedFrames === 15
-          ? new Date().toISOString()
-          : fixture.submittedAt,
-    });
+    await saveFixture(
+      {
+        ...fixture,
+        homeCaptainSigned: nextHomeSigned,
+        awayCaptainSigned: nextAwaySigned,
+        status:
+          bothSigned && score.completedFrames === 15
+            ? 'submitted'
+            : fixture.status === 'submitted' && !bothSigned
+            ? 'live'
+            : fixture.status,
+        submittedAt:
+          bothSigned && score.completedFrames === 15
+            ? new Date().toISOString()
+            : fixture.submittedAt,
+      },
+      side
+    );
   };
 
   const renderLineupSelector = (setNumber: 1 | 2 | 3, side: 'home' | 'away') => {
@@ -525,6 +543,23 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {/* Main Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4">
         <div className="max-w-4xl mx-auto space-y-4 pb-12">
+          {syncError && (
+            <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{syncError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => retryPendingSync()}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold shrink-0"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Retry Sync
+              </button>
+            </div>
+          )}
+
           {!editable && (
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-300">
               <span>

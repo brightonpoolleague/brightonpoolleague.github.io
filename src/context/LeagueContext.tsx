@@ -128,6 +128,8 @@ interface LeagueContextValue {
   adminPin: string;
   isCloudConnected: boolean;
   isSyncing: boolean;
+  syncError: string | null;
+  retryPendingSync: () => Promise<void>;
   setRoleSession: (
     role: UserRole,
     teamId?: string,
@@ -160,7 +162,10 @@ interface LeagueContextValue {
     startDate: string
   ) => Promise<number>;
   deleteFixture: (fixtureId: string) => Promise<void>;
-  saveFixture: (updated: Fixture) => Promise<void>;
+  saveFixture: (
+    updated: Fixture,
+    editedSide?: 'home' | 'away' | 'frames'
+  ) => Promise<void>;
   approveFixture: (fixtureId: string) => Promise<void>;
   reopenFixture: (fixtureId: string) => Promise<void>;
   refreshFromCloud: () => Promise<void>;
@@ -209,6 +214,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     })
   );
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [pendingFixtureSync, setPendingFixtureSync] = useState<{
+    fixture: Fixture;
+    editedSide?: 'home' | 'away' | 'frames';
+  } | null>(null);
 
   const isCloudConnected = getSupabaseConfig().isConfigured;
 
@@ -1196,8 +1206,108 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
+  const pushFixtureToSupabase = useCallback(
+    async (
+      updated: Fixture,
+      editedSide?: 'home' | 'away' | 'frames'
+    ): Promise<boolean> => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return true;
+
+      try {
+        if (session.role === 'admin') {
+          const { error } = await supabase.rpc('admin_save_fixture', {
+            p_admin_pin: adminPin,
+            p_fixture_id: updated.id,
+            p_status: updated.status,
+            p_lag_winner: updated.lagWinner,
+            p_home_set1_locked: updated.homeSet1Locked,
+            p_away_set1_locked: updated.awaySet1Locked,
+            p_lineups: updated.lineups,
+            p_frames: updated.frames,
+            p_home_captain_signed: updated.homeCaptainSigned,
+            p_away_captain_signed: updated.awayCaptainSigned,
+            p_submitted_at: updated.submittedAt ?? null,
+            p_approved_at: updated.approvedAt ?? null,
+          });
+          if (error) throw error;
+          return true;
+        } else if (session.role === 'captain' && session.teamId) {
+          const baseArgs = {
+            p_fixture_id: updated.id,
+            p_team_id: session.teamId,
+            p_pin: session.pin ?? '',
+            p_status: updated.status,
+            p_lag_winner: updated.lagWinner,
+            p_home_set1_locked: updated.homeSet1Locked,
+            p_away_set1_locked: updated.awaySet1Locked,
+            p_lineups: updated.lineups,
+            p_frames: updated.frames,
+            p_home_captain_signed: updated.homeCaptainSigned,
+            p_away_captain_signed: updated.awayCaptainSigned,
+            p_submitted_at: updated.submittedAt ?? null,
+          };
+
+          const { error } = await supabase.rpc('captain_save_fixture', {
+            ...baseArgs,
+            p_edited_side: editedSide ?? null,
+          });
+
+          if (error) {
+            // Fallback if database schema hasn't been re-run with p_edited_side yet
+            if (error.code === 'PGRST202') {
+              const retryRes = await supabase.rpc(
+                'captain_save_fixture',
+                baseArgs
+              );
+              if (retryRes.error) throw retryRes.error;
+              return true;
+            }
+            throw error;
+          }
+          return true;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [session, adminPin]
+  );
+
+  const retryPendingSync = useCallback(async (): Promise<void> => {
+    if (!pendingFixtureSync) return;
+    const ok = await pushFixtureToSupabase(
+      pendingFixtureSync.fixture,
+      pendingFixtureSync.editedSide
+    );
+    if (ok) {
+      setPendingFixtureSync(null);
+      setSyncError(null);
+      await refreshFromCloud();
+    }
+  }, [pendingFixtureSync, pushFixtureToSupabase, refreshFromCloud]);
+
+  useEffect(() => {
+    if (!pendingFixtureSync) return;
+    const handleOnline = () => {
+      retryPendingSync();
+    };
+    window.addEventListener('online', handleOnline);
+    const timer = window.setInterval(() => {
+      retryPendingSync();
+    }, 6000);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.clearInterval(timer);
+    };
+  }, [pendingFixtureSync, retryPendingSync]);
+
   const saveFixture = useCallback(
-    async (rawUpdated: Fixture): Promise<void> => {
+    async (
+      rawUpdated: Fixture,
+      editedSide?: 'home' | 'away' | 'frames'
+    ): Promise<void> => {
       const syncedLineups = syncDefaultSubsequentSets(rawUpdated.lineups);
       const syncedFrames = applyByeRulesToFrames(
         syncedLineups,
@@ -1231,42 +1341,18 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       setAllFixtures(nextFixtures);
       persistLocal(allTeams, allPlayers, nextFixtures);
 
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        if (session.role === 'admin') {
-          await supabase.rpc('admin_save_fixture', {
-            p_admin_pin: adminPin,
-            p_fixture_id: updated.id,
-            p_status: updated.status,
-            p_lag_winner: updated.lagWinner,
-            p_home_set1_locked: updated.homeSet1Locked,
-            p_away_set1_locked: updated.awaySet1Locked,
-            p_lineups: updated.lineups,
-            p_frames: updated.frames,
-            p_home_captain_signed: updated.homeCaptainSigned,
-            p_away_captain_signed: updated.awayCaptainSigned,
-            p_submitted_at: updated.submittedAt ?? null,
-            p_approved_at: updated.approvedAt ?? null,
-          });
-        } else if (session.role === 'captain' && session.teamId) {
-          await supabase.rpc('captain_save_fixture', {
-            p_fixture_id: updated.id,
-            p_team_id: session.teamId,
-            p_pin: session.pin ?? '',
-            p_status: updated.status,
-            p_lag_winner: updated.lagWinner,
-            p_home_set1_locked: updated.homeSet1Locked,
-            p_away_set1_locked: updated.awaySet1Locked,
-            p_lineups: updated.lineups,
-            p_frames: updated.frames,
-            p_home_captain_signed: updated.homeCaptainSigned,
-            p_away_captain_signed: updated.awayCaptainSigned,
-            p_submitted_at: updated.submittedAt ?? null,
-          });
-        }
+      const ok = await pushFixtureToSupabase(updated, editedSide);
+      if (!ok) {
+        setPendingFixtureSync({ fixture: updated, editedSide });
+        setSyncError(
+          'Weak signal — saved on your phone and will sync automatically when connected.'
+        );
+      } else {
+        setPendingFixtureSync(null);
+        setSyncError(null);
       }
     },
-    [session, adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [allTeams, allPlayers, allFixtures, persistLocal, pushFixtureToSupabase]
   );
 
   const approveFixture = useCallback(
@@ -1330,6 +1416,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         adminPin,
         isCloudConnected,
         isSyncing,
+        syncError,
+        retryPendingSync,
         setRoleSession,
         loginAsCaptainWithPin,
         loginAsAdminWithPin,

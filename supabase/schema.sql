@@ -237,6 +237,8 @@ end;
 $$;
 
 -- 6. Captain Scorecard Save (Strictly restricted to the Captain's own team & unapproved matches)
+-- Uses row-level locking (FOR UPDATE) and side-aware JSON merging so two captains on separate
+-- phones can enter Set 1 lineups or scores simultaneously without overwriting each other.
 create or replace function public.captain_save_fixture(
   p_fixture_id text,
   p_team_id text,
@@ -249,7 +251,8 @@ create or replace function public.captain_save_fixture(
   p_frames jsonb,
   p_home_captain_signed boolean,
   p_away_captain_signed boolean,
-  p_submitted_at timestamptz
+  p_submitted_at timestamptz,
+  p_edited_side text default null
 )
 returns boolean
 language plpgsql
@@ -257,16 +260,22 @@ security definer
 as $$
 declare
   v_fixture public.fixtures%rowtype;
+  v_merged_lineups jsonb;
+  v_home_locked boolean;
+  v_away_locked boolean;
+  v_home_signed boolean;
+  v_away_signed boolean;
 begin
   -- Verify Captain PIN for the claimed team
   if not public.verify_captain_pin(p_team_id, p_pin) then
     raise exception 'Unauthorized: Invalid Captain PIN for this team';
   end if;
 
-  -- Load the target fixture
+  -- Lock the target fixture row to serialize simultaneous requests from Home & Away phones
   select * into v_fixture
   from public.fixtures
-  where id = p_fixture_id;
+  where id = p_fixture_id
+  for update;
 
   if not found then
     raise exception 'Fixture not found';
@@ -287,16 +296,51 @@ begin
     raise exception 'Forbidden: Team Captains cannot mark a fixture as approved';
   end if;
 
+  -- Side-aware merge to prevent two phones from overwriting each other's lineups/locks/signatures
+  if p_edited_side = 'home' then
+    v_merged_lineups := jsonb_build_object(
+      'set1', jsonb_build_object('home', p_lineups->'set1'->'home', 'away', coalesce(v_fixture.lineups->'set1'->'away', p_lineups->'set1'->'away')),
+      'set2', jsonb_build_object('home', p_lineups->'set2'->'home', 'away', coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away')),
+      'set3', jsonb_build_object('home', p_lineups->'set3'->'home', 'away', coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away'))
+    );
+    v_home_locked := p_home_set1_locked;
+    v_away_locked := v_fixture.away_set1_locked;
+    v_home_signed := p_home_captain_signed;
+    v_away_signed := v_fixture.away_captain_signed;
+  elsif p_edited_side = 'away' then
+    v_merged_lineups := jsonb_build_object(
+      'set1', jsonb_build_object('home', coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home'), 'away', p_lineups->'set1'->'away'),
+      'set2', jsonb_build_object('home', coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home'), 'away', p_lineups->'set2'->'away'),
+      'set3', jsonb_build_object('home', coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home'), 'away', p_lineups->'set3'->'away')
+    );
+    v_home_locked := v_fixture.home_set1_locked;
+    v_away_locked := p_away_set1_locked;
+    v_home_signed := v_fixture.home_captain_signed;
+    v_away_signed := p_away_captain_signed;
+  elsif p_edited_side = 'frames' then
+    v_merged_lineups := coalesce(v_fixture.lineups, p_lineups);
+    v_home_locked := v_fixture.home_set1_locked;
+    v_away_locked := v_fixture.away_set1_locked;
+    v_home_signed := v_fixture.home_captain_signed;
+    v_away_signed := v_fixture.away_captain_signed;
+  else
+    v_merged_lineups := p_lineups;
+    v_home_locked := p_home_set1_locked;
+    v_away_locked := p_away_set1_locked;
+    v_home_signed := p_home_captain_signed;
+    v_away_signed := p_away_captain_signed;
+  end if;
+
   -- Perform scoped update of scorecard fields only
   update public.fixtures
   set status = p_status,
       lag_winner = p_lag_winner,
-      home_set1_locked = p_home_set1_locked,
-      away_set1_locked = p_away_set1_locked,
-      lineups = p_lineups,
+      home_set1_locked = v_home_locked,
+      away_set1_locked = v_away_locked,
+      lineups = v_merged_lineups,
       frames = p_frames,
-      home_captain_signed = p_home_captain_signed,
-      away_captain_signed = p_away_captain_signed,
+      home_captain_signed = v_home_signed,
+      away_captain_signed = v_away_signed,
       submitted_at = p_submitted_at,
       updated_at = now()
   where id = p_fixture_id;
