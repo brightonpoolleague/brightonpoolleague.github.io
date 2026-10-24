@@ -3,6 +3,8 @@ import {
   BarChart3,
   BookOpen,
   Calendar,
+  KeyRound,
+  LogOut,
   Radio,
   Shield,
   Trophy,
@@ -27,6 +29,7 @@ const MainShell: React.FC = () => {
     setSelectedSeasonId,
     fixtures,
     session,
+    setRoleSession,
   } = useLeague();
   const [activeTab, setActiveTab] = useState<NavTab>('fixtures');
   const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(
@@ -37,6 +40,8 @@ const MainShell: React.FC = () => {
   const selectedFixture =
     fixtures.find((f) => f.id === selectedFixtureId) || null;
   const liveMatchesCount = fixtures.filter((f) => f.status === 'live').length;
+
+  const isLoggedIn = session.role === 'captain' || session.role === 'admin';
 
   const navItems: {
     id: NavTab;
@@ -147,23 +152,45 @@ const MainShell: React.FC = () => {
             })}
           </nav>
 
-          {/* Role Switcher / PIN Login Pill */}
-          <button
-            type="button"
-            onClick={() => setShowRoleModal(true)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition shrink-0 ${
-              session.role === 'admin'
-                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                : session.role === 'captain'
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-            }`}
-          >
-            <UserCheck className="w-3.5 h-3.5" />
-            <span className="max-w-[120px] sm:max-w-[160px] truncate">
-              {session.name}
-            </span>
-          </button>
+          {/* Login / Active Role + Logout Controls */}
+          {isLoggedIn ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowRoleModal(true)}
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                  session.role === 'admin'
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                    : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                }`}
+                title="Switch account"
+              >
+                <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                <span className="max-w-[110px] sm:max-w-[150px] truncate">
+                  {session.name}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRoleSession('viewer')}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition"
+                title="Log out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Log Out</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowRoleModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition shrink-0"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="sm:hidden">Log In</span>
+              <span className="hidden sm:inline">Captain / Admin Login</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -223,7 +250,7 @@ const MainShell: React.FC = () => {
         />
       )}
 
-      {/* Role Switcher / PIN Login Modal */}
+      {/* Captain / Admin Login Modal */}
       {showRoleModal && (
         <RoleSwitcherModal onClose={() => setShowRoleModal(false)} />
       )}

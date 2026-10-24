@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, KeyRound, Shield, UserCheck, X } from 'lucide-react';
+import { KeyRound, LogOut, Shield, UserCheck, X } from 'lucide-react';
 import { useLeague } from '../context/LeagueContext';
 
 interface RoleSwitcherModalProps {
@@ -25,6 +25,8 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
 
   const [adminPinInput, setAdminPinInput] = useState('');
   const [adminError, setAdminError] = useState('');
+
+  const isLoggedIn = session.role === 'captain' || session.role === 'admin';
 
   const handleCaptainLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +60,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               PIN Authentication
             </span>
             <h3 className="text-lg font-black text-white">
-              Sign In / Switch Role
+              Captain &amp; Admin Login
             </h3>
           </div>
           <button
@@ -70,31 +72,27 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => {
-              setRoleSession('viewer');
-              onClose();
-            }}
-            className={`w-full p-3.5 rounded-xl border text-left transition flex items-start gap-3 ${
-              session.role === 'viewer'
-                ? 'bg-emerald-600/15 border-emerald-500 text-white'
-                : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-            }`}
-          >
-            <Eye className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-            <div>
-              <div className="font-bold text-sm text-white">
-                General Read-Only Spectator
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                No PIN required. View live scores, fixtures, league tables, and
-                player stats.
-              </p>
+        {isLoggedIn && (
+          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
+            <div className="text-xs">
+              <span className="text-slate-400">Signed in as: </span>
+              <strong className="text-white">{session.name}</strong>
             </div>
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRoleSession('viewer');
+                onClose();
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-bold transition"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Log Out
+            </button>
+          </div>
+        )}
 
+        <div className="space-y-3">
           <form
             onSubmit={handleCaptainLogin}
             className={`p-3.5 rounded-xl border transition space-y-2.5 ${
@@ -154,7 +152,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                     disabled={!selectedTeamId}
                     className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold disabled:opacity-50"
                   >
-                    Unlock Team
+                    Log In
                   </button>
                 </div>
                 {captainError && (
@@ -185,8 +183,8 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   League Admin Login
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Manage seasons, teams, players, Team Captain PINs, and approve
-                  scorecards.
+                  Manage seasons, divisions, teams, players, Team Captain PINs,
+                  and approve scorecards.
                 </p>
               </div>
             </div>
@@ -210,7 +208,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                 type="submit"
                 className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
               >
-                Admin Sign In
+                Log In
               </button>
             </div>
             {adminError && (
