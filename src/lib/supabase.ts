@@ -3,17 +3,29 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const STORAGE_URL_KEY = 'bpl_supabase_url';
 const STORAGE_ANON_KEY = 'bpl_supabase_anon_key';
 
-export function getSupabaseConfig(): { url: string; anonKey: string; isConfigured: boolean } {
+const DEFAULT_SUPABASE_URL = 'https://sttjprycpauamxkiwqit.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'sb_publishable_XZofgwk2aqlKFq8WKOmELg_UwfD6YcS';
+
+export function getSupabaseConfig(): {
+  url: string;
+  anonKey: string;
+  isConfigured: boolean;
+} {
   const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
   const localUrl =
-    typeof window !== 'undefined' ? localStorage.getItem(STORAGE_URL_KEY) || '' : '';
+    typeof window !== 'undefined'
+      ? localStorage.getItem(STORAGE_URL_KEY) || ''
+      : '';
   const localKey =
-    typeof window !== 'undefined' ? localStorage.getItem(STORAGE_ANON_KEY) || '' : '';
+    typeof window !== 'undefined'
+      ? localStorage.getItem(STORAGE_ANON_KEY) || ''
+      : '';
 
-  const url = (localUrl || envUrl || '').trim();
-  const anonKey = (localKey || envKey || '').trim();
+  const url = (localUrl || envUrl || DEFAULT_SUPABASE_URL).trim();
+  const anonKey = (localKey || envKey || DEFAULT_SUPABASE_ANON_KEY).trim();
 
   return {
     url,
