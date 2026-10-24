@@ -405,13 +405,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Captain PIN (auto if blank)
+                  Captain PIN (auto 8-digit if blank)
                 </label>
                 <input
                   type="text"
                   value={captainPin}
                   onChange={(e) => setCaptainPin(e.target.value)}
-                  placeholder="e.g. 4821"
+                  placeholder="e.g. 48219304"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono"
                 />
               </div>
@@ -507,7 +507,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           onChange={(e) =>
                             updateTeamPin(team.id, e.target.value)
                           }
-                          className="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
+                          className="w-24 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
                           title="Edit Captain PIN directly"
                         />
                         <button
@@ -516,7 +516,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             updateTeamPin(team.id, generateRandomPin())
                           }
                           className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
-                          title="Generate new random 4-digit PIN"
+                          title="Generate new random 8-digit PIN"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>

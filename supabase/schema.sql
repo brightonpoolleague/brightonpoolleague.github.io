@@ -43,7 +43,7 @@ create table if not exists public.teams (
 -- 4. Private Team Captain PINs (NO public read/write access so PINs are never exposed in DevTools!)
 create table if not exists public.team_pins (
   team_id text primary key references public.teams(id) on delete cascade,
-  captain_pin text not null default '1111',
+  captain_pin text not null default '11111111',
   updated_at timestamptz not null default now()
 );
 

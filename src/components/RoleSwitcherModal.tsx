@@ -110,7 +110,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   Team Captain Login
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Select your team and enter your 4-digit Team PIN to fill in
+                  Select your team and enter your 8-digit Team PIN to fill in
                   your live match score sheet.
                 </p>
               </div>
@@ -145,7 +145,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                         setCaptainPinInput(e.target.value);
                         setCaptainError('');
                       }}
-                      placeholder="Team PIN"
+                      placeholder="8-digit Team PIN"
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white"
                     />
                   </div>

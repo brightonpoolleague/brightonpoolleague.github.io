@@ -42,7 +42,7 @@ const STORAGE_KEYS = {
 };
 
 export function generateRandomPin(): string {
-  return String(Math.floor(1000 + Math.random() * 9000));
+  return String(Math.floor(10000000 + Math.random() * 90000000));
 }
 
 function mapSeasonRow(r: Record<string, unknown>): Season {
@@ -55,7 +55,7 @@ function mapSeasonRow(r: Record<string, unknown>): Season {
 
 function mapTeamRow(
   r: Record<string, unknown>,
-  existingPin = '••••'
+  existingPin = '••••••••'
 ): Team {
   return {
     id: String(r.id),
@@ -300,7 +300,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         const mappedTeams: Team[] = teamsRes.data.map((r) => {
           const row = r as Record<string, unknown>;
           const id = String(row.id);
-          return mapTeamRow(row, pinMap[id] ?? '••••');
+          return mapTeamRow(row, pinMap[id] ?? '••••••••');
         });
         setAllTeams(mappedTeams);
         localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mappedTeams));
@@ -395,7 +395,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
                 const existing = prev.find((t) => t.id === rowId);
                 const updated = mapTeamRow(
                   row,
-                  existing?.captainPin ?? '••••'
+                  existing?.captainPin ?? '••••••••'
                 );
                 const next = existing
                   ? prev.map((t) => (t.id === rowId ? updated : t))
@@ -738,7 +738,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             p_address: t.address,
             p_captain_name: t.captainName,
             p_captain_pin:
-              t.captainPin !== '••••' ? t.captainPin : generateRandomPin(),
+              t.captainPin !== '••••••••' ? t.captainPin : generateRandomPin(),
           });
         }
         for (const p of clonedPlayers) {
