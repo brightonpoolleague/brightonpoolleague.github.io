@@ -1,0 +1,118 @@
+export type Division = 'Premier League' | 'Division 1' | 'Division 2' | 'Division 3';
+
+export const DIVISIONS: Division[] = [
+  'Premier League',
+  'Division 1',
+  'Division 2',
+  'Division 3',
+];
+
+export type UserRole = 'viewer' | 'captain' | 'admin';
+
+export interface UserSession {
+  role: UserRole;
+  teamId?: string;
+  email?: string;
+  name: string;
+}
+
+export interface Player {
+  id: string;
+  teamId: string;
+  name: string;
+  active: boolean;
+}
+
+export interface Team {
+  id: string;
+  division: Division;
+  name: string;
+  venue: string;
+  address: string;
+  captainName: string;
+}
+
+// 'BYE' represents a missing player (No Player / BYE) in position 4 or 5
+export type SlotPlayerId = string | 'BYE' | null;
+
+export interface SetLineupSide {
+  // Always length 5 (indices 0..4 correspond to positions 1..5)
+  slots: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+}
+
+export interface MatchLineups {
+  set1: {
+    home: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+    away: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+  };
+  set2: {
+    home: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+    away: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+  };
+  set3: {
+    home: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+    away: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
+  };
+}
+
+export type FrameWinner = 'home' | 'away' | null;
+
+export interface FrameData {
+  frameNumber: number; // 1 to 15
+  setNumber: 1 | 2 | 3;
+  gameInSet: 1 | 2 | 3 | 4 | 5;
+  homeSlot: 1 | 2 | 3 | 4 | 5;
+  awaySlot: 1 | 2 | 3 | 4 | 5;
+  winner: FrameWinner;
+  dish: boolean;
+  reverseDish: boolean;
+}
+
+export type FixtureStatus = 'scheduled' | 'live' | 'submitted' | 'approved';
+
+export interface Fixture {
+  id: string;
+  seasonId: string;
+  division: Division;
+  matchDate: string; // YYYY-MM-DD
+  weekNumber: number;
+  homeTeamId: string;
+  awayTeamId: string;
+  status: FixtureStatus;
+  lagWinner: 'home' | 'away' | null;
+  homeSet1Locked: boolean;
+  awaySet1Locked: boolean;
+  lineups: MatchLineups;
+  frames: FrameData[];
+  homeCaptainSigned: boolean;
+  awayCaptainSigned: boolean;
+  submittedAt?: string;
+  approvedAt?: string;
+  updatedAt: string;
+}
+
+export interface LeagueTableRow {
+  team: Team;
+  played: number;
+  won: number;
+  lost: number;
+  framesFor: number;
+  framesAgainst: number;
+  frameDiff: number;
+  points: number;
+  form: ('W' | 'L')[];
+  tieBreakNote?: string;
+}
+
+export interface PlayerStatsRow {
+  player: Player;
+  team: Team;
+  division: Division;
+  played: number;
+  won: number;
+  lost: number;
+  winPercentage: number;
+  dishes: number;
+  reverseDishes: number;
+  totalDishes: number;
+}

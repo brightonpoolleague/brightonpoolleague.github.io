@@ -1,4 +1,10 @@
 .idea
+.DS_Store
 public
 resources
-.DS_Store
+.hugo_build.lock
+node_modules
+dist
+*.tsbuildinfo
+.env
+.env.local

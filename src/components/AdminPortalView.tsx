@@ -1,0 +1,918 @@
+import React, { useState } from 'react';
+import {
+  CalendarPlus,
+  CheckCircle2,
+  Database,
+  Edit3,
+  Plus,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  UserPlus,
+  Users,
+  Wand2,
+} from 'lucide-react';
+import { Division, DIVISIONS, Fixture, Team } from '../types/league';
+import { useLeague } from '../context/LeagueContext';
+import { calculateMatchScore } from '../utils/leagueEngine';
+import { getSupabaseConfig, saveSupabaseConfig } from '../lib/supabase';
+
+interface AdminPortalViewProps {
+  onSelectFixture: (fixture: Fixture) => void;
+}
+
+export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
+  onSelectFixture,
+}) => {
+  const {
+    seasonName,
+    teams,
+    players,
+    fixtures,
+    canManageLeague,
+    setRoleSession,
+    addTeam,
+    deleteTeam,
+    addPlayer,
+    removePlayer,
+    transferPlayer,
+    addFixture,
+    generateDivisionFixtures,
+    deleteFixture,
+    approveFixture,
+    reopenFixture,
+    loadDemoData,
+    resetAllData,
+    refreshFromCloud,
+  } = useLeague();
+
+  const [activeTab, setActiveTab] = useState<
+    'teams' | 'fixtures' | 'approvals' | 'database'
+  >('teams');
+
+  // Team creation form state
+  const [teamDivision, setTeamDivision] = useState<Division>('Premier League');
+  const [teamName, setTeamName] = useState('');
+  const [teamVenue, setTeamVenue] = useState('');
+  const [teamAddress, setTeamAddress] = useState('');
+  const [captainName, setCaptainName] = useState('');
+  const [initialPlayersInput, setInitialPlayersInput] = useState('');
+
+  // Per-team add player input state
+  const [newPlayerByTeam, setNewPlayerByTeam] = useState<
+    Record<string, string>
+  >({});
+  const [filterDivision, setFilterDivision] = useState<Division | 'ALL'>('ALL');
+
+  // Fixture creation form state
+  const [fixDivision, setFixDivision] = useState<Division>('Premier League');
+  const [fixDate, setFixDate] = useState('2026-11-02');
+  const [fixWeek, setFixWeek] = useState(1);
+  const [fixHomeId, setFixHomeId] = useState('');
+  const [fixAwayId, setFixAwayId] = useState('');
+  const [genStartDate, setGenStartDate] = useState('2026-11-02');
+  const [genMessage, setGenMessage] = useState('');
+
+  // Supabase connection state
+  const currentSb = getSupabaseConfig();
+  const [sbUrl, setSbUrl] = useState(currentSb.url);
+  const [sbKey, setSbKey] = useState(currentSb.anonKey);
+  const [sbSavedMsg, setSbSavedMsg] = useState('');
+
+  if (!canManageLeague) {
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-lg mx-auto space-y-4">
+        <ShieldCheck className="w-12 h-12 text-amber-400 mx-auto" />
+        <h2 className="text-xl font-bold text-white">
+          League Admin Access Required
+        </h2>
+        <p className="text-xs sm:text-sm text-slate-400">
+          You are currently viewing the site as a read-only user or team
+          captain. Switch to the <strong>League Admin</strong> role to manage
+          teams, players, fixtures, and approve scorecards.
+        </p>
+        <button
+          type="button"
+          onClick={() => setRoleSession('admin')}
+          className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow"
+        >
+          Switch to League Admin Mode
+        </button>
+      </div>
+    );
+  }
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!teamName.trim() || !teamVenue.trim()) return;
+    const created = await addTeam({
+      division: teamDivision,
+      name: teamName.trim(),
+      venue: teamVenue.trim(),
+      address: teamAddress.trim(),
+      captainName: captainName.trim(),
+    });
+
+    // If initial comma/newline-separated player names were provided, add them right away
+    const names = initialPlayersInput
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const pName of names) {
+      await addPlayer(created.id, pName);
+    }
+
+    setTeamName('');
+    setTeamVenue('');
+    setTeamAddress('');
+    setCaptainName('');
+    setInitialPlayersInput('');
+  };
+
+  const handleAddPlayerToTeam = async (teamId: string) => {
+    const raw = (newPlayerByTeam[teamId] || '').trim();
+    if (!raw) return;
+    const names = raw
+      .split(',')
+      .map((n) => n.trim())
+      .filter(Boolean);
+    for (const name of names) {
+      await addPlayer(teamId, name);
+    }
+    setNewPlayerByTeam((prev) => ({ ...prev, [teamId]: '' }));
+  };
+
+  const handleCreateFixture = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fixHomeId || !fixAwayId || fixHomeId === fixAwayId) return;
+    await addFixture({
+      division: fixDivision,
+      matchDate: fixDate,
+      weekNumber: Number(fixWeek) || 1,
+      homeTeamId: fixHomeId,
+      awayTeamId: fixAwayId,
+    });
+    setFixHomeId('');
+    setFixAwayId('');
+  };
+
+  const handleAutoGenerate = async (division: Division) => {
+    const count = await generateDivisionFixtures(division, genStartDate);
+    if (count === 0) {
+      setGenMessage(
+        `Add at least 2 teams to ${division} first before generating fixtures.`
+      );
+    } else {
+      setGenMessage(
+        `Generated ${count} fixtures (Home & Away round-robin) for ${division}!`
+      );
+    }
+  };
+
+  const handleSaveSupabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSupabaseConfig(sbUrl, sbKey);
+    setSbSavedMsg('Saved! Syncing with Supabase...');
+    await refreshFromCloud();
+    setTimeout(() => setSbSavedMsg(''), 4000);
+  };
+
+  const filteredTeams = teams.filter(
+    (t) => filterDivision === 'ALL' || t.division === filterDivision
+  );
+  const divisionTeamsForFixture = teams.filter(
+    (t) => t.division === fixDivision
+  );
+  const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
+
+  return (
+    <div className="space-y-5">
+      {/* Header & Sub-navigation */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              League Admin Control Panel
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
+              Manage {seasonName}
+            </h1>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={loadDemoData}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              Load Sample Test Data
+            </button>
+            <button
+              type="button"
+              onClick={resetAllData}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 text-xs font-semibold"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Clear All Season Data
+            </button>
+          </div>
+        </div>
+
+        {/* Admin Section Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveTab('teams')}
+            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              activeTab === 'teams'
+                ? 'bg-emerald-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            Teams &amp; Players ({teams.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('fixtures')}
+            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              activeTab === 'fixtures'
+                ? 'bg-emerald-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <CalendarPlus className="w-3.5 h-3.5" />
+            Fixtures ({fixtures.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('approvals')}
+            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              activeTab === 'approvals'
+                ? 'bg-emerald-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Approve Scorecards
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('database')}
+            className={`py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              activeTab === 'database'
+                ? 'bg-emerald-600 text-white'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            Cloud Database
+          </button>
+        </div>
+      </div>
+
+      {/* TAB 1: TEAMS & PLAYERS */}
+      {activeTab === 'teams' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Add Team Form */}
+          <form
+            onSubmit={handleCreateTeam}
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 h-fit"
+          >
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Plus className="w-4 h-4 text-emerald-400" />
+              Add New Team
+            </h2>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Division
+              </label>
+              <select
+                value={teamDivision}
+                onChange={(e) => setTeamDivision(e.target.value as Division)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
+              >
+                {DIVISIONS.map((div) => (
+                  <option key={div} value={div}>
+                    {div}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Team Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="e.g. Wilmy Lions"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Team Venue *
+              </label>
+              <input
+                type="text"
+                required
+                value={teamVenue}
+                onChange={(e) => setTeamVenue(e.target.value)}
+                placeholder="e.g. Castle Club (Table R1)"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Team Captain Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={captainName}
+                onChange={(e) => setCaptainName(e.target.value)}
+                placeholder="e.g. Lewes Pollington"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Initial Signed-On Players (comma or line separated)
+              </label>
+              <textarea
+                rows={3}
+                value={initialPlayersInput}
+                onChange={(e) => setInitialPlayersInput(e.target.value)}
+                placeholder="Harry Craker, Bayley Pollington, Lewes Pollington, Ellis Clarke, JJ Minty"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow"
+            >
+              Create Team &amp; Squad
+            </button>
+          </form>
+
+          {/* Existing Teams & Squads List */}
+          <div className="lg:col-span-2 space-y-3.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              <button
+                type="button"
+                onClick={() => setFilterDivision('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                  filterDivision === 'ALL'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-900 text-slate-400 border border-slate-800'
+                }`}
+              >
+                All ({teams.length})
+              </button>
+              {DIVISIONS.map((div) => (
+                <button
+                  key={div}
+                  type="button"
+                  onClick={() => setFilterDivision(div)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                    filterDivision === div
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800'
+                  }`}
+                >
+                  {div} ({teams.filter((t) => t.division === div).length})
+                </button>
+              ))}
+            </div>
+
+            {filteredTeams.length === 0 ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
+                No teams added yet. Use the form on the left to add teams for{' '}
+                {seasonName}.
+              </div>
+            ) : (
+              filteredTeams.map((team) => {
+                const squad = players.filter((p) => p.teamId === team.id);
+                return (
+                  <div
+                    key={team.id}
+                    className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                          {team.division}
+                        </span>
+                        <h3 className="text-base font-bold text-white">
+                          {team.name}
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          Venue: {team.venue}
+                          {team.captainName
+                            ? ` • Captain: ${team.captainName}`
+                            : ''}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteTeam(team.id)}
+                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                        title="Delete Team"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Signed-On Players List */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-semibold text-slate-300">
+                        Signed-On Players ({squad.length}):
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {squad.map((player) => (
+                          <div
+                            key={player.id}
+                            className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200"
+                          >
+                            <span>{player.name}</span>
+                            {teams.length > 1 && (
+                              <select
+                                value={player.teamId}
+                                onChange={(e) =>
+                                  transferPlayer(player.id, e.target.value)
+                                }
+                                className="bg-transparent text-[10px] text-slate-500 hover:text-emerald-400 focus:outline-none cursor-pointer"
+                                title="Transfer player to another team"
+                              >
+                                {teams.map((t) => (
+                                  <option
+                                    key={t.id}
+                                    value={t.id}
+                                    className="bg-slate-900 text-white"
+                                  >
+                                    {t.id === team.id
+                                      ? 'Transfer...'
+                                      : `→ ${t.name}`}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removePlayer(player.id)}
+                              className="text-slate-500 hover:text-red-400 font-bold"
+                              title="Remove player"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {squad.length === 0 && (
+                          <span className="text-xs text-slate-500 italic">
+                            No players signed on yet.
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Quick Add Player Input */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <input
+                          type="text"
+                          value={newPlayerByTeam[team.id] || ''}
+                          onChange={(e) =>
+                            setNewPlayerByTeam((prev) => ({
+                              ...prev,
+                              [team.id]: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddPlayerToTeam(team.id);
+                            }
+                          }}
+                          placeholder="Add player name (or comma-separated names)..."
+                          className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddPlayerToTeam(team.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold"
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          Add Player
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: FIXTURES MANAGER */}
+      {activeTab === 'fixtures' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="space-y-4">
+            {/* Manual Single Fixture Form */}
+            <form
+              onSubmit={handleCreateFixture}
+              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5"
+            >
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <CalendarPlus className="w-4 h-4 text-emerald-400" />
+                Add Single Fixture
+              </h2>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Division
+                </label>
+                <select
+                  value={fixDivision}
+                  onChange={(e) => {
+                    setFixDivision(e.target.value as Division);
+                    setFixHomeId('');
+                    setFixAwayId('');
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                >
+                  {DIVISIONS.map((div) => (
+                    <option key={div} value={div}>
+                      {div}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Match Date
+                  </label>
+                  <input
+                    type="date"
+                    value={fixDate}
+                    onChange={(e) => setFixDate(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Week #
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={40}
+                    value={fixWeek}
+                    onChange={(e) => setFixWeek(Number(e.target.value))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Home Team
+                </label>
+                <select
+                  required
+                  value={fixHomeId}
+                  onChange={(e) => setFixHomeId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                >
+                  <option value="">-- Select Home Team --</option>
+                  {divisionTeamsForFixture.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Away Team
+                </label>
+                <select
+                  required
+                  value={fixAwayId}
+                  onChange={(e) => setFixAwayId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                >
+                  <option value="">-- Select Away Team --</option>
+                  {divisionTeamsForFixture
+                    .filter((t) => t.id !== fixHomeId)
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+              >
+                Create Fixture
+              </button>
+            </form>
+
+            {/* Auto-Generate Round-Robin Schedule */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Wand2 className="w-4 h-4 text-amber-400" />
+                Auto-Generate Season Schedule
+              </h3>
+              <p className="text-xs text-slate-400">
+                Automatically generates a full Home &amp; Away round-robin
+                schedule (weekly dates) for all teams in a division.
+              </p>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Week 1 Start Date
+                </label>
+                <input
+                  type="date"
+                  value={genStartDate}
+                  onChange={(e) => setGenStartDate(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {DIVISIONS.map((div) => (
+                  <button
+                    key={div}
+                    type="button"
+                    onClick={() => handleAutoGenerate(div)}
+                    className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold"
+                  >
+                    Generate {div}
+                  </button>
+                ))}
+              </div>
+              {genMessage && (
+                <p className="text-xs text-emerald-400 font-medium">
+                  {genMessage}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* All Fixtures List */}
+          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <h3 className="text-sm font-bold text-white">
+              All Season Fixtures ({fixtures.length})
+            </h3>
+            {fixtures.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">
+                No fixtures created yet.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                {fixtures.map((fix) => {
+                  const home = teamsById[fix.homeTeamId];
+                  const away = teamsById[fix.awayTeamId];
+                  if (!home || !away) return null;
+                  const score = calculateMatchScore(fix);
+
+                  return (
+                    <div
+                      key={fix.id}
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <div>
+                        <span className="text-emerald-400 font-bold">
+                          {fix.division}
+                        </span>{' '}
+                        • Wk {fix.weekNumber} ({fix.matchDate})
+                        <div className="font-bold text-white text-sm mt-0.5">
+                          {home.name} {score.homeFrames} – {score.awayFrames}{' '}
+                          {away.name}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onSelectFixture(fix)}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Edit Card
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteFixture(fix.id)}
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: SCORECARD APPROVALS */}
+      {activeTab === 'approvals' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+          <h2 className="text-base font-bold text-white">
+            Scorecard Review &amp; Official Approval Queue
+          </h2>
+          {fixtures.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">
+              No matches recorded yet.
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {fixtures.map((fix) => {
+                const home = teamsById[fix.homeTeamId];
+                const away = teamsById[fix.awayTeamId];
+                if (!home || !away) return null;
+                const score = calculateMatchScore(fix);
+
+                return (
+                  <div
+                    key={fix.id}
+                    className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-bold text-emerald-400">
+                          {fix.division}
+                        </span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-slate-400">{fix.matchDate}</span>
+                        <span
+                          className={`uppercase px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            fix.status === 'approved'
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : fix.status === 'submitted'
+                              ? 'bg-amber-500/20 text-amber-300'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}
+                        >
+                          {fix.status}
+                        </span>
+                      </div>
+                      <div className="font-bold text-white text-sm sm:text-base mt-1">
+                        {home.name} ({score.homeFrames}) vs ({score.awayFrames}){' '}
+                        {away.name}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Frames recorded: {score.completedFrames}/15 • Home
+                        Signed: {fix.homeCaptainSigned ? 'Yes' : 'No'} • Away
+                        Signed: {fix.awayCaptainSigned ? 'Yes' : 'No'}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onSelectFixture(fix)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                      >
+                        Inspect / Edit Card
+                      </button>
+                      {fix.status !== 'approved' ? (
+                        <button
+                          type="button"
+                          onClick={() => approveFixture(fix.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Approve Result
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => reopenFixture(fix.id)}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold"
+                        >
+                          Reopen
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 4: CLOUD DATABASE CONNECTION */}
+      {activeTab === 'database' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <form
+            onSubmit={handleSaveSupabase}
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4"
+          >
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Database className="w-4 h-4 text-emerald-400" />
+              Supabase PostgreSQL Connection
+            </h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              The app works out-of-the-box using browser storage and multi-tab
+              live sync so you can test everything immediately. To sync across
+              all phones and devices in production, paste your free{' '}
+              <strong>Supabase Project URL</strong> and{' '}
+              <strong>Anon Public Key</strong> below (or set{' '}
+              <code>VITE_SUPABASE_URL</code> and{' '}
+              <code>VITE_SUPABASE_ANON_KEY</code> in your GitHub Actions
+              repository secrets).
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Supabase Project URL
+              </label>
+              <input
+                type="url"
+                value={sbUrl}
+                onChange={(e) => setSbUrl(e.target.value)}
+                placeholder="https://xyzcompany.supabase.co"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Supabase Anon Public Key
+              </label>
+              <input
+                type="password"
+                value={sbKey}
+                onChange={(e) => setSbKey(e.target.value)}
+                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+            >
+              Save &amp; Connect Database
+            </button>
+            {sbSavedMsg && (
+              <p className="text-xs text-emerald-400 font-semibold">
+                {sbSavedMsg}
+              </p>
+            )}
+          </form>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 text-xs text-slate-300">
+            <h3 className="text-sm font-bold text-white">
+              Quick Setup Guide (3 Minutes)
+            </h3>
+            <ol className="list-decimal list-inside space-y-2 text-slate-400">
+              <li>
+                Create a free project at{' '}
+                <a
+                  href="https://supabase.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-emerald-400 underline"
+                >
+                  supabase.com
+                </a>
+                .
+              </li>
+              <li>
+                Open the <strong>SQL Editor</strong> in Supabase and run the SQL
+                file located at <code>supabase/schema.sql</code> in this
+                repository.
+              </li>
+              <li>
+                Copy your <strong>Project URL</strong> and{' '}
+                <strong>Anon Key</strong> from{' '}
+                <em>Project Settings → API</em> and paste them here (or add them
+                to GitHub Secrets).
+              </li>
+            </ol>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
