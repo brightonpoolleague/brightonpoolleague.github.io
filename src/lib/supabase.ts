@@ -12,6 +12,16 @@ export function getSupabaseConfig(): {
   anonKey: string;
   isConfigured: boolean;
 } {
+  // When running locally via `npm run dev`, stay in local sandbox mode
+  // so local testing never modifies the live production database.
+  if (import.meta.env.DEV) {
+    return {
+      url: '',
+      anonKey: '',
+      isConfigured: false,
+    };
+  }
+
   const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
