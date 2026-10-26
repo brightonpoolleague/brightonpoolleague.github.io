@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Calendar,
   CheckCircle2,
@@ -18,6 +18,14 @@ interface FixturesAndLiveViewProps {
   onGoToAdmin: () => void;
 }
 
+type StatusFilter =
+  | 'mine'
+  | 'all'
+  | 'live'
+  | 'scheduled'
+  | 'submitted'
+  | 'approved';
+
 export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   onSelectFixture,
   onGoToAdmin,
@@ -33,12 +41,22 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     approveFixture,
   } = useLeague();
 
+  const isCaptain = session.role === 'captain' && Boolean(session.teamId);
+
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(
     'ALL'
   );
-  const [statusFilter, setStatusFilter] = useState<
-    'all' | 'live' | 'scheduled' | 'submitted' | 'approved'
-  >('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    isCaptain ? 'mine' : 'all'
+  );
+
+  useEffect(() => {
+    if (isCaptain) {
+      setStatusFilter('mine');
+    } else {
+      setStatusFilter((prev) => (prev === 'mine' ? 'all' : prev));
+    }
+  }, [isCaptain, session.teamId]);
 
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
 
@@ -46,6 +64,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     .filter((f) => {
       if (selectedDivision !== 'ALL' && f.division !== selectedDivision) {
         return false;
+      }
+      if (statusFilter === 'mine') {
+        return (
+          f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
+        );
       }
       if (statusFilter !== 'all' && f.status !== statusFilter) {
         return false;
@@ -64,6 +87,15 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const pendingApprovalCount = fixtures.filter(
     (f) => f.status === 'submitted'
   ).length;
+
+  const statusTabs: { id: StatusFilter; label: string }[] = [
+    ...(isCaptain ? [{ id: 'mine' as const, label: 'My Matches' }] : []),
+    { id: 'all', label: 'All Matches' },
+    { id: 'live', label: 'Live Now' },
+    { id: 'scheduled', label: 'Upcoming' },
+    { id: 'submitted', label: 'Submitted Cards' },
+    { id: 'approved', label: 'Approved Results' },
+  ];
 
   return (
     <div className="space-y-5">
@@ -127,15 +159,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
-          {(
-            [
-              { id: 'all', label: 'All Matches' },
-              { id: 'live', label: 'Live Now' },
-              { id: 'scheduled', label: 'Upcoming' },
-              { id: 'submitted', label: 'Submitted Cards' },
-              { id: 'approved', label: 'Approved Results' },
-            ] as const
-          ).map((tab) => (
+          {statusTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
