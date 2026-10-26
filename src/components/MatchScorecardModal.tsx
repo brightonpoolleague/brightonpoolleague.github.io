@@ -1030,7 +1030,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </button>
             </div>
 
-            {(canSignHome || canSignAway) && (
+            {viewMode === 'mobile' && (canSignHome || canSignAway) && (
             <button
               type="button"
               onClick={() => setShowLineupEditor((v) => !v)}
