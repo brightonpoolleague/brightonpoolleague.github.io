@@ -5,7 +5,6 @@ import {
   ChevronRight,
   MapPin,
   PlayCircle,
-  PlusCircle,
   Radio,
   ShieldAlert,
   Sparkles,
@@ -16,7 +15,7 @@ import { calculateMatchScore, formatMatchDate } from '../utils/leagueEngine';
 
 interface FixturesAndLiveViewProps {
   onSelectFixture: (fixture: Fixture) => void;
-  onGoToAdmin: () => void;
+  onGoToAdmin?: () => void;
 }
 
 type StatusFilter =
@@ -348,18 +347,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               League Admin.
             </p>
           </div>
-          {canManageLeague && (
-            <div className="flex items-center justify-center pt-2">
-              <button
-                type="button"
-                onClick={onGoToAdmin}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Open League Admin Setup
-              </button>
-            </div>
-          )}
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
