@@ -369,7 +369,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                   Brighton &amp; Hove Pool League
                 </div>
                 <div className="font-medium text-emerald-400">
-                  brightonpoolleague.co.uk
+                  brightonpoolleague.com
                 </div>
               </div>
             </div>
