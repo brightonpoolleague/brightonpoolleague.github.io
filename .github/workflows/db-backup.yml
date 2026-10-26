@@ -1,0 +1,44 @@
+name: Weekly Supabase Database Backup
+
+on:
+  schedule:
+    # Runs every Sunday at 03:00 UTC (100% automated weekly backup)
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    # Allows manual trigger anytime from the GitHub Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Backup Supabase Database
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get current date stamp
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Export Supabase database snapshot
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: sttjprycpauamxkiwqit
+          BACKUP_OUTPUT_DIR: backups
+        run: node scripts/backup-db.mjs
+
+      - name: Upload backup artifact (private 90-day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ steps.date.outputs.date }}
+          path: backups/
+          retention-days: 90
+          if-no-files-found: error

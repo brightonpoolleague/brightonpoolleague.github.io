@@ -4,6 +4,8 @@ import {
   Calendar,
   CheckCircle2,
   Copy,
+  Database,
+  Download,
   Edit3,
   KeyRound,
   RefreshCw,
@@ -27,6 +29,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   onSelectFixture,
 }) => {
   const {
+    seasons,
+    seasonId,
     seasonName,
     divisions,
     teams,
@@ -163,6 +167,32 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       await addPlayer(teamId, name);
     }
     setNewPlayerByTeam((prev) => ({ ...prev, [teamId]: '' }));
+  };
+
+  const handleDownloadBackup = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      seasonId,
+      seasonName,
+      data: {
+        seasons,
+        teams,
+        players,
+        fixtures,
+        adminPin,
+      },
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bpl-backup-${seasonId}-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const startEditingTeam = (team: Team) => {
@@ -1193,6 +1223,31 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Database Backup & Snapshot Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit md:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-400" />
+                  Database Backups &amp; Snapshots
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 max-w-2xl">
+                  Automated backups run weekly every Sunday at 03:00 UTC via GitHub Actions,
+                  and are stored as downloadable artifacts for 90 days. You can also export an instant JSON
+                  snapshot of the league database directly to your device anytime.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadBackup}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export Database Snapshot (.json)
+              </button>
+            </div>
           </div>
 
           {!isCloudConnected && (
