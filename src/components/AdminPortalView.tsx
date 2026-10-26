@@ -132,13 +132,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     );
   }
 
-  const handleCopyCaptainInvite = (
-    teamId: string,
-    name: string,
-    pin: string
-  ) => {
-    const text = `Brighton Pool League (${seasonName}) — ${name} Captain Login PIN: ${pin}`;
-    navigator.clipboard?.writeText(text);
+  const handleCopyCaptainPin = (teamId: string, pin: string) => {
+    navigator.clipboard?.writeText(pin);
     setCopiedTeamId(teamId);
     setTimeout(() => setCopiedTeamId(null), 2500);
   };
@@ -342,7 +337,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     key={team.id}
                     className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
                         <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
                           {team.division}
@@ -363,11 +358,37 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            isEditing
+                              ? setEditingTeamId(null)
+                              : startEditingTeam(team)
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold"
+                          title="Edit Team Name, Venue & Details"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
+                          {isEditing ? 'Cancel' : 'Edit Team'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTeam(team.id)}
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                          title="Delete Team"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                        <span className="text-[11px] text-slate-400">
-                          PIN:
-                        </span>
+                        <span>Captain PIN:</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
                         <input
                           type="text"
                           value={team.captainPin}
@@ -390,38 +411,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         <button
                           type="button"
                           onClick={() =>
-                            handleCopyCaptainInvite(
-                              team.id,
-                              team.name,
-                              team.captainPin
-                            )
+                            handleCopyCaptainPin(team.id, team.captainPin)
                           }
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold"
-                          title="Copy PIN message for WhatsApp"
+                          title="Copy PIN"
                         >
                           <Copy className="w-3 h-3" />
-                          {copiedTeamId === team.id ? 'Copied!' : 'Copy'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            isEditing
-                              ? setEditingTeamId(null)
-                              : startEditingTeam(team)
-                          }
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold"
-                          title="Edit Team Name, Venue & Details"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                          {isEditing ? 'Cancel' : 'Edit'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteTeam(team.id)}
-                          className="p-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400"
-                          title="Delete Team"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          {copiedTeamId === team.id ? 'Copied!' : 'Copy PIN'}
                         </button>
                       </div>
                     </div>
