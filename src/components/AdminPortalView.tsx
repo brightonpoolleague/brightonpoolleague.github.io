@@ -54,6 +54,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     deleteFixture,
     approveFixture,
     reopenFixture,
+    isCloudConnected,
+    resetLocalTestData,
   } = useLeague();
 
   const [activeTab, setActiveTab] = useState<
@@ -1197,6 +1199,40 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
             )}
           </div>
+
+          {!isCloudConnected && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit md:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-emerald-400" />
+                    Local Sandbox Test Data
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Reset local browser storage back to the default 8 test teams,
+                    48 players, and 12 test fixtures across Division 1 &amp;
+                    Division 2.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Reset local test data back to default teams, players, and fixtures?'
+                      )
+                    ) {
+                      resetLocalTestData();
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Reset Local Test Data
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

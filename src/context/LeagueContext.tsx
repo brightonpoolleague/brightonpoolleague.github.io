@@ -25,6 +25,11 @@ import {
   INITIAL_TEAMS,
 } from '../data/seedData';
 import {
+  LOCAL_TEST_FIXTURES,
+  LOCAL_TEST_PLAYERS,
+  LOCAL_TEST_TEAMS,
+} from '../data/testData';
+import {
   applyByeRulesToFrames,
   createEmptyFrames,
   createEmptyLineups,
@@ -33,12 +38,12 @@ import {
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
 const STORAGE_KEYS = {
-  SEASONS: 'bpl_seasons_v2',
-  ACTIVE_SEASON_ID: 'bpl_active_season_id_v2',
+  SEASONS: 'bpl_seasons_v3',
+  ACTIVE_SEASON_ID: 'bpl_active_season_id_v3',
   ADMIN_PIN: 'bpl_admin_pin_local_v4',
-  TEAMS: 'bpl_teams_v2',
-  PLAYERS: 'bpl_players_v2',
-  FIXTURES: 'bpl_fixtures_v2',
+  TEAMS: 'bpl_teams_local_v3',
+  PLAYERS: 'bpl_players_local_v3',
+  FIXTURES: 'bpl_fixtures_local_v3',
   SESSION: 'bpl_session_v2',
 };
 
@@ -169,6 +174,7 @@ interface LeagueContextValue {
   approveFixture: (fixtureId: string) => Promise<void>;
   reopenFixture: (fixtureId: string) => Promise<void>;
   refreshFromCloud: () => Promise<void>;
+  resetLocalTestData: () => void;
   canEditFixture: (fixture: Fixture) => boolean;
   canManageLeague: boolean;
 }
@@ -189,6 +195,8 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const isCloudConnected = getSupabaseConfig().isConfigured;
+
   const [seasons, setSeasons] = useState<Season[]>(() =>
     loadFromStorage(STORAGE_KEYS.SEASONS, INITIAL_SEASONS)
   );
@@ -199,13 +207,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     loadFromStorage(STORAGE_KEYS.ADMIN_PIN, DEFAULT_ADMIN_PIN)
   );
   const [allTeams, setAllTeams] = useState<Team[]>(() =>
-    loadFromStorage(STORAGE_KEYS.TEAMS, INITIAL_TEAMS)
+    loadFromStorage(
+      STORAGE_KEYS.TEAMS,
+      isCloudConnected ? INITIAL_TEAMS : LOCAL_TEST_TEAMS
+    )
   );
   const [allPlayers, setAllPlayers] = useState<Player[]>(() =>
-    loadFromStorage(STORAGE_KEYS.PLAYERS, INITIAL_PLAYERS)
+    loadFromStorage(
+      STORAGE_KEYS.PLAYERS,
+      isCloudConnected ? INITIAL_PLAYERS : LOCAL_TEST_PLAYERS
+    )
   );
   const [allFixtures, setAllFixtures] = useState<Fixture[]>(() =>
-    loadFromStorage(STORAGE_KEYS.FIXTURES, INITIAL_FIXTURES)
+    loadFromStorage(
+      STORAGE_KEYS.FIXTURES,
+      isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES
+    )
   );
   const [session, setSession] = useState<UserSession>(() =>
     loadFromStorage(STORAGE_KEYS.SESSION, {
@@ -219,8 +236,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     fixture: Fixture;
     editedSide?: 'home' | 'away' | 'frames';
   } | null>(null);
-
-  const isCloudConnected = getSupabaseConfig().isConfigured;
 
   const activeSeason =
     seasons.find((s) => s.id === selectedSeasonId) ||
@@ -1382,6 +1397,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [allFixtures, saveFixture]
   );
 
+  const resetLocalTestData = useCallback(() => {
+    if (isCloudConnected) return;
+    setSeasons(INITIAL_SEASONS);
+    setSelectedSeasonIdState(DEFAULT_SEASON_ID);
+    setAllTeams(LOCAL_TEST_TEAMS);
+    setAllPlayers(LOCAL_TEST_PLAYERS);
+    setAllFixtures(LOCAL_TEST_FIXTURES);
+    persistLocal(
+      LOCAL_TEST_TEAMS,
+      LOCAL_TEST_PLAYERS,
+      LOCAL_TEST_FIXTURES,
+      INITIAL_SEASONS,
+      adminPin
+    );
+  }, [isCloudConnected, persistLocal, adminPin]);
+
   const canManageLeague = session.role === 'admin';
 
   const canEditFixture = useCallback(
@@ -1436,6 +1467,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         approveFixture,
         reopenFixture,
         refreshFromCloud,
+        resetLocalTestData,
         canEditFixture,
         canManageLeague,
       }}
