@@ -194,8 +194,7 @@ const MainShell: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition shrink-0"
             >
               <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="sm:hidden">Log In</span>
-              <span className="hidden sm:inline">Captain / Admin Login</span>
+              <span>Login</span>
             </button>
           )}
         </div>
