@@ -1040,8 +1040,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <Users className="w-3.5 h-3.5 text-emerald-400" />
                   {showLineupEditor
                     ? activeSet === 1
-                      ? 'Hide Lineup'
-                      : 'Hide Subs'
+                      ? 'Done Editing Lineup'
+                      : 'Done Making Subs'
                     : activeSet === 1
                     ? 'Edit Lineup'
                     : 'Make Subs'}
