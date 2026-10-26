@@ -571,3 +571,45 @@ export function computePlayerStats(
 
   return { averagesTable, dishTable };
 }
+
+
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+function getOrdinalSuffix(day: number): string {
+  if (day > 3 && day < 21) return 'th';
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+}
+
+export function formatMatchDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (!match) return dateStr;
+  const year = Number(match[1]);
+  const monthIdx = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const monthName = MONTH_NAMES[monthIdx];
+  if (!monthName || !day) return dateStr;
+  return `${day}${getOrdinalSuffix(day)} ${monthName} ${year}`;
+}

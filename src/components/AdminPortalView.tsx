@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Division, Fixture, Team } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
-import { calculateMatchScore } from '../utils/leagueEngine';
+import { calculateMatchScore, formatMatchDate } from '../utils/leagueEngine';
 
 interface AdminPortalViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -735,7 +735,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           <span className="text-emerald-400 font-bold">
                             {fix.division}
                           </span>{' '}
-                          • Wk {fix.weekNumber} ({fix.matchDate})
+                          • Wk {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
                           <div className="font-bold text-white text-sm mt-0.5">
                             {home.name} {score.homeFrames} – {score.awayFrames}{' '}
                             {away.name}
@@ -767,7 +767,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             onClick={() =>
                               setConfirmDialog({
                                 title: `Delete Fixture?`,
-                                message: `Are you sure you want to delete "${home.name} vs ${away.name}" (Week ${fix.weekNumber}, ${fix.matchDate})? Any recorded scores for this match will be permanently removed.`,
+                                message: `Are you sure you want to delete "${home.name} vs ${away.name}" (Week ${fix.weekNumber}, ${formatMatchDate(fix.matchDate)})? Any recorded scores for this match will be permanently removed.`,
                                 confirmLabel: 'Delete Fixture',
                                 variant: 'danger',
                                 onConfirm: () => deleteFixture(fix.id),
@@ -952,7 +952,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           {fix.division}
                         </span>
                         <span className="text-slate-500">•</span>
-                        <span className="text-slate-400">{fix.matchDate}</span>
+                        <span className="text-slate-400">
+                          {formatMatchDate(fix.matchDate)}
+                        </span>
                         <span
                           className={`uppercase px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             fix.status === 'approved'

@@ -20,6 +20,7 @@ import {
 } from '../types/league';
 import {
   calculateMatchScore,
+  formatMatchDate,
   getEligiblePlayersForSlot,
   getFrameBreaker,
   getFramePlayers,
@@ -381,7 +382,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 truncate">
-              {homeTeam.venue} • {fixture.matchDate}
+              {homeTeam.venue} • {formatMatchDate(fixture.matchDate)}
             </p>
           </div>
         </div>

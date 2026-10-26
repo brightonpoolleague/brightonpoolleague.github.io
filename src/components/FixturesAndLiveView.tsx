@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Division, Fixture } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
-import { calculateMatchScore } from '../utils/leagueEngine';
+import { calculateMatchScore, formatMatchDate } from '../utils/leagueEngine';
 
 interface FixturesAndLiveViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -239,7 +239,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </span>
                     <span className="text-slate-600">•</span>
                     <span className="text-slate-400">
-                      Wk {fix.weekNumber} ({fix.matchDate})
+                      Wk {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
                     </span>
                   </div>
                   <span
