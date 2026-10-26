@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  AlertTriangle,
   Calendar,
   CheckCircle2,
   Copy,
@@ -87,6 +88,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   const [newMasterPin, setNewMasterPin] = useState(adminPin);
   const [pinSavedMsg, setPinSavedMsg] = useState('');
+
+  // Custom Confirmation Modal State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    variant?: 'danger' | 'warning';
+    onConfirm: () => void;
+  } | null>(null);
 
   if (!canManageLeague) {
     return (
@@ -374,15 +384,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Are you sure you want to delete "${team.name}"? This will also delete its signed-on players and any fixtures involving this team.`
-                              )
-                            ) {
-                              deleteTeam(team.id);
-                            }
-                          }}
+                          onClick={() =>
+                            setConfirmDialog({
+                              title: `Delete ${team.name}?`,
+                              message: `Are you sure you want to delete "${team.name}"? This will also permanently delete its signed-on players and any fixtures involving this team.`,
+                              confirmLabel: 'Delete Team',
+                              variant: 'danger',
+                              onConfirm: () => deleteTeam(team.id),
+                            })
+                          }
                           className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
                           title="Delete Team"
                         >
@@ -408,15 +418,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         />
                         <button
                           type="button"
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `Generate a new random 8-digit Captain PIN for "${team.name}"?`
-                              )
-                            ) {
-                              updateTeamPin(team.id, generateRandomPin());
-                            }
-                          }}
+                          onClick={() =>
+                            setConfirmDialog({
+                              title: `Regenerate Captain PIN?`,
+                              message: `Generate a new random 8-digit Captain PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
+                              confirmLabel: 'Generate New PIN',
+                              variant: 'warning',
+                              onConfirm: () =>
+                                updateTeamPin(team.id, generateRandomPin()),
+                            })
+                          }
                           className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
                           title="Generate new random 8-digit PIN"
                         >
@@ -572,14 +583,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   const targetTeam = teams.find(
                                     (t) => t.id === targetId
                                   );
-                                  if (
-                                    targetTeam &&
-                                    targetId !== team.id &&
-                                    window.confirm(
-                                      `Transfer "${player.name}" from "${team.name}" to "${targetTeam.name}"?`
-                                    )
-                                  ) {
-                                    transferPlayer(player.id, targetId);
+                                  if (targetTeam && targetId !== team.id) {
+                                    setConfirmDialog({
+                                      title: `Transfer ${player.name}?`,
+                                      message: `Move "${player.name}" from "${team.name}" to "${targetTeam.name}"?`,
+                                      confirmLabel: 'Transfer Player',
+                                      variant: 'warning',
+                                      onConfirm: () =>
+                                        transferPlayer(player.id, targetId),
+                                    });
                                   }
                                 }}
                                 className="bg-transparent text-[10px] text-slate-500 hover:text-emerald-400 focus:outline-none cursor-pointer"
@@ -600,15 +612,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             )}
                             <button
                               type="button"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `Are you sure you want to remove player "${player.name}" from "${team.name}"?`
-                                  )
-                                ) {
-                                  removePlayer(player.id);
-                                }
-                              }}
+                              onClick={() =>
+                                setConfirmDialog({
+                                  title: `Remove ${player.name}?`,
+                                  message: `Are you sure you want to remove "${player.name}" from "${team.name}"?`,
+                                  confirmLabel: 'Remove Player',
+                                  variant: 'danger',
+                                  onConfirm: () => removePlayer(player.id),
+                                })
+                              }
                               className="text-slate-500 hover:text-red-400 font-bold"
                               title="Remove player"
                             >
@@ -752,15 +764,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Are you sure you want to delete the fixture "${home.name} vs ${away.name}" (Week ${fix.weekNumber}, ${fix.matchDate})? Any recorded scores for this match will be permanently removed.`
-                                )
-                              ) {
-                                deleteFixture(fix.id);
-                              }
-                            }}
+                            onClick={() =>
+                              setConfirmDialog({
+                                title: `Delete Fixture?`,
+                                message: `Are you sure you want to delete "${home.name} vs ${away.name}" (Week ${fix.weekNumber}, ${fix.matchDate})? Any recorded scores for this match will be permanently removed.`,
+                                confirmLabel: 'Delete Fixture',
+                                variant: 'danger',
+                                onConfirm: () => deleteFixture(fix.id),
+                              })
+                            }
                             className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
                             title="Delete Fixture"
                           >
@@ -1081,15 +1093,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Reset local test data back to default teams, players, and fixtures?'
-                      )
-                    ) {
-                      resetLocalTestData();
-                    }
-                  }}
+                  onClick={() =>
+                    setConfirmDialog({
+                      title: 'Reset Local Test Data?',
+                      message:
+                        'Reset your local browser storage back to the default 8 test teams, 48 players, and 12 test fixtures? Any local changes you made will be overwritten.',
+                      confirmLabel: 'Reset Test Data',
+                      variant: 'warning',
+                      onConfirm: () => resetLocalTestData(),
+                    })
+                  }
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -1098,6 +1111,63 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmDialog && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setConfirmDialog(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                  confirmDialog.variant === 'warning'
+                    ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                    : 'bg-red-500/15 border-red-500/30 text-red-400'
+                }`}
+              >
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <h3 className="text-base font-bold text-white">
+                  {confirmDialog.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {confirmDialog.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmDialog.onConfirm();
+                  setConfirmDialog(null);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold shadow transition ${
+                  confirmDialog.variant === 'warning'
+                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                    : 'bg-red-600 hover:bg-red-500 text-white'
+                }`}
+              >
+                {confirmDialog.confirmLabel}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
