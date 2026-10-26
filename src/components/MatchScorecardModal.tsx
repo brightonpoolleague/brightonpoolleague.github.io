@@ -12,6 +12,7 @@ import {
   Sparkles,
   Unlock,
   Users,
+  WifiOff,
   X,
 } from 'lucide-react';
 import {
@@ -46,6 +47,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     saveFixture,
     approveFixture,
     reopenFixture,
+    isOnline,
+    isSyncing,
     syncError,
     retryPendingSync,
   } = useLeague();
@@ -1070,19 +1073,36 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {/* Main Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4">
         <div className="max-w-4xl mx-auto space-y-4 pb-12">
-          {syncError && (
+          {(!isOnline || syncError) && (
             <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{syncError}</span>
+                {!isOnline ? (
+                  <WifiOff className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                )}
+                <span>
+                  {!isOnline
+                    ? 'Offline: Scores and lineups are saved locally on this device and will sync automatically when connection returns.'
+                    : syncError}
+                </span>
               </div>
               <button
                 type="button"
                 onClick={() => retryPendingSync()}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold shrink-0"
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold shrink-0 transition disabled:opacity-50"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Retry Sync
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`}
+                />
+                <span>
+                  {isSyncing
+                    ? 'Checking...'
+                    : !isOnline
+                    ? 'Check Connection'
+                    : 'Retry Sync'}
+                </span>
               </button>
             </div>
           )}

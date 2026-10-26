@@ -133,6 +133,7 @@ interface LeagueContextValue {
   session: UserSession;
   adminPin: string;
   isCloudConnected: boolean;
+  isOnline: boolean;
   isSyncing: boolean;
   syncError: string | null;
   retryPendingSync: () => Promise<void>;
@@ -231,6 +232,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       role: 'viewer',
       name: 'General Spectator',
     })
+  );
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -1331,30 +1335,58 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const retryPendingSync = useCallback(async (): Promise<void> => {
-    if (!pendingFixtureSync) return;
-    const ok = await pushFixtureToSupabase(
-      pendingFixtureSync.fixture,
-      pendingFixtureSync.editedSide
-    );
-    if (ok) {
-      setPendingFixtureSync(null);
-      setSyncError(null);
-      await refreshFromCloud();
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setIsOnline(false);
+      return;
+    }
+    setIsOnline(true);
+    setIsSyncing(true);
+    try {
+      if (pendingFixtureSync) {
+        const ok = await pushFixtureToSupabase(
+          pendingFixtureSync.fixture,
+          pendingFixtureSync.editedSide
+        );
+        if (ok) {
+          setPendingFixtureSync(null);
+          setSyncError(null);
+          await refreshFromCloud();
+        }
+      } else {
+        await refreshFromCloud();
+        setSyncError(null);
+      }
+    } finally {
+      setIsSyncing(false);
     }
   }, [pendingFixtureSync, pushFixtureToSupabase, refreshFromCloud]);
 
   useEffect(() => {
-    if (!pendingFixtureSync) return;
+    if (typeof window === 'undefined') return;
+
     const handleOnline = () => {
+      setIsOnline(true);
       retryPendingSync();
     };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
     window.addEventListener('online', handleOnline);
-    const timer = window.setInterval(() => {
-      retryPendingSync();
-    }, 6000);
+    window.addEventListener('offline', handleOffline);
+
+    let timer: number | null = null;
+    if (pendingFixtureSync) {
+      timer = window.setInterval(() => {
+        retryPendingSync();
+      }, 6000);
+    }
+
     return () => {
       window.removeEventListener('online', handleOnline);
-      window.clearInterval(timer);
+      window.removeEventListener('offline', handleOffline);
+      if (timer) window.clearInterval(timer);
     };
   }, [pendingFixtureSync, retryPendingSync]);
 
@@ -1486,6 +1518,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         session,
         adminPin,
         isCloudConnected,
+        isOnline,
         isSyncing,
         syncError,
         retryPendingSync,

@@ -20,6 +20,7 @@ import { AdminPortalView } from './components/AdminPortalView';
 import { DocsAndRulesView } from './components/DocsAndRulesView';
 import { MatchScorecardModal } from './components/MatchScorecardModal';
 import { RoleSwitcherModal } from './components/RoleSwitcherModal';
+import { NetworkStatusBanner } from './components/NetworkStatusBanner';
 
 type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'rules' | 'admin';
 
@@ -207,6 +208,9 @@ const MainShell: React.FC = () => {
           )}
         </div>
       </header>
+
+      {/* Persistent Offline / Weak Signal Banner */}
+      <NetworkStatusBanner />
 
       {/* Main Content Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
