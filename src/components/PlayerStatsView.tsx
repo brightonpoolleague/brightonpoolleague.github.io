@@ -131,19 +131,6 @@ export const PlayerStatsView: React.FC = () => {
 
         {/* Division Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {activeBoard === 'dishes' && (
-            <button
-              type="button"
-              onClick={() => setSelectedDivision('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-                selectedDivision === 'ALL'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-              }`}
-            >
-              All Divisions
-            </button>
-          )}
           {divisions.map((div) => {
             const isSelected = effectiveDivision === div;
             return (
@@ -161,6 +148,19 @@ export const PlayerStatsView: React.FC = () => {
               </button>
             );
           })}
+          {activeBoard === 'dishes' && (
+            <button
+              type="button"
+              onClick={() => setSelectedDivision('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                selectedDivision === 'ALL'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              All Divisions
+            </button>
+          )}
         </div>
       </div>
 
