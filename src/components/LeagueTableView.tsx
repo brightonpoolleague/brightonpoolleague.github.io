@@ -115,7 +115,6 @@ export const LeagueTableView: React.FC = () => {
         {rows.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-400">
             No teams registered in <strong>{selectedDivision}</strong> yet.
-            League Admins can add teams in the Admin tab.
           </div>
         ) : (
           <div className="overflow-x-auto">
