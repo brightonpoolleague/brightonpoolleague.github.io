@@ -682,7 +682,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 onClick={() =>
                                   setConfirmDialog({
                                     title: `Delete Player: ${player.name}?`,
-                                    message: `Are you sure you want to permanently remove "${player.name}" from "${team.name}"?`,
+                                    message: `Are you sure you want to permanently delete "${player.name}" from "${team.name}"? This will also remove all of their individual player statistics and dish records from the leaderboards.`,
                                     confirmLabel: 'Delete Player',
                                     variant: 'danger',
                                     onConfirm: () => removePlayer(player.id),
