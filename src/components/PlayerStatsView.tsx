@@ -70,7 +70,7 @@ export const PlayerStatsView: React.FC = () => {
               type="button"
               onClick={() => setShowExportModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
-              title="Export Leaderboard as Image (PNG / JPG / WhatsApp)"
+              title="Export & Share Leaderboard"
             >
               <Camera className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export Image</span>

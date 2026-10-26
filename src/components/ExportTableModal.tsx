@@ -9,7 +9,7 @@ import {
   Sparkles,
   Camera,
 } from 'lucide-react';
-import { toPng, toJpeg, toBlob } from 'html-to-image';
+import { toPng, toBlob } from 'html-to-image';
 
 export interface ExportTableColumn {
   header: string;
@@ -50,17 +50,17 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'jpg' | 'share' | null>(null);
+  const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'share' | null>(null);
 
   if (!isOpen) return null;
 
-  const getCleanFileName = (ext: 'png' | 'jpg') => {
+  const getCleanFileName = () => {
     const dateStr = new Date().toISOString().slice(0, 10);
     const clean = fileBaseName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    return `${clean}-${dateStr}.${ext}`;
+    return `${clean}-${dateStr}.png`;
   };
 
-  const handleDownload = async (format: 'png' | 'jpg') => {
+  const handleDownload = async () => {
     if (!cardRef.current || isGenerating) return;
     setIsGenerating(true);
     try {
@@ -70,17 +70,14 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         cacheBust: true,
       };
 
-      const dataUrl =
-        format === 'jpg'
-          ? await toJpeg(cardRef.current, { ...options, quality: 0.95 })
-          : await toPng(cardRef.current, options);
+      const dataUrl = await toPng(cardRef.current, options);
 
       const link = document.createElement('a');
-      link.download = getCleanFileName(format);
+      link.download = getCleanFileName();
       link.href = dataUrl;
       link.click();
 
-      setDownloadSuccess(format);
+      setDownloadSuccess('png');
       setTimeout(() => setDownloadSuccess(null), 3000);
     } catch (err) {
       console.error('Failed to generate image:', err);
@@ -101,7 +98,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 
       if (!blob) throw new Error('Could not create image blob');
 
-      const fileName = getCleanFileName('png');
+      const fileName = getCleanFileName();
       const file = new File([blob], fileName, { type: 'image/png' });
 
       if (
@@ -118,11 +115,11 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         setTimeout(() => setDownloadSuccess(null), 3000);
       } else {
         // Fallback to PNG download
-        await handleDownload('png');
+        await handleDownload();
       }
     } catch (err) {
       console.error('Share failed, falling back to download:', err);
-      await handleDownload('png');
+      await handleDownload();
     } finally {
       setIsGenerating(false);
     }
@@ -153,14 +150,9 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
             <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <Camera className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="font-black text-white text-sm sm:text-base">
-                Export &amp; Share Graphic
-              </h3>
-              <p className="text-xs text-slate-400">
-                High-resolution image ready for WhatsApp, social media, and printing.
-              </p>
-            </div>
+            <h3 className="font-black text-white text-sm sm:text-base">
+              Export &amp; Share
+            </h3>
           </div>
 
           <button
@@ -173,62 +165,40 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         </div>
 
         {/* Modal Actions Bar */}
-        <div className="bg-slate-950/60 border-b border-slate-800/80 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2.5">
-          <div className="text-xs text-slate-400">
-            Select format:
-          </div>
+        <div className="bg-slate-950/60 border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-end gap-2">
+          {canNativeShare && (
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isGenerating}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : downloadSuccess === 'share' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-200" />
+              ) : (
+                <Share2 className="w-3.5 h-3.5" />
+              )}
+              <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share'}</span>
+            </button>
+          )}
 
-          <div className="flex flex-wrap items-center gap-2">
-            {canNativeShare && (
-              <button
-                type="button"
-                onClick={handleShare}
-                disabled={isGenerating}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : downloadSuccess === 'share' ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-200" />
-                ) : (
-                  <Share2 className="w-3.5 h-3.5" />
-                )}
-                <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share to WhatsApp'}</span>
-              </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={isGenerating}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
+          >
+            {isGenerating ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : downloadSuccess === 'png' ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
             )}
-
-            <button
-              type="button"
-              onClick={() => handleDownload('png')}
-              disabled={isGenerating}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : downloadSuccess === 'png' ? (
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
-              )}
-              <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDownload('jpg')}
-              disabled={isGenerating}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : downloadSuccess === 'jpg' ? (
-                <Check className="w-3.5 h-3.5 text-amber-400" />
-              ) : (
-                <Download className="w-3.5 h-3.5 text-amber-400" />
-              )}
-              <span>{downloadSuccess === 'jpg' ? 'Saved JPG!' : 'Download JPG'}</span>
-            </button>
-          </div>
+            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
+          </button>
         </div>
 
         {/* Scrollable Preview Area */}
