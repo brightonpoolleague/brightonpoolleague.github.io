@@ -143,8 +143,13 @@ interface LeagueContextValue {
     customName?: string,
     pin?: string
   ) => void;
-  loginAsCaptainWithPin: (teamId: string, pin: string) => Promise<boolean>;
-  loginAsAdminWithPin: (pin: string) => Promise<boolean>;
+  loginAsCaptainWithPin: (
+    teamId: string,
+    pin: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  loginAsAdminWithPin: (
+    pin: string
+  ) => Promise<{ success: boolean; error?: string }>;
   updateAdminPin: (newPin: string) => Promise<void>;
   updateTeamPin: (teamId: string, newPin: string) => Promise<void>;
   addTeam: (
@@ -592,7 +597,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const loginAsCaptainWithPin = useCallback(
-    async (teamId: string, pin: string): Promise<boolean> => {
+    async (
+      teamId: string,
+      pin: string
+    ): Promise<{ success: boolean; error?: string }> => {
       const cleanPin = pin.trim();
       const supabase = getSupabaseClient();
       if (supabase) {
@@ -600,37 +608,49 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_team_id: teamId,
           p_pin: cleanPin,
         });
-        if (!error && data === true) {
-          setRoleSession('captain', teamId, undefined, cleanPin);
-          return true;
+        if (error) {
+          return { success: false, error: error.message };
         }
-        return false;
+        if (data === true) {
+          setRoleSession('captain', teamId, undefined, cleanPin);
+          return { success: true };
+        }
+        return {
+          success: false,
+          error: 'Incorrect Team Captain PIN. Check with League Admin.',
+        };
       }
 
       // Offline / local fallback
       const team = allTeams.find((t) => t.id === teamId);
-      if (!team) return false;
+      if (!team) return { success: false, error: 'Team not found.' };
       if (
         team.captainPin.trim() === cleanPin ||
         adminPin.trim() === cleanPin
       ) {
         setRoleSession('captain', teamId, undefined, cleanPin);
-        return true;
+        return { success: true };
       }
-      return false;
+      return {
+        success: false,
+        error: 'Incorrect Team Captain PIN. Check with League Admin.',
+      };
     },
     [allTeams, adminPin, setRoleSession]
   );
 
   const loginAsAdminWithPin = useCallback(
-    async (pin: string): Promise<boolean> => {
+    async (pin: string): Promise<{ success: boolean; error?: string }> => {
       const cleanPin = pin.trim();
       const supabase = getSupabaseClient();
       if (supabase) {
         const { data, error } = await supabase.rpc('verify_admin_pin', {
           p_pin: cleanPin,
         });
-        if (!error && data === true) {
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        if (data === true) {
           setAdminPin(cleanPin);
           localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify(cleanPin));
           setRoleSession('admin', undefined, undefined, cleanPin);
@@ -653,9 +673,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               }))
             );
           }
-          return true;
+          return { success: true };
         }
-        return false;
+        return { success: false, error: 'Incorrect League Admin PIN.' };
       }
 
       // Offline / local fallback
@@ -665,9 +685,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         cleanPin === '00000000'
       ) {
         setRoleSession('admin', undefined, undefined, cleanPin);
-        return true;
+        return { success: true };
       }
-      return false;
+      return { success: false, error: 'Incorrect League Admin PIN.' };
     },
     [adminPin, setRoleSession]
   );

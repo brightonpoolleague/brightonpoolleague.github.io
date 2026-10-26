@@ -111,8 +111,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          const ok = await loginAsAdminWithPin(unlockPinInput);
-          if (!ok) setUnlockError('Incorrect League Admin PIN.');
+          const res = await loginAsAdminWithPin(unlockPinInput);
+          if (!res.success) setUnlockError(res.error || 'Incorrect League Admin PIN.');
         }}
         className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-md mx-auto space-y-4"
       >

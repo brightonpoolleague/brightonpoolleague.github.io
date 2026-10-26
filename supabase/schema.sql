@@ -99,6 +99,24 @@ create table if not exists public.fixtures (
 
 alter table public.fixtures drop constraint if exists fixtures_division_check;
 
+-- Performance Indexes on Foreign Keys and Common Query Filters
+create index if not exists idx_fixtures_season_id on public.fixtures(season_id);
+create index if not exists idx_fixtures_match_date on public.fixtures(match_date);
+create index if not exists idx_fixtures_status on public.fixtures(status);
+create index if not exists idx_fixtures_teams on public.fixtures(home_team_id, away_team_id);
+create index if not exists idx_teams_season_id on public.teams(season_id);
+create index if not exists idx_players_team_id on public.players(team_id);
+
+-- 7. Private Failed PIN Attempt Log (Used for automated brute-force rate-limiting)
+create table if not exists public.pin_attempt_log (
+  id bigserial primary key,
+  identifier text not null,
+  action text not null,
+  attempted_at timestamptz not null default now()
+);
+
+create index if not exists idx_pin_attempt_log on public.pin_attempt_log(identifier, action, attempted_at);
+
 -- Enable Realtime on public tables (safe if already added)
 do $$
 begin
@@ -132,6 +150,7 @@ $$;
 -- Enable Row-Level Security on ALL tables
 alter table public.league_settings enable row level security;
 alter table public.team_pins enable row level security;
+alter table public.pin_attempt_log enable row level security;
 alter table public.seasons enable row level security;
 alter table public.teams enable row level security;
 alter table public.players enable row level security;
@@ -139,7 +158,7 @@ alter table public.fixtures enable row level security;
 
 -- Public tables are STRICTLY READ-ONLY (SELECT) for anonymous users.
 -- All writes (INSERT / UPDATE / DELETE) MUST go through the PIN-verified RPC functions below!
--- Notice: league_settings and team_pins have NO public policies at all.
+-- Notice: league_settings, team_pins, and pin_attempt_log have NO public policies at all.
 drop policy if exists "Allow public access to seasons" on public.seasons;
 drop policy if exists "Allow public access to teams" on public.teams;
 drop policy if exists "Allow public access to players" on public.players;
@@ -163,28 +182,154 @@ create policy "Allow public read-only access to fixtures" on public.fixtures for
 --   • League Admin: Full control when valid Master Admin PIN is supplied
 -- ============================================================================
 
--- 1. Verify Master League Admin PIN
+-- ============================================================================
+-- RATE LIMITING HELPERS & PIN VERIFICATION (BRUTE-FORCE SCRIPT PROTECTION)
+-- Enforces a rate limit of max 25 failed attempts per 15 minutes per IP.
+-- Adds an artificial 500ms delay on failed attempts to defeat fast dictionary attacks.
+-- ============================================================================
+
+-- Extract client IP from Cloudflare or reverse proxy headers in Supabase
+create or replace function public.get_request_client_ip()
+returns text
+language plpgsql
+stable
+as $$
+declare
+  v_headers json;
+  v_ip text;
+begin
+  begin
+    v_headers := current_setting('request.headers', true)::json;
+    v_ip := coalesce(
+      nullif(trim(v_headers->>'cf-connecting-ip'), ''),
+      nullif(trim(split_part(v_headers->>'x-forwarded-for', ',', 1)), '')
+    );
+  exception when others then
+    v_ip := null;
+  end;
+
+  return coalesce(v_ip, inet_client_addr()::text, 'unknown_client');
+end;
+$$;
+
+-- Check whether the client IP has exceeded the failed PIN attempts threshold
+create or replace function public.check_pin_rate_limit(p_action text)
+returns text
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_ip text;
+  v_recent_failures int;
+begin
+  v_ip := public.get_request_client_ip();
+
+  -- Periodically purge logs older than 1 hour to prevent table bloat
+  delete from public.pin_attempt_log
+  where attempted_at < now() - interval '1 hour';
+
+  -- Count failed attempts in the last 15 minutes for this IP and action target
+  select count(*) into v_recent_failures
+  from public.pin_attempt_log
+  where identifier = v_ip
+    and action = p_action
+    and attempted_at > now() - interval '15 minutes';
+
+  if v_recent_failures >= 25 then
+    raise exception 'Too many failed PIN attempts. Please wait 15 minutes before trying again.';
+  end if;
+
+  return v_ip;
+end;
+$$;
+
+create or replace function public.record_failed_pin_attempt(p_ip text, p_action text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  insert into public.pin_attempt_log (identifier, action, attempted_at)
+  values (p_ip, p_action, now());
+
+  -- Artificial 500ms delay on wrong PINs to eliminate rapid dictionary attacks
+  perform pg_sleep(0.5);
+end;
+$$;
+
+create or replace function public.clear_pin_rate_limit(p_ip text, p_action text)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  delete from public.pin_attempt_log
+  where identifier = p_ip and action = p_action;
+end;
+$$;
+
+-- 1. Verify Master League Admin PIN (with rate-limiting)
 create or replace function public.verify_admin_pin(p_pin text)
 returns boolean
-language sql
+language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
+declare
+  v_ip text;
+  v_valid boolean;
+begin
+  v_ip := public.check_pin_rate_limit('admin');
+
   select exists (
     select 1 from public.league_settings
     where id = 'default' and trim(admin_pin) = trim(coalesce(p_pin, ''))
-  );
+  ) into v_valid;
+
+  if v_valid then
+    perform public.clear_pin_rate_limit(v_ip, 'admin');
+    return true;
+  else
+    perform public.record_failed_pin_attempt(v_ip, 'admin');
+    return false;
+  end if;
+end;
 $$;
 
--- 2. Verify Team Captain PIN (or Master Admin PIN)
+-- 2. Verify Team Captain PIN or Master Admin PIN (with rate-limiting per team & IP)
 create or replace function public.verify_captain_pin(p_team_id text, p_pin text)
 returns boolean
-language sql
+language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
+declare
+  v_ip text;
+  v_valid boolean;
+  v_action text;
+begin
+  v_action := 'captain:' || coalesce(p_team_id, 'any');
+  v_ip := public.check_pin_rate_limit(v_action);
+
   select exists (
     select 1 from public.team_pins
     where team_id = p_team_id and trim(captain_pin) = trim(coalesce(p_pin, ''))
-  ) or public.verify_admin_pin(p_pin);
+  ) or exists (
+    select 1 from public.league_settings
+    where id = 'default' and trim(admin_pin) = trim(coalesce(p_pin, ''))
+  ) into v_valid;
+
+  if v_valid then
+    perform public.clear_pin_rate_limit(v_ip, v_action);
+    return true;
+  else
+    perform public.record_failed_pin_attempt(v_ip, v_action);
+    return false;
+  end if;
+end;
 $$;
 
 -- 3. Fetch all Team PINs (ONLY returns rows if caller supplies the valid Master Admin PIN)
@@ -192,6 +337,7 @@ create or replace function public.get_all_team_pins(p_admin_pin text)
 returns table(team_id text, captain_pin text)
 language sql
 security definer
+set search_path = public, pg_temp
 as $$
   select tp.team_id, tp.captain_pin
   from public.team_pins tp
@@ -203,6 +349,7 @@ create or replace function public.set_team_pin(p_admin_pin text, p_team_id text,
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -224,6 +371,7 @@ create or replace function public.set_admin_pin(p_current_admin_pin text, p_new_
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_current_admin_pin) then
@@ -260,6 +408,7 @@ create or replace function public.captain_save_fixture(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 declare
   v_fixture public.fixtures%rowtype;
@@ -457,6 +606,7 @@ create or replace function public.admin_save_fixture(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -492,6 +642,7 @@ create or replace function public.admin_upsert_season(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -534,6 +685,7 @@ create or replace function public.admin_upsert_team(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -570,6 +722,7 @@ create or replace function public.admin_delete_team(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -592,6 +745,7 @@ create or replace function public.admin_upsert_player(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -617,6 +771,7 @@ create or replace function public.admin_delete_player(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -645,6 +800,7 @@ create or replace function public.admin_upsert_fixture(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
@@ -682,6 +838,7 @@ create or replace function public.admin_delete_fixture(
 returns boolean
 language plpgsql
 security definer
+set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then

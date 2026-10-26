@@ -37,24 +37,26 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
   const handleCaptainLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeamId) return;
-    const ok = await loginAsCaptainWithPin(selectedTeamId, captainPinInput);
-    if (ok) {
+    const res = await loginAsCaptainWithPin(selectedTeamId, captainPinInput);
+    if (res.success) {
       setCaptainError('');
       onClose();
     } else {
-      setCaptainError('Incorrect Team Captain PIN. Check with League Admin.');
+      setCaptainError(
+        res.error || 'Incorrect Team Captain PIN. Check with League Admin.'
+      );
     }
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await loginAsAdminWithPin(adminPinInput);
-    if (ok) {
+    const res = await loginAsAdminWithPin(adminPinInput);
+    if (res.success) {
       setAdminError('');
       onAdminLoginSuccess?.();
       onClose();
     } else {
-      setAdminError('Incorrect League Admin PIN.');
+      setAdminError(res.error || 'Incorrect League Admin PIN.');
     }
   };
 
