@@ -55,10 +55,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const [showLineupEditor, setShowLineupEditor] = useState<boolean>(
     !fixture.homeSet1Locked || !fixture.awaySet1Locked
   );
-  // Allows captains sharing a single device at the pub to switch sides during blind Set 1 entry
-  const [activeDeviceSide, setActiveDeviceSide] = useState<'home' | 'away'>(
-    session.teamId === fixture.awayTeamId ? 'away' : 'home'
-  );
 
   const homeTeam = teams.find((t) => t.id === fixture.homeTeamId);
   const awayTeam = teams.find((t) => t.id === fixture.awayTeamId);
@@ -78,6 +74,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     (editable &&
       session.role === 'captain' &&
       session.teamId === fixture.awayTeamId);
+  const canEditSide = (side: 'home' | 'away'): boolean =>
+    side === 'home' ? canSignHome : canSignAway;
   const score = calculateMatchScore(fixture);
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
@@ -108,7 +106,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     slotIndex: number,
     value: SlotPlayerId
   ) => {
-    if (!editable) return;
+    if (!editable || !canEditSide(side)) return;
     const setKey = getSetKey(setNumber);
     const nextLineups = structuredClone(fixture.lineups);
     nextLineups[setKey][side][slotIndex] = value;
@@ -146,7 +144,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const handleToggleLockSet1 = async (side: 'home' | 'away') => {
-    if (!editable) return;
+    if (!editable || !canEditSide(side)) return;
     if (side === 'home') {
       await saveFixture(
         {
@@ -239,9 +237,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     const squad = side === 'home' ? homeSquad : awaySquad;
     const setKey = getSetKey(setNumber);
     const currentSlots = fixture.lineups[setKey][side];
+    const sideEditable = canEditSide(side);
     const isSet1Locked =
       setNumber === 1 &&
       (side === 'home' ? fixture.homeSet1Locked : fixture.awaySet1Locked);
+    const hideSideSlots =
+      setNumber === 1 && !bothSet1Locked && !sideEditable;
 
     return (
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
@@ -253,7 +254,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </span>
             <h4 className="font-bold text-white text-sm">{team.name}</h4>
           </div>
-          {setNumber === 1 && editable && (
+          {setNumber === 1 && sideEditable ? (
             <button
               type="button"
               onClick={() => handleToggleLockSet1(side)}
@@ -273,79 +274,111 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </>
               )}
             </button>
-          )}
+          ) : setNumber === 1 ? (
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                isSet1Locked
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-slate-800 text-slate-400 border border-slate-700'
+              }`}
+            >
+              {isSet1Locked ? (
+                <>
+                  <Lock className="w-3.5 h-3.5" /> Locked In
+                </>
+              ) : (
+                <>
+                  <Clock className="w-3.5 h-3.5" /> Awaiting Lock
+                </>
+              )}
+            </span>
+          ) : null}
         </div>
 
-        <div className="space-y-2">
-          {[0, 1, 2, 3, 4].map((slotIdx) => {
-            const slotNum = (slotIdx + 1) as 1 | 2 | 3 | 4 | 5;
-            const selectedId = currentSlots[slotIdx];
-            const eligible = getEligiblePlayersForSlot(
-              squad,
-              fixture.lineups,
-              setNumber,
-              side,
-              slotIdx
-            );
-            const canSelectBye = slotNum === 4 || slotNum === 5;
-            const prevPlayerId =
-              setNumber === 2
-                ? fixture.lineups.set1[side][slotIdx]
-                : setNumber === 3
-                ? fixture.lineups.set2[side][slotIdx]
-                : null;
-            const isSubbed =
-              setNumber > 1 &&
-              prevPlayerId &&
-              selectedId &&
-              prevPlayerId !== selectedId;
+        {hideSideSlots ? (
+          <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 text-center space-y-1.5">
+            <EyeOff className="w-5 h-5 text-slate-500 mx-auto" />
+            <p className="text-xs font-semibold text-slate-300">
+              {isSet1Locked
+                ? `${team.name} Set 1 Lineup is Locked & Hidden`
+                : `Awaiting ${team.name} Captain Set 1 Entry`}
+            </p>
+            <p className="text-[11px] text-slate-500">
+              Running order remains hidden (&ldquo;Folded Score Sheet&rdquo;) until both captains lock in Set 1.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {[0, 1, 2, 3, 4].map((slotIdx) => {
+              const slotNum = (slotIdx + 1) as 1 | 2 | 3 | 4 | 5;
+              const selectedId = currentSlots[slotIdx];
+              const eligible = getEligiblePlayersForSlot(
+                squad,
+                fixture.lineups,
+                setNumber,
+                side,
+                slotIdx
+              );
+              const canSelectBye = slotNum === 4 || slotNum === 5;
+              const prevPlayerId =
+                setNumber === 2
+                  ? fixture.lineups.set1[side][slotIdx]
+                  : setNumber === 3
+                  ? fixture.lineups.set2[side][slotIdx]
+                  : null;
+              const isSubbed =
+                setNumber > 1 &&
+                prevPlayerId &&
+                selectedId &&
+                prevPlayerId !== selectedId;
 
-            return (
-              <div key={slotNum} className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
-                  {slotNum}
-                </span>
-                <select
-                  disabled={!editable || isSet1Locked}
-                  value={selectedId ?? ''}
-                  onChange={(e) =>
-                    handleSlotChange(
-                      setNumber,
-                      side,
-                      slotIdx,
-                      (e.target.value || null) as SlotPlayerId
-                    )
-                  }
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60"
-                >
-                  <option value="">
-                    -- Select Position {slotNum} Player --
-                  </option>
-                  {eligible.map(({ player, disabledReason }) => (
-                    <option
-                      key={player.id}
-                      value={player.id}
-                      disabled={Boolean(disabledReason)}
-                    >
-                      {player.name}
-                      {disabledReason ? ` (${disabledReason})` : ''}
-                    </option>
-                  ))}
-                  {canSelectBye && (
-                    <option value="BYE">
-                      BYE (No Player - Pos {slotNum})
-                    </option>
-                  )}
-                </select>
-                {isSubbed && (
-                  <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-                    SUB
+              return (
+                <div key={slotNum} className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
+                    {slotNum}
                   </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  <select
+                    disabled={!sideEditable || isSet1Locked}
+                    value={selectedId ?? ''}
+                    onChange={(e) =>
+                      handleSlotChange(
+                        setNumber,
+                        side,
+                        slotIdx,
+                        (e.target.value || null) as SlotPlayerId
+                      )
+                    }
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60"
+                  >
+                    <option value="">
+                      -- Select Position {slotNum} Player --
+                    </option>
+                    {eligible.map(({ player, disabledReason }) => (
+                      <option
+                        key={player.id}
+                        value={player.id}
+                        disabled={Boolean(disabledReason)}
+                      >
+                        {player.name}
+                        {disabledReason ? ` (${disabledReason})` : ''}
+                      </option>
+                    ))}
+                    {canSelectBye && (
+                      <option value="BYE">
+                        BYE (No Player - Pos {slotNum})
+                      </option>
+                    )}
+                  </select>
+                  {isSubbed && (
+                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                      SUB
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -637,47 +670,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </h3>
                       <p className="text-xs text-slate-400">
                         {activeSet === 1
-                          ? 'Home captain enters 1–5, then folds/locks before Away captain enters 1–5.'
+                          ? 'Each captain selects and locks their own team’s 1–5 running order. Lineups are revealed once both teams lock Set 1.'
                           : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
                       </p>
                     </div>
-
-                    {activeSet === 1 && !bothSet1Locked && (
-                      <div className="flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-xs">
-                        <button
-                          type="button"
-                          onClick={() => setActiveDeviceSide('home')}
-                          className={`px-2.5 py-1 rounded-md font-semibold ${
-                            activeDeviceSide === 'home'
-                              ? 'bg-emerald-600 text-white'
-                              : 'text-slate-400'
-                          }`}
-                        >
-                          Home Entry
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveDeviceSide('away')}
-                          className={`px-2.5 py-1 rounded-md font-semibold ${
-                            activeDeviceSide === 'away'
-                              ? 'bg-emerald-600 text-white'
-                              : 'text-slate-400'
-                          }`}
-                        >
-                          Away Entry
-                        </button>
-                      </div>
-                    )}
                   </div>
 
-                  {activeSet === 1 && !bothSet1Locked && !canManageLeague ? (
-                    <div>{renderLineupSelector(1, activeDeviceSide)}</div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {renderLineupSelector(activeSet, 'home')}
-                      {renderLineupSelector(activeSet, 'away')}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {renderLineupSelector(activeSet, 'home')}
+                    {renderLineupSelector(activeSet, 'away')}
+                  </div>
                 </div>
               )}
 
@@ -693,15 +695,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     frame.frameNumber
                   );
                   const hideHome =
-                    frame.setNumber === 1 &&
-                    !bothSet1Locked &&
-                    !fixture.homeSet1Locked &&
-                    !canManageLeague;
+                    frame.setNumber === 1 && !bothSet1Locked && !canSignHome;
                   const hideAway =
-                    frame.setNumber === 1 &&
-                    !bothSet1Locked &&
-                    !fixture.awaySet1Locked &&
-                    !canManageLeague;
+                    frame.setNumber === 1 && !bothSet1Locked && !canSignAway;
 
                   const isByeFrame =
                     homePlayerId === 'BYE' || awayPlayerId === 'BYE';
@@ -897,6 +893,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       );
                       const isFirstInSet = frame.gameInSet === 1;
                       const isLastInSet = frame.gameInSet === 5;
+                      const hideHome =
+                        frame.setNumber === 1 && !bothSet1Locked && !canSignHome;
+                      const hideAway =
+                        frame.setNumber === 1 && !bothSet1Locked && !canSignAway;
 
                       return (
                         <tr
@@ -917,7 +917,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             {frame.homeSlot}
                           </td>
                           <td className="py-2 px-3 font-medium text-white">
-                            {getPlayerName(homePlayerId)}
+                            {getPlayerName(homePlayerId, hideHome)}
                           </td>
                           <td className="py-2 px-2 text-center">
                             <button
@@ -964,7 +964,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             </button>
                           </td>
                           <td className="py-2 px-3 font-medium text-white">
-                            {getPlayerName(awayPlayerId)}
+                            {getPlayerName(awayPlayerId, hideAway)}
                           </td>
                           <td className="py-2 px-2 text-center font-mono text-slate-400">
                             {frame.awaySlot}

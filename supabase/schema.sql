@@ -331,10 +331,40 @@ begin
     v_away_signed := p_away_captain_signed;
   end if;
 
-  -- Enforce that a captain can ONLY sign or unsign for their own team
+  -- Enforce that a captain can ONLY modify lineups, Set 1 lock, and signature for their own team
   if p_team_id = v_fixture.home_team_id then
+    v_merged_lineups := jsonb_build_object(
+      'set1', jsonb_build_object(
+        'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home') else p_lineups->'set1'->'home' end,
+        'away', coalesce(v_fixture.lineups->'set1'->'away', p_lineups->'set1'->'away')
+      ),
+      'set2', jsonb_build_object(
+        'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home') else p_lineups->'set2'->'home' end,
+        'away', coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away')
+      ),
+      'set3', jsonb_build_object(
+        'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home') else p_lineups->'set3'->'home' end,
+        'away', coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away')
+      )
+    );
+    v_away_locked := v_fixture.away_set1_locked;
     v_away_signed := v_fixture.away_captain_signed;
   elsif p_team_id = v_fixture.away_team_id then
+    v_merged_lineups := jsonb_build_object(
+      'set1', jsonb_build_object(
+        'home', coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home'),
+        'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set1'->'away', p_lineups->'set1'->'away') else p_lineups->'set1'->'away' end
+      ),
+      'set2', jsonb_build_object(
+        'home', coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home'),
+        'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away') else p_lineups->'set2'->'away' end
+      ),
+      'set3', jsonb_build_object(
+        'home', coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home'),
+        'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away') else p_lineups->'set3'->'away' end
+      )
+    );
+    v_home_locked := v_fixture.home_set1_locked;
     v_home_signed := v_fixture.home_captain_signed;
   end if;
 
