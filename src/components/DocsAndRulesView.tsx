@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Crown, FileText, Scale, Trophy } from 'lucide-react';
+import { useLeague } from '../context/LeagueContext';
 
 type HonourSubTab =
   | 'league'
@@ -13,6 +14,7 @@ type HonourSubTab =
   | 'top-dish';
 
 export const DocsAndRulesView: React.FC = () => {
+  const { seasonName } = useLeague();
   const [section, setSection] = useState<
     'format' | 'rules' | 'cofc' | 'competitions' | 'honours'
   >('format');
@@ -929,163 +931,21 @@ export const DocsAndRulesView: React.FC = () => {
         {/* 4. COMPETITIONS (content/docs/competitions/*.md)                 */}
         {/* ================================================================ */}
         {section === 'competitions' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Summer Open Singles */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-              <h3 className="font-black text-white text-base">
-                Summer Open Singles 2026
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
+              <Trophy className="w-7 h-7" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg sm:text-xl font-black text-white">
+                {seasonName || 'Winter 2026/27'} Competitions Not Published Yet
               </h3>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Prize Pot
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-0.5 text-slate-300">
-                  <li>Total: TBC</li>
-                  <li>Winner: TBC</li>
-                  <li>Runner-up: TBC</li>
-                  <li>Semi-Finalists: TBC</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Format
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-1 text-slate-300">
-                  <li>Races to 5 all the way through</li>
-                  <li>International rules</li>
-                  <li>Randomly drawn each round</li>
-                  <li>3 week windows to arrange and play your matches</li>
-                  <li>
-                    If drawn as the home player, you must play from a Brighton
-                    league venue
-                  </li>
-                  <li>
-                    Final to be played on presentation night (30th March 2026)
-                  </li>
-                </ul>
-              </div>
-              <p className="text-xs font-bold text-amber-300 pt-1">
-                Contact Cliona Saunders-Cooney to enter
+              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                Details, formats, and entry dates for this season's Singles, Doubles, and Cup competitions have not been published yet.
               </p>
             </div>
-
-            {/* Summer Ladies Singles */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-              <h3 className="font-black text-white text-base">
-                Summer Ladies Singles 2026
-              </h3>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Prize Pot (Supported by Nigel Enticknapp)
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-0.5 text-slate-300">
-                  <li>Total: TBC</li>
-                  <li>Winner: TBC</li>
-                  <li>Runner-up: TBC</li>
-                  <li>Semi-Finalists: TBC</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Format
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-1 text-slate-300">
-                  <li>Races to 5 all the way through</li>
-                  <li>International rules</li>
-                  <li>Randomly drawn each round</li>
-                  <li>4 week windows to arrange and play your matches</li>
-                  <li>
-                    If drawn as the home player, you must play from a Brighton
-                    league venue
-                  </li>
-                  <li>
-                    Final to be played on presentation night (30th March 2026)
-                  </li>
-                </ul>
-              </div>
-              <p className="text-xs font-bold text-amber-300 pt-1">
-                Contact Cliona Saunders-Cooney to enter
-              </p>
-            </div>
-
-            {/* Summer Doubles */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-              <h3 className="font-black text-white text-base">
-                Summer Doubles 2026
-              </h3>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Prize Pot
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-0.5 text-slate-300">
-                  <li>Total: TBC</li>
-                  <li>Winner: TBC</li>
-                  <li>Runners-up: TBC</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Format
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-1 text-slate-300">
-                  <li>Races to 5 all the way through</li>
-                  <li>Scotch format (alternate shots)</li>
-                  <li>Talk before first shot only</li>
-                  <li>International rules</li>
-                  <li>Randomly drawn each round</li>
-                  <li>
-                    3/4 week windows to arrange and play your matches -
-                    dependent on entries
-                  </li>
-                  <li>
-                    If drawn as the home pair, you must play from a Brighton
-                    league venue
-                  </li>
-                </ul>
-              </div>
-              <p className="text-xs font-bold text-amber-300 pt-1">
-                Contact Cliona Saunders-Cooney to enter
-              </p>
-            </div>
-
-            {/* Captains Cup */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-              <h3 className="font-black text-white text-base">
-                Captains Cup Summer 2026
-              </h3>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Prize Pot
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-0.5 text-slate-300">
-                  <li>Total: TBC</li>
-                  <li>Winner: TBC</li>
-                  <li>Runners-up: TBC</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-1">
-                  Format
-                </h4>
-                <ul className="list-disc list-inside text-xs space-y-1 text-slate-300">
-                  <li>Race to 5 all the way through</li>
-                  <li>International Rules</li>
-                  <li>
-                    Prem captains start on scratch (0), Div 1 Captains get a +1
-                    start, and Div 2 Captains get +2.
-                  </li>
-                  <li>Randomly Drawn Each Round</li>
-                  <li>4 Week window to arrange and play matches</li>
-                  <li>
-                    Finals to be played on presentation Night - 26th October
-                    2026
-                  </li>
-                  <li>Trophies and Prize Money</li>
-                </ul>
-              </div>
-              <p className="text-xs font-bold text-amber-300 pt-1">
-                Contact Cliona Saunders-Cooney to enter
-              </p>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span>Announcements will be made once competition entries open</span>
             </div>
           </div>
         )}
