@@ -8,6 +8,7 @@ import {
   PlusCircle,
   Radio,
   ShieldAlert,
+  Sparkles,
 } from 'lucide-react';
 import { Division, Fixture } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
@@ -59,6 +60,23 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   }, [isCaptain, session.teamId]);
 
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
+  const myTeam = isCaptain && session.teamId ? teamsById[session.teamId] : null;
+
+  const myMatches =
+    isCaptain && session.teamId
+      ? fixtures
+          .filter(
+            (f) =>
+              f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
+          )
+          .sort((a, b) => a.matchDate.localeCompare(b.matchDate))
+      : [];
+
+  const myNextMatch =
+    myMatches.find((f) => f.status === 'live') ||
+    myMatches.find((f) => f.status === 'scheduled') ||
+    myMatches.find((f) => f.status === 'submitted') ||
+    (myMatches.length > 0 ? myMatches[myMatches.length - 1] : null);
 
   const filtered = fixtures
     .filter((f) => {
@@ -175,6 +193,143 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Team Captain Spotlight: My Next Match */}
+      {isCaptain && myTeam && myNextMatch && (() => {
+        const nextScore = calculateMatchScore(myNextMatch);
+        const home = teamsById[myNextMatch.homeTeamId];
+        const away = teamsById[myNextMatch.awayTeamId];
+
+        return (
+          <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  MY NEXT MATCH
+                </span>
+                <span className="text-slate-400 font-semibold">
+                  {myNextMatch.division} • Week {myNextMatch.weekNumber}
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-slate-300 font-medium">
+                  {formatMatchDate(myNextMatch.matchDate)}
+                </span>
+              </div>
+
+              <span
+                className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
+                  myNextMatch.status === 'live'
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
+                    : myNextMatch.status === 'submitted'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : myNextMatch.status === 'approved'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'bg-slate-800 text-slate-300 border border-slate-700'
+                }`}
+              >
+                {myNextMatch.status === 'live'
+                  ? `LIVE NOW (${nextScore.completedFrames}/15)`
+                  : myNextMatch.status === 'scheduled'
+                  ? 'Upcoming Match'
+                  : myNextMatch.status === 'submitted'
+                  ? 'Submitted • Awaiting Approval'
+                  : 'Approved Result'}
+              </span>
+            </div>
+
+            <div
+              onClick={() => onSelectFixture(myNextMatch)}
+              className="cursor-pointer bg-slate-950/90 border border-slate-800 rounded-xl p-4 grid grid-cols-7 items-center gap-2 hover:border-emerald-500/50 transition shadow-inner"
+            >
+              <div className="col-span-3 text-left min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-sm sm:text-base text-white truncate">
+                    {home?.name}
+                  </span>
+                  {home?.id === myTeam.id && (
+                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                      Your Team
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  Home {nextScore.completedFrames > 0 && `• ${nextScore.homePoints} pts`}
+                </div>
+              </div>
+
+              <div className="col-span-1 flex flex-col items-center justify-center">
+                {nextScore.completedFrames > 0 || myNextMatch.status !== 'scheduled' ? (
+                  <div className="flex items-center gap-1.5 font-black text-lg sm:text-2xl text-white tabular-nums">
+                    <span
+                      className={
+                        nextScore.homeFrames > nextScore.awayFrames
+                          ? 'text-emerald-400'
+                          : ''
+                      }
+                    >
+                      {nextScore.homeFrames}
+                    </span>
+                    <span className="text-slate-600">–</span>
+                    <span
+                      className={
+                        nextScore.awayFrames > nextScore.homeFrames
+                          ? 'text-emerald-400'
+                          : ''
+                      }
+                    >
+                      {nextScore.awayFrames}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs font-bold text-emerald-400 px-2 py-1 rounded bg-slate-900 border border-slate-800">
+                    20:00
+                  </span>
+                )}
+              </div>
+
+              <div className="col-span-3 text-right min-w-0">
+                <div className="flex items-center justify-end gap-1.5 min-w-0">
+                  {away?.id === myTeam.id && (
+                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                      Your Team
+                    </span>
+                  )}
+                  <span className="font-bold text-sm sm:text-base text-white truncate">
+                    {away?.name}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5">
+                  Away {nextScore.completedFrames > 0 && `• ${nextScore.awayPoints} pts`}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-slate-300 truncate">
+                <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">
+                  {home?.venue} {home?.address ? `• ${home.address}` : ''}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onSelectFixture(myNextMatch)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
+              >
+                <PlayCircle className="w-4 h-4" />
+                {myNextMatch.status === 'live'
+                  ? 'Continue Scoring Live'
+                  : myNextMatch.status === 'scheduled'
+                  ? 'Enter Lineup / Start Match'
+                  : 'Open Scorecard'}
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Empty State when Season has no fixtures yet */}
       {fixtures.length === 0 ? (
