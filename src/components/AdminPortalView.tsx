@@ -1,22 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  CalendarPlus,
+  Calendar,
   CheckCircle2,
   Copy,
   Edit3,
-  FolderPlus,
   KeyRound,
-  Layers,
-  Plus,
   RefreshCw,
+  Save,
   Settings,
   ShieldCheck,
   Trash2,
   UserPlus,
   Users,
-  Wand2,
+  X,
 } from 'lucide-react';
-import { Division, Fixture } from '../types/league';
+import { Division, Fixture, Team } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
 import { calculateMatchScore } from '../utils/leagueEngine';
 
@@ -28,14 +26,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   onSelectFixture,
 }) => {
   const {
-    seasons,
-    seasonId,
     seasonName,
     divisions,
-    setSelectedSeasonId,
-    createNewSeason,
-    addDivision,
-    removeDivision,
     teams,
     players,
     fixtures,
@@ -44,13 +36,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     loginAsAdminWithPin,
     updateAdminPin,
     updateTeamPin,
-    addTeam,
+    updateTeam,
     deleteTeam,
     addPlayer,
     removePlayer,
     transferPlayer,
-    addFixture,
-    generateDivisionFixtures,
+    updateFixtureDetails,
     deleteFixture,
     approveFixture,
     reopenFixture,
@@ -59,61 +50,43 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   } = useLeague();
 
   const [activeTab, setActiveTab] = useState<
-    'teams' | 'fixtures' | 'approvals' | 'seasons' | 'settings'
+    'teams' | 'fixtures' | 'approvals' | 'settings'
   >('teams');
 
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  const [teamDivision, setTeamDivision] = useState<Division>(
-    divisions[0] || 'Premier League'
-  );
-  const [teamName, setTeamName] = useState('');
-  const [teamVenue, setTeamVenue] = useState('');
-  const [teamAddress, setTeamAddress] = useState('');
-  const [captainName, setCaptainName] = useState('');
-  const [captainPin, setCaptainPin] = useState('');
-  const [initialPlayersInput, setInitialPlayersInput] = useState('');
   const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
-
   const [newPlayerByTeam, setNewPlayerByTeam] = useState<
     Record<string, string>
   >({});
   const [filterDivision, setFilterDivision] = useState<Division | 'ALL'>('ALL');
+  const [fixtureFilterDivision, setFixtureFilterDivision] = useState<
+    Division | 'ALL'
+  >('ALL');
 
-  const [fixDivision, setFixDivision] = useState<Division>(
-    divisions[0] || 'Premier League'
-  );
-  const [fixDate, setFixDate] = useState('2026-11-02');
-  const [fixWeek, setFixWeek] = useState(1);
-  const [fixHomeId, setFixHomeId] = useState('');
-  const [fixAwayId, setFixAwayId] = useState('');
-  const [genStartDate, setGenStartDate] = useState('2026-11-02');
-  const [genMessage, setGenMessage] = useState('');
+  // Team inline editing state
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [teamDraft, setTeamDraft] = useState<{
+    name: string;
+    division: Division;
+    venue: string;
+    address: string;
+    captainName: string;
+  } | null>(null);
 
-  const [newSeasonName, setNewSeasonName] = useState('');
-  const [newSeasonDivisionsInput, setNewSeasonDivisionsInput] = useState(
-    divisions.join(', ')
-  );
-  const [copyTeamsToNewSeason, setCopyTeamsToNewSeason] = useState(false);
-  const [seasonCreatedMsg, setSeasonCreatedMsg] = useState('');
-
-  const [newDivisionInput, setNewDivisionInput] = useState('');
-  const [divisionError, setDivisionError] = useState('');
+  // Fixture inline editing state
+  const [editingFixtureId, setEditingFixtureId] = useState<string | null>(null);
+  const [fixtureDraft, setFixtureDraft] = useState<{
+    division: Division;
+    matchDate: string;
+    weekNumber: number;
+    homeTeamId: string;
+    awayTeamId: string;
+  } | null>(null);
 
   const [newMasterPin, setNewMasterPin] = useState(adminPin);
   const [pinSavedMsg, setPinSavedMsg] = useState('');
-
-  useEffect(() => {
-    if (divisions.length > 0) {
-      if (!divisions.includes(teamDivision)) {
-        setTeamDivision(divisions[0]);
-      }
-      if (!divisions.includes(fixDivision)) {
-        setFixDivision(divisions[0]);
-      }
-    }
-  }, [divisions, teamDivision, fixDivision]);
 
   if (!canManageLeague) {
     return (
@@ -130,8 +103,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           Enter League Admin PIN
         </h2>
         <p className="text-xs sm:text-sm text-slate-400">
-          Enter the Master League Admin PIN to manage seasons, divisions, teams,
-          players, Team Captain PINs, and approve scorecards.
+          Enter the Master League Admin PIN to manage teams, players, Team
+          Captain PINs, fixtures, and approve scorecards.
         </p>
         <div className="flex items-center gap-2 max-w-xs mx-auto">
           <input
@@ -159,34 +132,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     );
   }
 
-  const handleCreateTeam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!teamName.trim() || !teamVenue.trim()) return;
-    const created = await addTeam({
-      division: teamDivision,
-      name: teamName.trim(),
-      venue: teamVenue.trim(),
-      address: teamAddress.trim(),
-      captainName: captainName.trim(),
-      captainPin: captainPin.trim() || generateRandomPin(),
-    });
-
-    const names = initialPlayersInput
-      .split(/[\n,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    for (const pName of names) {
-      await addPlayer(created.id, pName);
-    }
-
-    setTeamName('');
-    setTeamVenue('');
-    setTeamAddress('');
-    setCaptainName('');
-    setCaptainPin('');
-    setInitialPlayersInput('');
-  };
-
   const handleCopyCaptainInvite = (
     teamId: string,
     name: string,
@@ -211,79 +156,61 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setNewPlayerByTeam((prev) => ({ ...prev, [teamId]: '' }));
   };
 
-  const handleCreateFixture = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fixHomeId || !fixAwayId || fixHomeId === fixAwayId) return;
-    await addFixture({
-      division: fixDivision,
-      matchDate: fixDate,
-      weekNumber: Number(fixWeek) || 1,
-      homeTeamId: fixHomeId,
-      awayTeamId: fixAwayId,
+  const startEditingTeam = (team: Team) => {
+    setEditingTeamId(team.id);
+    setTeamDraft({
+      name: team.name,
+      division: team.division,
+      venue: team.venue,
+      address: team.address || '',
+      captainName: team.captainName || '',
     });
-    setFixHomeId('');
-    setFixAwayId('');
   };
 
-  const handleAutoGenerate = async (division: Division) => {
-    const count = await generateDivisionFixtures(division, genStartDate);
-    if (count === 0) {
-      setGenMessage(
-        `Add at least 2 teams to ${division} first before generating fixtures.`
-      );
-    } else {
-      setGenMessage(
-        `Generated ${count} fixtures (Home & Away round-robin) for ${division}!`
-      );
-    }
+  const handleSaveTeamEdit = async (team: Team) => {
+    if (!teamDraft || !teamDraft.name.trim() || !teamDraft.venue.trim()) return;
+    await updateTeam({
+      ...team,
+      name: teamDraft.name.trim(),
+      division: teamDraft.division,
+      venue: teamDraft.venue.trim(),
+      address: teamDraft.address.trim(),
+      captainName: teamDraft.captainName.trim(),
+    });
+    setEditingTeamId(null);
+    setTeamDraft(null);
   };
 
-  const handleCreateSeason = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSeasonName.trim()) return;
-    const parsedDivs = newSeasonDivisionsInput
-      .split(',')
-      .map((d) => d.trim())
-      .filter(Boolean);
-    const created = await createNewSeason(
-      newSeasonName.trim(),
-      copyTeamsToNewSeason,
-      parsedDivs.length > 0 ? parsedDivs : divisions
-    );
-    setNewSeasonName('');
-    setSeasonCreatedMsg(
-      `Created & switched to season "${created.name}"!`
-    );
-    setTimeout(() => setSeasonCreatedMsg(''), 4000);
+  const startEditingFixture = (fix: Fixture) => {
+    setEditingFixtureId(fix.id);
+    setFixtureDraft({
+      division: fix.division,
+      matchDate: fix.matchDate,
+      weekNumber: fix.weekNumber,
+      homeTeamId: fix.homeTeamId,
+      awayTeamId: fix.awayTeamId,
+    });
   };
 
-  const handleAddDivision = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = newDivisionInput.trim();
-    if (!clean) return;
-    if (divisions.includes(clean)) {
-      setDivisionError(`"${clean}" already exists in ${seasonName}.`);
+  const handleSaveFixtureEdit = async (fix: Fixture) => {
+    if (
+      !fixtureDraft ||
+      !fixtureDraft.homeTeamId ||
+      !fixtureDraft.awayTeamId ||
+      fixtureDraft.homeTeamId === fixtureDraft.awayTeamId
+    ) {
       return;
     }
-    setDivisionError('');
-    await addDivision(clean);
-    setNewDivisionInput('');
-  };
-
-  const handleRemoveDivision = async (div: Division) => {
-    const teamsInDiv = teams.filter((t) => t.division === div).length;
-    if (teamsInDiv > 0) {
-      setDivisionError(
-        `Cannot remove "${div}" while ${teamsInDiv} team(s) are assigned to it.`
-      );
-      return;
-    }
-    if (divisions.length <= 1) {
-      setDivisionError('A season must have at least 1 division.');
-      return;
-    }
-    setDivisionError('');
-    await removeDivision(div);
+    await updateFixtureDetails({
+      ...fix,
+      division: fixtureDraft.division,
+      matchDate: fixtureDraft.matchDate,
+      weekNumber: Number(fixtureDraft.weekNumber) || 1,
+      homeTeamId: fixtureDraft.homeTeamId,
+      awayTeamId: fixtureDraft.awayTeamId,
+    });
+    setEditingFixtureId(null);
+    setFixtureDraft(null);
   };
 
   const handleSaveMasterPin = async (e: React.FormEvent) => {
@@ -297,8 +224,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const filteredTeams = teams.filter(
     (t) => filterDivision === 'ALL' || t.division === filterDivision
   );
-  const divisionTeamsForFixture = teams.filter(
-    (t) => t.division === fixDivision
+  const filteredFixtures = fixtures.filter(
+    (f) =>
+      fixtureFilterDivision === 'ALL' || f.division === fixtureFilterDivision
   );
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
 
@@ -316,7 +244,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
 
         {/* Admin Section Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button
             type="button"
             onClick={() => setActiveTab('teams')}
@@ -338,7 +266,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <CalendarPlus className="w-3.5 h-3.5" />
+            <Calendar className="w-3.5 h-3.5" />
             Fixtures ({fixtures.length})
           </button>
           <button
@@ -355,20 +283,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('seasons')}
-            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-              activeTab === 'seasons'
-                ? 'bg-emerald-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            Seasons &amp; Divisions
-          </button>
-          <button
-            type="button"
             onClick={() => setActiveTab('settings')}
-            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 col-span-2 sm:col-span-1 ${
+            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
               activeTab === 'settings'
                 ? 'bg-emerald-600 text-white'
                 : 'text-slate-400 hover:text-white'
@@ -382,146 +298,45 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
       {/* TAB 1: TEAMS, PLAYERS & CAPTAIN PINs */}
       {activeTab === 'teams' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <form
-            onSubmit={handleCreateTeam}
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 h-fit"
-          >
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Plus className="w-4 h-4 text-emerald-400" />
-              Add New Team ({seasonName})
-            </h2>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Division
-              </label>
-              <select
-                value={teamDivision}
-                onChange={(e) => setTeamDivision(e.target.value as Division)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
-              >
-                {divisions.map((div) => (
-                  <option key={div} value={div}>
-                    {div}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Team Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                placeholder="e.g. Wilmy Lions"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Team Venue *
-              </label>
-              <input
-                type="text"
-                required
-                value={teamVenue}
-                onChange={(e) => setTeamVenue(e.target.value)}
-                placeholder="e.g. Castle Club (Table R1)"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Captain Name
-                </label>
-                <input
-                  type="text"
-                  value={captainName}
-                  onChange={(e) => setCaptainName(e.target.value)}
-                  placeholder="Lewes Pollington"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Captain PIN (auto 8-digit if blank)
-                </label>
-                <input
-                  type="text"
-                  value={captainPin}
-                  onChange={(e) => setCaptainPin(e.target.value)}
-                  placeholder="e.g. 48219304"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Initial Signed-On Players (comma or line separated)
-              </label>
-              <textarea
-                rows={3}
-                value={initialPlayersInput}
-                onChange={(e) => setInitialPlayersInput(e.target.value)}
-                placeholder="Harry Craker, Bayley Pollington, Lewes Pollington, Ellis Clarke, JJ Minty"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-              />
-            </div>
-
+        <div className="space-y-3.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             <button
-              type="submit"
-              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow"
+              type="button"
+              onClick={() => setFilterDivision('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                filterDivision === 'ALL'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800'
+              }`}
             >
-              Create Team &amp; Generate Captain PIN
+              All ({teams.length})
             </button>
-          </form>
-
-          <div className="lg:col-span-2 space-y-3.5">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            {divisions.map((div) => (
               <button
+                key={div}
                 type="button"
-                onClick={() => setFilterDivision('ALL')}
+                onClick={() => setFilterDivision(div)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                  filterDivision === 'ALL'
+                  filterDivision === div
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-900 text-slate-400 border border-slate-800'
                 }`}
               >
-                All ({teams.length})
+                {div} ({teams.filter((t) => t.division === div).length})
               </button>
-              {divisions.map((div) => (
-                <button
-                  key={div}
-                  type="button"
-                  onClick={() => setFilterDivision(div)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                    filterDivision === div
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-900 text-slate-400 border border-slate-800'
-                  }`}
-                >
-                  {div} ({teams.filter((t) => t.division === div).length})
-                </button>
-              ))}
-            </div>
+            ))}
+          </div>
 
-            {filteredTeams.length === 0 ? (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
-                No teams added for <strong>{seasonName}</strong> yet. Use the
-                form on the left to add teams and generate their Captain PINs.
-              </div>
-            ) : (
-              filteredTeams.map((team) => {
+          {filteredTeams.length === 0 ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
+              No teams found for <strong>{seasonName}</strong>.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredTeams.map((team) => {
                 const squad = players.filter((p) => p.teamId === team.id);
+                const isEditing = editingTeamId === team.id && teamDraft !== null;
+
                 return (
                   <div
                     key={team.id}
@@ -541,12 +356,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             ? ` • Captain: ${team.captainName}`
                             : ''}
                         </p>
+                        {team.address && (
+                          <p className="text-[11px] text-slate-500">
+                            {team.address}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5">
                         <KeyRound className="w-3.5 h-3.5 text-amber-400" />
                         <span className="text-[11px] text-slate-400">
-                          Captain PIN:
+                          PIN:
                         </span>
                         <input
                           type="text"
@@ -584,14 +404,144 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </button>
                         <button
                           type="button"
+                          onClick={() =>
+                            isEditing
+                              ? setEditingTeamId(null)
+                              : startEditingTeam(team)
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold"
+                          title="Edit Team Name, Venue & Details"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          {isEditing ? 'Cancel' : 'Edit'}
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => deleteTeam(team.id)}
-                          className="p-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 ml-1"
+                          className="p-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400"
                           title="Delete Team"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
+
+                    {/* Inline Team Details Editor */}
+                    {isEditing && teamDraft && (
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2.5">
+                        <div className="text-xs font-bold text-emerald-400">
+                          Edit Team Details
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">
+                              Team Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={teamDraft.name}
+                              onChange={(e) =>
+                                setTeamDraft({
+                                  ...teamDraft,
+                                  name: e.target.value,
+                                })
+                              }
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">
+                              Division
+                            </label>
+                            <select
+                              value={teamDraft.division}
+                              onChange={(e) =>
+                                setTeamDraft({
+                                  ...teamDraft,
+                                  division: e.target.value as Division,
+                                })
+                              }
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                            >
+                              {divisions.map((div) => (
+                                <option key={div} value={div}>
+                                  {div}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">
+                              Venue *
+                            </label>
+                            <input
+                              type="text"
+                              value={teamDraft.venue}
+                              onChange={(e) =>
+                                setTeamDraft({
+                                  ...teamDraft,
+                                  venue: e.target.value,
+                                })
+                              }
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">
+                              Captain Name
+                            </label>
+                            <input
+                              type="text"
+                              value={teamDraft.captainName}
+                              onChange={(e) =>
+                                setTeamDraft({
+                                  ...teamDraft,
+                                  captainName: e.target.value,
+                                })
+                              }
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] text-slate-400 mb-1">
+                              Venue Address
+                            </label>
+                            <input
+                              type="text"
+                              value={teamDraft.address}
+                              onChange={(e) =>
+                                setTeamDraft({
+                                  ...teamDraft,
+                                  address: e.target.value,
+                                })
+                              }
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTeamId(null);
+                              setTeamDraft(null);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveTeamEdit(team)}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                            Save Team Changes
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <div className="text-xs font-semibold text-slate-300">
@@ -674,209 +624,246 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 2: FIXTURES MANAGER */}
       {activeTab === 'fixtures' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="space-y-4">
-            <form
-              onSubmit={handleCreateFixture}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5"
+        <div className="space-y-3.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => setFixtureFilterDivision('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                fixtureFilterDivision === 'ALL'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800'
+              }`}
             >
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <CalendarPlus className="w-4 h-4 text-emerald-400" />
-                Add Single Fixture
-              </h2>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Division
-                </label>
-                <select
-                  value={fixDivision}
-                  onChange={(e) => {
-                    setFixDivision(e.target.value as Division);
-                    setFixHomeId('');
-                    setFixAwayId('');
-                  }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  {divisions.map((div) => (
-                    <option key={div} value={div}>
-                      {div}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Match Date
-                  </label>
-                  <input
-                    type="date"
-                    value={fixDate}
-                    onChange={(e) => setFixDate(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Week #
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={40}
-                    value={fixWeek}
-                    onChange={(e) => setFixWeek(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Home Team
-                </label>
-                <select
-                  required
-                  value={fixHomeId}
-                  onChange={(e) => setFixHomeId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  <option value="">-- Select Home Team --</option>
-                  {divisionTeamsForFixture.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Away Team
-                </label>
-                <select
-                  required
-                  value={fixAwayId}
-                  onChange={(e) => setFixAwayId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  <option value="">-- Select Away Team --</option>
-                  {divisionTeamsForFixture
-                    .filter((t) => t.id !== fixHomeId)
-                    .map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
+              All ({fixtures.length})
+            </button>
+            {divisions.map((div) => (
               <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+                key={div}
+                type="button"
+                onClick={() => setFixtureFilterDivision(div)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                  fixtureFilterDivision === div
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-900 text-slate-400 border border-slate-800'
+                }`}
               >
-                Create Fixture
+                {div} ({fixtures.filter((f) => f.division === div).length})
               </button>
-            </form>
-
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Wand2 className="w-4 h-4 text-amber-400" />
-                Auto-Generate Season Schedule
-              </h3>
-              <p className="text-xs text-slate-400">
-                Automatically generates a full Home &amp; Away round-robin
-                schedule (weekly dates) for all teams in a division.
-              </p>
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Week 1 Start Date
-                </label>
-                <input
-                  type="date"
-                  value={genStartDate}
-                  onChange={(e) => setGenStartDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {divisions.map((div) => (
-                  <button
-                    key={div}
-                    type="button"
-                    onClick={() => handleAutoGenerate(div)}
-                    className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold"
-                  >
-                    Generate {div}
-                  </button>
-                ))}
-              </div>
-              {genMessage && (
-                <p className="text-xs text-emerald-400 font-medium">
-                  {genMessage}
-                </p>
-              )}
-            </div>
+            ))}
           </div>
 
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <h3 className="text-sm font-bold text-white">
-              {seasonName} Fixtures ({fixtures.length})
+              {seasonName} Fixtures ({filteredFixtures.length})
             </h3>
-            {fixtures.length === 0 ? (
+            {filteredFixtures.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center">
-                No fixtures created for {seasonName} yet.
+                No fixtures found for {seasonName}.
               </p>
             ) : (
-              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                {fixtures.map((fix) => {
+              <div className="space-y-2.5">
+                {filteredFixtures.map((fix) => {
                   const home = teamsById[fix.homeTeamId];
                   const away = teamsById[fix.awayTeamId];
                   if (!home || !away) return null;
                   const score = calculateMatchScore(fix);
+                  const isEditing =
+                    editingFixtureId === fix.id && fixtureDraft !== null;
+                  const divTeams = teams.filter(
+                    (t) =>
+                      t.division === (fixtureDraft?.division ?? fix.division)
+                  );
 
                   return (
                     <div
                       key={fix.id}
-                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2 text-xs"
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-3 text-xs"
                     >
-                      <div>
-                        <span className="text-emerald-400 font-bold">
-                          {fix.division}
-                        </span>{' '}
-                        • Wk {fix.weekNumber} ({fix.matchDate})
-                        <div className="font-bold text-white text-sm mt-0.5">
-                          {home.name} {score.homeFrames} – {score.awayFrames}{' '}
-                          {away.name}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <span className="text-emerald-400 font-bold">
+                            {fix.division}
+                          </span>{' '}
+                          • Wk {fix.weekNumber} ({fix.matchDate})
+                          <div className="font-bold text-white text-sm mt-0.5">
+                            {home.name} {score.homeFrames} – {score.awayFrames}{' '}
+                            {away.name}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              isEditing
+                                ? setEditingFixtureId(null)
+                                : startEditingFixture(fix)
+                            }
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
+                          >
+                            <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                            {isEditing ? 'Cancel' : 'Edit Date / Details'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSelectFixture(fix)}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            Edit Card
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteFixture(fix.id)}
+                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                            title="Delete Fixture"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onSelectFixture(fix)}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          Edit Card
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteFixture(fix.id)}
-                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+
+                      {isEditing && fixtureDraft && (
+                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2.5">
+                          <div className="text-xs font-bold text-emerald-400">
+                            Edit Fixture Date &amp; Teams
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-[11px] text-slate-400 mb-1">
+                                Match Date
+                              </label>
+                              <input
+                                type="date"
+                                value={fixtureDraft.matchDate}
+                                onChange={(e) =>
+                                  setFixtureDraft({
+                                    ...fixtureDraft,
+                                    matchDate: e.target.value,
+                                  })
+                                }
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] text-slate-400 mb-1">
+                                Week #
+                              </label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={50}
+                                value={fixtureDraft.weekNumber}
+                                onChange={(e) =>
+                                  setFixtureDraft({
+                                    ...fixtureDraft,
+                                    weekNumber: Number(e.target.value) || 1,
+                                  })
+                                }
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[11px] text-slate-400 mb-1">
+                                Division
+                              </label>
+                              <select
+                                value={fixtureDraft.division}
+                                onChange={(e) =>
+                                  setFixtureDraft({
+                                    ...fixtureDraft,
+                                    division: e.target.value as Division,
+                                  })
+                                }
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                              >
+                                {divisions.map((div) => (
+                                  <option key={div} value={div}>
+                                    {div}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="sm:col-span-1">
+                              <label className="block text-[11px] text-slate-400 mb-1">
+                                Home Team
+                              </label>
+                              <select
+                                value={fixtureDraft.homeTeamId}
+                                onChange={(e) =>
+                                  setFixtureDraft({
+                                    ...fixtureDraft,
+                                    homeTeamId: e.target.value,
+                                  })
+                                }
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                              >
+                                {(divTeams.length > 0 ? divTeams : teams).map(
+                                  (t) => (
+                                    <option key={t.id} value={t.id}>
+                                      {t.name}
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="block text-[11px] text-slate-400 mb-1">
+                                Away Team
+                              </label>
+                              <select
+                                value={fixtureDraft.awayTeamId}
+                                onChange={(e) =>
+                                  setFixtureDraft({
+                                    ...fixtureDraft,
+                                    awayTeamId: e.target.value,
+                                  })
+                                }
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                              >
+                                {(divTeams.length > 0 ? divTeams : teams)
+                                  .filter(
+                                    (t) => t.id !== fixtureDraft.homeTeamId
+                                  )
+                                  .map((t) => (
+                                    <option key={t.id} value={t.id}>
+                                      {t.name}
+                                    </option>
+                                  ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingFixtureId(null);
+                                setFixtureDraft(null);
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveFixtureEdit(fix)}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                            >
+                              <Save className="w-3.5 h-3.5" />
+                              Save Fixture Changes
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -974,167 +961,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
       )}
 
-      {/* TAB 4: SEASONS & DIVISIONS */}
-      {activeTab === 'seasons' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Manage Seasons Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <FolderPlus className="w-4 h-4 text-emerald-400" />
-                Manage Seasons
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Switch between seasons or create a new season (e.g. Summer
-                2027) below.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-300">
-                Existing Seasons:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {seasons.map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setSelectedSeasonId(s.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                      s.id === seasonId
-                        ? 'bg-emerald-600 border-emerald-500 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                    }`}
-                  >
-                    {s.name} {s.id === seasonId ? '(Selected)' : ''}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <form
-              onSubmit={handleCreateSeason}
-              className="pt-3 border-t border-slate-800 space-y-3"
-            >
-              <label className="block text-xs font-semibold text-slate-300">
-                Create a New Season (e.g. Summer 2027)
-              </label>
-              <input
-                type="text"
-                required
-                value={newSeasonName}
-                onChange={(e) => setNewSeasonName(e.target.value)}
-                placeholder="e.g. Summer 2027"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-              />
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Divisions for New Season (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={newSeasonDivisionsInput}
-                  onChange={(e) => setNewSeasonDivisionsInput(e.target.value)}
-                  placeholder="Premier League, Division 1, Division 2, Division 3"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-                />
-              </div>
-
-              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={copyTeamsToNewSeason}
-                  onChange={(e) => setCopyTeamsToNewSeason(e.target.checked)}
-                  className="rounded border-slate-700 text-emerald-600 focus:ring-emerald-500"
-                />
-                Copy all teams, players &amp; Captain PINs from {seasonName}{' '}
-                into the new season
-              </label>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
-              >
-                Create New Season
-              </button>
-              {seasonCreatedMsg && (
-                <p className="text-xs text-emerald-400 font-semibold">
-                  {seasonCreatedMsg}
-                </p>
-              )}
-            </form>
-          </div>
-
-          {/* Manage Divisions for Current Season Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-400" />
-                Divisions in {seasonName} ({divisions.length})
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Add or remove divisions for <strong>{seasonName}</strong>.
-                Each season can have its own custom set of divisions.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {divisions.map((div) => {
-                const count = teams.filter((t) => t.division === div).length;
-                return (
-                  <div
-                    key={div}
-                    className="inline-flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white"
-                  >
-                    <span className="font-bold">{div}</span>
-                    <span className="text-[10px] text-slate-400">
-                      ({count} teams)
-                    </span>
-                    {divisions.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDivision(div)}
-                        className="text-slate-500 hover:text-red-400 font-bold ml-1"
-                        title="Remove division"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <form onSubmit={handleAddDivision} className="flex gap-2">
-              <input
-                type="text"
-                value={newDivisionInput}
-                onChange={(e) => {
-                  setNewDivisionInput(e.target.value);
-                  setDivisionError('');
-                }}
-                placeholder="e.g. Division 4 or Summer Group A"
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white"
-              />
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add Division
-              </button>
-            </form>
-
-            {divisionError && (
-              <p className="text-xs text-red-400 font-medium">
-                {divisionError}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: SETTINGS (MASTER ADMIN PIN & SECURITY) */}
+      {/* TAB 4: SETTINGS (MASTER ADMIN PIN & SECURITY) */}
       {activeTab === 'settings' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">

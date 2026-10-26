@@ -167,6 +167,7 @@ interface LeagueContextValue {
     startDate: string
   ) => Promise<number>;
   deleteFixture: (fixtureId: string) => Promise<void>;
+  updateFixtureDetails: (updated: Fixture) => Promise<void>;
   saveFixture: (
     updated: Fixture,
     editedSide?: 'home' | 'away' | 'frames'
@@ -1221,6 +1222,38 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
+  const updateFixtureDetails = useCallback(
+    async (updated: Fixture): Promise<void> => {
+      const stamped: Fixture = {
+        ...updated,
+        updatedAt: new Date().toISOString(),
+      };
+      const nextFixtures = allFixtures.map((f) =>
+        f.id === stamped.id ? stamped : f
+      );
+      setAllFixtures(nextFixtures);
+      persistLocal(allTeams, allPlayers, nextFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_upsert_fixture', {
+          p_admin_pin: adminPin,
+          p_id: stamped.id,
+          p_season_id: stamped.seasonId,
+          p_division: stamped.division,
+          p_match_date: stamped.matchDate,
+          p_week_number: stamped.weekNumber,
+          p_home_team_id: stamped.homeTeamId,
+          p_away_team_id: stamped.awayTeamId,
+          p_status: stamped.status,
+          p_lineups: stamped.lineups,
+          p_frames: stamped.frames,
+        });
+      }
+    },
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+  );
+
   const pushFixtureToSupabase = useCallback(
     async (
       updated: Fixture,
@@ -1463,6 +1496,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         addFixture,
         generateDivisionFixtures,
         deleteFixture,
+        updateFixtureDetails,
         saveFixture,
         approveFixture,
         reopenFixture,
