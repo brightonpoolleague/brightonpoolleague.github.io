@@ -70,16 +70,16 @@ const MainShell: React.FC = () => {
       icon: Trophy,
     },
     {
-      id: 'teams',
-      label: 'Teams & Venues',
-      shortLabel: 'Venues',
-      icon: MapPin,
-    },
-    {
       id: 'stats',
       label: 'Player Stats',
       shortLabel: 'Stats',
       icon: BarChart3,
+    },
+    {
+      id: 'teams',
+      label: 'Teams & Venues',
+      shortLabel: 'Venues',
+      icon: MapPin,
     },
     {
       id: 'rules',

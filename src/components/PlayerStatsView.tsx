@@ -7,7 +7,7 @@ import { computePlayerStats } from '../utils/leagueEngine';
 export const PlayerStatsView: React.FC = () => {
   const { seasonName, divisions, teams, players, fixtures } = useLeague();
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(
-    'ALL'
+    () => divisions[0] || 'Premier League'
   );
   const [activeBoard, setActiveBoard] = useState<'averages' | 'dishes'>(
     'averages'
@@ -15,8 +15,14 @@ export const PlayerStatsView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [includeLive, setIncludeLive] = useState(true);
 
+  // Player averages are strictly per division (never across All Divisions)
+  const effectiveDivision =
+    activeBoard === 'averages' && selectedDivision === 'ALL'
+      ? divisions[0] || 'Premier League'
+      : selectedDivision;
+
   const { averagesTable, dishTable } = computePlayerStats(
-    selectedDivision,
+    effectiveDivision,
     teams,
     players,
     fixtures,
@@ -44,7 +50,9 @@ export const PlayerStatsView: React.FC = () => {
               {seasonName} Individual Leaderboards
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-              Player Averages &amp; Dish Table
+              {activeBoard === 'averages'
+                ? `${effectiveDivision} Player Averages`
+                : `${effectiveDivision === 'ALL' ? 'All Divisions' : effectiveDivision} Dish Leaderboard`}
             </h1>
           </div>
 
@@ -80,7 +88,12 @@ export const PlayerStatsView: React.FC = () => {
           <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               type="button"
-              onClick={() => setActiveBoard('averages')}
+              onClick={() => {
+                setActiveBoard('averages');
+                if (selectedDivision === 'ALL') {
+                  setSelectedDivision(divisions[0] || 'Premier League');
+                }
+              }}
               className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition ${
                 activeBoard === 'averages'
                   ? 'bg-emerald-600 text-white shadow'
@@ -118,31 +131,36 @@ export const PlayerStatsView: React.FC = () => {
 
         {/* Division Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => setSelectedDivision('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-              selectedDivision === 'ALL'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-            }`}
-          >
-            All Divisions
-          </button>
-          {divisions.map((div) => (
+          {activeBoard === 'dishes' && (
             <button
-              key={div}
               type="button"
-              onClick={() => setSelectedDivision(div)}
+              onClick={() => setSelectedDivision('ALL')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-                selectedDivision === div
+                selectedDivision === 'ALL'
                   ? 'bg-emerald-600 text-white'
                   : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
-              {div}
+              All Divisions
             </button>
-          ))}
+          )}
+          {divisions.map((div) => {
+            const isSelected = effectiveDivision === div;
+            return (
+              <button
+                key={div}
+                type="button"
+                onClick={() => setSelectedDivision(div)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                  isSelected
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                {div}
+              </button>
+            );
+          })}
         </div>
       </div>
 
