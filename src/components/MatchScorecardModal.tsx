@@ -1081,9 +1081,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           )}
 
-          {/* Captain Signatures & League Admin Approval Card (top) */}
-          {showSignOff && renderSignOffCard()}
-
           {viewMode === 'mobile' ? (
             <>
               {/* Set Tabs (Set 1, Set 2, Set 3) */}
