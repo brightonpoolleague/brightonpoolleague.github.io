@@ -1,0 +1,30 @@
+name: Daily Supabase Keep-Alive
+
+on:
+  schedule:
+    # Runs daily at 06:00 UTC to ensure Supabase database never pauses due to inactivity
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allows manual ping anytime from the GitHub Actions tab
+
+jobs:
+  ping:
+    name: Ping Supabase Database
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Pinging Supabase database to maintain activity and prevent pause..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: sb_publishable_XZofgwk2aqlKFq8WKOmELg_UwfD6YcS" \
+            -H "Authorization: Bearer sb_publishable_XZofgwk2aqlKFq8WKOmELg_UwfD6YcS" \
+            "https://sttjprycpauamxkiwqit.supabase.co/rest/v1/seasons?select=id&limit=1")
+          
+          echo "HTTP Status Code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "Successfully pinged Supabase. Database is active and awake!"
+          else
+            echo "Unexpected HTTP status: $HTTP_STATUS"
+            exit 1
+          fi
