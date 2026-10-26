@@ -59,6 +59,10 @@ export interface MatchLineups {
     home: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
     away: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
   };
+  unlockRequested?: {
+    home?: boolean;
+    away?: boolean;
+  };
 }
 
 export type FrameWinner = 'home' | 'away' | null;

@@ -265,6 +265,8 @@ declare
   v_away_locked boolean;
   v_home_signed boolean;
   v_away_signed boolean;
+  v_home_unlock_req boolean;
+  v_away_unlock_req boolean;
 begin
   -- Verify Captain PIN for the claimed team
   if not public.verify_captain_pin(p_team_id, p_pin) then
@@ -331,8 +333,34 @@ begin
     v_away_signed := p_away_captain_signed;
   end if;
 
-  -- Enforce that a captain can ONLY modify lineups, Set 1 lock, and signature for their own team
+  v_home_unlock_req := coalesce((v_fixture.lineups->'unlockRequested'->>'home')::boolean, false);
+  v_away_unlock_req := coalesce((v_fixture.lineups->'unlockRequested'->>'away')::boolean, false);
+
+  -- Enforce that a captain can ONLY modify lineups, Set 1 lock, and signature for their own team,
+  -- and that once both captains have locked Set 1, unlocking requires BOTH captains to unlock.
   if p_team_id = v_fixture.home_team_id then
+    if p_edited_side <> 'frames' then
+      v_home_unlock_req := coalesce((p_lineups->'unlockRequested'->>'home')::boolean, false);
+    end if;
+
+    if v_fixture.home_set1_locked and v_fixture.away_set1_locked then
+      if (v_home_unlock_req and v_away_unlock_req) or (not p_home_set1_locked and v_away_unlock_req) then
+        v_home_locked := false;
+        v_away_locked := false;
+        v_home_unlock_req := false;
+        v_away_unlock_req := false;
+      else
+        v_home_locked := true;
+        v_away_locked := true;
+      end if;
+    else
+      v_away_locked := v_fixture.away_set1_locked;
+      if v_home_locked and v_away_locked then
+        v_home_unlock_req := false;
+        v_away_unlock_req := false;
+      end if;
+    end if;
+
     v_merged_lineups := jsonb_build_object(
       'set1', jsonb_build_object(
         'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home') else p_lineups->'set1'->'home' end,
@@ -345,11 +373,33 @@ begin
       'set3', jsonb_build_object(
         'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home') else p_lineups->'set3'->'home' end,
         'away', coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away')
-      )
+      ),
+      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req)
     );
-    v_away_locked := v_fixture.away_set1_locked;
     v_away_signed := v_fixture.away_captain_signed;
   elsif p_team_id = v_fixture.away_team_id then
+    if p_edited_side <> 'frames' then
+      v_away_unlock_req := coalesce((p_lineups->'unlockRequested'->>'away')::boolean, false);
+    end if;
+
+    if v_fixture.home_set1_locked and v_fixture.away_set1_locked then
+      if (v_home_unlock_req and v_away_unlock_req) or (not p_away_set1_locked and v_home_unlock_req) then
+        v_home_locked := false;
+        v_away_locked := false;
+        v_home_unlock_req := false;
+        v_away_unlock_req := false;
+      else
+        v_home_locked := true;
+        v_away_locked := true;
+      end if;
+    else
+      v_home_locked := v_fixture.home_set1_locked;
+      if v_home_locked and v_away_locked then
+        v_home_unlock_req := false;
+        v_away_unlock_req := false;
+      end if;
+    end if;
+
     v_merged_lineups := jsonb_build_object(
       'set1', jsonb_build_object(
         'home', coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home'),
@@ -362,9 +412,9 @@ begin
       'set3', jsonb_build_object(
         'home', coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home'),
         'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away') else p_lineups->'set3'->'away' end
-      )
+      ),
+      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req)
     );
-    v_home_locked := v_fixture.home_set1_locked;
     v_home_signed := v_fixture.home_captain_signed;
   end if;
 

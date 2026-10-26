@@ -205,6 +205,9 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
       home: [...lineups.set3.home] as MatchLineups['set3']['home'],
       away: [...lineups.set3.away] as MatchLineups['set3']['away'],
     },
+    ...(lineups.unlockRequested
+      ? { unlockRequested: { ...lineups.unlockRequested } }
+      : {}),
   };
 
   (['home', 'away'] as const).forEach((side) => {
@@ -571,7 +574,6 @@ export function computePlayerStats(
 
   return { averagesTable, dishTable };
 }
-
 
 const MONTH_NAMES = [
   'January',
