@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { BarChart3, Search, ShieldCheck, Sparkles, Trophy } from 'lucide-react';
+import {
+  BarChart3,
+  Camera,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+} from 'lucide-react';
 import { Division } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 import { computePlayerStats } from '../utils/leagueEngine';
+import { ExportTableModal } from './ExportTableModal';
 
 export const PlayerStatsView: React.FC = () => {
   const { seasonName, divisions, teams, players, fixtures } = useLeague();
@@ -14,6 +22,7 @@ export const PlayerStatsView: React.FC = () => {
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [includeLive, setIncludeLive] = useState(true);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Player averages are strictly per division (never across All Divisions)
   const effectiveDivision =
@@ -56,30 +65,42 @@ export const PlayerStatsView: React.FC = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => setIncludeLive(true)}
-              className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                includeLive
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              onClick={() => setShowExportModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
+              title="Export Leaderboard as Image (PNG / JPG / WhatsApp)"
             >
-              Include Live
+              <Camera className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Export Image</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setIncludeLive(false)}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold transition ${
-                !includeLive
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Approved Only
-            </button>
+
+            <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+              <button
+                type="button"
+                onClick={() => setIncludeLive(true)}
+                className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                  includeLive
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Include Live
+              </button>
+              <button
+                type="button"
+                onClick={() => setIncludeLive(false)}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold transition ${
+                  !includeLive
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Approved Only
+              </button>
+            </div>
           </div>
         </div>
 
@@ -270,6 +291,66 @@ export const PlayerStatsView: React.FC = () => {
           </div>
         )}
       </div>
+      {/* Export Table Image Modal */}
+      <ExportTableModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        title={activeBoard === 'dishes' ? 'Dish Leaderboard' : 'Player Averages'}
+        divisionName={
+          activeBoard === 'dishes' && effectiveDivision === 'ALL'
+            ? undefined
+            : effectiveDivision
+        }
+        seasonName={seasonName}
+        badgeText={
+          activeBoard === 'dishes' && effectiveDivision === 'ALL'
+            ? 'All Divisions'
+            : includeLive
+            ? 'Live Standings'
+            : 'Approved Only'
+        }
+        columns={
+          activeBoard === 'dishes'
+            ? [
+                { header: 'Player & Team', align: 'left' },
+                { header: 'P', align: 'center' },
+                { header: 'W', align: 'center' },
+                { header: 'L', align: 'center' },
+                { header: 'Win %', align: 'center' },
+                { header: 'Dishes', align: 'center' },
+              ]
+            : [
+                { header: 'Player & Team', align: 'left' },
+                { header: 'P', align: 'center' },
+                { header: 'W', align: 'center' },
+                { header: 'L', align: 'center' },
+                { header: 'Dishes', align: 'center' },
+                { header: 'Win %', align: 'center' },
+              ]
+        }
+        rows={list.map((r, i) => ({
+          rank: i + 1,
+          primaryText: r.player.name,
+          secondaryText: `${r.team.name} (${r.team.division})`,
+          values:
+            activeBoard === 'dishes'
+              ? [
+                  r.played,
+                  r.won,
+                  r.lost,
+                  `${r.winPercentage.toFixed(1)}%`,
+                  r.dishes,
+                ]
+              : [
+                  r.played,
+                  r.won,
+                  r.lost,
+                  r.dishes,
+                  `${r.winPercentage.toFixed(1)}%`,
+                ],
+        }))}
+        fileBaseName={`${seasonName}-${effectiveDivision}-${activeBoard}`}
+      />
     </div>
   );
 };
