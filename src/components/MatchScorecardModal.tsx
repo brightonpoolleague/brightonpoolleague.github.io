@@ -270,6 +270,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleToggleSign = async (side: 'home' | 'away') => {
     if (!editable) return;
+    if (!fixture.frames.every((f) => f.winner !== null)) return;
     if (side === 'home' && !canSignHome) return;
     if (side === 'away' && !canSignAway) return;
     const nextHomeSigned =
@@ -728,6 +729,118 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const setFrames = fixture.frames.filter((f) => f.setNumber === activeSet);
 
+  const allFramesComplete = fixture.frames.every((f) => f.winner !== null);
+  const showSignOff = allFramesComplete || fixture.status === 'approved';
+
+  const renderSignOffCard = () => (
+    <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h4 className="text-sm font-bold text-white">
+            Captain Sign-Off & Result Submission
+          </h4>
+          <p className="text-xs text-slate-400">
+            All 15 frames recorded — final score {homeTeam.name}{' '}
+            {score.homeFrames}–{score.awayFrames} {awayTeam.name}. Both
+            captains sign to submit the result.
+          </p>
+        </div>
+        {fixture.status === 'approved' && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+            <ShieldCheck className="w-4 h-4" /> Officially Approved
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button"
+          disabled={!canSignHome}
+          onClick={() => handleToggleSign('home')}
+          className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
+            fixture.homeCaptainSigned
+              ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
+              : canSignHome
+              ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+              : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
+          }`}
+        >
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-400">
+              Home Captain Signature
+            </div>
+            <div className="font-bold text-sm">
+              {homeTeam.captainName || homeTeam.name}
+            </div>
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
+            {fixture.homeCaptainSigned
+              ? '✓ Signed'
+              : canSignHome
+              ? 'Tap to Sign'
+              : 'Home Captain Only'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          disabled={!canSignAway}
+          onClick={() => handleToggleSign('away')}
+          className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
+            fixture.awayCaptainSigned
+              ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
+              : canSignAway
+              ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+              : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
+          }`}
+        >
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-400">
+              Away Captain Signature
+            </div>
+            <div className="font-bold text-sm">
+              {awayTeam.captainName || awayTeam.name}
+            </div>
+          </div>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
+            {fixture.awayCaptainSigned
+              ? '✓ Signed'
+              : canSignAway
+              ? 'Tap to Sign'
+              : 'Away Captain Only'}
+          </span>
+        </button>
+      </div>
+
+      {canManageLeague && (
+        <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs text-slate-400">League Admin Controls:</span>
+          <div className="flex items-center gap-2">
+            {fixture.status !== 'approved' ? (
+              <button
+                type="button"
+                onClick={() => approveFixture(fixture.id)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Approve Official Scorecard
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => reopenFixture(fixture.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                Reopen Scorecard for Editing
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col overflow-hidden">
       {/* Top Bar */}
@@ -948,6 +1061,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </span>
             </div>
           )}
+
+          {/* Captain Signatures & League Admin Approval Card (top) */}
+          {showSignOff && renderSignOffCard()}
 
           {viewMode === 'mobile' ? (
             <>
@@ -1333,113 +1449,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           )}
 
-          {/* Captain Signatures & League Admin Approval Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h4 className="text-sm font-bold text-white">
-                  Captain Sign-Off & Result Submission
-                </h4>
-                <p className="text-xs text-slate-400">
-                  Both captains sign off when all 15 frames are complete ({score.completedFrames}/15 recorded).
-                </p>
-              </div>
-              {fixture.status === 'approved' && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
-                  <ShieldCheck className="w-4 h-4" /> Officially Approved
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                disabled={!canSignHome}
-                onClick={() => handleToggleSign('home')}
-                className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
-                  fixture.homeCaptainSigned
-                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
-                    : canSignHome
-                    ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                    : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
-                }`}
-              >
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                    Home Captain Signature
-                  </div>
-                  <div className="font-bold text-sm">
-                    {homeTeam.captainName || homeTeam.name}
-                  </div>
-                </div>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
-                  {fixture.homeCaptainSigned
-                    ? '✓ Signed'
-                    : canSignHome
-                    ? 'Tap to Sign'
-                    : 'Home Captain Only'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                disabled={!canSignAway}
-                onClick={() => handleToggleSign('away')}
-                className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
-                  fixture.awayCaptainSigned
-                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
-                    : canSignAway
-                    ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-                    : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
-                }`}
-              >
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                    Away Captain Signature
-                  </div>
-                  <div className="font-bold text-sm">
-                    {awayTeam.captainName || awayTeam.name}
-                  </div>
-                </div>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
-                  {fixture.awayCaptainSigned
-                    ? '✓ Signed'
-                    : canSignAway
-                    ? 'Tap to Sign'
-                    : 'Away Captain Only'}
-                </span>
-              </button>
-            </div>
-
-            {canManageLeague && (
-              <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs text-slate-400">
-                  League Admin Controls:
-                </span>
-                <div className="flex items-center gap-2">
-                  {fixture.status !== 'approved' ? (
-                    <button
-                      type="button"
-                      onClick={() => approveFixture(fixture.id)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      Approve Official Scorecard
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => reopenFixture(fixture.id)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold"
-                    >
-                      <Unlock className="w-3.5 h-3.5" />
-                      Reopen Scorecard for Editing
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Captain Signatures & League Admin Approval Card (bottom) */}
+          {showSignOff && renderSignOffCard()}
         </div>
       </div>
     </div>
