@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyRound, LogOut, Shield, UserCheck, X } from 'lucide-react';
+import { KeyRound, LogOut, Shield, ShieldCheck, UserCheck, X } from 'lucide-react';
 import { useLeague } from '../context/LeagueContext';
 
 interface RoleSwitcherModalProps {
@@ -189,6 +189,25 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               </p>
             )}
           </form>
+        ) : session.role === 'admin' ? (
+          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-center">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/40">
+              <ShieldCheck className="w-4 h-4" /> You are logged in as League Admin
+            </div>
+            <p className="text-xs text-slate-400">
+              You have full administrative privileges to manage teams, players, fixtures, and scorecards.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onAdminLoginSuccess?.();
+                onClose();
+              }}
+              className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
+            >
+              Go to League Admin Portal
+            </button>
+          </div>
         ) : (
           <form
             onSubmit={handleAdminLogin}
