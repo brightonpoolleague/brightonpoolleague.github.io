@@ -207,7 +207,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               }}
               className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
             >
-              Go to League Admin Portal
+              Go to League Admin Control Panel
             </button>
           </div>
         ) : (
