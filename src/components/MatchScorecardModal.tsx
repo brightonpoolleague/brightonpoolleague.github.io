@@ -1081,10 +1081,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 ) : (
                   <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
                 )}
-                <span>
+                <span className="font-medium text-slate-200">
                   {!isOnline
-                    ? 'Offline: Scores and lineups are saved locally on this device and will sync automatically when connection returns.'
-                    : syncError}
+                    ? 'You are currently offline.'
+                    : 'Weak connection detected.'}
                 </span>
               </div>
               <button
@@ -1096,13 +1096,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 <RefreshCw
                   className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`}
                 />
-                <span>
-                  {isSyncing
-                    ? 'Checking...'
-                    : !isOnline
-                    ? 'Check Connection'
-                    : 'Retry Sync'}
-                </span>
+                <span>{isSyncing ? 'Retrying...' : 'Retry'}</span>
               </button>
             </div>
           )}

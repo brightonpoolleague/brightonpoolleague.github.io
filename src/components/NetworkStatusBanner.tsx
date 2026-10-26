@@ -36,14 +36,13 @@ export const NetworkStatusBanner: React.FC = () => {
                   : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
               }`}
             >
-              {isOffline ? 'Offline' : 'Weak Signal'}
+              {isOffline ? 'Offline' : 'Weak Connection'}
             </span>
 
             <span className="font-medium text-slate-200">
               {isOffline
-                ? 'You are offline. Scores and lineups are saved locally on this device and will auto-sync once connection is restored.'
-                : syncError ||
-                  'Connection is weak. Saved locally on your device and will sync automatically.'}
+                ? 'You are currently offline.'
+                : 'Weak connection detected.'}
             </span>
           </div>
         </div>
@@ -53,18 +52,12 @@ export const NetworkStatusBanner: React.FC = () => {
           onClick={() => retryPendingSync()}
           disabled={isSyncing}
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-200 text-xs font-semibold shrink-0 transition disabled:opacity-50"
-          title="Try to reconnect and sync changes"
+          title="Retry connection"
         >
           <RefreshCw
             className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`}
           />
-          <span>
-            {isSyncing
-              ? 'Checking...'
-              : isOffline
-              ? 'Check Connection'
-              : 'Retry Sync'}
-          </span>
+          <span>{isSyncing ? 'Retrying...' : 'Retry'}</span>
         </button>
       </div>
     </aside>

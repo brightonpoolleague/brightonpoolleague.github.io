@@ -1431,9 +1431,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const ok = await pushFixtureToSupabase(updated, editedSide);
       if (!ok) {
         setPendingFixtureSync({ fixture: updated, editedSide });
-        setSyncError(
-          'Weak signal — saved on your phone and will sync automatically when connected.'
-        );
+        setSyncError('Weak connection detected.');
       } else {
         setPendingFixtureSync(null);
         setSyncError(null);
