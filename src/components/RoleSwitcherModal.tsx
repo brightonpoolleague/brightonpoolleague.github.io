@@ -19,6 +19,10 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     loginAsAdminWithPin,
   } = useLeague();
 
+  const [loginTab, setLoginTab] = useState<'captain' | 'admin'>(
+    session.role === 'admin' ? 'admin' : 'captain'
+  );
+
   const [selectedTeamId, setSelectedTeamId] = useState<string>(
     session.teamId || teams[0]?.id || ''
   );
@@ -55,17 +59,16 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-              PIN Authentication
-            </span>
-            <h3 className="text-lg font-black text-white">
-              Captain &amp; Admin Login
-            </h3>
-          </div>
+          <h3 className="text-lg font-black text-white">Login</h3>
           <button
             type="button"
             onClick={onClose}
@@ -95,37 +98,53 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
           </div>
         )}
 
-        <div className="space-y-3">
-          <form
-            onSubmit={handleCaptainLogin}
-            className={`p-3.5 rounded-xl border transition space-y-2.5 ${
-              session.role === 'captain'
-                ? 'bg-emerald-600/15 border-emerald-500 text-white'
-                : 'bg-slate-950 border-slate-800 text-slate-300'
+        {/* 2-Tab Switcher: Team Captain | League Admin */}
+        <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setLoginTab('captain')}
+            className={`inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition ${
+              loginTab === 'captain'
+                ? 'bg-emerald-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <div className="flex items-start gap-3">
-              <UserCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="font-bold text-sm text-white">
-                  Team Captain Login
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Select your team and enter your 8-digit Team PIN to fill in
-                  your live match score sheet.
-                </p>
-              </div>
-            </div>
+            <UserCheck className="w-3.5 h-3.5" />
+            Team Captain
+          </button>
+          <button
+            type="button"
+            onClick={() => setLoginTab('admin')}
+            className={`inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition ${
+              loginTab === 'admin'
+                ? 'bg-emerald-600 text-white shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            League Admin
+          </button>
+        </div>
+
+        {loginTab === 'captain' ? (
+          <form
+            onSubmit={handleCaptainLogin}
+            className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3"
+          >
+            <p className="text-xs text-slate-400">
+              Select your team and enter your 8-digit Team PIN to fill in your
+              live match score sheet.
+            </p>
 
             {teams.length > 0 ? (
-              <div className="space-y-2 pt-1">
+              <div className="space-y-2.5">
                 <select
                   value={selectedTeamId}
                   onChange={(e) => {
                     setSelectedTeamId(e.target.value);
                     setCaptainError('');
                   }}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"
                 >
                   <option value="">-- Choose Your Team --</option>
                   {teams.map((t) => (
@@ -147,13 +166,13 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                         setCaptainError('');
                       }}
                       placeholder="8-digit Team PIN"
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-2 text-xs text-white"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={!selectedTeamId}
-                    className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
                   >
                     Log In
                   </button>
@@ -170,29 +189,17 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               </p>
             )}
           </form>
-
+        ) : (
           <form
             onSubmit={handleAdminLogin}
-            className={`p-3.5 rounded-xl border transition space-y-2.5 ${
-              session.role === 'admin'
-                ? 'bg-emerald-600/15 border-emerald-500 text-white'
-                : 'bg-slate-950 border-slate-800 text-slate-300'
-            }`}
+            className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3"
           >
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="font-bold text-sm text-white">
-                  League Admin Login
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Manage seasons, divisions, teams, players, Team Captain PINs,
-                  and approve scorecards.
-                </p>
-              </div>
-            </div>
+            <p className="text-xs text-slate-400">
+              Enter the Master League Admin PIN to manage teams, players, Team
+              Captain PINs, fixtures, and approve scorecards.
+            </p>
 
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <KeyRound className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -204,12 +211,12 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                     setAdminError('');
                   }}
                   placeholder="Enter Admin PIN"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-2 text-xs text-white"
                 />
               </div>
               <button
                 type="submit"
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
               >
                 Log In
               </button>
@@ -220,7 +227,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               </p>
             )}
           </form>
-        </div>
+        )}
       </div>
     </div>
   );
