@@ -21,6 +21,7 @@ export const LOCAL_TEST_TEAMS: Team[] = [
     address: '13–17 Marlborough Place, Brighton BN1 1UB',
     captainName: 'Dave Mercer',
     captainPin: '11111111',
+    tableNumber: 'Table 1',
   },
   {
     id: 'team-cob-a',
@@ -31,6 +32,7 @@ export const LOCAL_TEST_TEAMS: Team[] = [
     address: '39 Ditchling Road, Brighton BN1 4SB',
     captainName: 'Sam Hollis',
     captainPin: '22222222',
+    tableNumber: 'Table 1',
   },
   {
     id: 'team-castle-a',
@@ -41,6 +43,7 @@ export const LOCAL_TEST_TEAMS: Team[] = [
     address: '20–21 Castle Street, Brighton BN1 2HD',
     captainName: 'Liam Vance',
     captainPin: '33333333',
+    tableNumber: 'Table 1',
   },
   {
     id: 'team-hollingbury-a',
@@ -63,6 +66,7 @@ export const LOCAL_TEST_TEAMS: Team[] = [
     address: '13–17 Marlborough Place, Brighton BN1 1UB',
     captainName: 'Chris Barker',
     captainPin: '55555555',
+    tableNumber: 'Table 2',
   },
   {
     id: 'team-sportsman',

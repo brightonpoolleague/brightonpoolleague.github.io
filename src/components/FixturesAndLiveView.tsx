@@ -309,7 +309,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               <div className="flex items-center gap-1.5 text-xs text-slate-300 truncate">
                 <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span className="truncate">
-                  {home?.venue} {home?.address ? `• ${home.address}` : ''}
+                  {home?.venue}
+                  {home?.tableNumber ? ` (${home.tableNumber})` : ''}
+                  {home?.address ? ` • ${home.address}` : ''}
                 </span>
               </div>
 
@@ -470,7 +472,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 <div className="flex items-center justify-between gap-2 pt-1">
                   <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
                     <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span className="truncate">{home.venue}</span>
+                    <span className="truncate">
+                      {home.venue}
+                      {home.tableNumber ? ` (${home.tableNumber})` : ''}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">

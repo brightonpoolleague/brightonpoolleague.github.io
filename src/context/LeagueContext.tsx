@@ -78,6 +78,7 @@ function mapTeamRow(
     address: String(r.address ?? ''),
     captainName: String(r.captain_name ?? ''),
     captainPin: existingPin,
+    tableNumber: r.table_number ? String(r.table_number) : undefined,
   };
 }
 
@@ -928,6 +929,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_address: newTeam.address,
           p_captain_name: newTeam.captainName,
           p_captain_pin: generatedPin,
+          p_table_number: newTeam.tableNumber ?? null,
         });
       }
       return newTeam;
@@ -964,6 +966,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_address: updatedTeam.address,
           p_captain_name: updatedTeam.captainName,
           p_captain_pin: null,
+          p_table_number: updatedTeam.tableNumber ?? null,
         });
       }
     },

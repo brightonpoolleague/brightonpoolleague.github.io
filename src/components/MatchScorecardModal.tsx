@@ -884,7 +884,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 truncate">
-              {homeTeam.venue} • {formatMatchDate(fixture.matchDate)}
+              {homeTeam.venue}
+              {homeTeam.tableNumber ? ` (${homeTeam.tableNumber})` : ''} •{' '}
+              {formatMatchDate(fixture.matchDate)}
             </p>
           </div>
         </div>

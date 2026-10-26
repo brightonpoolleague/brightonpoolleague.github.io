@@ -77,6 +77,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     venue: string;
     address: string;
     captainName: string;
+    tableNumber?: string;
   } | null>(null);
 
   // Fixture inline editing state
@@ -172,6 +173,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       venue: team.venue,
       address: team.address || '',
       captainName: team.captainName || '',
+      tableNumber: team.tableNumber || '',
     });
   };
 
@@ -184,6 +186,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       venue: teamDraft.venue.trim(),
       address: teamDraft.address.trim(),
       captainName: teamDraft.captainName.trim(),
+      tableNumber: teamDraft.tableNumber?.trim() || undefined,
     });
     setEditingTeamId(null);
     setTeamDraft(null);
@@ -360,6 +363,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </h3>
                         <p className="text-xs text-slate-400">
                           Venue: {team.venue}
+                          {team.tableNumber ? ` (${team.tableNumber})` : ''}
                           {team.captainName
                             ? ` • Captain: ${team.captainName}`
                             : ''}
@@ -523,6 +527,23 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   captainName: e.target.value,
                                 })
                               }
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1">
+                              Table Number (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={teamDraft.tableNumber || ''}
+                              onChange={(e) =>
+                                setTeamDraft({
+                                  ...teamDraft,
+                                  tableNumber: e.target.value,
+                                })
+                              }
+                              placeholder="e.g. Table 1"
                               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                             />
                           </div>

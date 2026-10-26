@@ -46,8 +46,11 @@ create table if not exists public.teams (
   venue text not null,
   address text not null default '',
   captain_name text not null default '',
+  table_number text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.teams add column if not exists table_number text not null default '';
 
 -- Drop any legacy fixed division check constraint so Admins can add new divisions freely
 alter table public.teams drop constraint if exists teams_division_check;
@@ -515,7 +518,7 @@ begin
 end;
 $$;
 
--- 9. Admin Upsert Team (+ optional Captain PIN)
+-- 9. Admin Upsert Team (+ optional Captain PIN & Table Number)
 create or replace function public.admin_upsert_team(
   p_admin_pin text,
   p_id text,
@@ -525,7 +528,8 @@ create or replace function public.admin_upsert_team(
   p_venue text,
   p_address text,
   p_captain_name text,
-  p_captain_pin text default null
+  p_captain_pin text default null,
+  p_table_number text default null
 )
 returns boolean
 language plpgsql
@@ -536,14 +540,15 @@ begin
     raise exception 'Unauthorized: Invalid League Admin PIN';
   end if;
 
-  insert into public.teams (id, season_id, division, name, venue, address, captain_name)
-  values (p_id, p_season_id, p_division, trim(p_name), trim(p_venue), trim(coalesce(p_address, '')), trim(coalesce(p_captain_name, '')))
+  insert into public.teams (id, season_id, division, name, venue, address, captain_name, table_number)
+  values (p_id, p_season_id, p_division, trim(p_name), trim(p_venue), trim(coalesce(p_address, '')), trim(coalesce(p_captain_name, '')), trim(coalesce(p_table_number, '')))
   on conflict (id) do update
     set division = excluded.division,
         name = excluded.name,
         venue = excluded.venue,
         address = excluded.address,
-        captain_name = excluded.captain_name;
+        captain_name = excluded.captain_name,
+        table_number = excluded.table_number;
 
   if p_captain_pin is not null and length(trim(p_captain_pin)) > 0 then
     insert into public.team_pins (team_id, captain_pin, updated_at)

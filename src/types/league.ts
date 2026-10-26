@@ -41,6 +41,7 @@ export interface Team {
   address: string;
   captainName: string;
   captainPin: string;
+  tableNumber?: string;
 }
 
 // 'BYE' represents a missing player (No Player / BYE) in position 4 or 5

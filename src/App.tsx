@@ -5,6 +5,7 @@ import {
   Calendar,
   KeyRound,
   LogOut,
+  MapPin,
   Radio,
   Shield,
   Trophy,
@@ -14,12 +15,13 @@ import { LeagueProvider, useLeague } from './context/LeagueContext';
 import { FixturesAndLiveView } from './components/FixturesAndLiveView';
 import { LeagueTableView } from './components/LeagueTableView';
 import { PlayerStatsView } from './components/PlayerStatsView';
+import { TeamsAndVenuesView } from './components/TeamsAndVenuesView';
 import { AdminPortalView } from './components/AdminPortalView';
 import { DocsAndRulesView } from './components/DocsAndRulesView';
 import { MatchScorecardModal } from './components/MatchScorecardModal';
 import { RoleSwitcherModal } from './components/RoleSwitcherModal';
 
-type NavTab = 'fixtures' | 'table' | 'stats' | 'rules' | 'admin';
+type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'rules' | 'admin';
 
 const MainShell: React.FC = () => {
   const {
@@ -65,6 +67,12 @@ const MainShell: React.FC = () => {
       label: 'League Table',
       shortLabel: 'Table',
       icon: Trophy,
+    },
+    {
+      id: 'teams',
+      label: 'Teams & Venues',
+      shortLabel: 'Venues',
+      icon: MapPin,
     },
     {
       id: 'stats',
@@ -211,6 +219,7 @@ const MainShell: React.FC = () => {
           />
         )}
         {currentTab === 'table' && <LeagueTableView />}
+        {currentTab === 'teams' && <TeamsAndVenuesView />}
         {currentTab === 'stats' && <PlayerStatsView />}
         {currentTab === 'rules' && <DocsAndRulesView />}
         {currentTab === 'admin' && (
@@ -223,7 +232,10 @@ const MainShell: React.FC = () => {
       {/* Mobile Bottom Tab Navigation */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-1.5">
         <div
-          className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} gap-1`}
+          className="grid gap-1"
+          style={{
+            gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))`,
+          }}
         >
           {navItems.map((item) => {
             const Icon = item.icon;
