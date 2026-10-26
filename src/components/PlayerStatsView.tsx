@@ -88,7 +88,7 @@ export const PlayerStatsView: React.FC = () => {
               }`}
             >
               <Trophy className="w-3.5 h-3.5" />
-              Player Averages (8b)
+              Player Averages
             </button>
             <button
               type="button"
@@ -100,7 +100,7 @@ export const PlayerStatsView: React.FC = () => {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Dish Leaderboard (8c)
+              Dish Leaderboard
             </button>
           </div>
 
