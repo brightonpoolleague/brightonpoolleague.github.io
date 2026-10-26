@@ -159,6 +159,7 @@ interface LeagueContextValue {
   updateTeam: (team: Team) => Promise<void>;
   deleteTeam: (teamId: string) => Promise<void>;
   addPlayer: (teamId: string, name: string) => Promise<Player>;
+  updatePlayer: (player: Player) => Promise<void>;
   removePlayer: (playerId: string) => Promise<void>;
   transferPlayer: (playerId: string, toTeamId: string) => Promise<void>;
   addFixture: (data: {
@@ -1029,6 +1030,30 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
+  const updatePlayer = useCallback(
+    async (updatedPlayer: Player): Promise<void> => {
+      const cleanName = updatedPlayer.name.trim();
+      if (!cleanName) return;
+      const nextPlayers = allPlayers.map((p) =>
+        p.id === updatedPlayer.id ? { ...p, name: cleanName } : p
+      );
+      setAllPlayers(nextPlayers);
+      persistLocal(allTeams, nextPlayers, allFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_upsert_player', {
+          p_admin_pin: adminPin,
+          p_id: updatedPlayer.id,
+          p_team_id: updatedPlayer.teamId,
+          p_name: cleanName,
+          p_active: updatedPlayer.active,
+        });
+      }
+    },
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+  );
+
   const removePlayer = useCallback(
     async (playerId: string): Promise<void> => {
       const nextPlayers = allPlayers.filter((p) => p.id !== playerId);
@@ -1530,6 +1555,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         updateTeam,
         deleteTeam,
         addPlayer,
+        updatePlayer,
         removePlayer,
         transferPlayer,
         addFixture,

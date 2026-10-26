@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
+  Check,
   CheckCircle2,
   Copy,
   Edit3,
@@ -14,7 +15,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { Division, Fixture, Team } from '../types/league';
+import { Division, Fixture, Player, Team } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
 import { calculateMatchScore, formatMatchDate } from '../utils/leagueEngine';
 
@@ -40,6 +41,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     updateTeam,
     deleteTeam,
     addPlayer,
+    updatePlayer,
     removePlayer,
     transferPlayer,
     updateFixtureDetails,
@@ -79,6 +81,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     captainName: string;
     tableNumber?: string;
   } | null>(null);
+
+  // Player inline renaming state
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editingPlayerName, setEditingPlayerName] = useState('');
 
   // Fixture inline editing state
   const [editingFixtureId, setEditingFixtureId] = useState<string | null>(null);
@@ -160,6 +166,14 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       await addPlayer(teamId, name);
     }
     setNewPlayerByTeam((prev) => ({ ...prev, [teamId]: '' }));
+  };
+
+  const handleSavePlayerName = async (player: Player) => {
+    const trimmed = editingPlayerName.trim();
+    if (!trimmed) return;
+    await updatePlayer({ ...player, name: trimmed });
+    setEditingPlayerId(null);
+    setEditingPlayerName('');
   };
 
   const startEditingTeam = (team: Team) => {
@@ -570,65 +584,118 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         Signed-On Players ({squad.length}):
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {squad.map((player) => (
-                          <div
-                            key={player.id}
-                            className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200"
-                          >
-                            <span>{player.name}</span>
-                            {teams.length > 1 && (
-                              <select
-                                value={player.teamId}
-                                onChange={(e) => {
-                                  const targetId = e.target.value;
-                                  const targetTeam = teams.find(
-                                    (t) => t.id === targetId
-                                  );
-                                  if (targetTeam && targetId !== team.id) {
-                                    setConfirmDialog({
-                                      title: `Transfer ${player.name}?`,
-                                      message: `Move "${player.name}" from "${team.name}" to "${targetTeam.name}"?`,
-                                      confirmLabel: 'Transfer Player',
-                                      variant: 'warning',
-                                      onConfirm: () =>
-                                        transferPlayer(player.id, targetId),
-                                    });
+                        {squad.map((player) =>
+                          editingPlayerId === player.id ? (
+                            <div
+                              key={player.id}
+                              className="inline-flex items-center gap-1.5 bg-slate-900 border border-emerald-500/50 rounded-lg px-2 py-1 text-xs shadow-sm"
+                            >
+                              <input
+                                type="text"
+                                value={editingPlayerName}
+                                onChange={(e) =>
+                                  setEditingPlayerName(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleSavePlayerName(player);
+                                  } else if (e.key === 'Escape') {
+                                    setEditingPlayerId(null);
                                   }
                                 }}
-                                className="bg-transparent text-[10px] text-slate-500 hover:text-emerald-400 focus:outline-none cursor-pointer"
-                                title="Transfer player to another team"
+                                className="bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white font-medium focus:outline-none focus:border-emerald-500 w-32"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSavePlayerName(player)}
+                                className="text-emerald-400 hover:text-emerald-300 p-0.5"
+                                title="Save name"
                               >
-                                {teams.map((t) => (
-                                  <option
-                                    key={t.id}
-                                    value={t.id}
-                                    className="bg-slate-900 text-white"
-                                  >
-                                    {t.id === team.id
-                                      ? 'Transfer...'
-                                      : `→ ${t.name}`}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setConfirmDialog({
-                                  title: `Remove ${player.name}?`,
-                                  message: `Are you sure you want to remove "${player.name}" from "${team.name}"?`,
-                                  confirmLabel: 'Remove Player',
-                                  variant: 'danger',
-                                  onConfirm: () => removePlayer(player.id),
-                                })
-                              }
-                              className="text-slate-500 hover:text-red-400 font-bold"
-                              title="Remove player"
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingPlayerId(null)}
+                                className="text-slate-400 hover:text-slate-200 p-0.5"
+                                title="Cancel"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              key={player.id}
+                              className="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 hover:border-slate-700 transition"
                             >
-                              ×
-                            </button>
-                          </div>
-                        ))}
+                              <span className="font-medium text-slate-200">
+                                {player.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingPlayerId(player.id);
+                                  setEditingPlayerName(player.name);
+                                }}
+                                className="text-slate-500 hover:text-emerald-400 transition p-0.5"
+                                title={`Rename ${player.name}`}
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                              {teams.length > 1 && (
+                                <select
+                                  value={player.teamId}
+                                  onChange={(e) => {
+                                    const targetId = e.target.value;
+                                    const targetTeam = teams.find(
+                                      (t) => t.id === targetId
+                                    );
+                                    if (targetTeam && targetId !== team.id) {
+                                      setConfirmDialog({
+                                        title: `Transfer Player: ${player.name}?`,
+                                        message: `Move "${player.name}" from "${team.name}" to "${targetTeam.name}"?`,
+                                        confirmLabel: 'Transfer Player',
+                                        variant: 'warning',
+                                        onConfirm: () =>
+                                          transferPlayer(player.id, targetId),
+                                      });
+                                    }
+                                  }}
+                                  className="bg-transparent text-[10px] text-slate-500 hover:text-emerald-400 focus:outline-none cursor-pointer"
+                                  title="Transfer player to another team"
+                                >
+                                  {teams.map((t) => (
+                                    <option
+                                      key={t.id}
+                                      value={t.id}
+                                      className="bg-slate-900 text-white"
+                                    >
+                                      {t.id === team.id
+                                        ? 'Transfer...'
+                                        : `→ ${t.name}`}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setConfirmDialog({
+                                    title: `Delete Player: ${player.name}?`,
+                                    message: `Are you sure you want to permanently remove "${player.name}" from "${team.name}"?`,
+                                    confirmLabel: 'Delete Player',
+                                    variant: 'danger',
+                                    onConfirm: () => removePlayer(player.id),
+                                  })
+                                }
+                                className="text-slate-500 hover:text-red-400 transition p-0.5"
+                                title={`Delete ${player.name}`}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )
+                        )}
                         {squad.length === 0 && (
                           <span className="text-xs text-slate-500 italic">
                             No players signed on yet.
