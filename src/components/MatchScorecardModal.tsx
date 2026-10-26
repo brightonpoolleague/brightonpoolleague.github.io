@@ -999,54 +999,69 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           </div>
 
           {/* Lag Winner Bar */}
-          <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 font-medium">
-                Frame 1 Lag Winner (8 Breaks):
-              </span>
-              <button
-                type="button"
-                disabled={!editable}
-                onClick={() => handleLagChange('home')}
-                className={`px-2.5 py-1 rounded-md font-semibold transition ${
-                  fixture.lagWinner === 'home'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
-                }`}
-              >
-                {homeTeam.name}
-              </button>
-              <button
-                type="button"
-                disabled={!editable}
-                onClick={() => handleLagChange('away')}
-                className={`px-2.5 py-1 rounded-md font-semibold transition ${
-                  fixture.lagWinner === 'away'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
-                }`}
-              >
-                {awayTeam.name}
-              </button>
-            </div>
+          {viewMode === 'mobile' ? (
+            <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-medium">
+                  Frame 1 Lag Winner (8 Breaks):
+                </span>
+                <button
+                  type="button"
+                  disabled={!editable}
+                  onClick={() => handleLagChange('home')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                    fixture.lagWinner === 'home'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
+                  }`}
+                >
+                  {homeTeam.name}
+                </button>
+                <button
+                  type="button"
+                  disabled={!editable}
+                  onClick={() => handleLagChange('away')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                    fixture.lagWinner === 'away'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50'
+                  }`}
+                >
+                  {awayTeam.name}
+                </button>
+              </div>
 
-            {viewMode === 'mobile' && (canSignHome || canSignAway) && (
-            <button
-              type="button"
-              onClick={() => setShowLineupEditor((v) => !v)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium border border-slate-700"
-            >
-              <Users className="w-3.5 h-3.5 text-emerald-400" />
-              {showLineupEditor
-                ? activeSet === 1
-                  ? 'Hide Lineup'
-                  : 'Hide Subs'
-                : activeSet === 1
-                ? 'Edit Lineup'
-                : 'Make Subs'}
-            </button>
-            )}
-          </div>
+              {(canSignHome || canSignAway) && (
+                <button
+                  type="button"
+                  onClick={() => setShowLineupEditor((v) => !v)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium border border-slate-700"
+                >
+                  <Users className="w-3.5 h-3.5 text-emerald-400" />
+                  {showLineupEditor
+                    ? activeSet === 1
+                      ? 'Hide Lineup'
+                      : 'Hide Subs'
+                    : activeSet === 1
+                    ? 'Edit Lineup'
+                    : 'Make Subs'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs text-slate-400">
+              <span>
+                Frame 1 Lag Winner:{' '}
+                <strong className="text-white">
+                  {fixture.lagWinner === 'home'
+                    ? `${homeTeam.name} (8 breaks)`
+                    : fixture.lagWinner === 'away'
+                    ? `${awayTeam.name} (8 breaks)`
+                    : 'Not Selected'}
+                </strong>
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
