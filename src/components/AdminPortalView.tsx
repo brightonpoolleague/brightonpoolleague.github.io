@@ -4,13 +4,10 @@ import {
   Calendar,
   CheckCircle2,
   Copy,
-  Database,
-  Download,
   Edit3,
   KeyRound,
   RefreshCw,
   Save,
-  Settings,
   ShieldCheck,
   Trash2,
   UserPlus,
@@ -39,7 +36,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     adminPin,
     canManageLeague,
     loginAsAdminWithPin,
-    updateAdminPin,
     updateTeamPin,
     updateTeam,
     deleteTeam,
@@ -55,7 +51,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   } = useLeague();
 
   const [activeTab, setActiveTab] = useState<
-    'teams' | 'fixtures' | 'approvals' | 'settings'
+    'teams' | 'fixtures' | 'approvals'
   >('teams');
 
   const [unlockPinInput, setUnlockPinInput] = useState('');
@@ -93,9 +89,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     homeTeamId: string;
     awayTeamId: string;
   } | null>(null);
-
-  const [newMasterPin, setNewMasterPin] = useState(adminPin);
-  const [pinSavedMsg, setPinSavedMsg] = useState('');
 
   // Custom Confirmation Modal State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -169,32 +162,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setNewPlayerByTeam((prev) => ({ ...prev, [teamId]: '' }));
   };
 
-  const handleDownloadBackup = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      seasonId,
-      seasonName,
-      data: {
-        seasons,
-        teams,
-        players,
-        fixtures,
-        adminPin,
-      },
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `bpl-backup-${seasonId}-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const startEditingTeam = (team: Team) => {
     setEditingTeamId(team.id);
     setTeamDraft({
@@ -254,14 +221,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setFixtureDraft(null);
   };
 
-  const handleSaveMasterPin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMasterPin.trim()) return;
-    await updateAdminPin(newMasterPin.trim());
-    setPinSavedMsg('Master League Admin PIN updated!');
-    setTimeout(() => setPinSavedMsg(''), 3000);
-  };
-
   const filteredTeams = teams.filter(
     (t) => filterDivision === 'ALL' || t.division === filterDivision
   );
@@ -285,7 +244,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
 
         {/* Admin Section Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button
             type="button"
             onClick={() => setActiveTab('teams')}
@@ -296,7 +255,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            Teams &amp; PINs ({teams.length})
+            <span className="truncate">Teams &amp; PINs ({teams.length})</span>
           </button>
           <button
             type="button"
@@ -308,7 +267,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            Fixtures ({fixtures.length})
+            <span className="truncate">Fixtures ({fixtures.length})</span>
           </button>
           <button
             type="button"
@@ -320,19 +279,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Scorecards
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('settings')}
-            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-              activeTab === 'settings'
-                ? 'bg-emerald-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Settings className="w-3.5 h-3.5" />
-            Settings
+            <span className="truncate">Scorecards</span>
           </button>
         </div>
       </div>
@@ -1159,131 +1106,31 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         );
       })()}
 
-      {/* TAB 4: SETTINGS (MASTER ADMIN PIN & SECURITY) */}
-      {activeTab === 'settings' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
-            <form onSubmit={handleSaveMasterPin} className="space-y-3">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-amber-400" />
-                Master League Admin PIN
-              </h2>
-              <p className="text-xs text-slate-400">
-                This PIN unlocks the League Admin portal. Team Captain PINs are
-                managed directly on each team card in the{' '}
-                <strong>Teams &amp; PINs</strong> tab.
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  required
-                  value={newMasterPin}
-                  onChange={(e) => setNewMasterPin(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-amber-300"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
-                >
-                  Update Admin PIN
-                </button>
-              </div>
-              {pinSavedMsg && (
-                <p className="text-xs text-emerald-400 font-semibold">
-                  {pinSavedMsg}
-                </p>
-              )}
-            </form>
+      {!isCloudConnected && (
+        <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 mt-6">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              <strong>Local Sandbox Mode:</strong> Connected to local browser storage only.
+            </span>
           </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-400" />
-              All Team Captain PINs ({seasonName})
-            </h2>
-            {teams.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">
-                No teams added yet.
-              </p>
-            ) : (
-              <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-                {teams.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs"
-                  >
-                    <span className="font-semibold text-white">
-                      {t.name}{' '}
-                      <span className="text-slate-500">({t.division})</span>
-                    </span>
-                    <span className="font-mono font-bold text-amber-300">
-                      PIN: {t.captainPin}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Database Backup & Snapshot Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit md:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Database className="w-4 h-4 text-emerald-400" />
-                  Database Backups &amp; Snapshots
-                </h2>
-                <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-                  Automated backups run weekly every Sunday at 03:00 UTC via GitHub Actions,
-                  and are stored as downloadable artifacts for 90 days. You can also export an instant JSON
-                  snapshot of the league database directly to your device anytime.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleDownloadBackup}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Export Database Snapshot (.json)
-              </button>
-            </div>
-          </div>
-
-          {!isCloudConnected && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit md:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 text-emerald-400" />
-                    Local Sandbox Test Data
-                  </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Reset local browser storage back to the default 8 test teams,
-                    48 players, and 12 test fixtures across Division 1 &amp;
-                    Division 2.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfirmDialog({
-                      title: 'Reset Local Test Data?',
-                      message:
-                        'Reset your local browser storage back to the default 8 test teams, 48 players, and 12 test fixtures? Any local changes you made will be overwritten.',
-                      confirmLabel: 'Reset Test Data',
-                      variant: 'warning',
-                      onConfirm: () => resetLocalTestData(),
-                    })
-                  }
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Reset Local Test Data
-                </button>
-              </div>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() =>
+              setConfirmDialog({
+                title: 'Reset Local Test Data?',
+                message:
+                  'Reset your local browser storage back to the default 8 test teams, 48 players, and 12 test fixtures? Any local changes you made will be overwritten.',
+                confirmLabel: 'Reset Test Data',
+                variant: 'warning',
+                onConfirm: () => resetLocalTestData(),
+              })
+            }
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Reset Local Test Data
+          </button>
         </div>
       )}
 

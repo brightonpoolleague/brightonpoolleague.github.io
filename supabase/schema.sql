@@ -367,26 +367,10 @@ begin
 end;
 $$;
 
--- 5. Update the Master League Admin PIN (requires current valid Master Admin PIN)
-create or replace function public.set_admin_pin(p_current_admin_pin text, p_new_admin_pin text)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_current_admin_pin) then
-    raise exception 'Unauthorized: Invalid current League Admin PIN';
-  end if;
-
-  update public.league_settings
-  set admin_pin = trim(p_new_admin_pin),
-      updated_at = now()
-  where id = 'default';
-
-  return true;
-end;
-$$;
+-- 5. Master League Admin PIN Management
+-- Note: The Master Admin PIN cannot be updated via website RPCs. It is managed strictly
+-- in the Supabase Dashboard by the database owner to prevent any unauthorized takeover.
+drop function if exists public.set_admin_pin(text, text);
 
 -- 6. Captain Scorecard Save (Strictly restricted to the Captain's own team & unapproved matches)
 -- Uses row-level locking (FOR UPDATE) and side-aware JSON merging so two captains on separate

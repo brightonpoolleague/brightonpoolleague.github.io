@@ -150,7 +150,6 @@ interface LeagueContextValue {
   loginAsAdminWithPin: (
     pin: string
   ) => Promise<{ success: boolean; error?: string }>;
-  updateAdminPin: (newPin: string) => Promise<void>;
   updateTeamPin: (teamId: string, newPin: string) => Promise<void>;
   addTeam: (
     data: Omit<Team, 'id' | 'seasonId' | 'captainPin'> & {
@@ -690,23 +689,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       return { success: false, error: 'Incorrect League Admin PIN.' };
     },
     [adminPin, setRoleSession]
-  );
-
-  const updateAdminPin = useCallback(
-    async (newPin: string): Promise<void> => {
-      const clean = newPin.trim();
-      if (!clean) return;
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('set_admin_pin', {
-          p_current_admin_pin: adminPin,
-          p_new_admin_pin: clean,
-        });
-      }
-      setAdminPin(clean);
-      persistLocal(allTeams, allPlayers, allFixtures, seasons, clean);
-    },
-    [adminPin, allTeams, allPlayers, allFixtures, seasons, persistLocal]
   );
 
   const updateTeamPin = useCallback(
@@ -1543,7 +1525,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         setRoleSession,
         loginAsCaptainWithPin,
         loginAsAdminWithPin,
-        updateAdminPin,
         updateTeamPin,
         addTeam,
         updateTeam,
