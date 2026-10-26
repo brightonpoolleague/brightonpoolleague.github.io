@@ -1030,6 +1030,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </button>
             </div>
 
+            {(canSignHome || canSignAway) && (
             <button
               type="button"
               onClick={() => setShowLineupEditor((v) => !v)}
@@ -1044,6 +1045,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 ? 'Edit Lineup'
                 : 'Make Subs'}
             </button>
+            )}
           </div>
         </div>
       </div>
@@ -1116,7 +1118,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </div>
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
-              {showLineupEditor && (
+              {showLineupEditor && (canSignHome || canSignAway) && (
                 <div className="space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 sm:p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -1141,10 +1143,63 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {renderLineupSelector(activeSet, 'home')}
-                    {renderLineupSelector(activeSet, 'away')}
-                  </div>
+                  {(() => {
+                    const editableSides = (['home', 'away'] as const).filter(
+                      (s) => canEditSide(s)
+                    );
+                    const opponentSide =
+                      editableSides.length === 1
+                        ? editableSides[0] === 'home'
+                          ? 'away'
+                          : 'home'
+                        : null;
+                    const opponentTeam =
+                      opponentSide === 'home' ? homeTeam : awayTeam;
+                    const opponentLocked =
+                      opponentSide === 'home'
+                        ? fixture.homeSet1Locked
+                        : fixture.awaySet1Locked;
+
+                    return (
+                      <>
+                        <div
+                          className={`grid grid-cols-1 gap-3 ${
+                            editableSides.length > 1 ? 'md:grid-cols-2' : ''
+                          }`}
+                        >
+                          {editableSides.map((s) => (
+                            <React.Fragment key={s}>
+                              {renderLineupSelector(activeSet, s)}
+                            </React.Fragment>
+                          ))}
+                        </div>
+
+                        {activeSet === 1 && opponentSide && (
+                          <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
+                            {opponentLocked ? (
+                              <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Clock className="w-3.5 h-3.5 text-slate-500" />
+                            )}
+                            <span>
+                              {opponentTeam.name}:{' '}
+                              <strong
+                                className={
+                                  opponentLocked
+                                    ? 'text-emerald-300'
+                                    : 'text-slate-300'
+                                }
+                              >
+                                {opponentLocked
+                                  ? 'Lineup locked in'
+                                  : 'Awaiting lineup'}
+                              </strong>
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
 
