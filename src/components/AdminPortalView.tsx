@@ -65,6 +65,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [fixtureFilterDivision, setFixtureFilterDivision] = useState<
     Division | 'ALL'
   >('ALL');
+  const [approvalFilter, setApprovalFilter] = useState<
+    'all' | 'submitted' | 'live' | 'scheduled' | 'approved'
+  >('all');
 
   // Team inline editing state
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
@@ -924,94 +927,186 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       )}
 
       {/* TAB 3: SCORECARD APPROVALS */}
-      {activeTab === 'approvals' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
-          <h2 className="text-base font-bold text-white">
-            Scorecard Review &amp; Official Approval Queue ({seasonName})
-          </h2>
-          {fixtures.length === 0 ? (
-            <p className="text-xs text-slate-400 py-6 text-center">
-              No matches recorded for {seasonName} yet.
-            </p>
-          ) : (
-            <div className="space-y-2.5">
-              {fixtures.map((fix) => {
-                const home = teamsById[fix.homeTeamId];
-                const away = teamsById[fix.awayTeamId];
-                if (!home || !away) return null;
-                const score = calculateMatchScore(fix);
+      {activeTab === 'approvals' && (() => {
+        const submittedCount = fixtures.filter(
+          (f) => f.status === 'submitted'
+        ).length;
+        const liveCount = fixtures.filter((f) => f.status === 'live').length;
+        const scheduledCount = fixtures.filter(
+          (f) => f.status === 'scheduled'
+        ).length;
+        const approvedCount = fixtures.filter(
+          (f) => f.status === 'approved'
+        ).length;
 
-                return (
-                  <div
-                    key={fix.id}
-                    className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-bold text-emerald-400">
-                          {fix.division}
-                        </span>
-                        <span className="text-slate-500">•</span>
-                        <span className="text-slate-400">
-                          {formatMatchDate(fix.matchDate)}
-                        </span>
-                        <span
-                          className={`uppercase px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            fix.status === 'approved'
-                              ? 'bg-emerald-500/20 text-emerald-300'
-                              : fix.status === 'submitted'
-                              ? 'bg-amber-500/20 text-amber-300'
-                              : 'bg-slate-800 text-slate-400'
-                          }`}
-                        >
-                          {fix.status}
-                        </span>
-                      </div>
-                      <div className="font-bold text-white text-sm sm:text-base mt-1">
-                        {home.name} ({score.homeFrames}) vs ({score.awayFrames}){' '}
-                        {away.name}
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        Frames recorded: {score.completedFrames}/15 • Home
-                        Signed: {fix.homeCaptainSigned ? 'Yes' : 'No'} • Away
-                        Signed: {fix.awayCaptainSigned ? 'Yes' : 'No'}
-                      </div>
-                    </div>
+        const filterTabs: {
+          id: 'all' | 'submitted' | 'live' | 'scheduled' | 'approved';
+          label: string;
+          count: number;
+        }[] = [
+          { id: 'all', label: 'All', count: fixtures.length },
+          { id: 'submitted', label: 'Submitted', count: submittedCount },
+          { id: 'live', label: 'Live', count: liveCount },
+          { id: 'scheduled', label: 'Scheduled', count: scheduledCount },
+          { id: 'approved', label: 'Approved', count: approvedCount },
+        ];
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onSelectFixture(fix)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
-                      >
-                        Inspect / Edit Card
-                      </button>
-                      {fix.status !== 'approved' ? (
-                        <button
-                          type="button"
-                          onClick={() => approveFixture(fix.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Approve Result
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => reopenFixture(fix.id)}
-                          className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold"
-                        >
-                          Reopen
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+        const statusOrder: Record<string, number> = {
+          submitted: 0,
+          live: 1,
+          scheduled: 2,
+          approved: 3,
+        };
+
+        const filtered = fixtures
+          .filter((f) =>
+            approvalFilter === 'all' ? true : f.status === approvalFilter
+          )
+          .sort((a, b) => {
+            if (statusOrder[a.status] !== statusOrder[b.status]) {
+              return statusOrder[a.status] - statusOrder[b.status];
+            }
+            return a.matchDate.localeCompare(b.matchDate);
+          });
+
+        return (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-white">
+                  Scorecard Review &amp; Official Approval Queue ({seasonName})
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Review match submissions, inspect scores, and approve official cards.
+                </p>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Status Filter Buttons */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              {filterTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setApprovalFilter(tab.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
+                    approvalFilter === tab.id
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === tab.id
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : tab.id === 'submitted' && tab.count > 0
+                        ? 'bg-amber-500/20 text-amber-300'
+                        : tab.id === 'live' && tab.count > 0
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-xs text-slate-400">
+                {approvalFilter === 'submitted'
+                  ? 'No scorecards currently awaiting approval.'
+                  : approvalFilter === 'live'
+                  ? 'No matches currently live.'
+                  : approvalFilter === 'scheduled'
+                  ? 'No upcoming scheduled matches.'
+                  : approvalFilter === 'approved'
+                  ? 'No approved scorecards yet.'
+                  : `No matches recorded for ${seasonName} yet.`}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {filtered.map((fix) => {
+                  const home = teamsById[fix.homeTeamId];
+                  const away = teamsById[fix.awayTeamId];
+                  if (!home || !away) return null;
+                  const score = calculateMatchScore(fix);
+
+                  return (
+                    <div
+                      key={fix.id}
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-bold text-emerald-400">
+                            {fix.division}
+                          </span>
+                          <span className="text-slate-500">•</span>
+                          <span className="text-slate-400">
+                            {formatMatchDate(fix.matchDate)}
+                          </span>
+                          <span
+                            className={`uppercase px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              fix.status === 'approved'
+                                ? 'bg-emerald-500/20 text-emerald-300'
+                                : fix.status === 'submitted'
+                                ? 'bg-amber-500/20 text-amber-300'
+                                : fix.status === 'live'
+                                ? 'bg-red-500/20 text-red-300 animate-pulse'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {fix.status}
+                          </span>
+                        </div>
+                        <div className="font-bold text-white text-sm sm:text-base mt-1">
+                          {home.name} ({score.homeFrames}) vs ({score.awayFrames}){' '}
+                          {away.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          Frames recorded: {score.completedFrames}/15 • Home
+                          Signed: {fix.homeCaptainSigned ? 'Yes' : 'No'} • Away
+                          Signed: {fix.awayCaptainSigned ? 'Yes' : 'No'}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onSelectFixture(fix)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                        >
+                          Inspect / Edit Card
+                        </button>
+                        {fix.status !== 'approved' ? (
+                          <button
+                            type="button"
+                            onClick={() => approveFixture(fix.id)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Approve Result
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => reopenFixture(fix.id)}
+                            className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold"
+                          >
+                            Reopen
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* TAB 4: SETTINGS (MASTER ADMIN PIN & SECURITY) */}
       {activeTab === 'settings' && (
