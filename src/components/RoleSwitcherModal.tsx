@@ -4,10 +4,12 @@ import { useLeague } from '../context/LeagueContext';
 
 interface RoleSwitcherModalProps {
   onClose: () => void;
+  onAdminLoginSuccess?: () => void;
 }
 
 export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
   onClose,
+  onAdminLoginSuccess,
 }) => {
   const {
     teams,
@@ -45,6 +47,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     const ok = await loginAsAdminWithPin(adminPinInput);
     if (ok) {
       setAdminError('');
+      onAdminLoginSuccess?.();
       onClose();
     } else {
       setAdminError('Incorrect League Admin PIN.');

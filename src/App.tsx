@@ -42,6 +42,9 @@ const MainShell: React.FC = () => {
   const liveMatchesCount = fixtures.filter((f) => f.status === 'live').length;
 
   const isLoggedIn = session.role === 'captain' || session.role === 'admin';
+  const isAdmin = session.role === 'admin';
+  const currentTab: NavTab =
+    activeTab === 'admin' && !isAdmin ? 'fixtures' : activeTab;
 
   const navItems: {
     id: NavTab;
@@ -75,12 +78,16 @@ const MainShell: React.FC = () => {
       shortLabel: 'Rules',
       icon: BookOpen,
     },
-    {
-      id: 'admin',
-      label: 'League Admin',
-      shortLabel: 'Admin',
-      icon: Shield,
-    },
+    ...(isAdmin
+      ? [
+          {
+            id: 'admin' as NavTab,
+            label: 'League Admin',
+            shortLabel: 'Admin',
+            icon: Shield,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -128,7 +135,7 @@ const MainShell: React.FC = () => {
           <nav className="hidden md:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isActive = currentTab === item.id;
               return (
                 <button
                   key={item.id}
@@ -196,7 +203,7 @@ const MainShell: React.FC = () => {
 
       {/* Main Content Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
-        {activeTab === 'fixtures' && (
+        {currentTab === 'fixtures' && (
           <FixturesAndLiveView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}
             onGoToAdmin={() => {
@@ -204,10 +211,10 @@ const MainShell: React.FC = () => {
             }}
           />
         )}
-        {activeTab === 'table' && <LeagueTableView />}
-        {activeTab === 'stats' && <PlayerStatsView />}
-        {activeTab === 'rules' && <DocsAndRulesView />}
-        {activeTab === 'admin' && (
+        {currentTab === 'table' && <LeagueTableView />}
+        {currentTab === 'stats' && <PlayerStatsView />}
+        {currentTab === 'rules' && <DocsAndRulesView />}
+        {currentTab === 'admin' && (
           <AdminPortalView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}
           />
@@ -216,10 +223,12 @@ const MainShell: React.FC = () => {
 
       {/* Mobile Bottom Tab Navigation */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-1.5">
-        <div className="grid grid-cols-5 gap-1">
+        <div
+          className={`grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} gap-1`}
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = currentTab === item.id;
             return (
               <button
                 key={item.id}
@@ -252,7 +261,10 @@ const MainShell: React.FC = () => {
 
       {/* Captain / Admin Login Modal */}
       {showRoleModal && (
-        <RoleSwitcherModal onClose={() => setShowRoleModal(false)} />
+        <RoleSwitcherModal
+          onClose={() => setShowRoleModal(false)}
+          onAdminLoginSuccess={() => setActiveTab('admin')}
+        />
       )}
     </div>
   );
