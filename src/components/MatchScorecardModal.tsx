@@ -67,6 +67,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const awaySquad = players.filter((p) => p.teamId === awayTeam.id && p.active);
 
   const editable = canEditFixture(fixture);
+  const canSignHome =
+    canManageLeague ||
+    (editable &&
+      session.role === 'captain' &&
+      session.teamId === fixture.homeTeamId);
+  const canSignAway =
+    canManageLeague ||
+    (editable &&
+      session.role === 'captain' &&
+      session.teamId === fixture.awayTeamId);
   const score = calculateMatchScore(fixture);
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
@@ -195,6 +205,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleToggleSign = async (side: 'home' | 'away') => {
     if (!editable) return;
+    if (side === 'home' && !canSignHome) return;
+    if (side === 'away' && !canSignAway) return;
     const nextHomeSigned =
       side === 'home' ? !fixture.homeCaptainSigned : fixture.homeCaptainSigned;
     const nextAwaySigned =
@@ -1009,12 +1021,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
-                disabled={!editable}
+                disabled={!canSignHome}
                 onClick={() => handleToggleSign('home')}
                 className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
                   fixture.homeCaptainSigned
                     ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                    : canSignHome
+                    ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                    : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
                 }`}
               >
                 <div>
@@ -1026,18 +1040,24 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   </div>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
-                  {fixture.homeCaptainSigned ? '✓ Signed' : 'Tap to Sign'}
+                  {fixture.homeCaptainSigned
+                    ? '✓ Signed'
+                    : canSignHome
+                    ? 'Tap to Sign'
+                    : 'Home Captain Only'}
                 </span>
               </button>
 
               <button
                 type="button"
-                disabled={!editable}
+                disabled={!canSignAway}
                 onClick={() => handleToggleSign('away')}
                 className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
                   fixture.awayCaptainSigned
                     ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                    : canSignAway
+                    ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                    : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
                 }`}
               >
                 <div>
@@ -1049,7 +1069,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   </div>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
-                  {fixture.awayCaptainSigned ? '✓ Signed' : 'Tap to Sign'}
+                  {fixture.awayCaptainSigned
+                    ? '✓ Signed'
+                    : canSignAway
+                    ? 'Tap to Sign'
+                    : 'Away Captain Only'}
                 </span>
               </button>
             </div>

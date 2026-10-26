@@ -331,6 +331,13 @@ begin
     v_away_signed := p_away_captain_signed;
   end if;
 
+  -- Enforce that a captain can ONLY sign or unsign for their own team
+  if p_team_id = v_fixture.home_team_id then
+    v_away_signed := v_fixture.away_captain_signed;
+  elsif p_team_id = v_fixture.away_team_id then
+    v_home_signed := v_fixture.home_captain_signed;
+  end if;
+
   -- Perform scoped update of scorecard fields only
   update public.fixtures
   set status = p_status,
