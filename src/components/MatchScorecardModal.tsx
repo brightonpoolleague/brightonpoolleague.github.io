@@ -1037,8 +1037,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <Users className="w-3.5 h-3.5 text-emerald-400" />
               {showLineupEditor
-                ? 'Hide Lineup / Subs Picker'
-                : `Edit Set ${activeSet} Lineups / Subs`}
+                ? activeSet === 1
+                  ? 'Hide Lineup'
+                  : 'Hide Subs'
+                : activeSet === 1
+                ? 'Edit Lineup'
+                : 'Make Subs'}
             </button>
           </div>
         </div>
@@ -1125,7 +1129,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         ) : (
                           <>
                             <Users className="w-4 h-4 text-emerald-400" />
-                            Set {activeSet} Player Lineups & Substitutions
+                            Set {activeSet} Substitutions
                           </>
                         )}
                       </h3>
