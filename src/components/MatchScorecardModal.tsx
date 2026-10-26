@@ -151,6 +151,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     );
   };
 
+  const isSet1LineupComplete = (side: 'home' | 'away'): boolean =>
+    fixture.lineups.set1[side].every((slot) => Boolean(slot));
+
   const handleToggleLockSet1 = async (side: 'home' | 'away') => {
     if (!editable || !canEditSide(side)) return;
 
@@ -198,6 +201,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
     if (side === 'home') {
       const nextLocked = !fixture.homeSet1Locked;
+      if (nextLocked && !isSet1LineupComplete('home')) return;
       await saveFixture(
         {
           ...fixture,
@@ -211,6 +215,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       );
     } else {
       const nextLocked = !fixture.awaySet1Locked;
+      if (nextLocked && !isSet1LineupComplete('away')) return;
       await saveFixture(
         {
           ...fixture,
@@ -303,6 +308,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     const isSet1Locked =
       setNumber === 1 &&
       (side === 'home' ? fixture.homeSet1Locked : fixture.awaySet1Locked);
+    const set1Complete = isSet1LineupComplete(side);
+    const set1FilledCount = fixture.lineups.set1[side].filter(Boolean).length;
     const hideSideSlots =
       setNumber === 1 && !bothSet1Locked && !sideEditable;
 
@@ -352,8 +359,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           {setNumber === 1 && sideEditable ? (
             <button
               type="button"
+              disabled={!isSet1Locked && !set1Complete}
               onClick={() => handleToggleLockSet1(side)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              title={
+                !isSet1Locked && !set1Complete
+                  ? 'Select a player (or BYE) in all 5 slots before locking Set 1'
+                  : undefined
+              }
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
                 bothSet1Locked && !canManageLeague
                   ? otherUnlockReq
                     ? 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 shadow'
@@ -362,7 +375,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
                   : isSet1Locked
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                  : set1Complete
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-slate-800 text-slate-400 border border-slate-700'
               }`}
             >
               {bothSet1Locked && !canManageLeague ? (
@@ -383,9 +398,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 <>
                   <Lock className="w-3.5 h-3.5" /> Locked In
                 </>
-              ) : (
+              ) : set1Complete ? (
                 <>
                   <Unlock className="w-3.5 h-3.5" /> Lock Set 1
+                </>
+              ) : (
+                <>
+                  <Lock className="w-3.5 h-3.5" /> Select All 5 ({set1FilledCount}/5)
                 </>
               )}
             </button>
