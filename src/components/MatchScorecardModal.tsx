@@ -764,17 +764,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <a
-            href="https://www.epa.org.uk/stopclock/epa/index.php"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700"
-            title="EPA Official Shot Clock (10:30 PM rule)"
-          >
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Shot Clock</span>
-          </a>
-
           <div className="flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
             <button
               type="button"
