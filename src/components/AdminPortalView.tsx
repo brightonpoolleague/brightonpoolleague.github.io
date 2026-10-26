@@ -374,7 +374,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </button>
                         <button
                           type="button"
-                          onClick={() => deleteTeam(team.id)}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to delete "${team.name}"? This will also delete its signed-on players and any fixtures involving this team.`
+                              )
+                            ) {
+                              deleteTeam(team.id);
+                            }
+                          }}
                           className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
                           title="Delete Team"
                         >
@@ -400,9 +408,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         />
                         <button
                           type="button"
-                          onClick={() =>
-                            updateTeamPin(team.id, generateRandomPin())
-                          }
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Generate a new random 8-digit Captain PIN for "${team.name}"?`
+                              )
+                            ) {
+                              updateTeamPin(team.id, generateRandomPin());
+                            }
+                          }}
                           className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
                           title="Generate new random 8-digit PIN"
                         >
@@ -553,9 +567,21 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             {teams.length > 1 && (
                               <select
                                 value={player.teamId}
-                                onChange={(e) =>
-                                  transferPlayer(player.id, e.target.value)
-                                }
+                                onChange={(e) => {
+                                  const targetId = e.target.value;
+                                  const targetTeam = teams.find(
+                                    (t) => t.id === targetId
+                                  );
+                                  if (
+                                    targetTeam &&
+                                    targetId !== team.id &&
+                                    window.confirm(
+                                      `Transfer "${player.name}" from "${team.name}" to "${targetTeam.name}"?`
+                                    )
+                                  ) {
+                                    transferPlayer(player.id, targetId);
+                                  }
+                                }}
                                 className="bg-transparent text-[10px] text-slate-500 hover:text-emerald-400 focus:outline-none cursor-pointer"
                                 title="Transfer player to another team"
                               >
@@ -574,7 +600,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             )}
                             <button
                               type="button"
-                              onClick={() => removePlayer(player.id)}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Are you sure you want to remove player "${player.name}" from "${team.name}"?`
+                                  )
+                                ) {
+                                  removePlayer(player.id);
+                                }
+                              }}
                               className="text-slate-500 hover:text-red-400 font-bold"
                               title="Remove player"
                             >
@@ -718,7 +752,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => deleteFixture(fix.id)}
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  `Are you sure you want to delete the fixture "${home.name} vs ${away.name}" (Week ${fix.weekNumber}, ${fix.matchDate})? Any recorded scores for this match will be permanently removed.`
+                                )
+                              ) {
+                                deleteFixture(fix.id);
+                              }
+                            }}
                             className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
                             title="Delete Fixture"
                           >
