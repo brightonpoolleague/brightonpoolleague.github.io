@@ -184,7 +184,7 @@ create policy "Allow public read-only access to fixtures" on public.fixtures for
 
 -- ============================================================================
 -- RATE LIMITING HELPERS & PIN VERIFICATION (BRUTE-FORCE SCRIPT PROTECTION)
--- Enforces a rate limit of max 25 failed attempts per 15 minutes per IP.
+-- Enforces a very generous rate limit (max 100 failed attempts per 15 minutes per IP).
 -- Adds an artificial 500ms delay on failed attempts to defeat fast dictionary attacks.
 -- ============================================================================
 
@@ -236,8 +236,9 @@ begin
     and action = p_action
     and attempted_at > now() - interval '15 minutes';
 
-  if v_recent_failures >= 25 then
-    raise exception 'Too many failed PIN attempts. Please wait 15 minutes before trying again.';
+  -- Generous threshold: 100 failed attempts per 15 minutes
+  if v_recent_failures >= 100 then
+    raise exception 'Too many failed PIN attempts. Please wait 5 minutes before trying again.';
   end if;
 
   return v_ip;
