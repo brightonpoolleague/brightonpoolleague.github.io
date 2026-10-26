@@ -97,6 +97,19 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   // Until both Set 1 lineups are locked, hide the opponent's Set 1 slots unless viewing that side in the editor or Admin
   const bothSet1Locked = fixture.homeSet1Locked && fixture.awaySet1Locked;
 
+  // Frame results can only be recorded once both Set 1 lineups are locked
+  // and both players for that frame have been assigned (player or BYE).
+  const canRecordFrame = (frameNumber: number): boolean => {
+    if (!editable || !bothSet1Locked) return false;
+    const frame = fixture.frames.find((f) => f.frameNumber === frameNumber);
+    if (!frame) return false;
+    const { homePlayerId, awayPlayerId } = getFramePlayers(
+      fixture.lineups,
+      frame
+    );
+    return Boolean(homePlayerId) && Boolean(awayPlayerId);
+  };
+
   const handleLagChange = async (winner: 'home' | 'away') => {
     if (!editable) return;
     await saveFixture(
@@ -234,7 +247,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     frameNumber: number,
     winner: 'home' | 'away'
   ) => {
-    if (!editable) return;
+    if (!canRecordFrame(frameNumber)) return;
     const nextFrames = fixture.frames.map((f) => {
       if (f.frameNumber !== frameNumber) return f;
       const toggledWinner = f.winner === winner ? null : winner;
@@ -254,7 +267,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const handleToggleDish = async (frameNumber: number) => {
-    if (!editable) return;
+    if (!canRecordFrame(frameNumber)) return;
     const nextFrames = fixture.frames.map((f) => {
       if (f.frameNumber !== frameNumber || !f.winner) return f;
       return { ...f, dish: !f.dish };
@@ -1132,6 +1145,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               )}
 
               {/* 5 Frame Cards for Active Set */}
+              {editable && !bothSet1Locked && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 text-xs text-amber-200">
+                  <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    Frame results can be recorded once <strong>both captains</strong> have
+                    locked their Set 1 lineups.
+                  </span>
+                </div>
+              )}
               <div className="space-y-2.5">
                 {setFrames.map((frame) => {
                   const { homePlayerId, awayPlayerId } = getFramePlayers(
@@ -1180,7 +1202,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         {/* Home Player Button */}
                         <button
                           type="button"
-                          disabled={!editable}
+                          disabled={!canRecordFrame(frame.frameNumber)}
                           onClick={() =>
                             handleFrameWinner(frame.frameNumber, 'home')
                           }
@@ -1228,7 +1250,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         {/* Away Player Button */}
                         <button
                           type="button"
-                          disabled={!editable}
+                          disabled={!canRecordFrame(frame.frameNumber)}
                           onClick={() =>
                             handleFrameWinner(frame.frameNumber, 'away')
                           }
@@ -1275,7 +1297,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
 
                       {/* Dish toggle when a winner is recorded */}
-                      {frame.winner && !isByeFrame && editable && (
+                      {frame.winner && !isByeFrame && canRecordFrame(frame.frameNumber) && (
                         <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex items-center justify-end gap-2">
                           <span className="text-[11px] text-slate-400 mr-auto">
                             Did the frame winner dish / reverse dish?
@@ -1370,7 +1392,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           <td className="py-2 px-2 text-center">
                             <button
                               type="button"
-                              disabled={!editable}
+                              disabled={!canRecordFrame(frame.frameNumber)}
                               onClick={() =>
                                 handleFrameWinner(frame.frameNumber, 'home')
                               }
@@ -1392,7 +1414,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           <td className="py-2 px-2 text-center">
                             <button
                               type="button"
-                              disabled={!editable}
+                              disabled={!canRecordFrame(frame.frameNumber)}
                               onClick={() =>
                                 handleFrameWinner(frame.frameNumber, 'away')
                               }
