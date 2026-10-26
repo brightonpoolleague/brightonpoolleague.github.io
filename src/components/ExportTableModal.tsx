@@ -68,6 +68,9 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         pixelRatio: 2,
         backgroundColor: '#020617', // slate-950
         cacheBust: true,
+        style: {
+          margin: '0',
+        },
       };
 
       const dataUrl = await toPng(cardRef.current, options);
@@ -94,6 +97,9 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         pixelRatio: 2,
         backgroundColor: '#020617',
         cacheBust: true,
+        style: {
+          margin: '0',
+        },
       });
 
       if (!blob) throw new Error('Could not create image blob');
@@ -203,143 +209,144 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 
         {/* Scrollable Preview Area */}
         <div className="flex-1 overflow-auto p-3 sm:p-6 bg-slate-950/40">
-          <div className="overflow-x-auto pb-4">
-            {/* The Actual Rendered Graphic (Width 820px for high-res retina output) */}
-            <div
-              ref={cardRef}
-              style={{ width: '820px' }}
-              className="bg-slate-950 text-slate-100 rounded-2xl border-2 border-slate-800 p-6 mx-auto shadow-2xl space-y-5"
-            >
-              {/* Graphic Card Header */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div className="flex items-center gap-3.5">
+          <div className="flex justify-center min-w-fit">
+            <div className="rounded-xl overflow-hidden shadow-2xl border border-slate-800">
+              {/* The Actual Rendered Graphic (Width 800px for high-res retina output) */}
+              <div
+                ref={cardRef}
+                style={{ width: '800px', margin: 0 }}
+                className="bg-slate-950 text-slate-100 p-7 space-y-5"
+              >
+                {/* Graphic Card Header - Centered */}
+                <div className="flex flex-col items-center text-center border-b border-slate-800 pb-5 space-y-2">
                   <img
                     src={`${import.meta.env.BASE_URL}logo.png`}
                     alt="BPL Crest"
-                    className="w-12 h-12 object-contain shrink-0"
+                    className="w-16 h-16 object-contain"
                   />
                   <div>
-                    <div className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                    <div className="text-[11px] font-black uppercase tracking-widest text-emerald-400">
                       Brighton &amp; Hove Pool League
                     </div>
-                    <h2 className="text-xl font-black text-white">
+                    <h2 className="text-2xl font-black text-white tracking-tight mt-0.5">
                       {divisionName ? `${divisionName} - ${title}` : title}
                     </h2>
-                    <div className="text-xs text-slate-400 font-semibold">
-                      {seasonName}
-                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs text-slate-400">
+                    <span className="font-semibold text-slate-300">{seasonName}</span>
+                    {badgeText && (
+                      <>
+                        <span className="text-slate-600">•</span>
+                        <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-black text-emerald-300 uppercase tracking-wider">
+                          {badgeText}
+                        </span>
+                      </>
+                    )}
+                    <span className="text-slate-600">•</span>
+                    <span>As of {generatedDateStr}</span>
                   </div>
                 </div>
 
-                <div className="text-right space-y-1">
-                  {badgeText && (
-                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-black text-emerald-300 uppercase tracking-wider">
-                      {badgeText}
-                    </span>
-                  )}
-                  <div className="text-[10px] font-medium text-slate-400">
-                    As of {generatedDateStr}
-                  </div>
-                </div>
-              </div>
-
-              {/* Graphic Card Table */}
-              <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/90">
-                <table className="w-full text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-900 border-b border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      <th className="py-2.5 px-3 text-center w-10">#</th>
-                      <th className="py-2.5 px-3 text-left">
-                        {columns[0]?.header || 'Entry'}
-                      </th>
-                      {columns.slice(1).map((col, idx) => (
-                        <th
-                          key={idx}
-                          className={`py-2.5 px-2.5 text-${
-                            col.align || 'center'
-                          } ${col.className || ''}`}
-                        >
-                          {col.header}
+                {/* Graphic Card Table */}
+                <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900/90">
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-900 border-b border-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                        <th className="py-2.5 px-3 text-center w-10">#</th>
+                        <th className="py-2.5 px-3 text-left">
+                          {columns[0]?.header || 'Entry'}
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, idx) => {
-                      const isTop3 = row.rank <= 3;
-                      return (
-                        <tr
-                          key={idx}
-                          className={`border-b border-slate-800/60 ${
-                            row.highlight
-                              ? 'bg-emerald-950/20'
-                              : idx % 2 === 0
-                              ? 'bg-slate-950/40'
-                              : 'bg-slate-900/40'
-                          }`}
-                        >
-                          {/* Rank with Gold / Silver / Bronze badge */}
-                          <td className="py-2.5 px-3 text-center font-bold">
-                            {row.rank === 1 ? (
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] shadow">
-                                1
-                              </span>
-                            ) : row.rank === 2 ? (
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-300 text-slate-950 font-black text-[11px] shadow">
-                                2
-                              </span>
-                            ) : row.rank === 3 ? (
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-700 text-amber-100 font-black text-[11px] shadow">
-                                3
-                              </span>
-                            ) : (
-                              <span className="text-slate-400 text-xs">
-                                {row.rank}
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Primary & Secondary Label */}
-                          <td className="py-2.5 px-3 text-left">
-                            <div className="font-bold text-white text-xs">
-                              {row.primaryText}
-                            </div>
-                            {row.secondaryText && (
-                              <div className="text-[10px] text-slate-400">
-                                {row.secondaryText}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Values */}
-                          {row.values.map((val, vIdx) => (
-                            <td
-                              key={vIdx}
-                              className={`py-2.5 px-2.5 text-${
-                                columns[vIdx + 1]?.align || 'center'
-                              } font-semibold ${
-                                vIdx === row.values.length - 1
-                                  ? 'text-emerald-400 font-black text-sm'
-                                  : 'text-slate-300'
-                              }`}
-                            >
-                              {val}
+                        {columns.slice(1).map((col, idx) => (
+                          <th
+                            key={idx}
+                            className={`py-2.5 px-2.5 text-${
+                              col.align || 'center'
+                            } ${col.className || ''}`}
+                          >
+                            {col.header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, idx) => {
+                        const isTop3 = row.rank <= 3;
+                        return (
+                          <tr
+                            key={idx}
+                            className={`border-b border-slate-800/60 ${
+                              row.highlight
+                                ? 'bg-emerald-950/20'
+                                : idx % 2 === 0
+                                ? 'bg-slate-950/40'
+                                : 'bg-slate-900/40'
+                            }`}
+                          >
+                            {/* Rank with Gold / Silver / Bronze badge */}
+                            <td className="py-2.5 px-3 text-center font-bold">
+                              {row.rank === 1 ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] shadow">
+                                  1
+                                </span>
+                              ) : row.rank === 2 ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-300 text-slate-950 font-black text-[11px] shadow">
+                                  2
+                                </span>
+                              ) : row.rank === 3 ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-700 text-amber-100 font-black text-[11px] shadow">
+                                  3
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-xs">
+                                  {row.rank}
+                                </span>
+                              )}
                             </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
 
-              {/* Graphic Card Footer */}
-              <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
-                <div className="font-semibold text-slate-400">
-                  Brighton &amp; Hove Pool League
+                            {/* Primary & Secondary Label */}
+                            <td className="py-2.5 px-3 text-left">
+                              <div className="font-bold text-white text-xs">
+                                {row.primaryText}
+                              </div>
+                              {row.secondaryText && (
+                                <div className="text-[10px] text-slate-400">
+                                  {row.secondaryText}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Values */}
+                            {row.values.map((val, vIdx) => (
+                              <td
+                                key={vIdx}
+                                className={`py-2.5 px-2.5 text-${
+                                  columns[vIdx + 1]?.align || 'center'
+                                } font-semibold ${
+                                  vIdx === row.values.length - 1
+                                    ? 'text-emerald-400 font-black text-sm'
+                                    : 'text-slate-300'
+                                }`}
+                              >
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="font-medium text-emerald-400">
-                  brightonpoolleague.com
+
+                {/* Graphic Card Footer - Centered */}
+                <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 pt-3 border-t border-slate-800">
+                  <span className="font-semibold text-slate-400">
+                    Brighton &amp; Hove Pool League
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="font-semibold text-emerald-400">
+                    brightonpoolleague.com
+                  </span>
                 </div>
               </div>
             </div>
