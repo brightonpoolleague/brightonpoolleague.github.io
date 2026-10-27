@@ -1460,7 +1460,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             )}
                           </div>
 
-                          <div className="font-bold text-white text-sm flex items-center gap-2">
+                          <div className="font-bold text-white text-sm flex flex-wrap items-center gap-1.5 sm:gap-2 leading-snug">
                             <span>{home.name}</span>
                             <span className="tabular-nums">
                               {score.completedFrames > 0 || fix.status !== 'scheduled' ? (

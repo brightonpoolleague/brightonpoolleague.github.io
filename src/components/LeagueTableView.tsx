@@ -155,7 +155,7 @@ export const LeagueTableView: React.FC = () => {
 
       {/* Team Captain Spotlight: Standing Banner */}
       {isCaptain && myTeam && myTeamRow && myTeamPos && selectedDivision === myTeamDivision && (
-        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex flex-col items-center justify-center text-emerald-300 shrink-0 shadow-inner">
               <span className="text-[10px] font-bold uppercase leading-none text-emerald-400">Pos</span>
@@ -163,7 +163,7 @@ export const LeagueTableView: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-white font-extrabold text-sm sm:text-base truncate">
+                <span className="text-white font-extrabold text-sm sm:text-base line-clamp-2 leading-snug">
                   {myTeam.name}
                 </span>
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)] animate-pulse">
@@ -223,42 +223,42 @@ export const LeagueTableView: React.FC = () => {
             <table className="w-full text-xs sm:text-sm border-collapse">
               <thead>
                 <tr className="bg-slate-950/90 text-slate-400 border-b border-slate-800 text-[11px] uppercase tracking-wider">
-                  <th className="py-3 px-3 text-center w-10">#</th>
-                  <th className="py-3 px-3 text-left">Team &amp; Venue</th>
-                  <th className="py-3 px-2.5 text-center" title="Matches Played">
+                  <th className="py-2.5 px-2 sm:py-3 sm:px-3 text-center w-8 sm:w-10">#</th>
+                  <th className="py-2.5 px-2 sm:py-3 sm:px-3 text-left">Team &amp; Venue</th>
+                  <th className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center" title="Matches Played">
                     P
                   </th>
-                  <th className="py-3 px-2.5 text-center" title="Matches Won">
+                  <th className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center" title="Matches Won">
                     W
                   </th>
-                  <th className="py-3 px-2.5 text-center" title="Matches Lost">
+                  <th className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center" title="Matches Lost">
                     L
                   </th>
                   <th
-                    className="py-3 px-2.5 text-center hidden sm:table-cell"
+                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center hidden sm:table-cell"
                     title="Frames Won"
                   >
                     FF
                   </th>
                   <th
-                    className="py-3 px-2.5 text-center hidden sm:table-cell"
+                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center hidden sm:table-cell"
                     title="Frames Lost"
                   >
                     FA
                   </th>
                   <th
-                    className="py-3 px-2.5 text-center"
+                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center"
                     title="Frame Difference"
                   >
                     FD
                   </th>
                   <th
-                    className="py-3 px-3 text-center font-black text-emerald-400"
+                    className="py-2.5 px-2 sm:py-3 sm:px-3 text-center font-black text-emerald-400"
                     title="Total Points"
                   >
                     PTS
                   </th>
-                  <th className="py-3 px-3 text-center hidden md:table-cell">
+                  <th className="py-2.5 px-2 sm:py-3 sm:px-3 text-center hidden md:table-cell">
                     Form
                   </th>
                 </tr>
@@ -281,7 +281,7 @@ export const LeagueTableView: React.FC = () => {
                           : 'hover:bg-slate-800/40'
                       }`}
                     >
-                      <td className="py-3 px-3 text-center font-bold">
+                      <td className="py-2.5 px-2 sm:py-3 sm:px-3 text-center font-bold">
                         <span
                           className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
                             isMyTeam
@@ -296,42 +296,44 @@ export const LeagueTableView: React.FC = () => {
                           {pos}
                         </span>
                       </td>
-                      <td className="py-3 px-3">
-                        <div className="font-bold text-white flex items-center gap-1.5 flex-wrap">
+                      <td className="py-2.5 px-2 sm:py-3 sm:px-3 min-w-[125px] sm:min-w-0">
+                        <div className="font-bold text-white flex items-center gap-1.5 leading-snug">
                           <span className={isMyTeam ? 'text-emerald-200 font-black' : ''}>
                             {row.team.name}
                           </span>
                           {pos === 1 && (
                             <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                           {isMyTeam && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)] animate-pulse shrink-0">
+                            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)] animate-pulse shrink-0">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                               Your Team
                             </span>
                           )}
-                        </div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-xs">
-                          {row.team.venue}
+                          <span className="text-[11px] text-slate-400 line-clamp-1 max-w-[150px] sm:max-w-xs">
+                            {row.team.venue}
+                          </span>
                         </div>
                       </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-slate-300">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-300">
                         {row.played}
                       </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-emerald-400 font-semibold">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-emerald-400 font-semibold">
                         {row.won}
                       </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-slate-400">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-400">
                         {row.lost}
                       </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-slate-300 hidden sm:table-cell">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-300 hidden sm:table-cell">
                         {row.framesFor}
                       </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums text-slate-400 hidden sm:table-cell">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-400 hidden sm:table-cell">
                         {row.framesAgainst}
                       </td>
                       <td
-                        className={`py-3 px-2.5 text-center tabular-nums font-semibold ${
+                        className={`py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums font-semibold ${
                           row.frameDiff > 0
                             ? 'text-emerald-400'
                             : row.frameDiff < 0
@@ -344,7 +346,7 @@ export const LeagueTableView: React.FC = () => {
                           : row.frameDiff}
                       </td>
                       <td
-                        className={`py-3 px-3 text-center tabular-nums font-black text-base ${
+                        className={`py-2.5 px-2 sm:py-3 sm:px-3 text-center tabular-nums font-black text-base ${
                           isMyTeam
                             ? 'text-emerald-300 bg-emerald-950/60 font-black'
                             : 'text-white bg-slate-950/40'
@@ -352,7 +354,7 @@ export const LeagueTableView: React.FC = () => {
                       >
                         {row.points}
                       </td>
-                      <td className="py-3 px-3 text-center hidden md:table-cell">
+                      <td className="py-2.5 px-2 sm:py-3 sm:px-3 text-center hidden md:table-cell">
                         <div className="inline-flex items-center gap-1">
                           {row.form.slice(-5).map((res, i) => (
                             <span
