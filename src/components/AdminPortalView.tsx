@@ -81,7 +81,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [fixtureSearchQuery, setFixtureSearchQuery] = useState('');
   const [fixtureDateFilter, setFixtureDateFilter] = useState('ALL');
   const [fixtureTimeframeFilter, setFixtureTimeframeFilter] = useState<
-    'ALL' | 'upcoming' | 'today' | 'past'
+    'ALL' | 'live' | 'upcoming' | 'today' | 'past'
   >('ALL');
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'approved'
@@ -409,6 +409,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   const fixtureTimeframeCounts = useMemo(() => {
     let all = 0;
+    let live = 0;
     let upcoming = 0;
     let today = 0;
     let past = 0;
@@ -421,17 +422,19 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         continue;
       }
       all++;
-      const tf = getMatchTimeframe(f.matchDate, f.status);
-      if (f.status === 'live' || tf === 'today') {
-        today++;
+      if (f.status === 'live') {
+        live++;
       }
-      if (tf === 'upcoming') {
+      const tf = getMatchTimeframe(f.matchDate, f.status);
+      if (tf === 'today') {
+        today++;
+      } else if (tf === 'upcoming') {
         upcoming++;
       } else if (tf === 'past') {
         past++;
       }
     }
-    return { all, upcoming, today, past };
+    return { all, live, upcoming, today, past };
   }, [fixtures, fixtureFilterDivision]);
 
   const filteredFixtures = useMemo(() => {
@@ -443,13 +446,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         return false;
       }
       if (fixtureTimeframeFilter !== 'ALL') {
-        const tf = getMatchTimeframe(f.matchDate, f.status);
-        if (fixtureTimeframeFilter === 'today') {
-          if (tf !== 'today' && f.status !== 'live') return false;
+        if (fixtureTimeframeFilter === 'live') {
+          if (f.status !== 'live') return false;
+        } else if (fixtureTimeframeFilter === 'today') {
+          const tf = getMatchTimeframe(f.matchDate, f.status);
+          if (tf !== 'today') return false;
         } else if (fixtureTimeframeFilter === 'upcoming') {
-          if (tf !== 'upcoming') return false;
+          const tf = getMatchTimeframe(f.matchDate, f.status);
+          if (tf !== 'upcoming' || f.status === 'live') return false;
         } else if (fixtureTimeframeFilter === 'past') {
-          if (tf !== 'past') return false;
+          const tf = getMatchTimeframe(f.matchDate, f.status);
+          if (tf !== 'past' || f.status === 'live') return false;
         }
       }
       if (fixtureDateFilter !== 'ALL' && f.matchDate !== fixtureDateFilter) {
@@ -1172,11 +1179,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </div>
 
             {/* Timeframe Filter Tabs */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setFixtureTimeframeFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition ${
+                className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
                   fixtureTimeframeFilter === 'ALL'
                     ? 'bg-emerald-600 text-white font-bold'
                     : 'text-slate-400 hover:text-white'
@@ -1186,8 +1193,28 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => setFixtureTimeframeFilter('live')}
+                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                  fixtureTimeframeFilter === 'live'
+                    ? 'bg-red-600 text-white font-bold'
+                    : fixtureTimeframeCounts.live > 0
+                    ? 'text-red-400 hover:text-red-300'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Radio
+                  className={`w-3 h-3 ${
+                    fixtureTimeframeCounts.live > 0
+                      ? 'text-red-400 animate-pulse'
+                      : 'text-slate-400'
+                  }`}
+                />
+                Live ({fixtureTimeframeCounts.live})
+              </button>
+              <button
+                type="button"
                 onClick={() => setFixtureTimeframeFilter('upcoming')}
-                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
                   fixtureTimeframeFilter === 'upcoming'
                     ? 'bg-sky-600 text-white font-bold'
                     : 'text-slate-400 hover:text-white'
@@ -1200,7 +1227,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setFixtureTimeframeFilter('today')}
-                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
                     fixtureTimeframeFilter === 'today'
                       ? 'bg-emerald-600 text-white font-bold'
                       : 'text-slate-400 hover:text-white'
@@ -1213,7 +1240,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               <button
                 type="button"
                 onClick={() => setFixtureTimeframeFilter('past')}
-                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
                   fixtureTimeframeFilter === 'past'
                     ? 'bg-slate-700 text-white font-bold'
                     : 'text-slate-400 hover:text-white'
