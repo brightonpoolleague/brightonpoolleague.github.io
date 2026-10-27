@@ -73,16 +73,27 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     away: string;
   }>({ home: '', away: '' });
 
-  // Auto-poll the cloud every 3.5 seconds while viewing this scorecard
-  // so updates by either captain or admin reflect immediately across devices.
+  // Auto-poll the cloud every 3.5 seconds silently while viewing this scorecard
+  // so updates by either captain or admin reflect immediately across devices without spinning buttons.
   useEffect(() => {
     const timer = setInterval(() => {
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-        refreshFromCloud();
+        refreshFromCloud({ silent: true });
       }
     }, 3500);
     return () => clearInterval(timer);
   }, [refreshFromCloud]);
+
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsManualRefreshing(true);
+    try {
+      await refreshFromCloud({ silent: false });
+    } finally {
+      setTimeout(() => setIsManualRefreshing(false), 500);
+    }
+  };
 
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -1062,13 +1073,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
           <button
             type="button"
-            onClick={() => refreshFromCloud()}
-            disabled={isSyncing}
+            onClick={handleManualRefresh}
+            disabled={isManualRefreshing}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
             title="Refresh scorecard and latest scores from cloud"
           >
             <RefreshCw
-              className={`w-4 h-4 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`}
+              className={`w-4 h-4 ${isManualRefreshing ? 'animate-spin text-emerald-400' : ''}`}
             />
           </button>
 

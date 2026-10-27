@@ -210,7 +210,7 @@ interface LeagueContextValue {
   ) => Promise<void>;
   approveFixture: (fixtureId: string) => Promise<void>;
   reopenFixture: (fixtureId: string) => Promise<void>;
-  refreshFromCloud: () => Promise<void>;
+  refreshFromCloud: (options?: { silent?: boolean }) => Promise<void>;
   resetLocalTestData: () => void;
   canEditFixture: (fixture: Fixture) => boolean;
   canManageLeague: boolean;
@@ -359,11 +359,15 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [seasons, adminPin]
   );
 
-  const refreshFromCloud = useCallback(async () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    setIsSyncing(true);
-    try {
+  const refreshFromCloud = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const supabase = getSupabaseClient();
+      if (!supabase) return;
+      const isSilent = options?.silent ?? false;
+      if (!isSilent) {
+        setIsSyncing(true);
+      }
+      try {
       const [seasonsRes, teamsRes, playersRes, fixturesRes] = await Promise.all([
         supabase.from('seasons').select('*').order('created_at'),
         supabase.from('teams').select('*').order('name'),
@@ -440,7 +444,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       }
     } finally {
-      setIsSyncing(false);
+      if (!isSilent) {
+        setIsSyncing(false);
+      }
     }
   }, [session.role, adminPin]);
 
@@ -644,7 +650,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     // to safeguard against silent WebSocket disconnects on mobile browsers
     const pollTimer = setInterval(() => {
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-        refreshFromCloud();
+        refreshFromCloud({ silent: true });
       }
     }, 10000);
 
