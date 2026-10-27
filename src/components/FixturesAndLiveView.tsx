@@ -97,7 +97,12 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
         );
       }
-      if (statusFilter !== 'all' && f.status !== statusFilter) {
+      if (statusFilter === 'scheduled') {
+        const tf = getMatchTimeframe(f.matchDate, f.status);
+        if (tf === 'past' || f.status !== 'scheduled') {
+          return false;
+        }
+      } else if (statusFilter !== 'all' && f.status !== statusFilter) {
         return false;
       }
       if (searchQuery.trim()) {
@@ -579,20 +584,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span
-                          className={`text-[10px] font-extrabold uppercase tracking-wider ${
-                            timeframe === 'today'
-                              ? 'text-emerald-400'
-                              : 'text-sky-400'
-                          }`}
-                        >
-                          {timeframe === 'today' ? 'Today' : 'Upcoming'}
-                        </span>
-                        <span className="text-xs font-bold text-slate-300 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-                          20:00
-                        </span>
-                      </div>
+                      <span className="text-xs font-bold text-slate-400 px-2 py-1 rounded bg-slate-900 border border-slate-800">
+                        20:00
+                      </span>
                     )}
                   </div>
 

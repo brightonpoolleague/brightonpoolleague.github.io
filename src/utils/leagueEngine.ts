@@ -623,14 +623,36 @@ export function getMatchTimeframe(dateStr: string, status?: string): MatchTimefr
     return 'past';
   }
   if (!dateStr) return 'upcoming';
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
-  if (!match) return 'upcoming';
 
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const fixtureDateStr = `${match[1]}-${match[2]}-${match[3]}`;
 
-  if (fixtureDateStr === todayStr) return 'today';
-  if (fixtureDateStr < todayStr) return 'past';
+  // Try YYYY-MM-DD
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (match) {
+    const fixtureDateStr = `${match[1]}-${match[2]}-${match[3]}`;
+    if (fixtureDateStr === todayStr) return 'today';
+    if (fixtureDateStr < todayStr) return 'past';
+    return 'upcoming';
+  }
+
+  // Try DD/MM/YYYY or DD-MM-YYYY
+  const ukMatch = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/.exec(dateStr.trim());
+  if (ukMatch) {
+    const fixtureDateStr = `${ukMatch[3]}-${ukMatch[2].padStart(2, '0')}-${ukMatch[1].padStart(2, '0')}`;
+    if (fixtureDateStr === todayStr) return 'today';
+    if (fixtureDateStr < todayStr) return 'past';
+    return 'upcoming';
+  }
+
+  // Fallback using Date parser
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    const fixtureDateStr = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+    if (fixtureDateStr === todayStr) return 'today';
+    if (fixtureDateStr < todayStr) return 'past';
+    return 'upcoming';
+  }
+
   return 'upcoming';
 }
