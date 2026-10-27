@@ -211,6 +211,7 @@ interface LeagueContextValue {
   approveFixture: (fixtureId: string) => Promise<void>;
   reopenFixture: (fixtureId: string) => Promise<void>;
   refreshFromCloud: (options?: { silent?: boolean }) => Promise<void>;
+  refreshSingleFixture: (fixtureId: string) => Promise<void>;
   resetLocalTestData: () => void;
   canEditFixture: (fixture: Fixture) => boolean;
   canManageLeague: boolean;
@@ -450,6 +451,28 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [session.role, adminPin]);
 
+  const refreshSingleFixture = useCallback(async (fixtureId: string) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('fixtures')
+        .select('*')
+        .eq('id', fixtureId)
+        .single();
+      if (!error && data) {
+        const updated = mapFixtureRow(data as Record<string, unknown>);
+        setAllFixtures((prev) => {
+          const next = prev.map((f) => (f.id === updated.id ? updated : f));
+          localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(next));
+          return next;
+        });
+      }
+    } catch {
+      // Quiet fail if network fluctuation
+    }
+  }, []);
+
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
@@ -615,7 +638,24 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          if (
+            status === 'CHANNEL_ERROR' ||
+            status === 'TIMED_OUT' ||
+            status === 'CLOSED'
+          ) {
+            console.warn(`[Realtime] Subscription state: ${status}`, err);
+            disconnectRealtime();
+            setTimeout(() => {
+              if (
+                typeof document === 'undefined' ||
+                document.visibilityState === 'visible'
+              ) {
+                connectRealtime();
+              }
+            }, 2500);
+          }
+        });
     };
 
     const disconnectRealtime = () => {
@@ -634,6 +674,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
+    const handleOnline = () => {
+      refreshFromCloud();
+      connectRealtime();
+    };
+
     refreshFromCloud();
     if (
       typeof document === 'undefined' ||
@@ -645,8 +690,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+    }
 
     return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('online', handleOnline);
+      }
       if (typeof document !== 'undefined') {
         document.removeEventListener(
           'visibilitychange',
@@ -1679,6 +1730,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         approveFixture,
         reopenFixture,
         refreshFromCloud,
+        refreshSingleFixture,
         resetLocalTestData,
         canEditFixture,
         canManageLeague,
