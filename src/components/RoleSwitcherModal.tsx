@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { KeyRound, LogOut, Shield, ShieldCheck, UserCheck, X } from 'lucide-react';
 import { useLeague } from '../context/LeagueContext';
 
@@ -60,13 +60,26 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     }
   };
 
+  const isPointerDownOnBackdrop = useRef(false);
+
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
-      onClick={onClose}
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 touch-manipulation select-none"
+      onMouseDown={(e) => {
+        isPointerDownOnBackdrop.current = e.target === e.currentTarget;
+      }}
+      onTouchStart={(e) => {
+        isPointerDownOnBackdrop.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (isPointerDownOnBackdrop.current && e.target === e.currentTarget) {
+          onClose();
+        }
+        isPointerDownOnBackdrop.current = false;
+      }}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl select-text"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">

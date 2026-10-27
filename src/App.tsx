@@ -170,14 +170,14 @@ const MainShell: React.FC = () => {
 
           {/* Login / Active Role + Logout Controls */}
           {isLoggedIn ? (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0 relative z-10">
               <button
                 type="button"
                 onClick={() => setShowRoleModal(true)}
-                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl text-xs font-bold border transition touch-manipulation cursor-pointer select-none active:scale-95 ${
                   session.role === 'admin'
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                    : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 active:bg-emerald-500/25'
+                    : 'bg-amber-500/15 border-amber-500/40 text-amber-300 active:bg-amber-500/25'
                 }`}
                 title="Switch account"
               >
@@ -189,7 +189,7 @@ const MainShell: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setRoleSession('viewer')}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition"
+                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition touch-manipulation cursor-pointer select-none active:scale-95"
                 title="Log out"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -200,9 +200,9 @@ const MainShell: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowRoleModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition shrink-0"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-200 transition touch-manipulation cursor-pointer select-none active:scale-95 shrink-0 relative z-10 shadow-sm"
             >
-              <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
+              <KeyRound className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Login</span>
             </button>
           )}
