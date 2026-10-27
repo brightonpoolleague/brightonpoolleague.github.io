@@ -5,6 +5,7 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  useRef,
 } from 'react';
 import {
   DEFAULT_DIVISIONS,
@@ -473,9 +474,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // Keep a stable reference so the realtime effect below doesn't tear down and rebuild the
+  // WebSocket subscription every time session/adminPin changes refreshFromCloud's identity.
+  const refreshFromCloudRef = useRef(refreshFromCloud);
+  useEffect(() => {
+    refreshFromCloudRef.current = refreshFromCloud;
+  }, [refreshFromCloud]);
+
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
+
+    const refreshFromCloud = (options?: { silent?: boolean }) =>
+      refreshFromCloudRef.current(options);
 
     let activeChannel: ReturnType<typeof supabase.channel> | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -522,11 +533,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     const connectRealtime = () => {
       if (activeChannel) return;
       activeChannel = supabase
-        .channel('bpl-realtime-changes')
+        // Unique topic per connection: supabase.channel() returns any existing channel with the
+        // same topic, so reusing a fixed name could hand back a channel that is still being torn
+        // down (e.g. StrictMode double-mount or effect re-run), leaving us silently unsubscribed.
+        .channel(
+          `bpl-realtime-changes-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'fixtures' },
           (payload) => {
+            console.log(`[Realtime] fixtures ${payload.eventType} received`);
             if (
               (payload.eventType === 'INSERT' ||
                 payload.eventType === 'UPDATE') &&
@@ -738,7 +755,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       disconnectRealtime();
     };
-  }, [isCloudConnected, refreshFromCloud]);
+  }, [isCloudConnected]);
 
   const setRoleSession = useCallback(
     (role: UserRole, teamId?: string, customName?: string, pin?: string) => {
