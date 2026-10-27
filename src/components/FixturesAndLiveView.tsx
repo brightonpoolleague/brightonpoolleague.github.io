@@ -383,7 +383,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </span>
                     <span className="text-slate-600">•</span>
                     <span className="text-slate-400">
-                      Wk {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
+                      Week {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
                     </span>
                   </div>
                   <span

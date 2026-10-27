@@ -1024,7 +1024,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           <span className="text-emerald-400 font-bold">
                             {fix.division}
                           </span>{' '}
-                          • Wk {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
+                          • Week {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
                           <div className="font-bold text-white text-sm mt-0.5">
                             {home.name} {score.homeFrames} – {score.awayFrames}{' '}
                             {away.name}
