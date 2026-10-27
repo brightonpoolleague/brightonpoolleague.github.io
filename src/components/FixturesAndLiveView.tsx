@@ -32,6 +32,7 @@ type StatusFilter =
   | 'all'
   | 'live'
   | 'scheduled'
+  | 'past'
   | 'submitted'
   | 'approved';
 
@@ -102,6 +103,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         if (tf === 'past' || f.status !== 'scheduled') {
           return false;
         }
+      } else if (statusFilter === 'past') {
+        const tf = getMatchTimeframe(f.matchDate, f.status);
+        if (tf !== 'past' || f.status !== 'scheduled') {
+          return false;
+        }
       } else if (statusFilter !== 'all' && f.status !== statusFilter) {
         return false;
       }
@@ -150,6 +156,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     { id: 'all', label: 'All Matches' },
     { id: 'live', label: 'Live Now' },
     { id: 'scheduled', label: 'Upcoming' },
+    { id: 'past', label: 'Past Date' },
     { id: 'submitted', label: 'Submitted Scorecards' },
     { id: 'approved', label: 'Approved Results' },
   ];

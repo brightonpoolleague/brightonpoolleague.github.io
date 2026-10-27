@@ -1220,7 +1220,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 }`}
               >
                 <History className="w-3 h-3 text-slate-400" />
-                Past ({fixtureTimeframeCounts.past})
+                Past Date ({fixtureTimeframeCounts.past})
               </button>
             </div>
           </div>
