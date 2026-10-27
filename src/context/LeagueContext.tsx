@@ -478,6 +478,46 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!supabase) return;
 
     let activeChannel: ReturnType<typeof supabase.channel> | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isReconnecting = false;
+
+    const disconnectRealtime = async () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
+      if (activeChannel) {
+        const chan = activeChannel;
+        activeChannel = null;
+        try {
+          await supabase.removeChannel(chan);
+        } catch {
+          // Ignore teardown errors
+        }
+      }
+    };
+
+    const scheduleReconnect = (status: string, err?: unknown) => {
+      if (isReconnecting) return;
+      isReconnecting = true;
+      console.warn(`[Realtime] Socket dropped or timed out (${status}), reconnecting in 2s...`, err);
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      reconnectTimeout = setTimeout(async () => {
+        try {
+          await disconnectRealtime();
+          if (
+            typeof document === 'undefined' ||
+            document.visibilityState === 'visible'
+          ) {
+            connectRealtime();
+          }
+        } finally {
+          isReconnecting = false;
+        }
+      }, 2000);
+    };
 
     const connectRealtime = () => {
       if (activeChannel) return;
@@ -641,30 +681,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log('[Realtime] Live WebSocket connected and listening');
-          } else if (
-            status === 'CHANNEL_ERROR' ||
-            status === 'TIMED_OUT' ||
-            status === 'CLOSED'
-          ) {
-            console.warn(`[Realtime] Connection dropped (${status}), auto-reconnecting in 500ms...`, err);
-            disconnectRealtime();
-            setTimeout(() => {
-              if (
-                typeof document === 'undefined' ||
-                document.visibilityState === 'visible'
-              ) {
-                connectRealtime();
-              }
-            }, 500);
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            scheduleReconnect(status, err);
           }
+          // Note: Never reconnect on 'CLOSED' because 'CLOSED' is naturally triggered by removeChannel/unsubscribe
         });
-    };
-
-    const disconnectRealtime = () => {
-      if (activeChannel) {
-        supabase.removeChannel(activeChannel);
-        activeChannel = null;
-      }
     };
 
     const handleVisibilityChange = () => {
