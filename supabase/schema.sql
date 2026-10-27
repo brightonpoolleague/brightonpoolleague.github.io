@@ -98,6 +98,7 @@ create table if not exists public.fixtures (
 );
 
 alter table public.fixtures drop constraint if exists fixtures_division_check;
+alter table public.fixtures alter column division drop not null;
 
 -- Knockout and Cup Match Support (Winter Divisional Cups, Summer Cup & Summer Plate)
 alter table public.fixtures add column if not exists match_type text not null default 'league';

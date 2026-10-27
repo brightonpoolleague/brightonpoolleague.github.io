@@ -378,7 +378,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     }
     const isKnockout = fixtureDraft.matchType === 'knockout';
     const compName = isKnockout
-      ? fixtureDraft.cupName?.trim() || `${fixtureDraft.division} Knockout`
+      ? fixtureDraft.cupName?.trim() || 'Knockout'
       : undefined;
     const roundName = isKnockout
       ? fixtureDraft.cupRound?.trim() || 'Round 1'
@@ -387,10 +387,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       ? fixtureDraft.knockoutFormat || 'first_to_8'
       : undefined;
     const playAll = isKnockout ? koFormat === 'play_all_15' : false;
+    const fixtureDivision = isKnockout
+      ? teamsById[fixtureDraft.homeTeamId]?.division || 'Knockout'
+      : fixtureDraft.division;
 
     await updateFixtureDetails({
       ...fix,
-      division: fixtureDraft.division,
+      division: fixtureDivision,
       matchDate: fixtureDraft.matchDate,
       homeTeamId: fixtureDraft.homeTeamId,
       awayTeamId: fixtureDraft.awayTeamId,
@@ -416,7 +419,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     }
     const isKnockout = newFixtureDraft.matchType === 'knockout';
     const compName = isKnockout
-      ? newFixtureDraft.cupName.trim() || `${newFixtureDraft.division} Knockout`
+      ? newFixtureDraft.cupName.trim() || 'Knockout'
       : undefined;
     const roundName = isKnockout
       ? newFixtureDraft.cupRound.trim() || 'Round 1'
@@ -425,9 +428,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       ? newFixtureDraft.knockoutFormat || 'first_to_8'
       : undefined;
     const playAll = isKnockout ? koFormat === 'play_all_15' : false;
+    const fixtureDivision = isKnockout
+      ? teamsById[newFixtureDraft.homeTeamId]?.division || 'Knockout'
+      : newFixtureDraft.division;
 
     await addFixture({
-      division: newFixtureDraft.division,
+      division: fixtureDivision,
       matchDate: newFixtureDraft.matchDate,
       homeTeamId: newFixtureDraft.homeTeamId,
       awayTeamId: newFixtureDraft.awayTeamId,
@@ -1303,14 +1309,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               onClick={() => {
                 setShowAddFixture((prev) => !prev);
                 if (!newFixtureDraft.homeTeamId && teams.length > 0) {
-                  const divTeams = teams.filter(
-                    (t) => t.division === newFixtureDraft.division
-                  );
-                  if (divTeams.length >= 2) {
+                  const availableTeams =
+                    newFixtureDraft.matchType === 'knockout'
+                      ? teams
+                      : teams.filter(
+                          (t) => t.division === newFixtureDraft.division
+                        );
+                  if (availableTeams.length >= 2) {
                     setNewFixtureDraft((prev) => ({
                       ...prev,
-                      homeTeamId: divTeams[0].id,
-                      awayTeamId: divTeams[1].id,
+                      homeTeamId: availableTeams[0].id,
+                      awayTeamId: availableTeams[1].id,
                     }));
                   }
                 }
@@ -1426,7 +1435,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                   >
                     <option value="league">League Match (15 frames)</option>
-                    <option value="knockout">🏆 Knockout Cup / Plate</option>
+                    <option value="knockout">Knockout</option>
                   </select>
                 </div>
 
@@ -1508,33 +1517,35 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">
-                    Division
-                  </label>
-                  <select
-                    value={newFixtureDraft.division}
-                    onChange={(e) => {
-                      const div = e.target.value as Division;
-                      const divTeams = teams.filter((t) => t.division === div);
-                      setNewFixtureDraft({
-                        ...newFixtureDraft,
-                        division: div,
-                        homeTeamId: divTeams[0]?.id || '',
-                        awayTeamId: divTeams[1]?.id || '',
-                      });
-                    }}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                  >
-                    {divisions.map((div) => (
-                      <option key={div} value={div}>
-                        {div}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {newFixtureDraft.matchType !== 'knockout' && (
+                  <div>
+                    <label className="block text-[11px] text-slate-400 mb-1">
+                      Division
+                    </label>
+                    <select
+                      value={newFixtureDraft.division}
+                      onChange={(e) => {
+                        const div = e.target.value as Division;
+                        const divTeams = teams.filter((t) => t.division === div);
+                        setNewFixtureDraft({
+                          ...newFixtureDraft,
+                          division: div,
+                          homeTeamId: divTeams[0]?.id || '',
+                          awayTeamId: divTeams[1]?.id || '',
+                        });
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    >
+                      {divisions.map((div) => (
+                        <option key={div} value={div}>
+                          {div}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-                <div>
+                <div className={newFixtureDraft.matchType === 'knockout' ? 'sm:col-span-1' : ''}>
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Home Team
                   </label>
@@ -1549,17 +1560,31 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                   >
                     <option value="">-- Select Home Team --</option>
-                    {teams
-                      .filter((t) => t.division === newFixtureDraft.division)
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
+                    {newFixtureDraft.matchType === 'knockout'
+                      ? divisions.map((div) => {
+                          const divTeams = teams.filter((t) => t.division === div);
+                          if (divTeams.length === 0) return null;
+                          return (
+                            <optgroup key={div} label={div}>
+                              {divTeams.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name} ({t.division})
+                                </option>
+                              ))}
+                            </optgroup>
+                          );
+                        })
+                      : teams
+                          .filter((t) => t.division === newFixtureDraft.division)
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
                   </select>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div className={newFixtureDraft.matchType === 'knockout' ? 'sm:col-span-2' : 'sm:col-span-2'}>
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Away Team
                   </label>
@@ -1574,17 +1599,35 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                   >
                     <option value="">-- Select Away Team --</option>
-                    {teams
-                      .filter(
-                        (t) =>
-                          t.division === newFixtureDraft.division &&
-                          t.id !== newFixtureDraft.homeTeamId
-                      )
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
+                    {newFixtureDraft.matchType === 'knockout'
+                      ? divisions.map((div) => {
+                          const divTeams = teams.filter(
+                            (t) =>
+                              t.division === div &&
+                              t.id !== newFixtureDraft.homeTeamId
+                          );
+                          if (divTeams.length === 0) return null;
+                          return (
+                            <optgroup key={div} label={div}>
+                              {divTeams.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name} ({t.division})
+                                </option>
+                              ))}
+                            </optgroup>
+                          );
+                        })
+                      : teams
+                          .filter(
+                            (t) =>
+                              t.division === newFixtureDraft.division &&
+                              t.id !== newFixtureDraft.homeTeamId
+                          )
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
                   </select>
                 </div>
               </div>
@@ -1935,7 +1978,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                               >
                                 <option value="league">League Match (15 frames)</option>
-                                <option value="knockout">🏆 Knockout Cup / Plate</option>
+                                <option value="knockout">Knockout</option>
                               </select>
                             </div>
                             {fixtureDraft.matchType === 'knockout' && (
@@ -2014,27 +2057,29 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                               />
                             </div>
-                            <div>
-                              <label className="block text-[11px] text-slate-400 mb-1">
-                                Division
-                              </label>
-                              <select
-                                value={fixtureDraft.division}
-                                onChange={(e) =>
-                                  setFixtureDraft({
-                                    ...fixtureDraft,
-                                    division: e.target.value as Division,
-                                  })
-                                }
-                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                              >
-                                {divisions.map((div) => (
-                                  <option key={div} value={div}>
-                                    {div}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
+                            {fixtureDraft.matchType !== 'knockout' && (
+                              <div>
+                                <label className="block text-[11px] text-slate-400 mb-1">
+                                  Division
+                                </label>
+                                <select
+                                  value={fixtureDraft.division}
+                                  onChange={(e) =>
+                                    setFixtureDraft({
+                                      ...fixtureDraft,
+                                      division: e.target.value as Division,
+                                    })
+                                  }
+                                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                                >
+                                  {divisions.map((div) => (
+                                    <option key={div} value={div}>
+                                      {div}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
                             <div className="sm:col-span-1">
                               <label className="block text-[11px] text-slate-400 mb-1">
                                 Home Team
@@ -2049,13 +2094,27 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 }
                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                               >
-                                {(divTeams.length > 0 ? divTeams : teams).map(
-                                  (t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {t.name}
-                                    </option>
-                                  )
-                                )}
+                                {fixtureDraft.matchType === 'knockout'
+                                  ? divisions.map((div) => {
+                                      const dt = teams.filter((t) => t.division === div);
+                                      if (dt.length === 0) return null;
+                                      return (
+                                        <optgroup key={div} label={div}>
+                                          {dt.map((t) => (
+                                            <option key={t.id} value={t.id}>
+                                              {t.name} ({t.division})
+                                            </option>
+                                          ))}
+                                        </optgroup>
+                                      );
+                                    })
+                                  : (divTeams.length > 0 ? divTeams : teams).map(
+                                      (t) => (
+                                        <option key={t.id} value={t.id}>
+                                          {t.name}
+                                        </option>
+                                      )
+                                    )}
                               </select>
                             </div>
                             <div className="sm:col-span-2">
@@ -2072,15 +2131,33 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 }
                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                               >
-                                {(divTeams.length > 0 ? divTeams : teams)
-                                  .filter(
-                                    (t) => t.id !== fixtureDraft.homeTeamId
-                                  )
-                                  .map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {t.name}
-                                    </option>
-                                  ))}
+                                {fixtureDraft.matchType === 'knockout'
+                                  ? divisions.map((div) => {
+                                      const dt = teams.filter(
+                                        (t) =>
+                                          t.division === div &&
+                                          t.id !== fixtureDraft.homeTeamId
+                                      );
+                                      if (dt.length === 0) return null;
+                                      return (
+                                        <optgroup key={div} label={div}>
+                                          {dt.map((t) => (
+                                            <option key={t.id} value={t.id}>
+                                              {t.name} ({t.division})
+                                            </option>
+                                          ))}
+                                        </optgroup>
+                                      );
+                                    })
+                                  : (divTeams.length > 0 ? divTeams : teams)
+                                      .filter(
+                                        (t) => t.id !== fixtureDraft.homeTeamId
+                                      )
+                                      .map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                          {t.name}
+                                        </option>
+                                      ))}
                               </select>
                             </div>
                           </div>

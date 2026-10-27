@@ -183,7 +183,7 @@ interface LeagueContextValue {
   removePlayer: (playerId: string) => Promise<void>;
   transferPlayer: (playerId: string, toTeamId: string) => Promise<void>;
   addFixture: (data: {
-    division: Division;
+    division?: Division;
     matchDate: string;
     weekNumber?: number;
     homeTeamId: string;
@@ -1164,7 +1164,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addFixture = useCallback(
     async (data: {
-      division: Division;
+      division?: Division;
       matchDate: string;
       weekNumber?: number;
       homeTeamId: string;
@@ -1182,11 +1182,12 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const roundName = data.round || data.cupRound;
       const koFormat = data.knockoutFormat ?? (data.playAllFrames ? 'play_all_15' : 'first_to_8');
       const playAll = Boolean(data.playAllFrames || koFormat === 'play_all_15');
+      const fixtureDiv = data.division || (matchType === 'knockout' ? 'Knockout' : 'Division 1');
 
       const newFixture: Fixture = {
         id: `fix-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         seasonId,
-        division: data.division,
+        division: fixtureDiv,
         matchDate: data.matchDate,
         weekNumber: data.weekNumber ?? 1,
         homeTeamId: data.homeTeamId,
