@@ -8,8 +8,11 @@ import {
   MapPin,
   PlayCircle,
   Radio,
+  RefreshCw,
+  Search,
   ShieldAlert,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { Division, Fixture } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
@@ -55,6 +58,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
     isCaptain ? 'mine' : 'all'
   );
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (isCaptain) {
@@ -95,6 +99,31 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
       }
       if (statusFilter !== 'all' && f.status !== statusFilter) {
         return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const home = teamsById[f.homeTeamId];
+        const away = teamsById[f.awayTeamId];
+        const homeName = (home?.name ?? '').toLowerCase();
+        const awayName = (away?.name ?? '').toLowerCase();
+        const venue = (home?.venue ?? '').toLowerCase();
+        const table = (home?.tableNumber ?? '').toLowerCase();
+        const division = (f.division ?? '').toLowerCase();
+        const weekStr = `week ${f.weekNumber} wk ${f.weekNumber} w${f.weekNumber}`;
+        const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
+        const statusStr = (f.status ?? '').toLowerCase();
+
+        const matches =
+          homeName.includes(q) ||
+          awayName.includes(q) ||
+          venue.includes(q) ||
+          table.includes(q) ||
+          division.includes(q) ||
+          weekStr.includes(q) ||
+          dateStr.includes(q) ||
+          statusStr.includes(q);
+
+        if (!matches) return false;
       }
       return true;
     })
@@ -196,6 +225,28 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               {tab.label}
             </button>
           ))}
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search fixtures by team, venue, table, division, week, or date..."
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+              title="Clear search"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -355,11 +406,56 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
-          No fixtures match your selected division and status filters.
+        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 space-y-2">
+          {searchQuery.trim() ? (
+            <>
+              <p>
+                No fixtures match &ldquo;
+                <strong className="text-white">{searchQuery}</strong>&rdquo;
+                {selectedDivision !== 'ALL' && (
+                  <span>
+                    {' '}
+                    in <strong>{selectedDivision}</strong>
+                  </span>
+                )}
+                {statusFilter !== 'all' && <span> ({statusFilter})</span>}.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedDivision('ALL');
+                  setStatusFilter(isCaptain ? 'mine' : 'all');
+                }}
+                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:underline font-semibold"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Reset all filters
+              </button>
+            </>
+          ) : (
+            <p>No fixtures match your selected division and status filters.</p>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="space-y-3">
+          {searchQuery.trim() && (
+            <div className="text-xs text-slate-400 font-medium px-1 flex items-center justify-between">
+              <span>
+                Found <strong className="text-white">{filtered.length}</strong>{' '}
+                fixture{filtered.length === 1 ? '' : 's'} matching &ldquo;
+                <strong className="text-white">{searchQuery}</strong>&rdquo;
+              </span>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-emerald-400 hover:underline font-semibold"
+              >
+                Clear search
+              </button>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {filtered.map((fix) => {
             const home = teamsById[fix.homeTeamId];
             const away = teamsById[fix.awayTeamId];
@@ -549,6 +645,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               </div>
             );
           })}
+          </div>
         </div>
       )}
     </div>
