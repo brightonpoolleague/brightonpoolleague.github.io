@@ -615,3 +615,22 @@ export function formatMatchDate(dateStr: string): string {
   if (!monthName || !day) return dateStr;
   return `${day}${getOrdinalSuffix(day)} ${monthName} ${year}`;
 }
+
+export type MatchTimeframe = 'past' | 'today' | 'upcoming';
+
+export function getMatchTimeframe(dateStr: string, status?: string): MatchTimeframe {
+  if (status === 'approved' || status === 'submitted') {
+    return 'past';
+  }
+  if (!dateStr) return 'upcoming';
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim());
+  if (!match) return 'upcoming';
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const fixtureDateStr = `${match[1]}-${match[2]}-${match[3]}`;
+
+  if (fixtureDateStr === todayStr) return 'today';
+  if (fixtureDateStr < todayStr) return 'past';
+  return 'upcoming';
+}

@@ -3,6 +3,8 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
+  Clock,
+  History,
   MapPin,
   PlayCircle,
   Radio,
@@ -11,7 +13,11 @@ import {
 } from 'lucide-react';
 import { Division, Fixture } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
-import { calculateMatchScore, formatMatchDate } from '../utils/leagueEngine';
+import {
+  calculateMatchScore,
+  formatMatchDate,
+  getMatchTimeframe,
+} from '../utils/leagueEngine';
 
 interface FixturesAndLiveViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -364,6 +370,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             const isMyTeamMatch =
               session.teamId === fix.homeTeamId ||
               session.teamId === fix.awayTeamId;
+            const timeframe = getMatchTimeframe(fix.matchDate, fix.status);
 
             return (
               <div
@@ -371,9 +378,13 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 className={`bg-slate-900 border rounded-2xl p-4 flex flex-col justify-between gap-3 transition hover:border-slate-700 ${
                   fix.status === 'live'
                     ? 'border-red-500/40 shadow-lg shadow-red-950/20'
+                    : timeframe === 'today'
+                    ? 'border-emerald-500/40 shadow-lg shadow-emerald-950/20'
                     : isMyTeamMatch
                     ? 'border-emerald-500/40'
-                    : 'border-slate-800'
+                    : timeframe === 'upcoming'
+                    ? 'border-sky-500/20 hover:border-sky-500/40'
+                    : 'border-slate-800 opacity-95'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 text-xs">
@@ -387,19 +398,51 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </span>
                   </div>
                   <span
-                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                       fix.status === 'live'
                         ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
                         : fix.status === 'submitted'
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                         : fix.status === 'approved'
                         ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : 'bg-slate-800 text-slate-400'
+                        : timeframe === 'today'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
+                        : timeframe === 'upcoming'
+                        ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                        : 'bg-slate-800 text-slate-400 border border-slate-700'
                     }`}
                   >
-                    {fix.status === 'live'
-                      ? `LIVE (${score.completedFrames}/15)`
-                      : fix.status}
+                    {fix.status === 'live' ? (
+                      <>
+                        <Radio className="w-2.5 h-2.5" />
+                        LIVE ({score.completedFrames}/15)
+                      </>
+                    ) : fix.status === 'approved' ? (
+                      <>
+                        <CheckCircle2 className="w-2.5 h-2.5" />
+                        Approved
+                      </>
+                    ) : fix.status === 'submitted' ? (
+                      <>
+                        <Clock className="w-2.5 h-2.5" />
+                        Submitted
+                      </>
+                    ) : timeframe === 'today' ? (
+                      <>
+                        <Calendar className="w-2.5 h-2.5" />
+                        Match Today
+                      </>
+                    ) : timeframe === 'upcoming' ? (
+                      <>
+                        <Clock className="w-2.5 h-2.5" />
+                        Upcoming
+                      </>
+                    ) : (
+                      <>
+                        <History className="w-2.5 h-2.5" />
+                        Past Date
+                      </>
+                    )}
                   </span>
                 </div>
 
@@ -440,9 +483,20 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                         </span>
                       </div>
                     ) : (
-                      <span className="text-xs font-bold text-slate-400 px-2 py-1 rounded bg-slate-900">
-                        20:00
-                      </span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span
+                          className={`text-[10px] font-extrabold uppercase tracking-wider ${
+                            timeframe === 'today'
+                              ? 'text-emerald-400'
+                              : 'text-sky-400'
+                          }`}
+                        >
+                          {timeframe === 'today' ? 'Today' : 'Upcoming'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-300 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                          20:00
+                        </span>
+                      </div>
                     )}
                   </div>
 

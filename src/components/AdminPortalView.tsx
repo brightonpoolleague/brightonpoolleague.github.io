@@ -5,9 +5,12 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Clock,
   Copy,
   Edit3,
+  History,
   KeyRound,
+  Radio,
   RefreshCw,
   Save,
   Search,
@@ -20,7 +23,11 @@ import {
 } from 'lucide-react';
 import { Division, Fixture, Player, Team } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
-import { calculateMatchScore, formatMatchDate } from '../utils/leagueEngine';
+import {
+  calculateMatchScore,
+  formatMatchDate,
+  getMatchTimeframe,
+} from '../utils/leagueEngine';
 
 interface AdminPortalViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -73,6 +80,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   >('ALL');
   const [fixtureSearchQuery, setFixtureSearchQuery] = useState('');
   const [fixtureDateFilter, setFixtureDateFilter] = useState('ALL');
+  const [fixtureTimeframeFilter, setFixtureTimeframeFilter] = useState<
+    'ALL' | 'upcoming' | 'today' | 'past'
+  >('ALL');
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'approved'
   >('all');
@@ -397,6 +407,33 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [fixtures, fixtureFilterDivision]);
 
+  const fixtureTimeframeCounts = useMemo(() => {
+    let all = 0;
+    let upcoming = 0;
+    let today = 0;
+    let past = 0;
+
+    for (const f of fixtures) {
+      if (
+        fixtureFilterDivision !== 'ALL' &&
+        f.division !== fixtureFilterDivision
+      ) {
+        continue;
+      }
+      all++;
+      const tf = getMatchTimeframe(f.matchDate, f.status);
+      if (f.status === 'live' || tf === 'today') {
+        today++;
+      }
+      if (tf === 'upcoming') {
+        upcoming++;
+      } else if (tf === 'past') {
+        past++;
+      }
+    }
+    return { all, upcoming, today, past };
+  }, [fixtures, fixtureFilterDivision]);
+
   const filteredFixtures = useMemo(() => {
     return fixtures.filter((f) => {
       if (
@@ -404,6 +441,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         f.division !== fixtureFilterDivision
       ) {
         return false;
+      }
+      if (fixtureTimeframeFilter !== 'ALL') {
+        const tf = getMatchTimeframe(f.matchDate, f.status);
+        if (fixtureTimeframeFilter === 'today') {
+          if (tf !== 'today' && f.status !== 'live') return false;
+        } else if (fixtureTimeframeFilter === 'upcoming') {
+          if (tf !== 'upcoming') return false;
+        } else if (fixtureTimeframeFilter === 'past') {
+          if (tf !== 'past') return false;
+        }
       }
       if (fixtureDateFilter !== 'ALL' && f.matchDate !== fixtureDateFilter) {
         return false;
@@ -438,6 +485,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   }, [
     fixtures,
     fixtureFilterDivision,
+    fixtureTimeframeFilter,
     fixtureDateFilter,
     fixtureSearchQuery,
     teamsById,
@@ -1093,32 +1141,88 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {/* TAB 2: FIXTURES MANAGER */}
       {activeTab === 'fixtures' && (
         <div className="space-y-3.5">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setFixtureFilterDivision('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                fixtureFilterDivision === 'ALL'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800'
-              }`}
-            >
-              All ({fixtures.length})
-            </button>
-            {divisions.map((div) => (
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            {/* Division Filter */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
               <button
-                key={div}
                 type="button"
-                onClick={() => setFixtureFilterDivision(div)}
+                onClick={() => setFixtureFilterDivision('ALL')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                  fixtureFilterDivision === div
+                  fixtureFilterDivision === 'ALL'
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-900 text-slate-400 border border-slate-800'
                 }`}
               >
-                {div} ({fixtures.filter((f) => f.division === div).length})
+                All ({fixtures.length})
               </button>
-            ))}
+              {divisions.map((div) => (
+                <button
+                  key={div}
+                  type="button"
+                  onClick={() => setFixtureFilterDivision(div)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                    fixtureFilterDivision === div
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800'
+                  }`}
+                >
+                  {div} ({fixtures.filter((f) => f.division === div).length})
+                </button>
+              ))}
+            </div>
+
+            {/* Timeframe Filter Tabs */}
+            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setFixtureTimeframeFilter('ALL')}
+                className={`px-2.5 py-1 rounded-lg transition ${
+                  fixtureTimeframeFilter === 'ALL'
+                    ? 'bg-emerald-600 text-white font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                All ({fixtureTimeframeCounts.all})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFixtureTimeframeFilter('upcoming')}
+                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 ${
+                  fixtureTimeframeFilter === 'upcoming'
+                    ? 'bg-sky-600 text-white font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Clock className="w-3 h-3 text-sky-400" />
+                Upcoming ({fixtureTimeframeCounts.upcoming})
+              </button>
+              {fixtureTimeframeCounts.today > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFixtureTimeframeFilter('today')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 ${
+                    fixtureTimeframeFilter === 'today'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Calendar className="w-3 h-3 text-emerald-400" />
+                  Today ({fixtureTimeframeCounts.today})
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setFixtureTimeframeFilter('past')}
+                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 ${
+                  fixtureTimeframeFilter === 'past'
+                    ? 'bg-slate-700 text-white font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <History className="w-3 h-3 text-slate-400" />
+                Past ({fixtureTimeframeCounts.past})
+              </button>
+            </div>
           </div>
 
           {/* Search & Date Filter Bar */}
@@ -1242,6 +1346,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       onClick={() => {
                         setFixtureSearchQuery('');
                         setFixtureDateFilter('ALL');
+                        setFixtureTimeframeFilter('ALL');
                         setFixtureFilterDivision('ALL');
                       }}
                       className="inline-flex items-center gap-1 text-emerald-400 hover:underline font-semibold mt-1"
@@ -1261,6 +1366,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   const away = teamsById[fix.awayTeamId];
                   if (!home || !away) return null;
                   const score = calculateMatchScore(fix);
+                  const timeframe = getMatchTimeframe(
+                    fix.matchDate,
+                    fix.status
+                  );
                   const isEditing =
                     editingFixtureId === fix.id && fixtureDraft !== null;
                   const divTeams = teams.filter(
@@ -1271,17 +1380,93 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   return (
                     <div
                       key={fix.id}
-                      className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-3 text-xs"
+                      className={`border rounded-xl p-3 space-y-3 text-xs transition ${
+                        fix.status === 'live'
+                          ? 'bg-slate-950 border-red-500/50 shadow-md shadow-red-950/20'
+                          : timeframe === 'today'
+                          ? 'bg-slate-950 border-emerald-500/50 shadow-md shadow-emerald-950/20'
+                          : timeframe === 'upcoming'
+                          ? 'bg-slate-950/90 border-slate-800 hover:border-sky-500/40'
+                          : 'bg-slate-950/60 border-slate-800/80'
+                      }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <span className="text-emerald-400 font-bold">
-                            {fix.division}
-                          </span>{' '}
-                          • Week {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
-                          <div className="font-bold text-white text-sm mt-0.5">
-                            {home.name} {score.homeFrames} – {score.awayFrames}{' '}
-                            {away.name}
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-emerald-400 font-bold">
+                              {fix.division}
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span className="text-slate-300">
+                              Week {fix.weekNumber} ({formatMatchDate(fix.matchDate)})
+                            </span>
+
+                            {/* Prominent Status & Timeframe Badge */}
+                            {fix.status === 'live' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse">
+                                <Radio className="w-2.5 h-2.5" />
+                                LIVE ({score.completedFrames}/15)
+                              </span>
+                            ) : fix.status === 'approved' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                Approved (Final)
+                              </span>
+                            ) : fix.status === 'submitted' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <Clock className="w-2.5 h-2.5" />
+                                Awaiting Approval
+                              </span>
+                            ) : timeframe === 'today' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+                                <Calendar className="w-2.5 h-2.5" />
+                                Match Today
+                              </span>
+                            ) : timeframe === 'upcoming' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                                <Clock className="w-2.5 h-2.5" />
+                                Upcoming
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700">
+                                <History className="w-2.5 h-2.5" />
+                                Past Date
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="font-bold text-white text-sm flex items-center gap-2">
+                            <span>{home.name}</span>
+                            <span className="tabular-nums">
+                              {score.completedFrames > 0 || fix.status !== 'scheduled' ? (
+                                <span className="inline-flex items-center gap-1 font-black px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800">
+                                  <span
+                                    className={
+                                      score.homeFrames > score.awayFrames
+                                        ? 'text-emerald-400'
+                                        : 'text-slate-300'
+                                    }
+                                  >
+                                    {score.homeFrames}
+                                  </span>
+                                  <span className="text-slate-600">–</span>
+                                  <span
+                                    className={
+                                      score.awayFrames > score.homeFrames
+                                        ? 'text-emerald-400'
+                                        : 'text-slate-300'
+                                    }
+                                  >
+                                    {score.awayFrames}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-xs font-semibold text-slate-500">
+                                  vs
+                                </span>
+                              )}
+                            </span>
+                            <span>{away.name}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
