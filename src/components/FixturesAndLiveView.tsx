@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   Eye,
@@ -64,6 +65,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     isCaptain ? 'mine' : 'all'
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState('ALL');
   const [showMyNextMatch, setShowMyNextMatch] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const stored = localStorage.getItem('bpl_show_my_next_match');
@@ -107,6 +109,22 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     myMatches.find((f) => f.status === 'submitted') ||
     (myMatches.length > 0 ? myMatches[myMatches.length - 1] : null);
 
+  const uniqueFixtureDates = useMemo(() => {
+    const dateSet = new Set<string>();
+    for (const f of fixtures) {
+      if (!f.matchDate) continue;
+      if (selectedDivision === 'KNOCKOUT') {
+        if (!isKnockoutFixture(f)) continue;
+      } else if (selectedDivision !== 'ALL') {
+        if (f.division !== selectedDivision || isKnockoutFixture(f)) {
+          continue;
+        }
+      }
+      dateSet.add(f.matchDate);
+    }
+    return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
+  }, [fixtures, selectedDivision]);
+
   const filtered = fixtures
     .filter((f) => {
       if (selectedDivision === 'KNOCKOUT') {
@@ -115,6 +133,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         if (f.division !== selectedDivision || isKnockoutFixture(f)) {
           return false;
         }
+      }
+      if (dateFilter !== 'ALL' && f.matchDate !== dateFilter) {
+        return false;
       }
       if (statusFilter === 'mine') {
         return (
@@ -279,26 +300,87 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           ))}
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search fixtures by team, venue, table, division, or date..."
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
-              title="Clear search"
+        {/* Search & Date Filter Bar */}
+        <div className="flex flex-col sm:flex-row gap-2.5 min-w-0">
+          {/* Search Bar */}
+          <div className="relative flex-1 min-w-0">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search fixtures by team, venue, table, division, or date..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Date Filter Dropdown & Native Picker */}
+          <div className="flex items-center gap-1.5 w-full sm:w-64 sm:flex-shrink-0 min-w-0">
+            <div className="relative flex-1 min-w-0">
+              <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-sm appearance-none cursor-pointer truncate"
+              >
+                <option value="ALL">All Dates</option>
+                {dateFilter !== 'ALL' && !uniqueFixtureDates.includes(dateFilter) && (
+                  <option value={dateFilter}>
+                    {formatMatchDate(dateFilter)}
+                  </option>
+                )}
+                {uniqueFixtureDates.map((date) => (
+                  <option key={date} value={date}>
+                    {formatMatchDate(date)}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* Native Calendar Picker */}
+            <div
+              className="relative flex-shrink-0"
+              title="Pick specific date from calendar"
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+              <input
+                type="date"
+                value={dateFilter === 'ALL' ? '' : dateFilter}
+                onChange={(e) => setDateFilter(e.target.value || 'ALL')}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+              <div
+                className={`p-2 rounded-xl border text-xs transition flex items-center justify-center ${
+                  dateFilter !== 'ALL'
+                    ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+              </div>
+            </div>
+
+            {dateFilter !== 'ALL' && (
+              <button
+                type="button"
+                onClick={() => setDateFilter('ALL')}
+                className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
+                title="Reset date filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -519,15 +601,24 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 space-y-2">
-          {searchQuery.trim() ? (
+          {searchQuery.trim() || dateFilter !== 'ALL' ? (
             <>
               <p>
-                No fixtures match &ldquo;
-                <strong className="text-white">{searchQuery}</strong>&rdquo;
+                No fixtures match
+                {searchQuery.trim() && (
+                  <span>
+                    {' '}&ldquo;
+                    <strong className="text-white">{searchQuery}</strong>&rdquo;
+                  </span>
+                )}
+                {dateFilter !== 'ALL' && (
+                  <span>
+                    {' '}on <strong>{formatMatchDate(dateFilter)}</strong>
+                  </span>
+                )}
                 {selectedDivision !== 'ALL' && (
                   <span>
-                    {' '}
-                    in <strong>{selectedDivision}</strong>
+                    {' '}in <strong>{selectedDivision}</strong>
                   </span>
                 )}
                 {statusFilter !== 'all' && <span> ({statusFilter})</span>}.
@@ -536,6 +627,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 type="button"
                 onClick={() => {
                   setSearchQuery('');
+                  setDateFilter('ALL');
                   setSelectedDivision('ALL');
                   setStatusFilter(isCaptain ? 'mine' : 'all');
                 }}

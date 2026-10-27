@@ -493,7 +493,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   );
 
   const uniqueFixtureDates = useMemo(() => {
-    const dateMap = new Map<string, number>();
+    const dateSet = new Set<string>();
     for (const f of fixtures) {
       if (!f.matchDate) continue;
       if (fixtureFilterDivision === 'KNOCKOUT') {
@@ -503,11 +503,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           continue;
         }
       }
-      dateMap.set(f.matchDate, (dateMap.get(f.matchDate) || 0) + 1);
+      dateSet.add(f.matchDate);
     }
-    return Array.from(dateMap.entries())
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
   }, [fixtures, fixtureFilterDivision]);
 
   const fixtureTimeframeCounts = useMemo(() => {
@@ -1415,21 +1413,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     onChange={(e) => setFixtureDateFilter(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-sm appearance-none cursor-pointer truncate"
                   >
-                    <option value="ALL">
-                      All Dates ({uniqueFixtureDates.length} Matchdays)
-                    </option>
+                    <option value="ALL">All Dates</option>
                     {fixtureDateFilter !== 'ALL' &&
-                      !uniqueFixtureDates.some(
-                        (item) => item.date === fixtureDateFilter
-                      ) && (
+                      !uniqueFixtureDates.includes(fixtureDateFilter) && (
                         <option value={fixtureDateFilter}>
-                          {formatMatchDate(fixtureDateFilter)} (Custom date)
+                          {formatMatchDate(fixtureDateFilter)}
                         </option>
                       )}
-                    {uniqueFixtureDates.map((item) => (
-                      <option key={item.date} value={item.date}>
-                        {formatMatchDate(item.date)} ({item.count}{' '}
-                        {item.count === 1 ? 'match' : 'matches'})
+                    {uniqueFixtureDates.map((date) => (
+                      <option key={date} value={date}>
+                        {formatMatchDate(date)}
                       </option>
                     ))}
                   </select>
