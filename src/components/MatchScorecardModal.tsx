@@ -92,7 +92,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
     if (hidden) return 'Hidden (Folded Scorecard)';
     if (!playerId) return 'Unassigned';
-    if (playerId === 'BYE') return 'BYE (No Player)';
+    if (playerId === 'BYE') return 'No Player (BYE)';
     return players.find((p) => p.id === playerId)?.name ?? 'Unknown Player';
   };
 
@@ -360,7 +360,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     const canSubInBye =
       setNumber > 1 &&
       subOutSlotIdx !== null &&
-      (subOutSlotIdx === 3 || subOutSlotIdx === 4) &&
       currentSlots[subOutSlotIdx] !== 'BYE';
 
     return (
@@ -486,7 +485,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 side,
                 slotIdx
               );
-              const canSelectBye = slotNum === 4 || slotNum === 5;
 
               return (
                 <div key={slotNum} className="flex items-center gap-2">
@@ -509,6 +507,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <option value="">
                       -- Select Position {slotNum} Player --
                     </option>
+                    <option value="BYE">No Player (BYE)</option>
                     {eligible.map(({ player, disabledReason }) => (
                       <option
                         key={player.id}
@@ -519,11 +518,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         {disabledReason ? ` (${disabledReason})` : ''}
                       </option>
                     ))}
-                    {canSelectBye && (
-                      <option value="BYE">
-                        BYE (No Player - Pos {slotNum})
-                      </option>
-                    )}
                   </select>
                 </div>
               );
@@ -618,9 +612,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         );
                       })}
                       {canSubInBye && (
-                        <option value="BYE">
-                          BYE (No Player - Pos #{(subOutSlotIdx ?? 0) + 1})
-                        </option>
+                        <option value="BYE">No Player (BYE)</option>
                       )}
                     </select>
                   </div>
