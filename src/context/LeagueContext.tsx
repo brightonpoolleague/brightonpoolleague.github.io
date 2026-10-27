@@ -67,7 +67,7 @@ function mapSeasonRow(r: Record<string, unknown>): Season {
 
 function mapTeamRow(
   r: Record<string, unknown>,
-  existingPin = '••••••••'
+  existingPin = ''
 ): Team {
   return {
     id: String(r.id),
@@ -77,7 +77,7 @@ function mapTeamRow(
     venue: String(r.venue),
     address: String(r.address ?? ''),
     captainName: String(r.captain_name ?? ''),
-    captainPin: existingPin,
+    captainPin: existingPin.includes('•') ? '' : existingPin,
     tableNumber: r.table_number ? String(r.table_number) : undefined,
   };
 }
@@ -317,16 +317,25 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!supabase) return;
     setIsSyncing(true);
     try {
-      const [seasonsRes, teamsRes, playersRes, fixturesRes] = await Promise.all([
+      const [seasonsRes, teamsRes, playersRes, fixturesRes, rawPinsRes] = await Promise.all([
         supabase.from('seasons').select('*').order('created_at'),
         supabase.from('teams').select('*').order('name'),
         supabase.from('players').select('*').order('name'),
         supabase.from('fixtures').select('*').order('match_date'),
+        supabase.from('team_pins').select('*'),
       ]);
 
-      // If logged in as Admin, fetch protected team PINs via server-side RPC
+      // Load team PINs directly or via Admin RPC
       const pinMap: Record<string, string> = {};
-      if (session.role === 'admin' && adminPin) {
+      if (!rawPinsRes.error && Array.isArray(rawPinsRes.data)) {
+        rawPinsRes.data.forEach(
+          (row: { team_id: string; captain_pin: string }) => {
+            if (row.team_id && row.captain_pin) {
+              pinMap[row.team_id] = row.captain_pin;
+            }
+          }
+        );
+      } else if (session.role === 'admin' && adminPin) {
         const pinsRes = await supabase.rpc('get_all_team_pins', {
           p_admin_pin: adminPin,
         });
@@ -351,13 +360,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!teamsRes.error && teamsRes.data) {
-        const mappedTeams: Team[] = teamsRes.data.map((r) => {
-          const row = r as Record<string, unknown>;
-          const id = String(row.id);
-          return mapTeamRow(row, pinMap[id] ?? '••••••••');
+        setAllTeams((prev) => {
+          const mappedTeams: Team[] = teamsRes.data.map((r) => {
+            const row = r as Record<string, unknown>;
+            const id = String(row.id);
+            const prevTeam = prev.find((t) => t.id === id);
+            const resolvedPin =
+              pinMap[id] ||
+              (prevTeam && prevTeam.captainPin && !prevTeam.captainPin.includes('•')
+                ? prevTeam.captainPin
+                : '') ||
+              '';
+            return mapTeamRow(row, resolvedPin);
+          });
+          localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mappedTeams));
+          return mappedTeams;
         });
-        setAllTeams(mappedTeams);
-        localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mappedTeams));
       }
 
       if (!playersRes.error && playersRes.data) {
@@ -449,7 +467,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
                 const existing = prev.find((t) => t.id === rowId);
                 const updated = mapTeamRow(
                   row,
-                  existing?.captainPin ?? '••••••••'
+                  existing?.captainPin ?? ''
                 );
                 const next = existing
                   ? prev.map((t) => (t.id === rowId ? updated : t))
@@ -463,6 +481,24 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               );
               setAllTeams((prev) => {
                 const next = prev.filter((t) => t.id !== deletedId);
+                localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(next));
+                return next;
+              });
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'team_pins' },
+          (payload) => {
+            if (payload.new && (payload.new as Record<string, unknown>).team_id) {
+              const row = payload.new as Record<string, unknown>;
+              const teamId = String(row.team_id);
+              const pin = String(row.captain_pin ?? '');
+              setAllTeams((prev) => {
+                const next = prev.map((t) =>
+                  t.id === teamId ? { ...t, captainPin: pin } : t
+                );
                 localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(next));
                 return next;
               });
@@ -870,7 +906,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             p_address: t.address,
             p_captain_name: t.captainName,
             p_captain_pin:
-              t.captainPin !== '••••••••' ? t.captainPin : generateRandomPin(),
+              t.captainPin && !t.captainPin.includes('•')
+                ? t.captainPin
+                : generateRandomPin(),
           });
         }
         for (const p of clonedPlayers) {

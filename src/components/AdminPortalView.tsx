@@ -599,7 +599,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       <div className="flex items-center gap-1.5">
                         <input
                           type="text"
-                          value={team.captainPin}
+                          value={team.captainPin && !team.captainPin.includes('•') ? team.captainPin : ''}
+                          placeholder="8-digit PIN"
                           onChange={(e) =>
                             updateTeamPin(team.id, e.target.value)
                           }
