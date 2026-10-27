@@ -1200,7 +1200,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Radio className="w-3 h-3 text-slate-400" />
+                <Radio
+                  className={`w-3 h-3 ${
+                    fixtureTimeframeFilter === 'live'
+                      ? 'text-white'
+                      : 'text-red-400'
+                  }`}
+                />
                 Live ({fixtureTimeframeCounts.live})
               </button>
               <button
