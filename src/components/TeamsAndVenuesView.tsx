@@ -276,11 +276,7 @@ export const TeamsAndVenuesView: React.FC = () => {
                                 <TableIcon className="w-3 h-3" />
                                 {team.tableNumber}
                               </span>
-                            ) : (
-                              <span className="text-[11px] text-slate-500 italic">
-                                Table not specified
-                              </span>
-                            )}
+                            ) : null}
                           </div>
 
                           <h4 className="font-bold text-white text-base">

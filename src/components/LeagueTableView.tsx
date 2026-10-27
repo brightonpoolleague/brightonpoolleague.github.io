@@ -295,7 +295,11 @@ export const LeagueTableView: React.FC = () => {
           primaryText: r.team.name,
           secondaryText:
             r.team.venue +
-            (r.team.tableNumber ? ` (Table ${r.team.tableNumber})` : ''),
+            (r.team.tableNumber
+              ? r.team.tableNumber.toLowerCase().startsWith('table')
+                ? ` (${r.team.tableNumber})`
+                : ` (Table ${r.team.tableNumber})`
+              : ''),
           values: [
             r.played,
             r.won,
