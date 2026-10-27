@@ -491,6 +491,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     let activeChannel: ReturnType<typeof supabase.channel> | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
     let isReconnecting = false;
+    let hasSubscribedOnce = false;
 
     const disconnectRealtime = async () => {
       if (reconnectTimeout) {
@@ -691,6 +692,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log('[Realtime] Live WebSocket connected and listening');
+            // After a reconnect, quietly catch up on any changes broadcast while we were offline
+            if (hasSubscribedOnce) {
+              refreshFromCloud({ silent: true });
+            }
+            hasSubscribedOnce = true;
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             scheduleReconnect(status, err);
           }

@@ -52,8 +52,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     saveFixture,
     approveFixture,
     reopenFixture,
-    refreshFromCloud,
-    refreshSingleFixture,
     isOnline,
     isSyncing,
     syncError,
@@ -73,17 +71,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     home: string;
     away: string;
   }>({ home: '', away: '' });
-
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-
-  const handleManualRefresh = async () => {
-    setIsManualRefreshing(true);
-    try {
-      await refreshSingleFixture(fixture.id);
-    } finally {
-      setTimeout(() => setIsManualRefreshing(false), 500);
-    }
-  };
 
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -1060,18 +1047,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               <span className="hidden sm:inline">Result Scorecard</span>
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={handleManualRefresh}
-            disabled={isManualRefreshing}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
-            title="Refresh scorecard and latest scores from cloud"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${isManualRefreshing ? 'animate-spin text-emerald-400' : ''}`}
-            />
-          </button>
 
           <button
             type="button"
