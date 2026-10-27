@@ -74,19 +74,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     away: string;
   }>({ home: '', away: '' });
 
-  // Lightweight background safety sync:
-  // Every 4.5 seconds, quietly check ONLY this single fixture row by ID from Supabase.
-  // This takes ~30ms and ~1KB, guaranteeing that if a phone's WebSocket temporarily lags or drops,
-  // the match score will NEVER fall more than 4.5 seconds behind.
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-        refreshSingleFixture(fixture.id);
-      }
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [fixture.id, refreshSingleFixture]);
-
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const handleManualRefresh = async () => {

@@ -639,12 +639,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         )
         .subscribe((status, err) => {
-          if (
+          if (status === 'SUBSCRIBED') {
+            console.log('[Realtime] Live WebSocket connected and listening');
+          } else if (
             status === 'CHANNEL_ERROR' ||
             status === 'TIMED_OUT' ||
             status === 'CLOSED'
           ) {
-            console.warn(`[Realtime] Subscription state: ${status}`, err);
+            console.warn(`[Realtime] Connection dropped (${status}), auto-reconnecting in 500ms...`, err);
             disconnectRealtime();
             setTimeout(() => {
               if (
@@ -653,7 +655,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               ) {
                 connectRealtime();
               }
-            }, 2500);
+            }, 500);
           }
         });
     };
@@ -667,19 +669,26 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshFromCloud();
+        refreshFromCloud({ silent: true });
         connectRealtime();
       } else {
         disconnectRealtime();
       }
     };
 
+    const handleFocus = () => {
+      if (!activeChannel) {
+        connectRealtime();
+      }
+      refreshFromCloud({ silent: true });
+    };
+
     const handleOnline = () => {
-      refreshFromCloud();
+      refreshFromCloud({ silent: true });
       connectRealtime();
     };
 
-    refreshFromCloud();
+    refreshFromCloud({ silent: true });
     if (
       typeof document === 'undefined' ||
       document.visibilityState === 'visible'
@@ -692,11 +701,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     if (typeof window !== 'undefined') {
       window.addEventListener('online', handleOnline);
+      window.addEventListener('focus', handleFocus);
     }
 
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('online', handleOnline);
+        window.removeEventListener('focus', handleFocus);
       }
       if (typeof document !== 'undefined') {
         document.removeEventListener(
