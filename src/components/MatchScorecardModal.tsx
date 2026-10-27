@@ -85,21 +85,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
   };
 
-  // Lightweight background safety sync: while scorecard is open, poll only this fixture by ID every 4s
-  // This guarantees updates appear promptly even if a device experiences a temporary WebSocket disruption
-  useEffect(() => {
-    if (!fixture.id) return;
-    const interval = setInterval(() => {
-      if (
-        typeof document === 'undefined' ||
-        document.visibilityState === 'visible'
-      ) {
-        refreshSingleFixture(fixture.id);
-      }
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [fixture.id, refreshSingleFixture]);
-
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     message: React.ReactNode;
