@@ -32,7 +32,6 @@ import {
   Team,
 } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
-import { PinInput } from './PinInput';
 import {
   calculateMatchScore,
   formatMatchDate,
@@ -58,7 +57,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     fixtures,
     adminPin,
     canManageLeague,
-    loginAsAdminWithPin,
     updateTeamPin,
     updateTeam,
     deleteTeam,
@@ -78,9 +76,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [activeTab, setActiveTab] = useState<
     'teams' | 'fixtures' | 'approvals'
   >('teams');
-
-  const [unlockPinInput, setUnlockPinInput] = useState('');
-  const [unlockError, setUnlockError] = useState('');
 
   const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
   const [newPlayerByTeam, setNewPlayerByTeam] = useState<
@@ -194,46 +189,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   };
 
   if (!canManageLeague) {
-    return (
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const res = await loginAsAdminWithPin(unlockPinInput);
-          if (!res.success) setUnlockError(res.error || 'Incorrect League Admin PIN.');
-        }}
-        className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-md mx-auto space-y-4"
-      >
-        <ShieldCheck className="w-12 h-12 text-emerald-400 mx-auto" />
-        <h2 className="text-xl font-bold text-white">
-          Enter League Admin PIN
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-400">
-          Enter the Master League Admin PIN to manage teams, players, Team
-          Captain PINs, fixtures, and approve scorecards.
-        </p>
-        <div className="flex items-center gap-2 max-w-xs mx-auto">
-          <PinInput
-            required
-            value={unlockPinInput}
-            onChange={(e) => {
-              setUnlockPinInput(e.target.value);
-              setUnlockError('');
-            }}
-            placeholder="Admin PIN"
-            className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 py-2.5 text-sm text-white text-center"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow"
-          >
-            Unlock
-          </button>
-        </div>
-        {unlockError && (
-          <p className="text-xs text-red-400 font-semibold">{unlockError}</p>
-        )}
-      </form>
-    );
+    return null;
   }
 
   const handleCopyCaptainPin = (teamId: string, pin: string) => {
