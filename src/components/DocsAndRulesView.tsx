@@ -243,7 +243,7 @@ export const DocsAndRulesView: React.FC = () => {
 
             <div className="space-y-2 border-t border-slate-800/80 pt-4">
               <h3 className="text-base font-bold text-emerald-400">
-                4. Completing the Score Card
+                4. Completing the Scorecard
               </h3>
               <ul className="space-y-1.5 list-none">
                 <li>
@@ -411,7 +411,7 @@ export const DocsAndRulesView: React.FC = () => {
               <ul className="space-y-1.5 list-none">
                 <li>
                   <strong>a.</strong> Record the number of games each team has
-                  won at the bottom of the score card (the total should be{' '}
+                  won at the bottom of the scorecard (the total should be{' '}
                   <strong>15</strong>).
                 </li>
                 <li>
@@ -530,7 +530,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <h4 className="font-bold text-white">
                     1) Team with Only 4 Players
                   </h4>
-                  <p>a. Enter BYE in position 5 on the score card.</p>
+                  <p>a. Enter BYE in position 5 on the scorecard.</p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.
                   </p>
@@ -539,7 +539,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <h4 className="font-bold text-white">
                     2) Both Teams with Only 4 Players
                   </h4>
-                  <p>a. Both teams enter BYE in position 5 on the score card.</p>
+                  <p>a. Both teams enter BYE in position 5 on the scorecard.</p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.
                   </p>
@@ -576,8 +576,8 @@ export const DocsAndRulesView: React.FC = () => {
                     5) Team of 3 vs Team of 3
                   </h4>
                   <p>
-                    a. Both teams enter BYE in positions 4 and 5 on the score
-                    card.
+                    a. Both teams enter BYE in positions 4 and 5 on the
+                    scorecard.
                   </p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.

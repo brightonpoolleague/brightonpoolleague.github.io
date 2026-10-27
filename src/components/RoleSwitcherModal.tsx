@@ -135,7 +135,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
           >
             <p className="text-xs text-slate-400">
               Select your team and enter your 8-digit Team PIN to fill in your
-              live match score card.
+              live match scorecard.
             </p>
 
             {teams.length > 0 ? (

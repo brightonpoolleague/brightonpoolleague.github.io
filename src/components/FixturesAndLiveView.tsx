@@ -487,7 +487,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       }`}
                     >
                       <PlayCircle className="w-3.5 h-3.5" />
-                      {isEditable ? 'Score Card' : 'View Card'}
+                      {isEditable ? 'Scorecard' : 'View Scorecard'}
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
