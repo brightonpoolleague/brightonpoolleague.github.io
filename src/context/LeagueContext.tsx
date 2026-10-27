@@ -492,12 +492,39 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
     let isReconnecting = false;
     let hasSubscribedOnce = false;
+    // Increments per connection so late callbacks from torn-down channels are ignored
+    let connectionId = 0;
+    let isSubscribed = false;
+    let lastCatchUpAt = 0;
+
+    // Quietly refetch everything, but collapse bursts of triggers (tab visible + focus +
+    // reconnect all fire together when a phone is unlocked) into a single fetch.
+    const catchUp = () => {
+      const now = Date.now();
+      if (now - lastCatchUpAt < 3000) return;
+      lastCatchUpAt = now;
+      refreshFromCloud({ silent: true });
+    };
+
+    // Called when the user returns to the app or the device comes back online.
+    // - Live socket already listening: just catch up on anything missed.
+    // - No socket: connect; the SUBSCRIBED handler catches up once it's actually listening,
+    //   so nothing broadcast between the fetch and the subscription can slip through.
+    // - Socket mid-connect: do nothing; SUBSCRIBED will handle it.
+    const resumeLive = () => {
+      if (!activeChannel) {
+        connectRealtime();
+      } else if (isSubscribed) {
+        catchUp();
+      }
+    };
 
     const disconnectRealtime = async () => {
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout);
         reconnectTimeout = null;
       }
+      isSubscribed = false;
       if (activeChannel) {
         const chan = activeChannel;
         activeChannel = null;
@@ -533,6 +560,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const connectRealtime = () => {
       if (activeChannel) return;
+      const myConnectionId = ++connectionId;
       activeChannel = supabase
         // Unique topic per connection: supabase.channel() returns any existing channel with the
         // same topic, so reusing a fixed name could hand back a channel that is still being torn
@@ -690,14 +718,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         })
         .subscribe((status, err) => {
+          if (myConnectionId !== connectionId) return; // stale channel
           if (status === 'SUBSCRIBED') {
             console.log('[Realtime] Live WebSocket connected and listening');
+            isSubscribed = true;
             // After a reconnect, quietly catch up on any changes broadcast while we were offline
             if (hasSubscribedOnce) {
-              refreshFromCloud({ silent: true });
+              catchUp();
             }
             hasSubscribedOnce = true;
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            isSubscribed = false;
             scheduleReconnect(status, err);
           }
           // Note: Never reconnect on 'CLOSED' because 'CLOSED' is naturally triggered by removeChannel/unsubscribe
@@ -706,25 +737,21 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshFromCloud({ silent: true });
-        connectRealtime();
+        resumeLive();
       } else {
         disconnectRealtime();
       }
     };
 
     const handleFocus = () => {
-      if (!activeChannel) {
-        connectRealtime();
-      }
-      refreshFromCloud({ silent: true });
+      resumeLive();
     };
 
     const handleOnline = () => {
-      refreshFromCloud({ silent: true });
-      connectRealtime();
+      resumeLive();
     };
 
+    lastCatchUpAt = Date.now();
     refreshFromCloud({ silent: true });
     if (
       typeof document === 'undefined' ||
