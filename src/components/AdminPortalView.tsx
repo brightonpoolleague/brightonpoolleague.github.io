@@ -1167,7 +1167,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     )}
                   {uniqueFixtureDates.map((item) => (
                     <option key={item.date} value={item.date}>
-                      {formatMatchDate(item.date)} (Wk {item.weeks.join(', ')})
+                      {formatMatchDate(item.date)} (
+                      {item.weeks.length > 1 ? 'Weeks' : 'Week'}{' '}
+                      {item.weeks.join(', ')})
                     </option>
                   ))}
                 </select>
