@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Download,
   Share2,
@@ -8,6 +8,8 @@ import {
   Trophy,
   Sparkles,
   Camera,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
 
@@ -48,9 +50,55 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
   rows,
   fileBaseName,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'share' | null>(null);
+  const [fitScale, setFitScale] = useState<number>(1);
+  const [cardHeight, setCardHeight] = useState<number>(750);
+  const [zoomMode, setZoomMode] = useState<'fit' | 'actual'>('fit');
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const computeFitScale = () => {
+      if (!containerRef.current || !cardRef.current) return;
+      const cWidth = containerRef.current.clientWidth;
+      const cHeight = containerRef.current.clientHeight;
+      const unscaledHeight = cardRef.current.offsetHeight || 750;
+      setCardHeight(unscaledHeight);
+
+      // Safe margin: 16px on mobile, 32px on desktop
+      const padX = window.innerWidth < 640 ? 16 : 32;
+      const padY = window.innerWidth < 640 ? 16 : 32;
+
+      const availWidth = Math.max(100, cWidth - padX);
+      const availHeight = Math.max(100, cHeight - padY);
+
+      const scaleX = availWidth / 800;
+      const scaleY = availHeight / unscaledHeight;
+      const bestScale = Math.min(1, scaleX, scaleY);
+      setFitScale(bestScale);
+    };
+
+    computeFitScale();
+    const timer = setTimeout(computeFitScale, 80);
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      ro = new ResizeObserver(() => computeFitScale());
+      ro.observe(containerRef.current);
+    }
+    window.addEventListener('resize', computeFitScale);
+
+    return () => {
+      clearTimeout(timer);
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', computeFitScale);
+    };
+  }, [isOpen, rows.length]);
+
+  const currentScale = zoomMode === 'fit' ? fitScale : 1;
 
   if (!isOpen) return null;
 
@@ -70,6 +118,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         cacheBust: true,
         style: {
           margin: '0',
+          transform: 'none',
         },
       };
 
@@ -99,6 +148,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         cacheBust: true,
         style: {
           margin: '0',
+          transform: 'none',
         },
       });
 
@@ -143,22 +193,27 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-6"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[96vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Bar */}
-        <div className="p-4 sm:px-6 sm:py-4 border-b border-slate-800 flex items-center justify-between gap-3">
+        <div className="p-3.5 sm:px-6 sm:py-4 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <Camera className="w-4 h-4" />
             </div>
-            <h3 className="font-black text-white text-sm sm:text-base">
-              Export Image
-            </h3>
+            <div>
+              <h3 className="font-black text-white text-sm sm:text-base leading-tight">
+                Export Image
+              </h3>
+              <p className="text-[11px] text-slate-400 hidden sm:block">
+                High-resolution ready to share on WhatsApp, Facebook, or print
+              </p>
+            </div>
           </div>
 
           <button
@@ -171,46 +226,91 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         </div>
 
         {/* Modal Actions Bar */}
-        <div className="bg-slate-950/60 border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-end gap-2">
-          {canNativeShare && (
+        <div className="bg-slate-950/60 border-b border-slate-800/80 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 shrink-0">
+          {/* Zoom toggle button */}
+          <button
+            type="button"
+            onClick={() => setZoomMode((m) => (m === 'fit' ? 'actual' : 'fit'))}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/80 transition"
+            title={zoomMode === 'fit' ? 'Zoom to 100% full size' : 'Fit whole image in preview box'}
+          >
+            {zoomMode === 'fit' ? (
+              <>
+                <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Fit ({Math.round(fitScale * 100)}%)</span>
+              </>
+            ) : (
+              <>
+                <Minimize2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>100% (Scroll)</span>
+              </>
+            )}
+          </button>
+
+          <div className="flex items-center gap-2">
+            {canNativeShare && (
+              <button
+                type="button"
+                onClick={handleShare}
+                disabled={isGenerating}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : downloadSuccess === 'share' ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-200" />
+                ) : (
+                  <Share2 className="w-3.5 h-3.5" />
+                )}
+                <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share'}</span>
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={handleShare}
+              onClick={handleDownload}
               disabled={isGenerating}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
             >
               {isGenerating ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : downloadSuccess === 'share' ? (
-                <Check className="w-3.5 h-3.5 text-emerald-200" />
+              ) : downloadSuccess === 'png' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
               ) : (
-                <Share2 className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
               )}
-              <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share'}</span>
+              <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isGenerating}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
-          >
-            {isGenerating ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : downloadSuccess === 'png' ? (
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
-            )}
-            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
-          </button>
+          </div>
         </div>
 
-        {/* Scrollable Preview Area */}
-        <div className="flex-1 overflow-auto p-3 sm:p-6 bg-slate-950/40">
-          <div className="flex justify-center min-w-fit">
-            <div className="rounded-xl overflow-hidden shadow-2xl border border-slate-800">
+        {/* Scaled Preview Area: fits cleanly on mobile without scrolling */}
+        <div
+          ref={containerRef}
+          className={`flex-1 min-h-0 p-2 sm:p-5 bg-slate-950/40 flex items-center justify-center ${
+            zoomMode === 'actual' ? 'overflow-auto' : 'overflow-hidden'
+          }`}
+        >
+          <div
+            style={{
+              width: `${800 * currentScale}px`,
+              height: cardHeight ? `${cardHeight * currentScale}px` : 'auto',
+              maxWidth: zoomMode === 'actual' ? 'none' : '100%',
+              maxHeight: zoomMode === 'actual' ? 'none' : '100%',
+            }}
+            className="relative transition-all duration-150 shrink-0"
+          >
+            <div
+              style={{
+                transform: `scale(${currentScale})`,
+                transformOrigin: 'top left',
+                width: '800px',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+              }}
+              className="rounded-xl overflow-hidden shadow-2xl border border-slate-800"
+            >
               {/* The Actual Rendered Graphic (Width 800px for high-res retina output) */}
               <div
                 ref={cardRef}
