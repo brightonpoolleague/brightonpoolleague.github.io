@@ -646,16 +646,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
-    // Background safety poll: every 10 seconds refresh data from cloud
-    // to safeguard against silent WebSocket disconnects on mobile browsers
-    const pollTimer = setInterval(() => {
-      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-        refreshFromCloud({ silent: true });
-      }
-    }, 10000);
-
     return () => {
-      clearInterval(pollTimer);
       if (typeof document !== 'undefined') {
         document.removeEventListener(
           'visibilitychange',
