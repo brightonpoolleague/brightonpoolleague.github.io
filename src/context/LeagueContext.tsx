@@ -613,24 +613,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'team_pins' },
-          (payload) => {
-            if (payload.new && (payload.new as Record<string, unknown>).team_id) {
-              const row = payload.new as Record<string, unknown>;
-              const teamId = String(row.team_id);
-              const pin = String(row.captain_pin ?? '');
-              setAllTeams((prev) => {
-                const next = prev.map((t) =>
-                  t.id === teamId ? { ...t, captainPin: pin } : t
-                );
-                localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(next));
-                return next;
-              });
-            }
-          }
-        )
+        // NOTE: Do NOT subscribe to `team_pins` here. It is intentionally private (RLS with no
+        // public policy, not in the supabase_realtime publication), and including it makes the
+        // Realtime server reject the ENTIRE postgres_changes subscription while the client still
+        // reports SUBSCRIBED — silently killing all live updates. PINs are fetched via RPC instead.
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'players' },
@@ -695,6 +681,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         )
+        // Surface server-side postgres_changes errors: the client reports SUBSCRIBED even when
+        // the Realtime server rejects the database-change bindings, so log them explicitly.
+        .on('system', {}, (msg: { status?: string; message?: string }) => {
+          if (msg?.status === 'error') {
+            console.error('[Realtime] Server rejected subscription:', msg.message);
+          }
+        })
         .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log('[Realtime] Live WebSocket connected and listening');
