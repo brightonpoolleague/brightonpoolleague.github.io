@@ -5,11 +5,7 @@ import {
   X,
   Loader2,
   Check,
-  Trophy,
-  Sparkles,
   Camera,
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
 
@@ -56,7 +52,6 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
   const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'share' | null>(null);
   const [fitScale, setFitScale] = useState<number>(1);
   const [cardHeight, setCardHeight] = useState<number>(750);
-  const [zoomMode, setZoomMode] = useState<'fit' | 'actual'>('fit');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -98,7 +93,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     };
   }, [isOpen, rows.length]);
 
-  const currentScale = zoomMode === 'fit' ? fitScale : 1;
+
 
   if (!isOpen) return null;
 
@@ -226,83 +221,59 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         </div>
 
         {/* Modal Actions Bar */}
-        <div className="bg-slate-950/60 border-b border-slate-800/80 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 shrink-0">
-          {/* Zoom toggle button */}
-          <button
-            type="button"
-            onClick={() => setZoomMode((m) => (m === 'fit' ? 'actual' : 'fit'))}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/80 transition"
-            title={zoomMode === 'fit' ? 'Zoom to 100% full size' : 'Fit whole image in preview box'}
-          >
-            {zoomMode === 'fit' ? (
-              <>
-                <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Fit ({Math.round(fitScale * 100)}%)</span>
-              </>
-            ) : (
-              <>
-                <Minimize2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>100% (Scroll)</span>
-              </>
-            )}
-          </button>
-
-          <div className="flex items-center gap-2">
-            {canNativeShare && (
-              <button
-                type="button"
-                onClick={handleShare}
-                disabled={isGenerating}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : downloadSuccess === 'share' ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-200" />
-                ) : (
-                  <Share2 className="w-3.5 h-3.5" />
-                )}
-                <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share'}</span>
-              </button>
-            )}
-
+        <div className="bg-slate-950/60 border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-end gap-2 shrink-0">
+          {canNativeShare && (
             <button
               type="button"
-              onClick={handleDownload}
+              onClick={handleShare}
               disabled={isGenerating}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
             >
               {isGenerating ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : downloadSuccess === 'png' ? (
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : downloadSuccess === 'share' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-200" />
               ) : (
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <Share2 className="w-3.5 h-3.5" />
               )}
-              <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
+              <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share'}</span>
             </button>
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={isGenerating}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
+          >
+            {isGenerating ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : downloadSuccess === 'png' ? (
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+            )}
+            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
+          </button>
         </div>
 
-        {/* Scaled Preview Area: fits cleanly on mobile without scrolling */}
+        {/* Scaled Preview Area: fits cleanly on mobile and desktop without scrolling */}
         <div
           ref={containerRef}
-          className={`flex-1 min-h-0 p-2 sm:p-5 bg-slate-950/40 flex items-center justify-center ${
-            zoomMode === 'actual' ? 'overflow-auto' : 'overflow-hidden'
-          }`}
+          className="flex-1 min-h-0 p-2 sm:p-5 bg-slate-950/40 flex items-center justify-center overflow-hidden"
         >
           <div
             style={{
-              width: `${800 * currentScale}px`,
-              height: cardHeight ? `${cardHeight * currentScale}px` : 'auto',
-              maxWidth: zoomMode === 'actual' ? 'none' : '100%',
-              maxHeight: zoomMode === 'actual' ? 'none' : '100%',
+              width: `${800 * fitScale}px`,
+              height: cardHeight ? `${cardHeight * fitScale}px` : 'auto',
+              maxWidth: '100%',
+              maxHeight: '100%',
             }}
             className="relative transition-all duration-150 shrink-0"
           >
             <div
               style={{
-                transform: `scale(${currentScale})`,
+                transform: `scale(${fitScale})`,
                 transformOrigin: 'top left',
                 width: '800px',
                 position: 'absolute',
