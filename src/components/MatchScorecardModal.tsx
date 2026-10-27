@@ -6,7 +6,9 @@ import {
   EyeOff,
   FileSpreadsheet,
   Lock,
+  Pencil,
   RefreshCw,
+  RotateCcw,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -502,8 +504,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               onClick={() => handleToggleLockSet1(side)}
               title={
                 !isSet1Locked && !set1Complete
-                  ? 'Select a player (or BYE) in all 5 slots before locking Set 1'
-                  : undefined
+                  ? 'Select a player (or BYE) in all 5 slots before confirming Set 1'
+                  : bothSet1Locked && !canManageLeague
+                  ? otherUnlockReq
+                    ? 'Click to agree to changes and allow both lineups to be edited'
+                    : myUnlockReq
+                    ? 'Cancel change request'
+                    : 'Request permission from the other captain to edit your lineup'
+                  : isSet1Locked
+                  ? 'Click to edit your lineup before the match begins'
+                  : 'Confirm your team running order'
               }
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
                 bothSet1Locked && !canManageLeague
@@ -513,37 +523,37 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
                   : isSet1Locked
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
                   : set1Complete
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                  ? 'bg-emerald-600 text-white font-bold hover:bg-emerald-500 shadow'
                   : 'bg-slate-800 text-slate-400 border border-slate-700'
               }`}
             >
               {bothSet1Locked && !canManageLeague ? (
                 otherUnlockReq ? (
                   <>
-                    <Unlock className="w-3.5 h-3.5" /> Confirm Unlock (2/2)
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Allow Lineup Changes (2/2)
                   </>
                 ) : myUnlockReq ? (
                   <>
-                    <Clock className="w-3.5 h-3.5" /> Unlock Requested (1/2)
+                    <Clock className="w-3.5 h-3.5" /> Change Requested (1/2)
                   </>
                 ) : (
                   <>
-                    <Lock className="w-3.5 h-3.5" /> Locked In • Request Unlock
+                    <Pencil className="w-3.5 h-3.5" /> Confirmed • Request Changes
                   </>
                 )
               ) : isSet1Locked ? (
                 <>
-                  <Lock className="w-3.5 h-3.5" /> Locked In
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Confirmed • Edit Lineup
                 </>
               ) : set1Complete ? (
                 <>
-                  <Unlock className="w-3.5 h-3.5" /> Lock Set 1
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Confirm Lineup
                 </>
               ) : (
                 <>
-                  <Lock className="w-3.5 h-3.5" /> Select All 5 ({set1FilledCount}/5)
+                  <Clock className="w-3.5 h-3.5" /> Select All 5 ({set1FilledCount}/5)
                 </>
               )}
             </button>
@@ -559,15 +569,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               {myUnlockReq ? (
                 <>
-                  <Unlock className="w-3.5 h-3.5" /> Requested Unlock
+                  <Clock className="w-3.5 h-3.5" /> Change Requested
                 </>
               ) : isSet1Locked ? (
                 <>
-                  <Lock className="w-3.5 h-3.5" /> Locked In
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Confirmed
                 </>
               ) : (
                 <>
-                  <Clock className="w-3.5 h-3.5" /> Awaiting Lock
+                  <Clock className="w-3.5 h-3.5" /> Awaiting Lineup
                 </>
               )}
             </span>
@@ -578,8 +588,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 text-[11px] text-amber-200 flex items-center justify-between gap-2">
             <span>
               {myUnlockReq
-                ? `Unlock requested — Set 1 stays locked until ${otherTeam.name} captain also clicks unlock.`
-                : `${otherTeam.name} captain requested to unlock Set 1. Click "Confirm Unlock (2/2)" to unlock both lineups.`}
+                ? `Change requested — your lineup will unlock for editing once ${otherTeam.name} captain agrees.`
+                : `${otherTeam.name} captain requested to make changes to their lineup. Click "Allow Lineup Changes (2/2)" to unlock both lineups for editing.`}
             </span>
           </div>
         )}
@@ -589,11 +599,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <EyeOff className="w-5 h-5 text-slate-500 mx-auto" />
             <p className="text-xs font-semibold text-slate-300">
               {isSet1Locked
-                ? `${team.name} Set 1 Lineup is Locked & Hidden`
+                ? `${team.name} Set 1 Lineup is Confirmed & Hidden`
                 : `Awaiting ${team.name} Captain Set 1 Entry`}
             </p>
             <p className="text-[11px] text-slate-500">
-              Running order remains hidden (&ldquo;Folded Scorecard&rdquo;) until both captains lock in Set 1.
+              Running order remains hidden (&ldquo;Folded Scorecard&rdquo;) until both captains confirm their Set 1 lineups.
             </p>
           </div>
         ) : setNumber === 1 ? (
@@ -1311,7 +1321,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </h3>
                       <p className="text-xs text-slate-400">
                         {activeSet === 1
-                          ? 'Each captain selects and locks their own team’s 1–5 running order. Lineups are revealed once both teams lock Set 1.'
+                          ? 'Each captain selects and confirms their own team’s 1–5 running order. Lineups are revealed once both teams confirm Set 1.'
                           : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
                       </p>
                     </div>
@@ -1351,7 +1361,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         {activeSet === 1 && opponentSide && (
                           <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
                             {opponentLocked ? (
-                              <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                             ) : (
                               <Clock className="w-3.5 h-3.5 text-slate-500" />
                             )}
@@ -1365,7 +1375,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                 }
                               >
                                 {opponentLocked
-                                  ? 'Lineup locked in'
+                                  ? 'Lineup confirmed'
                                   : 'Awaiting lineup'}
                               </strong>
                             </span>
@@ -1390,24 +1400,24 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     {bothSet1Locked ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     ) : (
-                      <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                     )}
                     <span className="leading-snug">
                       {bothSet1Locked ? (
                         <>
-                          <strong>Both Set 1 lineups locked in!</strong> Match running order revealed &amp; frame scoring active.
+                          <strong>Both Set 1 lineups confirmed!</strong> Match running order revealed &amp; frame scoring active.
                         </>
                       ) : fixture.homeSet1Locked && !fixture.awaySet1Locked ? (
                         <>
-                          <strong className="text-white">{homeTeam.name}</strong> locked in (1/2). Waiting for <strong className="text-white">{awayTeam.name}</strong> captain to lock Set 1.
+                          <strong className="text-white">{homeTeam.name}</strong> lineup confirmed (1/2). Waiting for <strong className="text-white">{awayTeam.name}</strong> captain to confirm.
                         </>
                       ) : !fixture.homeSet1Locked && fixture.awaySet1Locked ? (
                         <>
-                          <strong className="text-white">{awayTeam.name}</strong> locked in (1/2). Waiting for <strong className="text-white">{homeTeam.name}</strong> captain to lock Set 1.
+                          <strong className="text-white">{awayTeam.name}</strong> lineup confirmed (1/2). Waiting for <strong className="text-white">{homeTeam.name}</strong> captain to confirm.
                         </>
                       ) : (
                         <>
-                          Both captains must lock Set 1 before the running order is revealed and frame scores can be set (0/2 locked in).
+                          Both captains must confirm their Set 1 lineup before the running order is revealed and frame scores can be set (0/2 confirmed).
                         </>
                       )}
                     </span>
@@ -1418,7 +1428,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       onClick={handleAdminQuickLockBoth}
                       className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap shadow transition"
                     >
-                      Admin: Lock Both &amp; Begin
+                      Admin: Confirm Both &amp; Begin
                     </button>
                   )}
                 </div>
