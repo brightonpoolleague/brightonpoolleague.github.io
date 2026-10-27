@@ -246,6 +246,7 @@ export function calculateMatchScore(fixture: Fixture): {
   awayPoints: number;
   isDecided: boolean;
   isKnockout: boolean;
+  playAllFrames: boolean;
   matchWinner: 'home' | 'away' | null;
   setScores: {
     set1: { home: number; away: number };
@@ -274,9 +275,13 @@ export function calculateMatchScore(fixture: Fixture): {
 
   const completedFrames = homeFrames + awayFrames;
   const isKnockout = isKnockoutFixture(fixture);
-  const isDecided = isKnockout
-    ? homeFrames >= 8 || awayFrames >= 8
-    : completedFrames === 15;
+  const playAllFrames = Boolean(
+    fixture.playAllFrames || fixture.knockoutFormat === 'play_all_15'
+  );
+  const isDecided =
+    isKnockout && !playAllFrames
+      ? homeFrames >= 8 || awayFrames >= 8
+      : completedFrames === 15;
 
   const matchWinner: 'home' | 'away' | null = isDecided
     ? homeFrames > awayFrames
@@ -286,7 +291,7 @@ export function calculateMatchScore(fixture: Fixture): {
       : null
     : null;
 
-  // Knockout matches are first to 8 frames and do not award league points
+  // Knockout matches do not award league points
   const homeWinBonus = !isKnockout && isDecided && homeFrames > awayFrames ? 2 : 0;
   const awayWinBonus = !isKnockout && isDecided && awayFrames > homeFrames ? 2 : 0;
 
@@ -301,6 +306,7 @@ export function calculateMatchScore(fixture: Fixture): {
     awayPoints,
     isDecided,
     isKnockout,
+    playAllFrames,
     matchWinner,
     setScores,
   };

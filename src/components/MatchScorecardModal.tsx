@@ -102,26 +102,32 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const bothSet1Locked = fixture.homeSet1Locked && fixture.awaySet1Locked;
 
   const isKnockout = isKnockoutFixture(fixture);
-  const isKnockoutDecided =
-    isKnockout && (score.homeFrames >= 8 || score.awayFrames >= 8);
+  const playAllFrames = Boolean(
+    fixture.playAllFrames || fixture.knockoutFormat === 'play_all_15'
+  );
+  const isKnockoutDecided = isKnockout
+    ? playAllFrames
+      ? fixture.frames.every((f) => f.winner !== null)
+      : score.homeFrames >= 8 || score.awayFrames >= 8
+    : false;
   const allFramesComplete = fixture.frames.every((f) => f.winner !== null);
   const isMatchComplete = isKnockout ? isKnockoutDecided : allFramesComplete;
 
   const knockoutTitle =
     fixture.competitionName ||
     fixture.cupName ||
-    (fixture.division ? `${fixture.division} Knockout` : 'Knockout Match');
+    (fixture.division ? `${fixture.division} Cup` : 'Knockout Cup');
   const knockoutRound = fixture.round || fixture.cupRound;
 
   // Frame results can only be recorded once both Set 1 lineups are locked
   // and both players for that frame have been assigned (player or BYE).
-  // In Knockout matches (first to 8 frames), unplayed frames are locked once either team reaches 8 frames.
+  // In Knockout matches with first-to-8 rules, unplayed frames are locked once either team reaches 8 frames.
   const canRecordFrame = (frameNumber: number): boolean => {
     if (!editable || !bothSet1Locked) return false;
     const frame = fixture.frames.find((f) => f.frameNumber === frameNumber);
     if (!frame) return false;
-    // In knockout matches, once a team has reached 8 frames, unrecorded frames cannot be played
-    if (isKnockout && isKnockoutDecided && !frame.winner) {
+    // In first-to-8 knockout matches, once a team has reached 8 frames, unrecorded frames cannot be played
+    if (isKnockout && !playAllFrames && isKnockoutDecided && !frame.winner) {
       return false;
     }
     const { homePlayerId, awayPlayerId } = getFramePlayers(
@@ -769,7 +775,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           </h4>
           <p className="text-xs text-slate-400">
             {isKnockout
-              ? `Knockout match decided (first to 8 frames) — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the knockout result.`
+              ? `${knockoutTitle} match decided (${playAllFrames ? 'all 15 frames recorded' : 'first to 8 frames'}) — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the knockout result.`
               : `All 15 frames recorded — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the result.`}
           </p>
         </div>
@@ -885,6 +891,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
                   🏆 {knockoutTitle}
                   {knockoutRound ? ` • ${knockoutRound}` : ''}
+                  <span className="text-amber-500/80 font-normal">
+                    ({playAllFrames ? 'All 15 Frames' : 'First to 8'})
+                  </span>
                 </span>
               ) : (
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
@@ -963,11 +972,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               <div className="font-bold text-sm sm:text-lg text-white leading-tight">
                 {homeTeam.name}
               </div>
-              <div className="text-[11px] text-emerald-400 font-medium mt-0.5">
+              <div className="text-[11px] text-emerald-400 font-medium mt-0.5 truncate">
                 {isKnockout
-                  ? score.homeFrames >= 8
+                  ? isKnockoutDecided && score.matchWinner === 'home'
                     ? '🏆 Winner'
-                    : 'Knockout'
+                    : knockoutTitle
                   : `${score.homePoints} League Pts`}
               </div>
             </div>
@@ -1001,8 +1010,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 {isKnockout ? (
                   <span className="text-amber-400 font-semibold text-center">
                     {isKnockoutDecided
-                      ? `🏆 Match Decided (${score.homeFrames >= 8 ? homeTeam.name : awayTeam.name} Wins)`
-                      : 'First to 8 Frames'}
+                      ? `🏆 Match Decided: ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'} (${knockoutTitle})`
+                      : playAllFrames
+                      ? `${knockoutTitle} • Play All 15 Frames`
+                      : `${knockoutTitle} • First to 8 Frames`}
                   </span>
                 ) : (
                   <>
@@ -1030,11 +1041,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               <div className="font-bold text-sm sm:text-lg text-white leading-tight">
                 {awayTeam.name}
               </div>
-              <div className="text-[11px] text-emerald-400 font-medium mt-0.5">
+              <div className="text-[11px] text-emerald-400 font-medium mt-0.5 truncate">
                 {isKnockout
-                  ? score.awayFrames >= 8
+                  ? isKnockoutDecided && score.matchWinner === 'away'
                     ? '🏆 Winner'
-                    : 'Knockout'
+                    : knockoutTitle
                   : `${score.awayPoints} League Pts`}
               </div>
             </div>
@@ -1309,9 +1320,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           </span>
                         </span>
                         <div className="flex items-center gap-2">
-                          {isKnockout && isKnockoutDecided && !frame.winner && (
+                          {isKnockout && !playAllFrames && isKnockoutDecided && !frame.winner && (
                             <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-semibold text-[10px]">
-                              Not required (Knockout Decided at 8)
+                              Not required (Decided at 8)
                             </span>
                           )}
                           {isByeFrame && (
@@ -1581,7 +1592,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <tfoot>
                     <tr className="bg-slate-950 font-black text-sm text-white">
                       <td colSpan={4} className="py-3 px-3 text-right">
-                        {isKnockout ? 'Knockout Result (First to 8):' : 'Result (Total 15):'}
+                        {isKnockout
+                          ? `${knockoutTitle} Result (${playAllFrames ? 'All 15' : 'First to 8'}):`
+                          : 'Result (Total 15):'}
                       </td>
                       <td className="py-3 px-2 text-center text-emerald-400 text-base">
                         {score.homeFrames}
@@ -1592,8 +1605,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       <td colSpan={4} className="py-3 px-3 text-xs text-slate-400 font-normal">
                         {isKnockout
                           ? isKnockoutDecided
-                            ? `Knockout Winner: ${score.homeFrames >= 8 ? homeTeam.name : awayTeam.name}`
-                            : 'First team to 8 frames wins match'
+                            ? `Knockout Winner: ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'}`
+                            : playAllFrames
+                            ? `${knockoutTitle} • All 15 frames to be played`
+                            : `${knockoutTitle} • First team to 8 frames wins match`
                           : `Points: ${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
                       </td>
                     </tr>

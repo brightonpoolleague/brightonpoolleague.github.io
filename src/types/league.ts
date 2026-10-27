@@ -80,6 +80,7 @@ export interface FrameData {
 
 export type FixtureStatus = 'scheduled' | 'live' | 'submitted' | 'approved';
 export type MatchType = 'league' | 'knockout' | 'cup';
+export type KnockoutFormat = 'first_to_8' | 'play_all_15';
 
 export interface Fixture {
   id: string;
@@ -92,6 +93,8 @@ export interface Fixture {
   matchType?: MatchType;
   competitionName?: string; // e.g. "Division 1 Cup", "Summer Cup", "Summer Plate"
   round?: string; // e.g. "Preliminary Round", "Quarter-Final", "Semi-Final", "Final"
+  playAllFrames?: boolean; // When true, all 15 frames are played (e.g. over 2 legs)
+  knockoutFormat?: KnockoutFormat; // 'first_to_8' (default) or 'play_all_15'
   cupName?: string; // backward-compat alias
   cupRound?: string; // backward-compat alias
   status: FixtureStatus;

@@ -103,6 +103,8 @@ alter table public.fixtures drop constraint if exists fixtures_division_check;
 alter table public.fixtures add column if not exists match_type text not null default 'league';
 alter table public.fixtures add column if not exists competition_name text;
 alter table public.fixtures add column if not exists round text;
+alter table public.fixtures add column if not exists play_all_frames boolean not null default false;
+alter table public.fixtures add column if not exists knockout_format text default 'first_to_8';
 alter table public.fixtures add column if not exists cup_name text;
 alter table public.fixtures add column if not exists cup_round text;
 

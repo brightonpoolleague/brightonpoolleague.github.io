@@ -23,7 +23,14 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { Division, Fixture, MatchType, Player, Team } from '../types/league';
+import {
+  Division,
+  Fixture,
+  KnockoutFormat,
+  MatchType,
+  Player,
+  Team,
+} from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
 import {
   calculateMatchScore,
@@ -80,10 +87,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [filterDivision, setFilterDivision] = useState<Division | 'ALL'>('ALL');
   const [teamSearchQuery, setTeamSearchQuery] = useState('');
   const [fixtureFilterDivision, setFixtureFilterDivision] = useState<
-    Division | 'ALL'
-  >('ALL');
-  const [fixtureCompetitionFilter, setFixtureCompetitionFilter] = useState<
-    'ALL' | 'league' | 'knockout'
+    Division | 'ALL' | 'KNOCKOUT'
   >('ALL');
   const [fixtureSearchQuery, setFixtureSearchQuery] = useState('');
   const [fixtureDateFilter, setFixtureDateFilter] = useState('ALL');
@@ -124,6 +128,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     matchType: MatchType;
     cupName?: string;
     cupRound?: string;
+    knockoutFormat?: KnockoutFormat;
   } | null>(null);
 
   // Fixture creation state
@@ -137,6 +142,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     matchType: MatchType;
     cupName: string;
     cupRound: string;
+    knockoutFormat: KnockoutFormat;
   }>({
     division: 'Division 1',
     matchDate: new Date().toISOString().split('T')[0],
@@ -146,6 +152,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     matchType: 'league',
     cupName: '',
     cupRound: 'Round 1',
+    knockoutFormat: 'first_to_8',
   });
 
   // Custom Confirmation Modal State
@@ -356,8 +363,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       homeTeamId: fix.homeTeamId,
       awayTeamId: fix.awayTeamId,
       matchType: fix.matchType ?? 'league',
-      cupName: fix.cupName ?? '',
-      cupRound: fix.cupRound ?? '',
+      cupName: fix.competitionName || fix.cupName || '',
+      cupRound: fix.round || fix.cupRound || '',
+      knockoutFormat:
+        fix.knockoutFormat ??
+        (fix.playAllFrames ? 'play_all_15' : 'first_to_8'),
     });
   };
 
@@ -370,6 +380,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     ) {
       return;
     }
+    const isKnockout = fixtureDraft.matchType === 'knockout';
+    const compName = isKnockout
+      ? fixtureDraft.cupName?.trim() || `${fixtureDraft.division} Knockout`
+      : undefined;
+    const roundName = isKnockout
+      ? fixtureDraft.cupRound?.trim() || 'Round 1'
+      : undefined;
+    const koFormat = isKnockout
+      ? fixtureDraft.knockoutFormat || 'first_to_8'
+      : undefined;
+    const playAll = isKnockout ? koFormat === 'play_all_15' : false;
+
     await updateFixtureDetails({
       ...fix,
       division: fixtureDraft.division,
@@ -378,22 +400,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       homeTeamId: fixtureDraft.homeTeamId,
       awayTeamId: fixtureDraft.awayTeamId,
       matchType: fixtureDraft.matchType ?? 'league',
-      competitionName:
-        fixtureDraft.matchType === 'knockout'
-          ? fixtureDraft.cupName?.trim() || `${fixtureDraft.division} Knockout`
-          : undefined,
-      round:
-        fixtureDraft.matchType === 'knockout'
-          ? fixtureDraft.cupRound?.trim() || 'Round 1'
-          : undefined,
-      cupName:
-        fixtureDraft.matchType === 'knockout'
-          ? fixtureDraft.cupName?.trim() || `${fixtureDraft.division} Knockout`
-          : undefined,
-      cupRound:
-        fixtureDraft.matchType === 'knockout'
-          ? fixtureDraft.cupRound?.trim() || 'Round 1'
-          : undefined,
+      competitionName: compName,
+      round: roundName,
+      cupName: compName,
+      cupRound: roundName,
+      knockoutFormat: koFormat,
+      playAllFrames: playAll,
     });
     setEditingFixtureId(null);
     setFixtureDraft(null);
@@ -407,6 +419,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     ) {
       return;
     }
+    const isKnockout = newFixtureDraft.matchType === 'knockout';
+    const compName = isKnockout
+      ? newFixtureDraft.cupName.trim() || `${newFixtureDraft.division} Knockout`
+      : undefined;
+    const roundName = isKnockout
+      ? newFixtureDraft.cupRound.trim() || 'Round 1'
+      : undefined;
+    const koFormat = isKnockout
+      ? newFixtureDraft.knockoutFormat || 'first_to_8'
+      : undefined;
+    const playAll = isKnockout ? koFormat === 'play_all_15' : false;
+
     await addFixture({
       division: newFixtureDraft.division,
       matchDate: newFixtureDraft.matchDate,
@@ -414,22 +438,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       homeTeamId: newFixtureDraft.homeTeamId,
       awayTeamId: newFixtureDraft.awayTeamId,
       matchType: newFixtureDraft.matchType,
-      competitionName:
-        newFixtureDraft.matchType === 'knockout'
-          ? newFixtureDraft.cupName.trim() || `${newFixtureDraft.division} Knockout`
-          : undefined,
-      round:
-        newFixtureDraft.matchType === 'knockout'
-          ? newFixtureDraft.cupRound.trim() || 'Round 1'
-          : undefined,
-      cupName:
-        newFixtureDraft.matchType === 'knockout'
-          ? newFixtureDraft.cupName.trim() || `${newFixtureDraft.division} Knockout`
-          : undefined,
-      cupRound:
-        newFixtureDraft.matchType === 'knockout'
-          ? newFixtureDraft.cupRound.trim() || 'Round 1'
-          : undefined,
+      competitionName: compName,
+      round: roundName,
+      cupName: compName,
+      cupRound: roundName,
+      knockoutFormat: koFormat,
+      playAllFrames: playAll,
     });
     setShowAddFixture(false);
     setNewFixtureDraft({
@@ -441,6 +455,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       matchType: newFixtureDraft.matchType,
       cupName: '',
       cupRound: 'Round 1',
+      knockoutFormat: 'first_to_8',
     });
   };
 
@@ -481,17 +496,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     const dateMap = new Map<string, { weeks: Set<number>; count: number }>();
     for (const f of fixtures) {
       if (!f.matchDate) continue;
-      if (
-        fixtureFilterDivision !== 'ALL' &&
-        f.division !== fixtureFilterDivision
-      ) {
-        continue;
-      }
-      if (fixtureCompetitionFilter === 'league' && isKnockoutFixture(f)) {
-        continue;
-      }
-      if (fixtureCompetitionFilter === 'knockout' && !isKnockoutFixture(f)) {
-        continue;
+      if (fixtureFilterDivision === 'KNOCKOUT') {
+        if (!isKnockoutFixture(f)) continue;
+      } else if (fixtureFilterDivision !== 'ALL') {
+        if (f.division !== fixtureFilterDivision || isKnockoutFixture(f)) {
+          continue;
+        }
       }
       const entry = dateMap.get(f.matchDate) || {
         weeks: new Set<number>(),
@@ -508,7 +518,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         count: data.count,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [fixtures, fixtureFilterDivision, fixtureCompetitionFilter]);
+  }, [fixtures, fixtureFilterDivision]);
 
   const fixtureTimeframeCounts = useMemo(() => {
     let all = 0;
@@ -518,17 +528,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     let past = 0;
 
     for (const f of fixtures) {
-      if (
-        fixtureFilterDivision !== 'ALL' &&
-        f.division !== fixtureFilterDivision
-      ) {
-        continue;
-      }
-      if (fixtureCompetitionFilter === 'league' && isKnockoutFixture(f)) {
-        continue;
-      }
-      if (fixtureCompetitionFilter === 'knockout' && !isKnockoutFixture(f)) {
-        continue;
+      if (fixtureFilterDivision === 'KNOCKOUT') {
+        if (!isKnockoutFixture(f)) continue;
+      } else if (fixtureFilterDivision !== 'ALL') {
+        if (f.division !== fixtureFilterDivision || isKnockoutFixture(f)) {
+          continue;
+        }
       }
       all++;
       if (f.status === 'live') {
@@ -544,21 +549,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       }
     }
     return { all, live, upcoming, today, past };
-  }, [fixtures, fixtureFilterDivision, fixtureCompetitionFilter]);
+  }, [fixtures, fixtureFilterDivision]);
 
   const filteredFixtures = useMemo(() => {
     return fixtures.filter((f) => {
-      if (
-        fixtureFilterDivision !== 'ALL' &&
-        f.division !== fixtureFilterDivision
-      ) {
-        return false;
-      }
-      if (fixtureCompetitionFilter === 'league' && isKnockoutFixture(f)) {
-        return false;
-      }
-      if (fixtureCompetitionFilter === 'knockout' && !isKnockoutFixture(f)) {
-        return false;
+      if (fixtureFilterDivision === 'KNOCKOUT') {
+        if (!isKnockoutFixture(f)) return false;
+      } else if (fixtureFilterDivision !== 'ALL') {
+        if (f.division !== fixtureFilterDivision || isKnockoutFixture(f)) {
+          return false;
+        }
       }
       if (fixtureTimeframeFilter !== 'ALL') {
         if (fixtureTimeframeFilter === 'live') {
@@ -589,7 +589,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         const weekStr = `week ${f.weekNumber} wk ${f.weekNumber} w${f.weekNumber}`;
         const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
         const statusStr = (f.status ?? '').toLowerCase();
-        const cupStr = `${f.matchType === 'cup' ? 'cup knockout' : 'league'} ${f.cupName ?? ''} ${f.cupRound ?? ''}`.toLowerCase();
+        const knockoutStr = `${isKnockoutFixture(f) ? 'knockout cup plate' : 'league'} ${f.competitionName ?? ''} ${f.cupName ?? ''} ${f.round ?? ''} ${f.cupRound ?? ''}`.toLowerCase();
 
         const matches =
           homeName.includes(q) ||
@@ -600,7 +600,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           weekStr.includes(q) ||
           dateStr.includes(q) ||
           statusStr.includes(q) ||
-          cupStr.includes(q);
+          knockoutStr.includes(q);
 
         if (!matches) return false;
       }
@@ -609,7 +609,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   }, [
     fixtures,
     fixtureFilterDivision,
-    fixtureCompetitionFilter,
     fixtureTimeframeFilter,
     fixtureDateFilter,
     fixtureSearchQuery,
@@ -1267,7 +1266,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {activeTab === 'fixtures' && (
         <div className="space-y-3.5">
           <div className="flex flex-wrap items-center justify-between gap-2.5">
-            {/* Division Filter */}
+            {/* Division & Knockout Filter */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
               <button
                 type="button"
@@ -1280,57 +1279,38 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               >
                 All ({fixtures.length})
               </button>
-              {divisions.map((div) => (
-                <button
-                  key={div}
-                  type="button"
-                  onClick={() => setFixtureFilterDivision(div)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                    fixtureFilterDivision === div
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-900 text-slate-400 border border-slate-800'
-                  }`}
-                >
-                  {div} ({fixtures.filter((f) => f.division === div).length})
-                </button>
-              ))}
-            </div>
-
-            {/* Competition Filter */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold overflow-x-auto">
+              {divisions.map((div) => {
+                const count = fixtures.filter(
+                  (f) => f.division === div && !isKnockoutFixture(f)
+                ).length;
+                return (
+                  <button
+                    key={div}
+                    type="button"
+                    onClick={() => setFixtureFilterDivision(div)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                      fixtureFilterDivision === div
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-900 text-slate-400 border border-slate-800'
+                    }`}
+                  >
+                    {div} ({count})
+                  </button>
+                );
+              })}
               <button
                 type="button"
-                onClick={() => setFixtureCompetitionFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
-                  fixtureCompetitionFilter === 'ALL'
-                    ? 'bg-emerald-600 text-white font-bold'
-                    : 'text-slate-400 hover:text-white'
+                onClick={() => setFixtureFilterDivision('KNOCKOUT')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1 ${
+                  fixtureFilterDivision === 'KNOCKOUT'
+                    ? 'bg-amber-500 text-slate-950 font-black'
+                    : 'bg-slate-900 text-amber-400 border border-slate-800 hover:border-amber-500/50'
                 }`}
               >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={() => setFixtureCompetitionFilter('league')}
-                className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
-                  fixtureCompetitionFilter === 'league'
-                    ? 'bg-emerald-600 text-white font-bold'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                League
-              </button>
-              <button
-                type="button"
-                onClick={() => setFixtureCompetitionFilter('knockout')}
-                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 whitespace-nowrap ${
-                  fixtureCompetitionFilter === 'knockout'
-                    ? 'bg-amber-500 text-slate-950 font-bold'
-                    : 'text-amber-400 hover:text-amber-300'
-                }`}
-              >
-                <Trophy className="w-3 h-3" />
-                Knockouts
+                <Trophy className="w-3.5 h-3.5" />
+                <span>
+                  Knockouts ({fixtures.filter((f) => isKnockoutFixture(f)).length})
+                </span>
               </button>
             </div>
 
@@ -1463,12 +1443,34 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                   >
                     <option value="league">League Match (15 frames)</option>
-                    <option value="knockout">🏆 Knockout (First to 8 frames)</option>
+                    <option value="knockout">🏆 Knockout Cup / Plate</option>
                   </select>
                 </div>
 
                 {newFixtureDraft.matchType === 'knockout' && (
                   <>
+                    <div>
+                      <label className="block text-[11px] text-slate-400 mb-1">
+                        Knockout Format Rule
+                      </label>
+                      <select
+                        value={newFixtureDraft.knockoutFormat}
+                        onChange={(e) =>
+                          setNewFixtureDraft({
+                            ...newFixtureDraft,
+                            knockoutFormat: e.target.value as KnockoutFormat,
+                          })
+                        }
+                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                      >
+                        <option value="first_to_8">
+                          First to 8 frames (Standard Knockout)
+                        </option>
+                        <option value="play_all_15">
+                          Play all 15 frames (2-Leg Tie / Aggregate)
+                        </option>
+                      </select>
+                    </div>
                     <div>
                       <label className="block text-[11px] text-slate-400 mb-1">
                         Event / Competition Name
@@ -1768,7 +1770,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       onClick={() => {
                         setFixtureSearchQuery('');
                         setFixtureDateFilter('ALL');
-                        setFixtureCompetitionFilter('ALL');
                         setFixtureTimeframeFilter('ALL');
                         setFixtureFilterDivision('ALL');
                       }}
@@ -1848,7 +1849,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             {fix.status === 'live' ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse">
                                 <Radio className="w-2.5 h-2.5" />
-                                LIVE ({isKnockoutFixture(fix) ? 'First to 8' : `${score.completedFrames}/15`})
+                                LIVE ({isKnockoutFixture(fix)
+                                  ? fix.knockoutFormat === 'play_all_15'
+                                    ? `${score.completedFrames}/15`
+                                    : 'First to 8'
+                                  : `${score.completedFrames}/15`})
                               </span>
                             ) : fix.status === 'approved' ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
@@ -1973,11 +1978,33 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                               >
                                 <option value="league">League Match (15 frames)</option>
-                                <option value="knockout">🏆 Knockout (First to 8 frames)</option>
+                                <option value="knockout">🏆 Knockout Cup / Plate</option>
                               </select>
                             </div>
                             {fixtureDraft.matchType === 'knockout' && (
                               <>
+                                <div>
+                                  <label className="block text-[11px] text-slate-400 mb-1">
+                                    Knockout Format Rule
+                                  </label>
+                                  <select
+                                    value={fixtureDraft.knockoutFormat || 'first_to_8'}
+                                    onChange={(e) =>
+                                      setFixtureDraft({
+                                        ...fixtureDraft,
+                                        knockoutFormat: e.target.value as KnockoutFormat,
+                                      })
+                                    }
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                                  >
+                                    <option value="first_to_8">
+                                      First to 8 frames (Standard Knockout)
+                                    </option>
+                                    <option value="play_all_15">
+                                      Play all 15 frames (2-Leg Tie / Aggregate)
+                                    </option>
+                                  </select>
+                                </div>
                                 <div>
                                   <label className="block text-[11px] text-slate-400 mb-1">
                                     Event / Competition Name

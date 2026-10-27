@@ -57,12 +57,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
   const isCaptain = session.role === 'captain' && Boolean(session.teamId);
 
-  const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(
-    'ALL'
-  );
-  const [competitionFilter, setCompetitionFilter] = useState<
-    'all' | 'league' | 'knockout'
-  >('all');
+  const [selectedDivision, setSelectedDivision] = useState<
+    Division | 'ALL' | 'KNOCKOUT'
+  >('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
     isCaptain ? 'mine' : 'all'
   );
@@ -112,14 +109,12 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
   const filtered = fixtures
     .filter((f) => {
-      if (competitionFilter === 'league' && isKnockoutFixture(f)) {
-        return false;
-      }
-      if (competitionFilter === 'knockout' && !isKnockoutFixture(f)) {
-        return false;
-      }
-      if (selectedDivision !== 'ALL' && f.division !== selectedDivision) {
-        return false;
+      if (selectedDivision === 'KNOCKOUT') {
+        if (!isKnockoutFixture(f)) return false;
+      } else if (selectedDivision !== 'ALL') {
+        if (f.division !== selectedDivision || isKnockoutFixture(f)) {
+          return false;
+        }
       }
       if (statusFilter === 'mine') {
         return (
@@ -225,53 +220,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           </div>
         </div>
 
-        {/* Competition Filter */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setCompetitionFilter('all')}
-              className={`px-3 py-1.5 rounded-lg transition ${
-                competitionFilter === 'all'
-                  ? 'bg-slate-800 text-white font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              All Matches
-            </button>
-            <button
-              type="button"
-              onClick={() => setCompetitionFilter('league')}
-              className={`px-3 py-1.5 rounded-lg transition ${
-                competitionFilter === 'league'
-                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              League Only
-            </button>
-            <button
-              type="button"
-              onClick={() => setCompetitionFilter('knockout')}
-              className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 transition ${
-                competitionFilter === 'knockout'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                  : 'text-amber-400 hover:text-amber-300'
-              }`}
-            >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>Knockouts</span>
-            </button>
-          </div>
-          {competitionFilter === 'knockout' && (
-            <span className="text-xs text-amber-300/90 font-medium flex items-center gap-1">
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
-              <span>First to 8 frames knockout • Independent from league table</span>
-            </span>
-          )}
-        </div>
-
-        {/* Division Pills */}
+        {/* Division & Knockout Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           <button
             type="button"
@@ -282,7 +231,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            All Divisions
+            All Matches
           </button>
           {divisions.map((div) => (
             <button
@@ -298,6 +247,18 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               {div}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setSelectedDivision('KNOCKOUT')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1 transition ${
+              selectedDivision === 'KNOCKOUT'
+                ? 'bg-amber-500 text-slate-950 font-black'
+                : 'bg-slate-950 text-amber-400 hover:text-amber-300 border border-slate-800 hover:border-amber-500/50'
+            }`}
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            <span>Knockouts</span>
+          </button>
         </div>
 
         {/* Status Filter Tabs */}
@@ -576,7 +537,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedDivision('ALL');
-                  setCompetitionFilter('all');
                   setStatusFilter(isCaptain ? 'mine' : 'all');
                 }}
                 className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:underline font-semibold"
@@ -684,7 +644,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       <>
                         <Radio className="w-2.5 h-2.5" />
                         {isKnockoutFixture(fix)
-                          ? 'LIVE (First to 8)'
+                          ? fix.knockoutFormat === 'play_all_15'
+                            ? `LIVE (${score.completedFrames}/15)`
+                            : 'LIVE (First to 8)'
                           : `LIVE (${score.completedFrames}/15)`}
                       </>
                     ) : fix.status === 'approved' ? (
@@ -726,7 +688,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </div>
                     <div className="text-[11px] text-slate-400 mt-1">
                       {isKnockoutFixture(fix)
-                        ? score.isDecided && score.homeFrames >= 8
+                        ? score.isDecided && score.matchWinner === 'home'
                           ? '🏆 Winner'
                           : 'Home'
                         : `Home • ${score.homePoints} pts`}
@@ -769,7 +731,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </div>
                     <div className="text-[11px] text-slate-400 mt-1">
                       {isKnockoutFixture(fix)
-                        ? score.isDecided && score.awayFrames >= 8
+                        ? score.isDecided && score.matchWinner === 'away'
                           ? '🏆 Winner'
                           : 'Away'
                         : `Away • ${score.awayPoints} pts`}

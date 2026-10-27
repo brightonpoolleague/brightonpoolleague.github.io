@@ -10,6 +10,7 @@ import {
   DEFAULT_DIVISIONS,
   Division,
   Fixture,
+  KnockoutFormat,
   Player,
   Season,
   Team,
@@ -115,6 +116,8 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     matchType,
     competitionName: compName,
     round: roundName,
+    playAllFrames: Boolean(r.play_all_frames ?? (r.knockout_format === 'play_all_15')),
+    knockoutFormat: (r.knockout_format as Fixture['knockoutFormat']) ?? (r.play_all_frames ? 'play_all_15' : 'first_to_8'),
     cupName: compName,
     cupRound: roundName,
     status: r.status as Fixture['status'],
@@ -188,6 +191,8 @@ interface LeagueContextValue {
     matchType?: Fixture['matchType'];
     competitionName?: string;
     round?: string;
+    playAllFrames?: boolean;
+    knockoutFormat?: KnockoutFormat;
     cupName?: string;
     cupRound?: string;
   }) => Promise<Fixture>;
@@ -1167,12 +1172,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       matchType?: Fixture['matchType'];
       competitionName?: string;
       round?: string;
+      playAllFrames?: boolean;
+      knockoutFormat?: KnockoutFormat;
       cupName?: string;
       cupRound?: string;
     }): Promise<Fixture> => {
       const matchType = data.matchType ?? 'league';
       const compName = data.competitionName || data.cupName;
       const roundName = data.round || data.cupRound;
+      const koFormat = data.knockoutFormat ?? (data.playAllFrames ? 'play_all_15' : 'first_to_8');
+      const playAll = Boolean(data.playAllFrames || koFormat === 'play_all_15');
 
       const newFixture: Fixture = {
         id: `fix-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -1185,6 +1194,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         matchType,
         competitionName: compName,
         round: roundName,
+        playAllFrames: matchType === 'knockout' ? playAll : false,
+        knockoutFormat: matchType === 'knockout' ? koFormat : undefined,
         cupName: compName,
         cupRound: roundName,
         status: 'scheduled',
