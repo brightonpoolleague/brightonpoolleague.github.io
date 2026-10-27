@@ -172,8 +172,11 @@ create policy "Allow public read-only access to seasons" on public.seasons for s
 create policy "Allow public read-only access to teams" on public.teams for select using (true);
 create policy "Allow public read-only access to players" on public.players for select using (true);
 create policy "Allow public read-only access to fixtures" on public.fixtures for select using (true);
+
+-- Notice: league_settings, team_pins, and pin_attempt_log have NO public policies.
+-- Captain PINs are strictly protected and only returned via get_all_team_pins(p_admin_pin)
+-- when a valid League Admin Master PIN is provided.
 drop policy if exists "Allow public read-only access to team_pins" on public.team_pins;
-create policy "Allow public read-only access to team_pins" on public.team_pins for select using (true);
 
 -- ============================================================================
 -- SERVER-SIDE PIN VERIFICATION & ROLE-GATED WRITE FUNCTIONS (RPC)

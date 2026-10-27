@@ -317,32 +317,25 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!supabase) return;
     setIsSyncing(true);
     try {
-      const [seasonsRes, teamsRes, playersRes, fixturesRes, rawPinsRes] = await Promise.all([
+      const [seasonsRes, teamsRes, playersRes, fixturesRes] = await Promise.all([
         supabase.from('seasons').select('*').order('created_at'),
         supabase.from('teams').select('*').order('name'),
         supabase.from('players').select('*').order('name'),
         supabase.from('fixtures').select('*').order('match_date'),
-        supabase.from('team_pins').select('*'),
       ]);
 
-      // Load team PINs directly or via Admin RPC
+      // If logged in as Admin, fetch protected team PINs via server-side RPC (requires Master Admin PIN)
       const pinMap: Record<string, string> = {};
-      if (!rawPinsRes.error && Array.isArray(rawPinsRes.data)) {
-        rawPinsRes.data.forEach(
-          (row: { team_id: string; captain_pin: string }) => {
-            if (row.team_id && row.captain_pin) {
-              pinMap[row.team_id] = row.captain_pin;
-            }
-          }
-        );
-      } else if (session.role === 'admin' && adminPin) {
+      if (session.role === 'admin' && adminPin) {
         const pinsRes = await supabase.rpc('get_all_team_pins', {
           p_admin_pin: adminPin,
         });
         if (!pinsRes.error && Array.isArray(pinsRes.data)) {
           pinsRes.data.forEach(
             (row: { team_id: string; captain_pin: string }) => {
-              pinMap[row.team_id] = row.captain_pin;
+              if (row.team_id && row.captain_pin) {
+                pinMap[row.team_id] = row.captain_pin;
+              }
             }
           );
         }
