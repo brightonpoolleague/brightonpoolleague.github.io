@@ -118,6 +118,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     fixture.cupName ||
     (fixture.division ? `${fixture.division} Cup` : 'Knockout Cup');
   const knockoutRound = fixture.round || fixture.cupRound;
+  const knockoutDisplay = knockoutRound
+    ? `${knockoutTitle} (${knockoutRound})`
+    : knockoutTitle;
 
   // Frame results can only be recorded once both Set 1 lineups are locked
   // and both players for that frame have been assigned (player or BYE).
@@ -775,7 +778,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           </h4>
           <p className="text-xs text-slate-400">
             {isKnockout
-              ? `${knockoutTitle} match decided (${playAllFrames ? 'all 15 frames recorded' : 'first to 8 frames'}) — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the knockout result.`
+              ? `${knockoutDisplay} match decided (${playAllFrames ? 'all 15 frames recorded' : 'first to 8 frames'}) — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the knockout result.`
               : `All 15 frames recorded — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the result.`}
           </p>
         </div>
@@ -889,15 +892,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <div className="flex items-center gap-2">
               {isKnockout ? (
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-                  🏆 {knockoutTitle}
-                  {knockoutRound ? ` • ${knockoutRound}` : ''}
+                  🏆 {knockoutDisplay}
                   <span className="text-amber-500/80 font-normal">
-                    ({playAllFrames ? 'All 15 Frames' : 'First to 8'})
+                    • {playAllFrames ? 'All 15 Frames' : 'First to 8'}
                   </span>
                 </span>
               ) : (
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
-                  {fixture.division} • Week {fixture.weekNumber}
+                  {fixture.division} • {formatMatchDate(fixture.matchDate)}
                 </span>
               )}
               <span
@@ -976,7 +978,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 {isKnockout
                   ? isKnockoutDecided && score.matchWinner === 'home'
                     ? '🏆 Winner'
-                    : knockoutTitle
+                    : knockoutDisplay
                   : `${score.homePoints} League Pts`}
               </div>
             </div>
@@ -1010,10 +1012,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 {isKnockout ? (
                   <span className="text-amber-400 font-semibold text-center">
                     {isKnockoutDecided
-                      ? `🏆 Match Decided: ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'} (${knockoutTitle})`
+                      ? `🏆 Match Decided: ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'} (${knockoutDisplay})`
                       : playAllFrames
-                      ? `${knockoutTitle} • Play All 15 Frames`
-                      : `${knockoutTitle} • First to 8 Frames`}
+                      ? `${knockoutDisplay} • Play All 15 Frames`
+                      : `${knockoutDisplay} • First to 8 Frames`}
                   </span>
                 ) : (
                   <>
@@ -1045,7 +1047,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 {isKnockout
                   ? isKnockoutDecided && score.matchWinner === 'away'
                     ? '🏆 Winner'
-                    : knockoutTitle
+                    : knockoutDisplay
                   : `${score.awayPoints} League Pts`}
               </div>
             </div>
@@ -1471,7 +1473,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   City of Brighton and Hove Pool League
                 </div>
                 <div className="text-base font-black text-white mt-0.5">
-                  Official Result Scorecard — {homeTeam.name} vs {awayTeam.name}
+                  {isKnockout
+                    ? `${knockoutDisplay} Scorecard — ${homeTeam.name} vs ${awayTeam.name}`
+                    : `Official Result Scorecard — ${homeTeam.name} vs ${awayTeam.name}`}
                 </div>
               </div>
 
@@ -1593,7 +1597,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <tr className="bg-slate-950 font-black text-sm text-white">
                       <td colSpan={4} className="py-3 px-3 text-right">
                         {isKnockout
-                          ? `${knockoutTitle} Result (${playAllFrames ? 'All 15' : 'First to 8'}):`
+                          ? `${knockoutDisplay} Result (${playAllFrames ? 'All 15' : 'First to 8'}):`
                           : 'Result (Total 15):'}
                       </td>
                       <td className="py-3 px-2 text-center text-emerald-400 text-base">
@@ -1607,8 +1611,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           ? isKnockoutDecided
                             ? `Knockout Winner: ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'}`
                             : playAllFrames
-                            ? `${knockoutTitle} • All 15 frames to be played`
-                            : `${knockoutTitle} • First team to 8 frames wins match`
+                            ? `${knockoutDisplay} • All 15 frames to be played`
+                            : `${knockoutDisplay} • First team to 8 frames wins match`
                           : `Points: ${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
                       </td>
                     </tr>

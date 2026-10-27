@@ -87,7 +87,7 @@ export interface Fixture {
   seasonId: string;
   division: Division;
   matchDate: string; // YYYY-MM-DD
-  weekNumber: number;
+  weekNumber?: number;
   homeTeamId: string;
   awayTeamId: string;
   matchType?: MatchType;

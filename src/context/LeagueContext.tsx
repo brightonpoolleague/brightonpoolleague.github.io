@@ -185,7 +185,7 @@ interface LeagueContextValue {
   addFixture: (data: {
     division: Division;
     matchDate: string;
-    weekNumber: number;
+    weekNumber?: number;
     homeTeamId: string;
     awayTeamId: string;
     matchType?: Fixture['matchType'];
@@ -1166,7 +1166,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     async (data: {
       division: Division;
       matchDate: string;
-      weekNumber: number;
+      weekNumber?: number;
       homeTeamId: string;
       awayTeamId: string;
       matchType?: Fixture['matchType'];
@@ -1188,7 +1188,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         seasonId,
         division: data.division,
         matchDate: data.matchDate,
-        weekNumber: data.weekNumber,
+        weekNumber: data.weekNumber ?? 1,
         homeTeamId: data.homeTeamId,
         awayTeamId: data.awayTeamId,
         matchType,

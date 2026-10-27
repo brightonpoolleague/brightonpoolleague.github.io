@@ -286,7 +286,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search fixtures by team, venue, table, division, week, or date..."
+            placeholder="Search fixtures by team, venue, table, division, or date..."
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
           />
           {searchQuery && (
@@ -326,7 +326,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 </span>
                 <span className="text-slate-600 hidden sm:inline">•</span>
                 <span className="text-slate-400 hidden sm:inline">
-                  {myNextMatch.division} • Week {myNextMatch.weekNumber} • {formatMatchDate(myNextMatch.matchDate)}
+                  {myNextMatch.division} • {formatMatchDate(myNextMatch.matchDate)}
                 </span>
               </div>
 
@@ -360,7 +360,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                         : ''}
                     </span>
                   ) : (
-                    `${myNextMatch.division} • Week ${myNextMatch.weekNumber}`
+                    myNextMatch.division
                   )}
                 </span>
                 <span className="text-slate-600">•</span>
@@ -610,15 +610,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                           : ''}
                       </span>
                     ) : (
-                      <>
-                        <span className="font-bold text-emerald-400">
-                          {fix.division}
-                        </span>
-                        <span className="text-slate-600">•</span>
-                        <span className="text-slate-400">
-                          Week {fix.weekNumber}
-                        </span>
-                      </>
+                      <span className="font-bold text-emerald-400">
+                        {fix.division}
+                      </span>
                     )}
                     <span className="text-slate-600">•</span>
                     <span className="text-slate-400">

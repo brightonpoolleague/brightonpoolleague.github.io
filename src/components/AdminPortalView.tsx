@@ -122,7 +122,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [fixtureDraft, setFixtureDraft] = useState<{
     division: Division;
     matchDate: string;
-    weekNumber: number;
     homeTeamId: string;
     awayTeamId: string;
     matchType: MatchType;
@@ -136,7 +135,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [newFixtureDraft, setNewFixtureDraft] = useState<{
     division: Division;
     matchDate: string;
-    weekNumber: number;
     homeTeamId: string;
     awayTeamId: string;
     matchType: MatchType;
@@ -146,7 +144,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   }>({
     division: 'Division 1',
     matchDate: new Date().toISOString().split('T')[0],
-    weekNumber: 1,
     homeTeamId: '',
     awayTeamId: '',
     matchType: 'league',
@@ -359,7 +356,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setFixtureDraft({
       division: fix.division,
       matchDate: fix.matchDate,
-      weekNumber: fix.weekNumber,
       homeTeamId: fix.homeTeamId,
       awayTeamId: fix.awayTeamId,
       matchType: fix.matchType ?? 'league',
@@ -396,7 +392,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       ...fix,
       division: fixtureDraft.division,
       matchDate: fixtureDraft.matchDate,
-      weekNumber: Number(fixtureDraft.weekNumber) || 1,
       homeTeamId: fixtureDraft.homeTeamId,
       awayTeamId: fixtureDraft.awayTeamId,
       matchType: fixtureDraft.matchType ?? 'league',
@@ -434,7 +429,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     await addFixture({
       division: newFixtureDraft.division,
       matchDate: newFixtureDraft.matchDate,
-      weekNumber: Number(newFixtureDraft.weekNumber) || 1,
       homeTeamId: newFixtureDraft.homeTeamId,
       awayTeamId: newFixtureDraft.awayTeamId,
       matchType: newFixtureDraft.matchType,
@@ -449,7 +443,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setNewFixtureDraft({
       division: newFixtureDraft.division,
       matchDate: newFixtureDraft.matchDate,
-      weekNumber: newFixtureDraft.weekNumber + 1,
       homeTeamId: '',
       awayTeamId: '',
       matchType: newFixtureDraft.matchType,
@@ -493,7 +486,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   );
 
   const uniqueFixtureDates = useMemo(() => {
-    const dateMap = new Map<string, { weeks: Set<number>; count: number }>();
+    const dateMap = new Map<string, number>();
     for (const f of fixtures) {
       if (!f.matchDate) continue;
       if (fixtureFilterDivision === 'KNOCKOUT') {
@@ -503,20 +496,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           continue;
         }
       }
-      const entry = dateMap.get(f.matchDate) || {
-        weeks: new Set<number>(),
-        count: 0,
-      };
-      if (f.weekNumber) entry.weeks.add(f.weekNumber);
-      entry.count += 1;
-      dateMap.set(f.matchDate, entry);
+      dateMap.set(f.matchDate, (dateMap.get(f.matchDate) || 0) + 1);
     }
     return Array.from(dateMap.entries())
-      .map(([date, data]) => ({
-        date,
-        weeks: Array.from(data.weeks).sort((a, b) => a - b),
-        count: data.count,
-      }))
+      .map(([date, count]) => ({ date, count }))
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [fixtures, fixtureFilterDivision]);
 
@@ -1527,25 +1510,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
                 <div>
                   <label className="block text-[11px] text-slate-400 mb-1">
-                    Week #
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={50}
-                    value={newFixtureDraft.weekNumber}
-                    onChange={(e) =>
-                      setNewFixtureDraft({
-                        ...newFixtureDraft,
-                        weekNumber: Number(e.target.value) || 1,
-                      })
-                    }
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">
                     Division
                   </label>
                   <select
@@ -1658,7 +1622,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 type="text"
                 value={fixtureSearchQuery}
                 onChange={(e) => setFixtureSearchQuery(e.target.value)}
-                placeholder="Search by team, venue, table, division, week..."
+                placeholder="Search by team, venue, table, division, date..."
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
               />
               {fixtureSearchQuery && (
@@ -1695,9 +1659,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     )}
                   {uniqueFixtureDates.map((item) => (
                     <option key={item.date} value={item.date}>
-                      {formatMatchDate(item.date)} (
-                      {item.weeks.length > 1 ? 'Weeks' : 'Week'}{' '}
-                      {item.weeks.join(', ')})
+                      {formatMatchDate(item.date)} ({item.count}{' '}
+                      {item.count === 1 ? 'match' : 'matches'})
                     </option>
                   ))}
                 </select>
@@ -1830,15 +1793,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   : ''}
                               </span>
                             ) : (
-                              <>
-                                <span className="text-emerald-400 font-bold">
-                                  {fix.division}
-                                </span>
-                                <span className="text-slate-600">•</span>
-                                <span className="text-slate-300">
-                                  Week {fix.weekNumber}
-                                </span>
-                              </>
+                              <span className="text-emerald-400 font-bold">
+                                {fix.division}
+                              </span>
                             )}
                             <span className="text-slate-600">•</span>
                             <span className="text-slate-300">
@@ -1943,7 +1900,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             onClick={() =>
                               setConfirmDialog({
                                 title: `Delete Fixture?`,
-                                message: `Are you sure you want to delete "${home.name} vs ${away.name}" (Week ${fix.weekNumber}, ${formatMatchDate(fix.matchDate)})? Any recorded scores for this match will be permanently removed.`,
+                                message: `Are you sure you want to delete "${home.name} vs ${away.name}" (${formatMatchDate(fix.matchDate)})? Any recorded scores for this match will be permanently removed.`,
                                 confirmLabel: 'Delete Fixture',
                                 variant: 'danger',
                                 onConfirm: () => deleteFixture(fix.id),
@@ -2052,24 +2009,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   setFixtureDraft({
                                     ...fixtureDraft,
                                     matchDate: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] text-slate-400 mb-1">
-                                Week #
-                              </label>
-                              <input
-                                type="number"
-                                min={1}
-                                max={50}
-                                value={fixtureDraft.weekNumber}
-                                onChange={(e) =>
-                                  setFixtureDraft({
-                                    ...fixtureDraft,
-                                    weekNumber: Number(e.target.value) || 1,
                                   })
                                 }
                                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
