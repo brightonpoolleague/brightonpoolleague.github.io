@@ -157,7 +157,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
               <Camera className="w-4 h-4" />
             </div>
             <h3 className="font-black text-white text-sm sm:text-base">
-              Export &amp; Share
+              Export Image
             </h3>
           </div>
 
