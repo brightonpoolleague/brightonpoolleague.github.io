@@ -97,6 +97,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'approved'
   >('all');
+  const [scorecardSearchQuery, setScorecardSearchQuery] = useState('');
 
   // Team inline editing state
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
@@ -1256,37 +1257,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       {/* TAB 2: FIXTURES MANAGER */}
       {activeTab === 'fixtures' && (
         <div className="space-y-3.5 min-w-0">
-          {/* Actions & Filters */}
+          {/* Filters */}
           <div className="space-y-2.5 min-w-0">
-            {/* Schedule Fixture Action */}
-            <div className="flex items-center justify-end min-w-0">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddFixture((prev) => !prev);
-                  if (!newFixtureDraft.homeTeamId && teams.length > 0) {
-                    const availableTeams =
-                      newFixtureDraft.matchType === 'knockout'
-                        ? teams
-                        : teams.filter(
-                            (t) => t.division === newFixtureDraft.division
-                          );
-                    if (availableTeams.length >= 2) {
-                      setNewFixtureDraft((prev) => ({
-                        ...prev,
-                        homeTeamId: availableTeams[0].id,
-                        awayTeamId: availableTeams[1].id,
-                      }));
-                    }
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{showAddFixture ? 'Close Form' : 'Schedule Fixture'}</span>
-              </button>
-            </div>
-
             {/* Division & Knockout Filter */}
             <div className="w-full overflow-x-auto pb-1">
               <div className="inline-flex items-center gap-1.5 min-w-max">
@@ -1408,6 +1380,122 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   Past Date ({fixtureTimeframeCounts.past})
                 </button>
               </div>
+            </div>
+
+            {/* Search, Date Filter & Action Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-2.5 min-w-0">
+              {/* Search Input */}
+              <div className="relative flex-1 min-w-0">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={fixtureSearchQuery}
+                  onChange={(e) => setFixtureSearchQuery(e.target.value)}
+                  placeholder="Search by team, venue, table, division, date..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+                />
+                {fixtureSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setFixtureSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Date Filter Dropdown & Native Picker */}
+              <div className="flex items-center gap-1.5 w-full sm:w-72 sm:flex-shrink-0 min-w-0">
+                <div className="relative flex-1 min-w-0">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <select
+                    value={fixtureDateFilter}
+                    onChange={(e) => setFixtureDateFilter(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-sm appearance-none cursor-pointer truncate"
+                  >
+                    <option value="ALL">
+                      All Dates ({uniqueFixtureDates.length} Matchdays)
+                    </option>
+                    {fixtureDateFilter !== 'ALL' &&
+                      !uniqueFixtureDates.some(
+                        (item) => item.date === fixtureDateFilter
+                      ) && (
+                        <option value={fixtureDateFilter}>
+                          {formatMatchDate(fixtureDateFilter)} (Custom date)
+                        </option>
+                      )}
+                    {uniqueFixtureDates.map((item) => (
+                      <option key={item.date} value={item.date}>
+                        {formatMatchDate(item.date)} ({item.count}{' '}
+                        {item.count === 1 ? 'match' : 'matches'})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+
+                {/* Native Calendar Picker */}
+                <div
+                  className="relative flex-shrink-0"
+                  title="Pick specific date from calendar"
+                >
+                  <input
+                    type="date"
+                    value={fixtureDateFilter === 'ALL' ? '' : fixtureDateFilter}
+                    onChange={(e) => setFixtureDateFilter(e.target.value || 'ALL')}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                  <div
+                    className={`p-2 rounded-xl border text-xs transition flex items-center justify-center ${
+                      fixtureDateFilter !== 'ALL'
+                        ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {fixtureDateFilter !== 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={() => setFixtureDateFilter('ALL')}
+                    className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
+                    title="Reset date filter"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Schedule Fixture Action Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddFixture((prev) => !prev);
+                  if (!newFixtureDraft.homeTeamId && teams.length > 0) {
+                    const availableTeams =
+                      newFixtureDraft.matchType === 'knockout'
+                        ? teams
+                        : teams.filter(
+                            (t) => t.division === newFixtureDraft.division
+                          );
+                    if (availableTeams.length >= 2) {
+                      setNewFixtureDraft((prev) => ({
+                        ...prev,
+                        homeTeamId: availableTeams[0].id,
+                        awayTeamId: availableTeams[1].id,
+                      }));
+                    }
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0 whitespace-nowrap"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{showAddFixture ? 'Close Form' : 'Schedule Fixture'}</span>
+              </button>
             </div>
           </div>
 
@@ -1664,95 +1752,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
             </div>
           )}
-
-          {/* Search & Date Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-2.5 min-w-0">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-0">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={fixtureSearchQuery}
-                onChange={(e) => setFixtureSearchQuery(e.target.value)}
-                placeholder="Search by team, venue, table, division, date..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
-              />
-              {fixtureSearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setFixtureSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
-                  title="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Date Filter Dropdown & Native Picker */}
-            <div className="flex items-center gap-1.5 w-full sm:w-72 sm:flex-shrink-0 min-w-0">
-              <div className="relative flex-1 min-w-0">
-                <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <select
-                  value={fixtureDateFilter}
-                  onChange={(e) => setFixtureDateFilter(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-sm appearance-none cursor-pointer truncate"
-                >
-                  <option value="ALL">
-                    All Dates ({uniqueFixtureDates.length} Matchdays)
-                  </option>
-                  {fixtureDateFilter !== 'ALL' &&
-                    !uniqueFixtureDates.some(
-                      (item) => item.date === fixtureDateFilter
-                    ) && (
-                      <option value={fixtureDateFilter}>
-                        {formatMatchDate(fixtureDateFilter)} (Custom date)
-                      </option>
-                    )}
-                  {uniqueFixtureDates.map((item) => (
-                    <option key={item.date} value={item.date}>
-                      {formatMatchDate(item.date)} ({item.count}{' '}
-                      {item.count === 1 ? 'match' : 'matches'})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-
-              {/* Native Calendar Picker */}
-              <div
-                className="relative flex-shrink-0"
-                title="Pick specific date from calendar"
-              >
-                <input
-                  type="date"
-                  value={fixtureDateFilter === 'ALL' ? '' : fixtureDateFilter}
-                  onChange={(e) => setFixtureDateFilter(e.target.value || 'ALL')}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-                <div
-                  className={`p-2 rounded-xl border text-xs transition flex items-center justify-center ${
-                    fixtureDateFilter !== 'ALL'
-                      ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                </div>
-              </div>
-
-              {fixtureDateFilter !== 'ALL' && (
-                <button
-                  type="button"
-                  onClick={() => setFixtureDateFilter('ALL')}
-                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
-                  title="Reset date filter"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <h3 className="text-sm font-bold text-white">
@@ -2235,9 +2234,40 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         };
 
         const filtered = fixtures
-          .filter((f) =>
-            approvalFilter === 'all' ? true : f.status === approvalFilter
-          )
+          .filter((f) => {
+            if (approvalFilter !== 'all' && f.status !== approvalFilter) {
+              return false;
+            }
+            if (scorecardSearchQuery.trim()) {
+              const q = scorecardSearchQuery.toLowerCase().trim();
+              const home = teamsById[f.homeTeamId];
+              const away = teamsById[f.awayTeamId];
+              const homeName = (home?.name ?? '').toLowerCase();
+              const awayName = (away?.name ?? '').toLowerCase();
+              const division = (f.division ?? '').toLowerCase();
+              const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
+              const statusStr = (f.status ?? '').toLowerCase();
+              const knockoutStr = `${isKnockoutFixture(f) ? 'knockout' : ''} ${f.competitionName ?? ''} ${f.cupName ?? ''} ${f.round ?? ''} ${f.cupRound ?? ''}`.toLowerCase();
+              const teamPlayers = players.filter(
+                (p) => p.teamId === f.homeTeamId || p.teamId === f.awayTeamId
+              );
+              const playerMatches = teamPlayers.some((p) =>
+                p.name.toLowerCase().includes(q)
+              );
+
+              const matches =
+                homeName.includes(q) ||
+                awayName.includes(q) ||
+                division.includes(q) ||
+                dateStr.includes(q) ||
+                statusStr.includes(q) ||
+                knockoutStr.includes(q) ||
+                playerMatches;
+
+              if (!matches) return false;
+            }
+            return true;
+          })
           .sort((a, b) => {
             if (statusOrder[a.status] !== statusOrder[b.status]) {
               return statusOrder[a.status] - statusOrder[b.status];
@@ -2246,19 +2276,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           });
 
         return (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-white">
-                  Scorecard Review &amp; Official Approval Queue ({seasonName})
-                </h2>
-                <p className="text-xs text-slate-400">
-                  Review match submissions, inspect scores, and approve official scorecards.
-                </p>
-              </div>
-            </div>
-
-            {/* Status Filter Buttons */}
+          <div className="space-y-3.5 min-w-0">
+            {/* Status Filter Buttons (Outside card box) */}
             <div className="w-full overflow-x-auto pb-1">
               <div className="inline-flex items-center gap-1.5 min-w-max">
                 {filterTabs.map((tab) => (
@@ -2269,7 +2288,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                       approvalFilter === tab.id
                         ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
                     <span>{tab.label}</span>
@@ -2291,97 +2310,171 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
             </div>
 
-            {filtered.length === 0 ? (
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-xs text-slate-400">
-                {approvalFilter === 'submitted'
-                  ? 'No scorecards currently awaiting approval.'
-                  : approvalFilter === 'live'
-                  ? 'No matches currently live.'
-                  : approvalFilter === 'scheduled'
-                  ? 'No upcoming scheduled matches.'
-                  : approvalFilter === 'approved'
-                  ? 'No approved scorecards yet.'
-                  : `No matches recorded for ${seasonName} yet.`}
+            {/* Search Input (Outside card box) */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={scorecardSearchQuery}
+                onChange={(e) => setScorecardSearchQuery(e.target.value)}
+                placeholder="Search scorecards by team, division, status, date, or player..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+              />
+              {scorecardSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setScorecardSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Scorecard Review Queue Container */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Scorecard Review Queue ({filtered.length})
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Review match submissions, inspect scores, and approve official scorecards.
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2.5">
-                {filtered.map((fix) => {
-                  const home = teamsById[fix.homeTeamId];
-                  const away = teamsById[fix.awayTeamId];
-                  if (!home || !away) return null;
-                  const score = calculateMatchScore(fix);
 
-                  return (
-                    <div
-                      key={fix.id}
-                      className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
-                    >
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="font-bold text-emerald-400">
-                            {fix.division}
-                          </span>
-                          <span className="text-slate-500">•</span>
-                          <span className="text-slate-400">
-                            {formatMatchDate(fix.matchDate)}
-                          </span>
-                          <span
-                            className={`uppercase px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              fix.status === 'approved'
-                                ? 'bg-emerald-500/20 text-emerald-300'
-                                : fix.status === 'submitted'
-                                ? 'bg-amber-500/20 text-amber-300'
-                                : fix.status === 'live'
-                                ? 'bg-red-500/20 text-red-300 animate-pulse'
-                                : 'bg-slate-800 text-slate-400'
-                            }`}
-                          >
-                            {fix.status}
-                          </span>
-                        </div>
-                        <div className="font-bold text-white text-sm sm:text-base break-words">
-                          {home.name} ({score.homeFrames}) vs ({score.awayFrames}){' '}
-                          {away.name}
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          Frames recorded: {score.completedFrames}/15 • Home
-                          Signed: {fix.homeCaptainSigned ? 'Yes' : 'No'} • Away
-                          Signed: {fix.awayCaptainSigned ? 'Yes' : 'No'}
-                        </div>
-                      </div>
+              {filtered.length === 0 ? (
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-xs text-slate-400 space-y-1.5">
+                  {scorecardSearchQuery.trim() ? (
+                    <>
+                      <p>
+                        No scorecards match &ldquo;<strong>{scorecardSearchQuery}</strong>&rdquo;
+                        {approvalFilter !== 'all' && <span> with status <strong>{approvalFilter}</strong></span>}.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScorecardSearchQuery('');
+                          setApprovalFilter('all');
+                        }}
+                        className="inline-flex items-center gap-1 text-emerald-400 hover:underline font-semibold mt-1"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Reset search &amp; filters
+                      </button>
+                    </>
+                  ) : (
+                    <p>
+                      {approvalFilter === 'submitted'
+                        ? 'No scorecards currently awaiting approval.'
+                        : approvalFilter === 'live'
+                        ? 'No matches currently live.'
+                        : approvalFilter === 'scheduled'
+                        ? 'No upcoming scheduled matches.'
+                        : approvalFilter === 'approved'
+                        ? 'No approved scorecards yet.'
+                        : `No matches recorded for ${seasonName} yet.`}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {filtered.map((fix) => {
+                    const home = teamsById[fix.homeTeamId];
+                    const away = teamsById[fix.awayTeamId];
+                    if (!home || !away) return null;
+                    const score = calculateMatchScore(fix);
 
-                      <div className="flex flex-wrap items-center gap-2 shrink-0 pt-1 sm:pt-0">
-                        <button
-                          type="button"
-                          onClick={() => onSelectFixture(fix)}
-                          className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
-                        >
-                          Inspect / Edit Scorecard
-                        </button>
-                        {fix.status !== 'approved' ? (
+                    return (
+                      <div
+                        key={fix.id}
+                        className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
+                      >
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            {isKnockoutFixture(fix) ? (
+                              <span className="text-amber-400 font-bold inline-flex items-center gap-1">
+                                <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>
+                                  {fix.competitionName ||
+                                    fix.cupName ||
+                                    (fix.division
+                                      ? `${fix.division} Knockout`
+                                      : 'Knockout')}
+                                  {fix.round || fix.cupRound
+                                    ? ` (${fix.round || fix.cupRound})`
+                                    : ''}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="font-bold text-emerald-400">
+                                {fix.division}
+                              </span>
+                            )}
+                            <span className="text-slate-500">•</span>
+                            <span className="text-slate-400">
+                              {formatMatchDate(fix.matchDate)}
+                            </span>
+                            <span
+                              className={`uppercase px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                fix.status === 'approved'
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : fix.status === 'submitted'
+                                  ? 'bg-amber-500/20 text-amber-300'
+                                  : fix.status === 'live'
+                                  ? 'bg-red-500/20 text-red-300 animate-pulse'
+                                  : 'bg-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {fix.status}
+                            </span>
+                          </div>
+                          <div className="font-bold text-white text-sm sm:text-base break-words">
+                            {home.name} ({score.homeFrames}) vs ({score.awayFrames}){' '}
+                            {away.name}
+                          </div>
+                          <div className="text-[11px] text-slate-400">
+                            Frames recorded: {score.completedFrames}/15 • Home
+                            Signed: {fix.homeCaptainSigned ? 'Yes' : 'No'} • Away
+                            Signed: {fix.awayCaptainSigned ? 'Yes' : 'No'}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 pt-1 sm:pt-0">
                           <button
                             type="button"
-                            onClick={() => approveFixture(fix.id)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                            onClick={() => onSelectFixture(fix)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
                           >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Approve Result
+                            Inspect / Edit Scorecard
                           </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => reopenFixture(fix.id)}
-                            className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold"
-                          >
-                            Reopen
-                          </button>
-                        )}
+                          {fix.status !== 'approved' ? (
+                            <button
+                              type="button"
+                              onClick={() => approveFixture(fix.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Approve Result
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => reopenFixture(fix.id)}
+                              className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold"
+                            >
+                              Reopen
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         );
       })()}
