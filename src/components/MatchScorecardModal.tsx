@@ -249,6 +249,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     );
   };
 
+  const getLagBreakCount = (side: 'home' | 'away'): string | null => {
+    if (!fixture.lagWinner) return null;
+    const isWinner = fixture.lagWinner === side;
+    if (isKnockout && !playAllFrames) {
+      return isWinner ? '(Breaks 1st)' : '(Breaks 2nd)';
+    }
+    return isWinner ? '(8 breaks)' : '(7 breaks)';
+  };
+
   const handleSlotChange = async (
     setNumber: 1 | 2 | 3,
     side: 'home' | 'away',
@@ -1186,9 +1195,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     )}
                     <span>{homeTeam.name}</span>
-                    <span className="text-[10px] opacity-75 font-normal">
-                      (8 breaks)
-                    </span>
+                    {getLagBreakCount('home') && (
+                      <span className="text-[10px] opacity-75 font-normal">
+                        {getLagBreakCount('home')}
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
@@ -1204,9 +1215,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     )}
                     <span>{awayTeam.name}</span>
-                    <span className="text-[10px] opacity-75 font-normal">
-                      (8 breaks)
-                    </span>
+                    {getLagBreakCount('away') && (
+                      <span className="text-[10px] opacity-75 font-normal">
+                        {getLagBreakCount('away')}
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1245,7 +1258,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      {homeTeam.name} {fixture.lagWinner === 'home' && '✓'}
+                      {homeTeam.name} {fixture.lagWinner === 'home' && '✓'}{' '}
+                      {getLagBreakCount('home') && (
+                        <span className="text-[10px] opacity-75 font-normal">
+                          {getLagBreakCount('home')}
+                        </span>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -1256,15 +1274,20 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           : 'text-slate-400 hover:text-white'
                       }`}
                     >
-                      {awayTeam.name} {fixture.lagWinner === 'away' && '✓'}
+                      {awayTeam.name} {fixture.lagWinner === 'away' && '✓'}{' '}
+                      {getLagBreakCount('away') && (
+                        <span className="text-[10px] opacity-75 font-normal">
+                          {getLagBreakCount('away')}
+                        </span>
+                      )}
                     </button>
                   </div>
                 ) : (
                   <strong className="text-white">
                     {fixture.lagWinner === 'home'
-                      ? `${homeTeam.name} (breaks odd frames)`
+                      ? `${homeTeam.name} (breaks odd frames, 8 breaks)`
                       : fixture.lagWinner === 'away'
-                      ? `${awayTeam.name} (breaks odd frames)`
+                      ? `${awayTeam.name} (breaks odd frames, 8 breaks)`
                       : 'Not Selected'}
                   </strong>
                 )}
