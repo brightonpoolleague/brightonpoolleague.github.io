@@ -148,7 +148,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     awayTeamId: '',
     matchType: 'league',
     cupName: '',
-    cupRound: 'Round 1',
+    cupRound: '',
     knockoutFormat: 'first_to_8',
   });
 
@@ -453,7 +453,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       awayTeamId: '',
       matchType: newFixtureDraft.matchType,
       cupName: '',
-      cupRound: 'Round 1',
+      cupRound: '',
       knockoutFormat: 'first_to_8',
     });
   };
@@ -1258,11 +1258,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         <div className="space-y-3.5 min-w-0">
           {/* Actions & Filters */}
           <div className="space-y-2.5 min-w-0">
-            {/* Header / Schedule Fixture Action */}
-            <div className="flex items-center justify-between gap-2 min-w-0">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Filter Fixtures
-              </span>
+            {/* Schedule Fixture Action */}
+            <div className="flex items-center justify-end min-w-0">
               <button
                 type="button"
                 onClick={() => {
