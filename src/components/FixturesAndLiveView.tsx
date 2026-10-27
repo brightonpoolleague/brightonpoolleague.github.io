@@ -132,21 +132,45 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
   const myTeam = isCaptain && session.teamId ? teamsById[session.teamId] : null;
 
-  const myMatches =
-    isCaptain && session.teamId
-      ? fixtures
-          .filter(
-            (f) =>
-              f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
-          )
-          .sort((a, b) => a.matchDate.localeCompare(b.matchDate))
-      : [];
+  const myMatches = useMemo(() => {
+    if (!isCaptain || !session.teamId) return [];
+    return fixtures
+      .filter(
+        (f) =>
+          f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
+      )
+      .sort((a, b) => a.matchDate.localeCompare(b.matchDate));
+  }, [fixtures, isCaptain, session.teamId]);
 
-  const myNextMatch =
-    myMatches.find((f) => f.status === 'live') ||
-    myMatches.find((f) => f.status === 'scheduled') ||
-    myMatches.find((f) => f.status === 'submitted') ||
-    (myMatches.length > 0 ? myMatches[myMatches.length - 1] : null);
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }, []);
+
+  // "My Next Match" is strictly date-based:
+  // 1. Earliest fixture on or after today that is not yet completed/approved (whether scheduled or live today)
+  // 2. Earliest fixture on or after today (if all upcoming are approved)
+  // 3. Earliest unapproved fixture from earlier in the season (e.g. postponed or pending submission)
+  // 4. Fallback to the season's latest fixture
+  const myNextMatch = useMemo(() => {
+    if (myMatches.length === 0) return null;
+
+    const upcomingUnapproved = myMatches.find(
+      (f) => f.matchDate >= todayStr && f.status !== 'approved'
+    );
+    if (upcomingUnapproved) return upcomingUnapproved;
+
+    const upcomingAny = myMatches.find((f) => f.matchDate >= todayStr);
+    if (upcomingAny) return upcomingAny;
+
+    const pastUnapproved = myMatches.find((f) => f.status !== 'approved');
+    if (pastUnapproved) return pastUnapproved;
+
+    return myMatches[myMatches.length - 1];
+  }, [myMatches, todayStr]);
 
   const uniqueFixtureDates = useMemo(() => {
     const dateSet = new Set<string>();
