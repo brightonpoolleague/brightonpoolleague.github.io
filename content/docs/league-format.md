@@ -39,7 +39,7 @@ The shot clock can be found [here](https://www.epa.org.uk/stopclock/epa/index.ph
 
 ---
 
-## 4. Completing the Score Sheet
+## 4. Completing the Score Card
 
 a. The **home captain** writes their players’ full names against numbers **1–5** (running order in the first set).  
 b. Fold the paper in half (to hide what has been written) and pass it to the **away captain**, who writes their players’ full names against **1–5** (their running order in the first set).  
@@ -77,8 +77,8 @@ b. Breaks alternate between teams: the team that breaks first gets **8 breaks**,
 
 ## 7. End of the Match
 
-a. Record the number of games each team has won at the bottom of the score sheet (the total should be **15**).  
-b. The **winning captain** must take a clear photo of the completed sheet and either post it on Facebook or send it to the captains’ WhatsApp group **before 10:00 AM the following day**.
+a. Record the number of games each team has won at the bottom of the score card (the total should be **15**).  
+b. The **winning captain** must take a clear photo of the completed card and either post it on Facebook or send it to the captains’ WhatsApp group **before 10:00 AM the following day**.
 
 ---
 
@@ -116,14 +116,14 @@ c. The players dish table is sorted as follows:
 
 ### 1) Team with Only 4 Players
 
-a. Enter **BYE** in position 5 on the score sheet.  
+a. Enter **BYE** in position 5 on the score card.  
 b. Any player facing a **BYE** is automatically awarded the win.
 
 ---
 
 ### 2) Both Teams with Only 4 Players
 
-a. Both teams enter **BYE** in position 5 on the score sheet.  
+a. Both teams enter **BYE** in position 5 on the score card.  
 b. Any player facing a **BYE** is automatically awarded the win.  
 c. The team that wins the **lag** is awarded the win in **Set 1 (5 vs 5)**.
 
@@ -147,7 +147,7 @@ d. The team that wins the **lag** is awarded the win in **Set 1 (5 vs 5)**.
 
 ### 5) Team of 3 vs Team of 3
 
-a. Both teams enter **BYE** in positions 4 and 5 on the score sheet.  
+a. Both teams enter **BYE** in positions 4 and 5 on the score card.  
 b. Any player facing a **BYE** is automatically awarded the win.  
 c. The team that wins the **lag** is awarded:
 - The wins in **Set 1 (5 vs 5)** and **(4 vs 4)**, and

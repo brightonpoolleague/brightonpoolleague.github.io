@@ -90,7 +90,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const score = calculateMatchScore(fixture);
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
-    if (hidden) return 'Hidden (Folded Sheet)';
+    if (hidden) return 'Hidden (Folded Card)';
     if (!playerId) return 'Unassigned';
     if (playerId === 'BYE') return 'BYE (No Player)';
     return players.find((p) => p.id === playerId)?.name ?? 'Unknown Player';
@@ -471,7 +471,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 : `Awaiting ${team.name} Captain Set 1 Entry`}
             </p>
             <p className="text-[11px] text-slate-500">
-              Running order remains hidden (&ldquo;Folded Score Sheet&rdquo;) until both captains lock in Set 1.
+              Running order remains hidden (&ldquo;Folded Score Card&rdquo;) until both captains lock in Set 1.
             </p>
           </div>
         ) : setNumber === 1 ? (
@@ -1154,7 +1154,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         {activeSet === 1 ? (
                           <>
                             <EyeOff className="w-4 h-4 text-emerald-400" />
-                            Set 1 Blind Lineup Entry ("Folded Score Sheet")
+                            Set 1 Blind Lineup Entry ("Folded Score Card")
                           </>
                         ) : (
                           <>
