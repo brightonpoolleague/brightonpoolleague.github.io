@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -21,6 +21,8 @@ import {
 } from '../types/league';
 import {
   calculateMatchScore,
+  ensureValidFrames,
+  ensureValidLineups,
   formatMatchDate,
   getEligiblePlayersForSlot,
   getFrameBreaker,
@@ -28,6 +30,7 @@ import {
   getScorecardApprovalWarnings,
   getSetKey,
   isKnockoutFixture,
+  syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
 
@@ -49,6 +52,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     saveFixture,
     approveFixture,
     reopenFixture,
+    refreshFromCloud,
     isOnline,
     isSyncing,
     syncError,
@@ -68,6 +72,17 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     home: string;
     away: string;
   }>({ home: '', away: '' });
+
+  // Auto-poll the cloud every 3.5 seconds while viewing this scorecard
+  // so updates by either captain or admin reflect immediately across devices.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshFromCloud();
+      }
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [refreshFromCloud]);
 
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -113,7 +128,32 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const homeSquad = players.filter((p) => p.teamId === homeTeam.id && p.active);
   const awaySquad = players.filter((p) => p.teamId === awayTeam.id && p.active);
 
+  // Guarantee that frames and lineups are strictly complete and never empty arrays
+  const frames = useMemo(
+    () => ensureValidFrames(fixture.frames),
+    [fixture.frames]
+  );
+  const lineups = useMemo(
+    () => ensureValidLineups(fixture.lineups),
+    [fixture.lineups]
+  );
+
   const editable = canEditFixture(fixture);
+
+  // Self-heal: If fixture was loaded with an empty frames array, immediately persist the full 15 frames
+  useEffect(() => {
+    if (
+      (!Array.isArray(fixture.frames) || fixture.frames.length !== 15) &&
+      editable
+    ) {
+      saveFixture({
+        ...fixture,
+        frames: ensureValidFrames(fixture.frames),
+        lineups: ensureValidLineups(fixture.lineups),
+      });
+    }
+  }, [fixture.id, fixture.frames, editable, saveFixture]);
+
   const canSignHome =
     canManageLeague ||
     (editable &&
@@ -126,7 +166,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       session.teamId === fixture.awayTeamId);
   const canEditSide = (side: 'home' | 'away'): boolean =>
     side === 'home' ? canSignHome : canSignAway;
-  const score = calculateMatchScore(fixture);
+  const score = calculateMatchScore({ ...fixture, frames, lineups });
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
     if (hidden) return 'Hidden (Folded Scorecard)';
@@ -145,10 +185,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   );
   const isKnockoutDecided = isKnockout
     ? playAllFrames
-      ? fixture.frames.every((f) => f.winner !== null)
+      ? frames.every((f) => f.winner !== null)
       : score.homeFrames >= 8 || score.awayFrames >= 8
     : false;
-  const allFramesComplete = fixture.frames.every((f) => f.winner !== null);
+  const allFramesComplete = frames.every((f) => f.winner !== null);
   const isMatchComplete = isKnockout ? isKnockoutDecided : allFramesComplete;
 
   const knockoutTitle =
@@ -165,17 +205,47 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   // In Knockout matches with first-to-8 rules, unplayed frames are locked once either team reaches 8 frames.
   const canRecordFrame = (frameNumber: number): boolean => {
     if (!editable || !bothSet1Locked) return false;
-    const frame = fixture.frames.find((f) => f.frameNumber === frameNumber);
+    const frame = frames.find((f) => f.frameNumber === frameNumber);
     if (!frame) return false;
     // In first-to-8 knockout matches, once a team has reached 8 frames, unrecorded frames cannot be played
     if (isKnockout && !playAllFrames && isKnockoutDecided && !frame.winner) {
       return false;
     }
     const { homePlayerId, awayPlayerId } = getFramePlayers(
-      fixture.lineups,
+      lineups,
       frame
     );
     return Boolean(homePlayerId) && Boolean(awayPlayerId);
+  };
+
+  const handleAdminQuickLockBoth = async () => {
+    if (!canManageLeague) return;
+    const nextLineups = structuredClone(lineups);
+    const fillMissing = (side: 'home' | 'away') => {
+      const squad = side === 'home' ? homeSquad : awaySquad;
+      const current = nextLineups.set1[side];
+      for (let i = 0; i < 5; i++) {
+        if (!current[i]) {
+          const used = new Set(current.filter(Boolean));
+          const available = squad.find((p) => !used.has(p.id));
+          current[i] = available ? available.id : i >= 3 ? 'BYE' : null;
+        }
+      }
+    };
+    fillMissing('home');
+    fillMissing('away');
+
+    const updatedLineups = syncDefaultSubsequentSets(nextLineups);
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: updatedLineups,
+        frames,
+        homeSet1Locked: true,
+        awaySet1Locked: true,
+      },
+      'home'
+    );
   };
 
   const handleLagChange = async (winner: 'home' | 'away') => {
@@ -316,7 +386,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     winner: 'home' | 'away'
   ) => {
     if (!canRecordFrame(frameNumber)) return;
-    const nextFrames = fixture.frames.map((f) => {
+    const nextFrames = frames.map((f) => {
       if (f.frameNumber !== frameNumber) return f;
       const toggledWinner = f.winner === winner ? null : winner;
       return {
@@ -336,7 +406,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleToggleDish = async (frameNumber: number) => {
     if (!canRecordFrame(frameNumber)) return;
-    const nextFrames = fixture.frames.map((f) => {
+    const nextFrames = frames.map((f) => {
       if (f.frameNumber !== frameNumber || !f.winner) return f;
       return { ...f, dish: !f.dish };
     });
@@ -800,7 +870,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     );
   };
 
-  const setFrames = fixture.frames.filter((f) => f.setNumber === activeSet);
+  const setFrames = frames.filter((f) => f.setNumber === activeSet);
 
   const showSignOff =
     isMatchComplete ||
@@ -989,6 +1059,18 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               <span className="hidden sm:inline">Result Scorecard</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => refreshFromCloud()}
+            disabled={isSyncing}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+            title="Refresh scorecard and latest scores from cloud"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`}
+            />
+          </button>
 
           <button
             type="button"
@@ -1320,19 +1402,55 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               )}
 
               {/* 5 Frame Cards for Active Set */}
-              {editable && !bothSet1Locked && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 text-xs text-amber-200">
-                  <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>
-                    Frame results can be recorded once <strong>both captains</strong> have
-                    locked their Set 1 lineups.
-                  </span>
+              {activeSet === 1 && (
+                <div
+                  className={`rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs border ${
+                    bothSet1Locked
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {bothSet1Locked ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                    )}
+                    <span className="leading-snug">
+                      {bothSet1Locked ? (
+                        <>
+                          <strong>Both Set 1 lineups locked in!</strong> Match running order revealed &amp; frame scoring active.
+                        </>
+                      ) : fixture.homeSet1Locked && !fixture.awaySet1Locked ? (
+                        <>
+                          <strong className="text-white">{homeTeam.name}</strong> locked in (1/2). Waiting for <strong className="text-white">{awayTeam.name}</strong> captain to lock Set 1.
+                        </>
+                      ) : !fixture.homeSet1Locked && fixture.awaySet1Locked ? (
+                        <>
+                          <strong className="text-white">{awayTeam.name}</strong> locked in (1/2). Waiting for <strong className="text-white">{homeTeam.name}</strong> captain to lock Set 1.
+                        </>
+                      ) : (
+                        <>
+                          Both captains must lock Set 1 before the running order is revealed and frame scores can be set (0/2 locked in).
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  {canManageLeague && !bothSet1Locked && (
+                    <button
+                      type="button"
+                      onClick={handleAdminQuickLockBoth}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap shadow transition"
+                    >
+                      Admin: Lock Both &amp; Begin
+                    </button>
+                  )}
                 </div>
               )}
               <div className="space-y-2.5">
                 {setFrames.map((frame) => {
                   const { homePlayerId, awayPlayerId } = getFramePlayers(
-                    fixture.lineups,
+                    lineups,
                     frame
                   );
                   const breaker = getFrameBreaker(
@@ -1534,9 +1652,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {fixture.frames.map((frame) => {
+                    {frames.map((frame) => {
                       const { homePlayerId, awayPlayerId } = getFramePlayers(
-                        fixture.lineups,
+                        lineups,
                         frame
                       );
                       const breaker = getFrameBreaker(

@@ -34,6 +34,8 @@ import {
   applyByeRulesToFrames,
   createEmptyFrames,
   createEmptyLineups,
+  ensureValidFrames,
+  ensureValidLineups,
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
@@ -124,8 +126,8 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     lagWinner: (r.lag_winner as 'home' | 'away' | null) ?? null,
     homeSet1Locked: Boolean(r.home_set1_locked),
     awaySet1Locked: Boolean(r.away_set1_locked),
-    lineups: (r.lineups as Fixture['lineups']) ?? createEmptyLineups(),
-    frames: (r.frames as Fixture['frames']) ?? createEmptyFrames(),
+    lineups: ensureValidLineups(r.lineups),
+    frames: ensureValidFrames(r.frames),
     homeCaptainSigned: Boolean(r.home_captain_signed),
     awayCaptainSigned: Boolean(r.away_captain_signed),
     submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,
@@ -259,14 +261,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES
     );
     return raw.map((f: Fixture) => {
+      const validFrames = ensureValidFrames(f.frames);
+      const validLineups = ensureValidLineups(f.lineups);
+      let status = f.status;
       if (
-        f.status === 'live' &&
+        status === 'live' &&
         !(f.homeSet1Locked && f.awaySet1Locked) &&
-        f.frames.filter((frame) => frame.winner !== null).length === 0
+        validFrames.filter((frame) => frame.winner !== null).length === 0
       ) {
-        return { ...f, status: 'scheduled' as const };
+        status = 'scheduled';
       }
-      return f;
+      return {
+        ...f,
+        status,
+        frames: validFrames,
+        lineups: validLineups,
+      };
     });
   });
   const [session, setSession] = useState<UserSession>(() =>
@@ -630,7 +640,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
+    // Background safety poll: every 10 seconds refresh data from cloud
+    // to safeguard against silent WebSocket disconnects on mobile browsers
+    const pollTimer = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        refreshFromCloud();
+      }
+    }, 10000);
+
     return () => {
+      clearInterval(pollTimer);
       if (typeof document !== 'undefined') {
         document.removeEventListener(
           'visibilitychange',
@@ -1511,10 +1530,12 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       rawUpdated: Fixture,
       editedSide?: 'home' | 'away' | 'frames'
     ): Promise<void> => {
-      const syncedLineups = syncDefaultSubsequentSets(rawUpdated.lineups);
+      const syncedLineups = syncDefaultSubsequentSets(
+        ensureValidLineups(rawUpdated.lineups)
+      );
       const syncedFrames = applyByeRulesToFrames(
         syncedLineups,
-        rawUpdated.frames,
+        ensureValidFrames(rawUpdated.frames),
         rawUpdated.lagWinner
       );
 

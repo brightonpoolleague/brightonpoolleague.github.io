@@ -66,6 +66,77 @@ export function createEmptyLineups(): MatchLineups {
 }
 
 /**
+ * Ensures a fixture always has a valid array of exactly 15 frames.
+ * If rawFrames is empty, undefined, or missing frames, initializes from createEmptyFrames()
+ * while preserving any recorded frame winners and dish flags.
+ */
+export function ensureValidFrames(rawFrames: unknown): FrameData[] {
+  const empty = createEmptyFrames();
+  if (!Array.isArray(rawFrames) || rawFrames.length === 0) {
+    return empty;
+  }
+  const frameMap = new Map<number, FrameData>();
+  rawFrames.forEach((f) => {
+    if (f && typeof f === 'object' && typeof (f as FrameData).frameNumber === 'number') {
+      frameMap.set((f as FrameData).frameNumber, f as FrameData);
+    }
+  });
+  return empty.map((baseFrame) => {
+    const existing = frameMap.get(baseFrame.frameNumber);
+    if (!existing) return baseFrame;
+    return {
+      ...baseFrame,
+      winner: existing.winner ?? null,
+      dish: Boolean(existing.dish),
+    };
+  });
+}
+
+/**
+ * Ensures a fixture always has valid lineups for set1, set2, and set3.
+ */
+export function ensureValidLineups(rawLineups: unknown): MatchLineups {
+  const empty = createEmptyLineups();
+  if (!rawLineups || typeof rawLineups !== 'object') {
+    return empty;
+  }
+  const typed = rawLineups as Partial<MatchLineups>;
+  return {
+    set1: {
+      home:
+        Array.isArray(typed.set1?.home) && typed.set1.home.length === 5
+          ? (typed.set1.home as MatchLineups['set1']['home'])
+          : empty.set1.home,
+      away:
+        Array.isArray(typed.set1?.away) && typed.set1.away.length === 5
+          ? (typed.set1.away as MatchLineups['set1']['away'])
+          : empty.set1.away,
+    },
+    set2: {
+      home:
+        Array.isArray(typed.set2?.home) && typed.set2.home.length === 5
+          ? (typed.set2.home as MatchLineups['set2']['home'])
+          : empty.set2.home,
+      away:
+        Array.isArray(typed.set2?.away) && typed.set2.away.length === 5
+          ? (typed.set2.away as MatchLineups['set2']['away'])
+          : empty.set2.away,
+    },
+    set3: {
+      home:
+        Array.isArray(typed.set3?.home) && typed.set3.home.length === 5
+          ? (typed.set3.home as MatchLineups['set3']['home'])
+          : empty.set3.home,
+      away:
+        Array.isArray(typed.set3?.away) && typed.set3.away.length === 5
+          ? (typed.set3.away as MatchLineups['set3']['away'])
+          : empty.set3.away,
+    },
+    unlockRequested: typed.unlockRequested ?? { home: false, away: false },
+  };
+}
+
+/**
  * Determines which side ('home' | 'away' | null) breaks on a given frame (1..15).
  * Rule 6: Player 1 lags in Frame 1. Breaks alternate between teams:
  * lag winner gets 8 breaks (odd frames), opponent gets 7 breaks (even frames).
