@@ -9,6 +9,7 @@ import {
   KeyRound,
   RefreshCw,
   Save,
+  Search,
   ShieldCheck,
   Table as TableIcon,
   Trash2,
@@ -65,6 +66,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     Record<string, string>
   >({});
   const [filterDivision, setFilterDivision] = useState<Division | 'ALL'>('ALL');
+  const [teamSearchQuery, setTeamSearchQuery] = useState('');
   const [fixtureFilterDivision, setFixtureFilterDivision] = useState<
     Division | 'ALL'
   >('ALL');
@@ -332,9 +334,34 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     setFixtureDraft(null);
   };
 
-  const filteredTeams = teams.filter(
-    (t) => filterDivision === 'ALL' || t.division === filterDivision
-  );
+  const filteredTeams = teams.filter((t) => {
+    if (filterDivision !== 'ALL' && t.division !== filterDivision) {
+      return false;
+    }
+    if (teamSearchQuery.trim()) {
+      const q = teamSearchQuery.toLowerCase().trim();
+      const matchesName = t.name.toLowerCase().includes(q);
+      const matchesVenue = t.venue.toLowerCase().includes(q);
+      const matchesCaptain = t.captainName.toLowerCase().includes(q);
+      const matchesAddress = t.address.toLowerCase().includes(q);
+      const matchesTable = (t.tableNumber || '').toLowerCase().includes(q);
+      const matchesDivision = t.division.toLowerCase().includes(q);
+      const teamPlayers = players.filter((p) => p.teamId === t.id);
+      const matchesPlayer = teamPlayers.some((p) =>
+        p.name.toLowerCase().includes(q)
+      );
+      return (
+        matchesName ||
+        matchesVenue ||
+        matchesCaptain ||
+        matchesAddress ||
+        matchesTable ||
+        matchesDivision ||
+        matchesPlayer
+      );
+    }
+    return true;
+  });
   const filteredFixtures = fixtures.filter(
     (f) =>
       fixtureFilterDivision === 'ALL' || f.division === fixtureFilterDivision
@@ -426,9 +453,35 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             ))}
           </div>
 
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={teamSearchQuery}
+              onChange={(e) => setTeamSearchQuery(e.target.value)}
+              placeholder="Search by team, venue, table, captain, player, or street..."
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+            />
+            {teamSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setTeamSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
           {filteredTeams.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
-              No teams found for <strong>{seasonName}</strong>.
+              {teamSearchQuery.trim() ? (
+                <>No teams match "<strong>{teamSearchQuery}</strong>".</>
+              ) : (
+                <>No teams found for <strong>{seasonName}</strong>.</>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
