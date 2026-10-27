@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Eye,
+  EyeOff,
   History,
   MapPin,
   PlayCircle,
@@ -60,6 +62,21 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     isCaptain ? 'mine' : 'all'
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMyNextMatch, setShowMyNextMatch] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem('bpl_show_my_next_match');
+    return stored !== 'false';
+  });
+
+  const toggleMyNextMatch = () => {
+    setShowMyNextMatch((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bpl_show_my_next_match', String(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (isCaptain) {
@@ -268,6 +285,36 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         const home = teamsById[myNextMatch.homeTeamId];
         const away = teamsById[myNextMatch.awayTeamId];
 
+        if (!showMyNextMatch) {
+          return (
+            <div
+              onClick={toggleMyNextMatch}
+              className="cursor-pointer bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-xs transition shadow-md group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold text-xs border border-emerald-500/30">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  MY NEXT MATCH
+                </span>
+                <span className="text-slate-300 truncate font-semibold">
+                  <span className="text-white font-bold">{home?.name}</span>
+                  <span className="text-slate-500 mx-1.5 font-normal">vs</span>
+                  <span className="text-white font-bold">{away?.name}</span>
+                </span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
+                <span className="text-slate-400 hidden sm:inline">
+                  {myNextMatch.division} • Week {myNextMatch.weekNumber} • {formatMatchDate(myNextMatch.matchDate)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-emerald-400 group-hover:text-emerald-300 text-xs font-bold shrink-0">
+                <Eye className="w-3.5 h-3.5" />
+                <span>Show Match</span>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -285,25 +332,37 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 </span>
               </div>
 
-              <span
-                className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
-                  myNextMatch.status === 'live'
-                    ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
+                    myNextMatch.status === 'live'
+                      ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
+                      : myNextMatch.status === 'submitted'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : myNextMatch.status === 'approved'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-slate-800 text-slate-300 border border-slate-700'
+                  }`}
+                >
+                  {myNextMatch.status === 'live'
+                    ? `LIVE NOW (${nextScore.completedFrames}/15)`
+                    : myNextMatch.status === 'scheduled'
+                    ? 'Upcoming Match'
                     : myNextMatch.status === 'submitted'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                    : myNextMatch.status === 'approved'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-slate-800 text-slate-300 border border-slate-700'
-                }`}
-              >
-                {myNextMatch.status === 'live'
-                  ? `LIVE NOW (${nextScore.completedFrames}/15)`
-                  : myNextMatch.status === 'scheduled'
-                  ? 'Upcoming Match'
-                  : myNextMatch.status === 'submitted'
-                  ? 'Submitted • Awaiting Approval'
-                  : 'Approved Result'}
-              </span>
+                    ? 'Submitted • Awaiting Approval'
+                    : 'Approved Result'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={toggleMyNextMatch}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold border border-slate-700/80 transition shadow-sm"
+                  title="Hide My Next Match spotlight"
+                >
+                  <EyeOff className="w-3.5 h-3.5" />
+                  <span>Hide</span>
+                </button>
+              </div>
             </div>
 
             <div
