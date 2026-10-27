@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Save,
   ShieldCheck,
+  Table as TableIcon,
   Trash2,
   UserPlus,
   Users,
@@ -81,6 +82,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     captainName: string;
     tableNumber?: string;
   } | null>(null);
+
+  // Quick Table inline editing state
+  const [editingTableTeamId, setEditingTableTeamId] = useState<string | null>(null);
+  const [quickTableDraft, setQuickTableDraft] = useState('');
 
   // Player inline renaming state
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -188,8 +193,100 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     });
   };
 
+  // Helper to validate table conflicts
+  const getTableConflict = (
+    teamId: string,
+    venue: string,
+    division: string,
+    tableRaw?: string
+  ): { hasConflict: boolean; reason?: string; isWarning?: boolean } => {
+    const raw = (tableRaw || '').trim();
+    if (!raw) return { hasConflict: false };
+
+    const lower = raw.toLowerCase();
+    if (lower === 'tbc' || lower === 'table tbc') {
+      return { hasConflict: false };
+    }
+
+    const canonical = lower.startsWith('table') ? lower : `table ${lower}`;
+    const venueLower = venue.trim().toLowerCase();
+
+    // Check all other teams at the same venue
+    const otherTeams = teams.filter(
+      (t) => t.id !== teamId && t.venue.trim().toLowerCase() === venueLower
+    );
+
+    for (const other of otherTeams) {
+      const otherRaw = (other.tableNumber || '').trim().toLowerCase();
+      if (!otherRaw || otherRaw === 'tbc' || otherRaw === 'table tbc') continue;
+      const otherCanonical = otherRaw.startsWith('table')
+        ? otherRaw
+        : `table ${otherRaw}`;
+
+      if (canonical === otherCanonical) {
+        // Direct match: same venue, same table!
+        // 1. Same division clash
+        if (other.division === division) {
+          return {
+            hasConflict: true,
+            reason: `"${raw}" is already assigned to "${other.name}" in ${other.division} at ${venue}. Two teams in the same division cannot share a table.`,
+          };
+        }
+
+        // 2. Scheduled fixture clash
+        const myHomeDates = new Set(
+          fixtures
+            .filter((f) => f.homeTeamId === teamId)
+            .map((f) => f.matchDate)
+        );
+        const clashingDates = fixtures
+          .filter(
+            (f) => f.homeTeamId === other.id && myHomeDates.has(f.matchDate)
+          )
+          .map((f) => f.matchDate);
+
+        if (clashingDates.length > 0) {
+          return {
+            hasConflict: true,
+            reason: `"${raw}" clashes with "${other.name}" (${other.division}) on ${clashingDates.slice(0, 3).join(', ')}${clashingDates.length > 3 ? '...' : ''} — both teams have home matches scheduled on the same date.`,
+          };
+        }
+
+        // 3. Different division without fixture clash
+        return {
+          hasConflict: false,
+          isWarning: true,
+          reason: `Note: "${raw}" is shared with "${other.name}" (${other.division}) on alternating weeks (no fixture clashes).`,
+        };
+      }
+    }
+
+    return { hasConflict: false };
+  };
+
+  const handleSaveQuickTable = async (team: Team) => {
+    const cleanTable = quickTableDraft.trim();
+    const conflict = getTableConflict(team.id, team.venue, team.division, cleanTable);
+    if (conflict.hasConflict) return;
+
+    await updateTeam({
+      ...team,
+      tableNumber: cleanTable || undefined,
+    });
+    setEditingTableTeamId(null);
+  };
+
   const handleSaveTeamEdit = async (team: Team) => {
     if (!teamDraft || !teamDraft.name.trim() || !teamDraft.venue.trim()) return;
+    const cleanTable = teamDraft.tableNumber?.trim() || undefined;
+    const conflict = getTableConflict(
+      team.id,
+      teamDraft.venue.trim(),
+      teamDraft.division,
+      cleanTable
+    );
+    if (conflict.hasConflict) return;
+
     await updateTeam({
       ...team,
       name: teamDraft.name.trim(),
@@ -197,7 +294,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       venue: teamDraft.venue.trim(),
       address: teamDraft.address.trim(),
       captainName: teamDraft.captainName.trim(),
-      tableNumber: teamDraft.tableNumber?.trim() || undefined,
+      tableNumber: cleanTable,
     });
     setEditingTeamId(null);
     setTeamDraft(null);
@@ -399,6 +496,101 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       </div>
                     </div>
 
+                    {/* Venue Table Quick Editor */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Venue Table:</span>
+                      </div>
+                      {editingTableTeamId === team.id ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
+                          <input
+                            type="text"
+                            value={quickTableDraft}
+                            onChange={(e) => setQuickTableDraft(e.target.value)}
+                            placeholder="e.g. Table 1, Table TBC, or blank"
+                            className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white w-full sm:w-48 font-semibold"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveQuickTable(team);
+                              if (e.key === 'Escape') setEditingTableTeamId(null);
+                            }}
+                          />
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveQuickTable(team)}
+                              disabled={
+                                getTableConflict(
+                                  team.id,
+                                  team.venue,
+                                  team.division,
+                                  quickTableDraft
+                                ).hasConflict
+                              }
+                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingTableTeamId(null)}
+                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xs font-bold ${
+                              team.tableNumber
+                                ? 'text-amber-300'
+                                : 'text-slate-400 italic'
+                            }`}
+                          >
+                            {team.tableNumber || 'None (Single Table)'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTableTeamId(team.id);
+                              setQuickTableDraft(team.tableNumber || '');
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                            title="Edit Table"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit Table</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Conflict Notice if Quick Editing Table */}
+                    {editingTableTeamId === team.id && (() => {
+                      const conflict = getTableConflict(
+                        team.id,
+                        team.venue,
+                        team.division,
+                        quickTableDraft
+                      );
+                      if (!conflict.reason) return null;
+                      return (
+                        <div
+                          className={`text-xs px-3 py-1.5 rounded-lg border flex items-start gap-1.5 ${
+                            conflict.hasConflict
+                              ? 'bg-red-500/10 border-red-500/30 text-red-300 font-semibold'
+                              : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                          }`}
+                        >
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <span>{conflict.reason}</span>
+                        </div>
+                      );
+                    })()}
+
                     <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
                       <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <KeyRound className="w-3.5 h-3.5 text-amber-400" />
@@ -534,9 +726,30 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   tableNumber: e.target.value,
                                 })
                               }
-                              placeholder="e.g. Table 1"
+                              placeholder="e.g. Table 1, Table TBC, or blank"
                               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                             />
+                            {(() => {
+                              const conflict = getTableConflict(
+                                team.id,
+                                teamDraft.venue,
+                                teamDraft.division,
+                                teamDraft.tableNumber
+                              );
+                              if (!conflict.reason) return null;
+                              return (
+                                <p
+                                  className={`text-[11px] mt-1 flex items-start gap-1 ${
+                                    conflict.hasConflict
+                                      ? 'text-red-400 font-semibold'
+                                      : 'text-amber-400'
+                                  }`}
+                                >
+                                  <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                                  <span>{conflict.reason}</span>
+                                </p>
+                              );
+                            })()}
                           </div>
                           <div className="sm:col-span-2">
                             <label className="block text-[11px] text-slate-400 mb-1">
@@ -570,7 +783,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleSaveTeamEdit(team)}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                            disabled={
+                              getTableConflict(
+                                team.id,
+                                teamDraft.venue,
+                                teamDraft.division,
+                                teamDraft.tableNumber
+                              ).hasConflict
+                            }
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition"
                           >
                             <Save className="w-3.5 h-3.5" />
                             Save Team Changes
