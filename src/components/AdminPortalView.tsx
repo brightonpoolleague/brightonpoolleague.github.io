@@ -1416,23 +1416,23 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
           {/* Inline Schedule Fixture Form */}
           {showAddFixture && (
-            <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 space-y-3 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-sm text-white flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-emerald-400" />
-                  <span>Schedule New Fixture / Knockout Match</span>
+            <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-lg min-w-0 max-w-full">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="font-bold text-sm text-white flex items-center gap-1.5 min-w-0">
+                  <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="truncate">Schedule New Fixture</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowAddFixture(false)}
-                  className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+                  className="p-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 min-w-0">
+                <div className="min-w-0">
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Match Format
                   </label>
@@ -1444,7 +1444,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         matchType: e.target.value as MatchType,
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                   >
                     <option value="league">League Match (15 frames)</option>
                     <option value="knockout">Knockout</option>
@@ -1453,7 +1453,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
                 {newFixtureDraft.matchType === 'knockout' && (
                   <>
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-[11px] text-slate-400 mb-1">
                         Knockout Format Rule
                       </label>
@@ -1465,7 +1465,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             knockoutFormat: e.target.value as KnockoutFormat,
                           })
                         }
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                        className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                       >
                         <option value="first_to_8">
                           First to 8 frames (Standard Knockout)
@@ -1475,7 +1475,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </option>
                       </select>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-[11px] text-slate-400 mb-1">
                         Event / Competition Name
                       </label>
@@ -1489,10 +1489,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             cupName: e.target.value,
                           })
                         }
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                        className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                       />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <label className="block text-[11px] text-slate-400 mb-1">
                         Knockout Round
                       </label>
@@ -1506,13 +1506,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             cupRound: e.target.value,
                           })
                         }
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                        className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                       />
                     </div>
                   </>
                 )}
 
-                <div>
+                <div className="min-w-0">
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Match Date
                   </label>
@@ -1525,12 +1525,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         matchDate: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white box-border appearance-none"
                   />
                 </div>
 
                 {newFixtureDraft.matchType !== 'knockout' && (
-                  <div>
+                  <div className="min-w-0">
                     <label className="block text-[11px] text-slate-400 mb-1">
                       Division
                     </label>
@@ -1546,7 +1546,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           awayTeamId: divTeams[1]?.id || '',
                         });
                       }}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                      className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                     >
                       {divisions.map((div) => (
                         <option key={div} value={div}>
@@ -1557,7 +1557,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   </div>
                 )}
 
-                <div className={newFixtureDraft.matchType === 'knockout' ? 'sm:col-span-1' : ''}>
+                <div className={`min-w-0 ${newFixtureDraft.matchType === 'knockout' ? 'sm:col-span-1' : ''}`}>
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Home Team
                   </label>
@@ -1569,7 +1569,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         homeTeamId: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white truncate"
                   >
                     <option value="">-- Select Home Team --</option>
                     {newFixtureDraft.matchType === 'knockout'
@@ -1596,7 +1596,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   </select>
                 </div>
 
-                <div className={newFixtureDraft.matchType === 'knockout' ? 'sm:col-span-2' : 'sm:col-span-2'}>
+                <div className={`min-w-0 ${newFixtureDraft.matchType === 'knockout' ? 'sm:col-span-2' : 'sm:col-span-2'}`}>
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Away Team
                   </label>
@@ -1608,7 +1608,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         awayTeamId: e.target.value,
                       })
                     }
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                    className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white truncate"
                   >
                     <option value="">-- Select Away Team --</option>
                     {newFixtureDraft.matchType === 'knockout'
@@ -2053,7 +2053,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 </div>
                               </>
                             )}
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[11px] text-slate-400 mb-1">
                                 Match Date
                               </label>
@@ -2066,7 +2066,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                     matchDate: e.target.value,
                                   })
                                 }
-                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                                className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white box-border appearance-none"
                               />
                             </div>
                             {fixtureDraft.matchType !== 'knockout' && (
