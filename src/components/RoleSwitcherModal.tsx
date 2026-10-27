@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { KeyRound, LogOut, Shield, ShieldCheck, UserCheck, X } from 'lucide-react';
 import { useLeague } from '../context/LeagueContext';
+import { PinInput } from './PinInput';
 
 interface RoleSwitcherModalProps {
   onClose: () => void;
@@ -169,21 +170,20 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   ))}
                 </select>
                 <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <KeyRound className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="password"
-                      inputMode="numeric"
-                      required
-                      value={captainPinInput}
-                      onChange={(e) => {
-                        setCaptainPinInput(e.target.value);
-                        setCaptainError('');
-                      }}
-                      placeholder="8-digit Team PIN"
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-2 text-xs text-white"
-                    />
-                  </div>
+                  <PinInput
+                    leftIcon={
+                      <KeyRound className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    }
+                    inputMode="numeric"
+                    required
+                    value={captainPinInput}
+                    onChange={(e) => {
+                      setCaptainPinInput(e.target.value);
+                      setCaptainError('');
+                    }}
+                    placeholder="8-digit Team PIN"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
+                  />
                   <button
                     type="submit"
                     disabled={!selectedTeamId}
@@ -234,20 +234,19 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
             </p>
 
             <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <KeyRound className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  required
-                  value={adminPinInput}
-                  onChange={(e) => {
-                    setAdminPinInput(e.target.value);
-                    setAdminError('');
-                  }}
-                  placeholder="Enter Admin PIN"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-2.5 py-2 text-xs text-white"
-                />
-              </div>
+              <PinInput
+                leftIcon={
+                  <KeyRound className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                }
+                required
+                value={adminPinInput}
+                onChange={(e) => {
+                  setAdminPinInput(e.target.value);
+                  setAdminError('');
+                }}
+                placeholder="Enter Admin PIN"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
+              />
               <button
                 type="submit"
                 className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"

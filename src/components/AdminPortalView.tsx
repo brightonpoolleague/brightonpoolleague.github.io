@@ -32,6 +32,7 @@ import {
   Team,
 } from '../types/league';
 import { generateRandomPin, useLeague } from '../context/LeagueContext';
+import { PinInput } from './PinInput';
 import {
   calculateMatchScore,
   formatMatchDate,
@@ -211,8 +212,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           Captain PINs, fixtures, and approve scorecards.
         </p>
         <div className="flex items-center gap-2 max-w-xs mx-auto">
-          <input
-            type="password"
+          <PinInput
             required
             value={unlockPinInput}
             onChange={(e) => {
@@ -220,7 +220,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               setUnlockError('');
             }}
             placeholder="Admin PIN"
-            className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white text-center"
+            className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 py-2.5 text-sm text-white text-center"
           />
           <button
             type="submit"
