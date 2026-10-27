@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AlertTriangle,
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   Copy,
   Edit3,
   KeyRound,
@@ -70,6 +71,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [fixtureFilterDivision, setFixtureFilterDivision] = useState<
     Division | 'ALL'
   >('ALL');
+  const [fixtureSearchQuery, setFixtureSearchQuery] = useState('');
+  const [fixtureDateFilter, setFixtureDateFilter] = useState('ALL');
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'approved'
   >('all');
@@ -362,11 +365,83 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     }
     return true;
   });
-  const filteredFixtures = fixtures.filter(
-    (f) =>
-      fixtureFilterDivision === 'ALL' || f.division === fixtureFilterDivision
+  const teamsById = useMemo(
+    () => Object.fromEntries(teams.map((t) => [t.id, t])),
+    [teams]
   );
-  const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
+
+  const uniqueFixtureDates = useMemo(() => {
+    const dateMap = new Map<string, { weeks: Set<number>; count: number }>();
+    for (const f of fixtures) {
+      if (!f.matchDate) continue;
+      if (
+        fixtureFilterDivision !== 'ALL' &&
+        f.division !== fixtureFilterDivision
+      ) {
+        continue;
+      }
+      const entry = dateMap.get(f.matchDate) || {
+        weeks: new Set<number>(),
+        count: 0,
+      };
+      if (f.weekNumber) entry.weeks.add(f.weekNumber);
+      entry.count += 1;
+      dateMap.set(f.matchDate, entry);
+    }
+    return Array.from(dateMap.entries())
+      .map(([date, data]) => ({
+        date,
+        weeks: Array.from(data.weeks).sort((a, b) => a - b),
+        count: data.count,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [fixtures, fixtureFilterDivision]);
+
+  const filteredFixtures = useMemo(() => {
+    return fixtures.filter((f) => {
+      if (
+        fixtureFilterDivision !== 'ALL' &&
+        f.division !== fixtureFilterDivision
+      ) {
+        return false;
+      }
+      if (fixtureDateFilter !== 'ALL' && f.matchDate !== fixtureDateFilter) {
+        return false;
+      }
+      if (fixtureSearchQuery.trim()) {
+        const q = fixtureSearchQuery.toLowerCase().trim();
+        const home = teamsById[f.homeTeamId];
+        const away = teamsById[f.awayTeamId];
+        const homeName = (home?.name ?? '').toLowerCase();
+        const awayName = (away?.name ?? '').toLowerCase();
+        const venue = (home?.venue ?? '').toLowerCase();
+        const table = (home?.tableNumber ?? '').toLowerCase();
+        const division = (f.division ?? '').toLowerCase();
+        const weekStr = `week ${f.weekNumber} wk ${f.weekNumber} w${f.weekNumber}`;
+        const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
+        const statusStr = (f.status ?? '').toLowerCase();
+
+        const matches =
+          homeName.includes(q) ||
+          awayName.includes(q) ||
+          venue.includes(q) ||
+          table.includes(q) ||
+          division.includes(q) ||
+          weekStr.includes(q) ||
+          dateStr.includes(q) ||
+          statusStr.includes(q);
+
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [
+    fixtures,
+    fixtureFilterDivision,
+    fixtureDateFilter,
+    fixtureSearchQuery,
+    teamsById,
+  ]);
 
   return (
     <div className="space-y-5">
@@ -1046,14 +1121,137 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             ))}
           </div>
 
+          {/* Search & Date Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={fixtureSearchQuery}
+                onChange={(e) => setFixtureSearchQuery(e.target.value)}
+                placeholder="Search by team, venue, table, division, week..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+              />
+              {fixtureSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setFixtureSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Date Filter Dropdown & Native Picker */}
+            <div className="flex items-center gap-1.5 sm:w-72 sm:flex-shrink-0">
+              <div className="relative flex-1">
+                <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  value={fixtureDateFilter}
+                  onChange={(e) => setFixtureDateFilter(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-sm appearance-none cursor-pointer truncate"
+                >
+                  <option value="ALL">
+                    All Dates ({uniqueFixtureDates.length} Matchdays)
+                  </option>
+                  {fixtureDateFilter !== 'ALL' &&
+                    !uniqueFixtureDates.some(
+                      (item) => item.date === fixtureDateFilter
+                    ) && (
+                      <option value={fixtureDateFilter}>
+                        {formatMatchDate(fixtureDateFilter)} (Custom date)
+                      </option>
+                    )}
+                  {uniqueFixtureDates.map((item) => (
+                    <option key={item.date} value={item.date}>
+                      {formatMatchDate(item.date)} (Wk {item.weeks.join(', ')})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Native Calendar Picker */}
+              <div
+                className="relative flex-shrink-0"
+                title="Pick specific date from calendar"
+              >
+                <input
+                  type="date"
+                  value={fixtureDateFilter === 'ALL' ? '' : fixtureDateFilter}
+                  onChange={(e) => setFixtureDateFilter(e.target.value || 'ALL')}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <div
+                  className={`p-2 rounded-xl border text-xs transition flex items-center justify-center ${
+                    fixtureDateFilter !== 'ALL'
+                      ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Calendar className="w-4 h-4" />
+                </div>
+              </div>
+
+              {fixtureDateFilter !== 'ALL' && (
+                <button
+                  type="button"
+                  onClick={() => setFixtureDateFilter('ALL')}
+                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
+                  title="Reset date filter"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
             <h3 className="text-sm font-bold text-white">
               {seasonName} Fixtures ({filteredFixtures.length})
             </h3>
             {filteredFixtures.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                No fixtures found for {seasonName}.
-              </p>
+              <div className="py-8 text-center text-xs text-slate-400 space-y-1.5">
+                {fixtureSearchQuery.trim() || fixtureDateFilter !== 'ALL' ? (
+                  <>
+                    <p>
+                      No fixtures match your current filters
+                      {fixtureDateFilter !== 'ALL' && (
+                        <span>
+                          {' '}
+                          on{' '}
+                          <strong>{formatMatchDate(fixtureDateFilter)}</strong>
+                        </span>
+                      )}
+                      {fixtureSearchQuery.trim() && (
+                        <span>
+                          {' '}
+                          matching &ldquo;
+                          <strong>{fixtureSearchQuery}</strong>&rdquo;
+                        </span>
+                      )}
+                      .
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFixtureSearchQuery('');
+                        setFixtureDateFilter('ALL');
+                        setFixtureFilterDivision('ALL');
+                      }}
+                      className="inline-flex items-center gap-1 text-emerald-400 hover:underline font-semibold mt-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      Reset all filters
+                    </button>
+                  </>
+                ) : (
+                  <p>No fixtures found for {seasonName}.</p>
+                )}
+              </div>
             ) : (
               <div className="space-y-2.5">
                 {filteredFixtures.map((fix) => {
