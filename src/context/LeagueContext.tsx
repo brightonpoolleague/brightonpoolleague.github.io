@@ -361,6 +361,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [seasons, adminPin]
   );
 
+  // Server-side `updated_at` high-water mark for fixtures, used for incremental catch-up fetches
+  const fixturesHighWaterRef = useRef<number | null>(null);
+  const lastFullRefreshAtRef = useRef<number>(0);
+
+  const advanceFixturesHighWater = (rows: Record<string, unknown>[]) => {
+    for (const r of rows) {
+      const ts = Date.parse(String(r.updated_at ?? ''));
+      if (
+        !Number.isNaN(ts) &&
+        (fixturesHighWaterRef.current === null || ts > fixturesHighWaterRef.current)
+      ) {
+        fixturesHighWaterRef.current = ts;
+      }
+    }
+  };
+
   const refreshFromCloud = useCallback(
     async (options?: { silent?: boolean }) => {
       const supabase = getSupabaseClient();
@@ -444,6 +460,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           STORAGE_KEYS.FIXTURES,
           JSON.stringify(mappedFixtures)
         );
+        advanceFixturesHighWater(fixturesRes.data as Record<string, unknown>[]);
+        lastFullRefreshAtRef.current = Date.now();
       }
     } finally {
       if (!isSilent) {
@@ -451,6 +469,47 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }
   }, [session.role, adminPin]);
+
+  // Lightweight catch-up: fetch only fixtures changed since the last sync (usually a handful of
+  // rows) instead of re-downloading the whole season. Falls back to a full refresh if we have
+  // no high-water mark yet, or if the last full refresh is stale (to pick up rare admin edits
+  // to teams/players/seasons, or deleted fixtures, missed while disconnected).
+  const refreshChangedFixtures = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    const FULL_REFRESH_MAX_AGE_MS = 30 * 60 * 1000;
+    if (
+      fixturesHighWaterRef.current === null ||
+      Date.now() - lastFullRefreshAtRef.current > FULL_REFRESH_MAX_AGE_MS
+    ) {
+      await refreshFromCloudRef.current({ silent: true });
+      return;
+    }
+    // Small overlap guards against transactions that committed slightly out of order
+    const since = new Date(fixturesHighWaterRef.current - 30_000).toISOString();
+    try {
+      const { data, error } = await supabase
+        .from('fixtures')
+        .select('*')
+        .gte('updated_at', since);
+      if (error || !data) return;
+      advanceFixturesHighWater(data as Record<string, unknown>[]);
+      if (data.length === 0) return;
+      const changed = data.map((r) => mapFixtureRow(r as Record<string, unknown>));
+      const changedById = new Map(changed.map((f) => [f.id, f]));
+      setAllFixtures((prev) => {
+        const next = prev.map((f) => changedById.get(f.id) ?? f);
+        const existingIds = new Set(prev.map((f) => f.id));
+        for (const f of changed) {
+          if (!existingIds.has(f.id)) next.push(f);
+        }
+        localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(next));
+        return next;
+      });
+    } catch {
+      // Quiet fail on network fluctuation; next trigger will retry
+    }
+  }, []);
 
   const refreshSingleFixture = useCallback(async (fixtureId: string) => {
     const supabase = getSupabaseClient();
@@ -497,13 +556,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     let isSubscribed = false;
     let lastCatchUpAt = 0;
 
-    // Quietly refetch everything, but collapse bursts of triggers (tab visible + focus +
-    // reconnect all fire together when a phone is unlocked) into a single fetch.
+    // Quietly fetch changed fixtures (see refreshChangedFixtures), but collapse bursts of triggers
+    // (tab visible + focus + reconnect all fire together when a phone is unlocked) into one fetch.
     const catchUp = () => {
       const now = Date.now();
       if (now - lastCatchUpAt < 3000) return;
       lastCatchUpAt = now;
-      refreshFromCloud({ silent: true });
+      refreshChangedFixtures();
     };
 
     // Called when the user returns to the app or the device comes back online.
@@ -797,7 +856,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       disconnectRealtime();
     };
-  }, [isCloudConnected]);
+  }, [isCloudConnected, refreshChangedFixtures]);
 
   const setRoleSession = useCallback(
     (role: UserRole, teamId?: string, customName?: string, pin?: string) => {
