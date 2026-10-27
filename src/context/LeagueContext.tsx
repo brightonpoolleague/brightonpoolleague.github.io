@@ -735,11 +735,24 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         });
     };
 
+    // Only drop the socket after the tab has been hidden for a while. Disconnecting on every
+    // brief tab switch made the client tear the WebSocket down and then immediately try to
+    // reuse it mid-teardown ("WebSocket is closed before the connection is established").
+    const HIDDEN_DISCONNECT_DELAY_MS = 5 * 60 * 1000;
+    let hiddenDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        if (hiddenDisconnectTimer) {
+          clearTimeout(hiddenDisconnectTimer);
+          hiddenDisconnectTimer = null;
+        }
         resumeLive();
-      } else {
-        disconnectRealtime();
+      } else if (!hiddenDisconnectTimer) {
+        hiddenDisconnectTimer = setTimeout(() => {
+          hiddenDisconnectTimer = null;
+          disconnectRealtime();
+        }, HIDDEN_DISCONNECT_DELAY_MS);
       }
     };
 
@@ -778,6 +791,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           'visibilitychange',
           handleVisibilityChange
         );
+      }
+      if (hiddenDisconnectTimer) {
+        clearTimeout(hiddenDisconnectTimer);
       }
       disconnectRealtime();
     };
