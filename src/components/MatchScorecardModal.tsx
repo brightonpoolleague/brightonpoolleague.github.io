@@ -26,6 +26,7 @@ import {
   getFrameBreaker,
   getFramePlayers,
   getSetKey,
+  isKnockoutFixture,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
 
@@ -100,12 +101,29 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   // Until both Set 1 lineups are locked, hide the opponent's Set 1 slots unless viewing that side in the editor or Admin
   const bothSet1Locked = fixture.homeSet1Locked && fixture.awaySet1Locked;
 
+  const isKnockout = isKnockoutFixture(fixture);
+  const isKnockoutDecided =
+    isKnockout && (score.homeFrames >= 8 || score.awayFrames >= 8);
+  const allFramesComplete = fixture.frames.every((f) => f.winner !== null);
+  const isMatchComplete = isKnockout ? isKnockoutDecided : allFramesComplete;
+
+  const knockoutTitle =
+    fixture.competitionName ||
+    fixture.cupName ||
+    (fixture.division ? `${fixture.division} Knockout` : 'Knockout Match');
+  const knockoutRound = fixture.round || fixture.cupRound;
+
   // Frame results can only be recorded once both Set 1 lineups are locked
   // and both players for that frame have been assigned (player or BYE).
+  // In Knockout matches (first to 8 frames), unplayed frames are locked once either team reaches 8 frames.
   const canRecordFrame = (frameNumber: number): boolean => {
     if (!editable || !bothSet1Locked) return false;
     const frame = fixture.frames.find((f) => f.frameNumber === frameNumber);
     if (!frame) return false;
+    // In knockout matches, once a team has reached 8 frames, unrecorded frames cannot be played
+    if (isKnockout && isKnockoutDecided && !frame.winner) {
+      return false;
+    }
     const { homePlayerId, awayPlayerId } = getFramePlayers(
       fixture.lineups,
       frame
@@ -286,7 +304,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleToggleSign = async (side: 'home' | 'away') => {
     if (!editable) return;
-    if (!fixture.frames.every((f) => f.winner !== null)) return;
+    if (!isMatchComplete) return;
     if (side === 'home' && !canSignHome) return;
     if (side === 'away' && !canSignAway) return;
     const nextHomeSigned =
@@ -301,13 +319,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         homeCaptainSigned: nextHomeSigned,
         awayCaptainSigned: nextAwaySigned,
         status:
-          bothSigned && score.completedFrames === 15
+          bothSigned && isMatchComplete
             ? 'submitted'
             : fixture.status === 'submitted' && !bothSigned
             ? 'live'
             : fixture.status,
         submittedAt:
-          bothSigned && score.completedFrames === 15
+          bothSigned && isMatchComplete
             ? new Date().toISOString()
             : fixture.submittedAt,
       },
@@ -737,8 +755,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const setFrames = fixture.frames.filter((f) => f.setNumber === activeSet);
 
-  const allFramesComplete = fixture.frames.every((f) => f.winner !== null);
-  const showSignOff = allFramesComplete || fixture.status === 'approved';
+  const showSignOff =
+    isMatchComplete ||
+    fixture.status === 'submitted' ||
+    fixture.status === 'approved';
 
   const renderSignOffCard = () => (
     <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
@@ -748,9 +768,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             Captain Sign-Off & Result Submission
           </h4>
           <p className="text-xs text-slate-400">
-            All 15 frames recorded — final score {homeTeam.name}{' '}
-            {score.homeFrames}–{score.awayFrames} {awayTeam.name}. Both
-            captains sign to submit the result.
+            {isKnockout
+              ? `Knockout match decided (first to 8 frames) — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the knockout result.`
+              : `All 15 frames recorded — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the result.`}
           </p>
         </div>
         {fixture.status === 'approved' && (
@@ -861,9 +881,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
-                {fixture.division} • Week {fixture.weekNumber}
-              </span>
+              {isKnockout ? (
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                  🏆 {knockoutTitle}
+                  {knockoutRound ? ` • ${knockoutRound}` : ''}
+                </span>
+              ) : (
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
+                  {fixture.division} • Week {fixture.weekNumber}
+                </span>
+              )}
               <span
                 className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
                   fixture.status === 'live'
@@ -937,7 +964,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 {homeTeam.name}
               </div>
               <div className="text-[11px] text-emerald-400 font-medium mt-0.5">
-                {score.homePoints} League Pts
+                {isKnockout
+                  ? score.homeFrames >= 8
+                    ? '🏆 Winner'
+                    : 'Knockout'
+                  : `${score.homePoints} League Pts`}
               </div>
             </div>
 
@@ -967,17 +998,27 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
-                <span>
-                  S1: {score.setScores.set1.home}-{score.setScores.set1.away}
-                </span>
-                <span>•</span>
-                <span>
-                  S2: {score.setScores.set2.home}-{score.setScores.set2.away}
-                </span>
-                <span>•</span>
-                <span>
-                  S3: {score.setScores.set3.home}-{score.setScores.set3.away}
-                </span>
+                {isKnockout ? (
+                  <span className="text-amber-400 font-semibold text-center">
+                    {isKnockoutDecided
+                      ? `🏆 Match Decided (${score.homeFrames >= 8 ? homeTeam.name : awayTeam.name} Wins)`
+                      : 'First to 8 Frames'}
+                  </span>
+                ) : (
+                  <>
+                    <span>
+                      S1: {score.setScores.set1.home}-{score.setScores.set1.away}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      S2: {score.setScores.set2.home}-{score.setScores.set2.away}
+                    </span>
+                    <span>•</span>
+                    <span>
+                      S3: {score.setScores.set3.home}-{score.setScores.set3.away}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -990,7 +1031,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 {awayTeam.name}
               </div>
               <div className="text-[11px] text-emerald-400 font-medium mt-0.5">
-                {score.awayPoints} League Pts
+                {isKnockout
+                  ? score.awayFrames >= 8
+                    ? '🏆 Winner'
+                    : 'Knockout'
+                  : `${score.awayPoints} League Pts`}
               </div>
             </div>
           </div>
@@ -1264,6 +1309,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           </span>
                         </span>
                         <div className="flex items-center gap-2">
+                          {isKnockout && isKnockoutDecided && !frame.winner && (
+                            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-semibold text-[10px]">
+                              Not required (Knockout Decided at 8)
+                            </span>
+                          )}
                           {isByeFrame && (
                             <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">
                               Auto BYE Rule
@@ -1531,7 +1581,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <tfoot>
                     <tr className="bg-slate-950 font-black text-sm text-white">
                       <td colSpan={4} className="py-3 px-3 text-right">
-                        Result (Total 15):
+                        {isKnockout ? 'Knockout Result (First to 8):' : 'Result (Total 15):'}
                       </td>
                       <td className="py-3 px-2 text-center text-emerald-400 text-base">
                         {score.homeFrames}
@@ -1540,8 +1590,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         {score.awayFrames}
                       </td>
                       <td colSpan={4} className="py-3 px-3 text-xs text-slate-400 font-normal">
-                        Points: {homeTeam.name} ({score.homePoints} pts) –{' '}
-                        {awayTeam.name} ({score.awayPoints} pts)
+                        {isKnockout
+                          ? isKnockoutDecided
+                            ? `Knockout Winner: ${score.homeFrames >= 8 ? homeTeam.name : awayTeam.name}`
+                            : 'First team to 8 frames wins match'
+                          : `Points: ${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
                       </td>
                     </tr>
                   </tfoot>

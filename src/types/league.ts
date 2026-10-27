@@ -79,6 +79,7 @@ export interface FrameData {
 }
 
 export type FixtureStatus = 'scheduled' | 'live' | 'submitted' | 'approved';
+export type MatchType = 'league' | 'knockout' | 'cup';
 
 export interface Fixture {
   id: string;
@@ -88,6 +89,11 @@ export interface Fixture {
   weekNumber: number;
   homeTeamId: string;
   awayTeamId: string;
+  matchType?: MatchType;
+  competitionName?: string; // e.g. "Division 1 Cup", "Summer Cup", "Summer Plate"
+  round?: string; // e.g. "Preliminary Round", "Quarter-Final", "Semi-Final", "Final"
+  cupName?: string; // backward-compat alias
+  cupRound?: string; // backward-compat alias
   status: FixtureStatus;
   lagWinner: 'home' | 'away' | null;
   homeSet1Locked: boolean;

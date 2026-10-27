@@ -224,11 +224,19 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
   return next;
 }
 
+export function isKnockoutFixture(fixture: Fixture): boolean {
+  return fixture.matchType === 'knockout' || fixture.matchType === 'cup';
+}
+
 /**
  * Calculates frame totals and League Points for a match (Section 2 of league-format.md):
  * - Match win = 2 points
  * - Every 3 frames won = 1 point
  * - Max points = 7 (15-0 -> 7-0, 8-7 -> 4-2, etc.)
+ *
+ * In Knockout fixtures (e.g. Divisional Cups, Summer Cup, Summer Plate):
+ * - Match concludes as soon as one team reaches 8 frames (knockout format)
+ * - Fixture does not award league points
  */
 export function calculateMatchScore(fixture: Fixture): {
   homeFrames: number;
@@ -236,6 +244,9 @@ export function calculateMatchScore(fixture: Fixture): {
   completedFrames: number;
   homePoints: number;
   awayPoints: number;
+  isDecided: boolean;
+  isKnockout: boolean;
+  matchWinner: 'home' | 'away' | null;
   setScores: {
     set1: { home: number; away: number };
     set2: { home: number; away: number };
@@ -262,13 +273,25 @@ export function calculateMatchScore(fixture: Fixture): {
   });
 
   const completedFrames = homeFrames + awayFrames;
-  const isComplete = completedFrames === 15;
+  const isKnockout = isKnockoutFixture(fixture);
+  const isDecided = isKnockout
+    ? homeFrames >= 8 || awayFrames >= 8
+    : completedFrames === 15;
 
-  const homeWinBonus = isComplete && homeFrames > awayFrames ? 2 : 0;
-  const awayWinBonus = isComplete && awayFrames > homeFrames ? 2 : 0;
+  const matchWinner: 'home' | 'away' | null = isDecided
+    ? homeFrames > awayFrames
+      ? 'home'
+      : awayFrames > homeFrames
+      ? 'away'
+      : null
+    : null;
 
-  const homePoints = homeWinBonus + Math.floor(homeFrames / 3);
-  const awayPoints = awayWinBonus + Math.floor(awayFrames / 3);
+  // Knockout matches are first to 8 frames and do not award league points
+  const homeWinBonus = !isKnockout && isDecided && homeFrames > awayFrames ? 2 : 0;
+  const awayWinBonus = !isKnockout && isDecided && awayFrames > homeFrames ? 2 : 0;
+
+  const homePoints = isKnockout ? 0 : homeWinBonus + Math.floor(homeFrames / 3);
+  const awayPoints = isKnockout ? 0 : awayWinBonus + Math.floor(awayFrames / 3);
 
   return {
     homeFrames,
@@ -276,6 +299,9 @@ export function calculateMatchScore(fixture: Fixture): {
     completedFrames,
     homePoints,
     awayPoints,
+    isDecided,
+    isKnockout,
+    matchWinner,
     setScores,
   };
 }
@@ -299,7 +325,10 @@ export function computeLeagueTable(
     : ['approved'];
 
   const divFixtures = fixtures.filter(
-    (f) => f.division === division && validStatuses.includes(f.status)
+    (f) =>
+      f.division === division &&
+      validStatuses.includes(f.status) &&
+      !isKnockoutFixture(f)
   );
 
   // Pairwise record map: h2h[teamA][teamB] = { points, frameDiff }
@@ -447,7 +476,8 @@ export function computePlayerStats(
   const filteredFixtures = fixtures.filter(
     (f) =>
       (division === 'ALL' || f.division === division) &&
-      validStatuses.includes(f.status)
+      validStatuses.includes(f.status) &&
+      !isKnockoutFixture(f)
   );
 
   // Compute team rankings per division for tie-breaker 8b.iv.2

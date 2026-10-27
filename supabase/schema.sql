@@ -99,6 +99,13 @@ create table if not exists public.fixtures (
 
 alter table public.fixtures drop constraint if exists fixtures_division_check;
 
+-- Knockout and Cup Match Support (Winter Divisional Cups, Summer Cup & Summer Plate)
+alter table public.fixtures add column if not exists match_type text not null default 'league';
+alter table public.fixtures add column if not exists competition_name text;
+alter table public.fixtures add column if not exists round text;
+alter table public.fixtures add column if not exists cup_name text;
+alter table public.fixtures add column if not exists cup_round text;
+
 -- Performance Indexes on Foreign Keys and Common Query Filters
 create index if not exists idx_fixtures_season_id on public.fixtures(season_id);
 create index if not exists idx_fixtures_match_date on public.fixtures(match_date);

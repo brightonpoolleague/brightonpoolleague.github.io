@@ -92,6 +92,18 @@ function mapPlayerRow(r: Record<string, unknown>): Player {
 }
 
 function mapFixtureRow(r: Record<string, unknown>): Fixture {
+  const matchType = (r.match_type as Fixture['matchType']) ?? 'league';
+  const compName = r.competition_name
+    ? String(r.competition_name)
+    : r.cup_name
+    ? String(r.cup_name)
+    : undefined;
+  const roundName = r.round
+    ? String(r.round)
+    : r.cup_round
+    ? String(r.cup_round)
+    : undefined;
+
   return {
     id: String(r.id),
     seasonId: String(r.season_id ?? DEFAULT_SEASON_ID),
@@ -100,6 +112,11 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     weekNumber: Number(r.week_number ?? 1),
     homeTeamId: String(r.home_team_id),
     awayTeamId: String(r.away_team_id),
+    matchType,
+    competitionName: compName,
+    round: roundName,
+    cupName: compName,
+    cupRound: roundName,
     status: r.status as Fixture['status'],
     lagWinner: (r.lag_winner as 'home' | 'away' | null) ?? null,
     homeSet1Locked: Boolean(r.home_set1_locked),
@@ -168,6 +185,11 @@ interface LeagueContextValue {
     weekNumber: number;
     homeTeamId: string;
     awayTeamId: string;
+    matchType?: Fixture['matchType'];
+    competitionName?: string;
+    round?: string;
+    cupName?: string;
+    cupRound?: string;
   }) => Promise<Fixture>;
   generateDivisionFixtures: (
     division: Division,
@@ -1142,7 +1164,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       weekNumber: number;
       homeTeamId: string;
       awayTeamId: string;
+      matchType?: Fixture['matchType'];
+      competitionName?: string;
+      round?: string;
+      cupName?: string;
+      cupRound?: string;
     }): Promise<Fixture> => {
+      const matchType = data.matchType ?? 'league';
+      const compName = data.competitionName || data.cupName;
+      const roundName = data.round || data.cupRound;
+
       const newFixture: Fixture = {
         id: `fix-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         seasonId,
@@ -1151,6 +1182,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         weekNumber: data.weekNumber,
         homeTeamId: data.homeTeamId,
         awayTeamId: data.awayTeamId,
+        matchType,
+        competitionName: compName,
+        round: roundName,
+        cupName: compName,
+        cupRound: roundName,
         status: 'scheduled',
         lagWinner: null,
         homeSet1Locked: false,
