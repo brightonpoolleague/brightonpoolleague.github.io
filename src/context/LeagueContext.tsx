@@ -226,12 +226,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       isCloudConnected ? INITIAL_PLAYERS : LOCAL_TEST_PLAYERS
     )
   );
-  const [allFixtures, setAllFixtures] = useState<Fixture[]>(() =>
-    loadFromStorage(
+  const [allFixtures, setAllFixtures] = useState<Fixture[]>(() => {
+    const raw = loadFromStorage(
       STORAGE_KEYS.FIXTURES,
       isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES
-    )
-  );
+    );
+    return raw.map((f: Fixture) => {
+      if (
+        f.status === 'live' &&
+        !(f.homeSet1Locked && f.awaySet1Locked) &&
+        f.frames.filter((frame) => frame.winner !== null).length === 0
+      ) {
+        return { ...f, status: 'scheduled' as const };
+      }
+      return f;
+    });
+  });
   const [session, setSession] = useState<UserSession>(() =>
     loadFromStorage(STORAGE_KEYS.SESSION, {
       role: 'viewer',
@@ -1463,13 +1473,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const completedCount = syncedFrames.filter(
         (f) => f.winner !== null
       ).length;
-      const hasAnyLineup =
-        syncedLineups.set1.home.some(Boolean) ||
-        syncedLineups.set1.away.some(Boolean);
+      const bothSet1Locked = Boolean(
+        rawUpdated.homeSet1Locked && rawUpdated.awaySet1Locked
+      );
 
       let nextStatus = rawUpdated.status;
-      if (nextStatus === 'scheduled' && (completedCount > 0 || hasAnyLineup)) {
+      if (nextStatus === 'scheduled' && (bothSet1Locked || completedCount > 0)) {
         nextStatus = 'live';
+      } else if (
+        nextStatus === 'live' &&
+        !bothSet1Locked &&
+        completedCount === 0
+      ) {
+        nextStatus = 'scheduled';
       }
 
       const updated: Fixture = {

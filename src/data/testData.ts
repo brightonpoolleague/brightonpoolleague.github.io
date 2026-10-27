@@ -419,7 +419,7 @@ export const LOCAL_TEST_FIXTURES: Fixture[] = [
       weekNumber: 2,
       homeTeamId: 'team-sportsman',
       awayTeamId: 'team-newoak',
-      status: 'live',
+      status: 'scheduled',
       lagWinner: 'home',
       homeSet1Locked: true,
       awaySet1Locked: false,

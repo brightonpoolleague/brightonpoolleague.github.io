@@ -409,6 +409,7 @@ declare
   v_away_signed boolean;
   v_home_unlock_req boolean;
   v_away_unlock_req boolean;
+  v_next_status text;
 begin
   -- Verify Captain PIN for the claimed team
   if not public.verify_captain_pin(p_team_id, p_pin) then
@@ -560,9 +561,22 @@ begin
     v_home_signed := v_fixture.home_captain_signed;
   end if;
 
+  -- Determine match status: only live once both Set 1 lineups are locked (or frames have been scored/submitted)
+  v_next_status := p_status;
+  if v_home_locked and v_away_locked and v_next_status = 'scheduled' then
+    v_next_status := 'live';
+  elsif not (v_home_locked and v_away_locked) and v_next_status = 'live' then
+    if not exists (
+      select 1 from jsonb_array_elements(coalesce(p_frames, v_fixture.frames, '[]'::jsonb)) f
+      where (f->>'winner') is not null
+    ) then
+      v_next_status := 'scheduled';
+    end if;
+  end if;
+
   -- Perform scoped update of scorecard fields only
   update public.fixtures
-  set status = p_status,
+  set status = v_next_status,
       lag_winner = p_lag_winner,
       home_set1_locked = v_home_locked,
       away_set1_locked = v_away_locked,
