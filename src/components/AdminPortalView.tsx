@@ -605,7 +605,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   ]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 min-w-0 max-w-full">
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-400">
@@ -660,33 +660,35 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
       {/* TAB 1: TEAMS, PLAYERS & CAPTAIN PINs */}
       {activeTab === 'teams' && (
-        <div className="space-y-3.5">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setFilterDivision('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                filterDivision === 'ALL'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-900 text-slate-400 border border-slate-800'
-              }`}
-            >
-              All ({teams.length})
-            </button>
-            {divisions.map((div) => (
+        <div className="space-y-3.5 min-w-0">
+          <div className="w-full overflow-x-auto pb-1">
+            <div className="inline-flex items-center gap-1.5 min-w-max">
               <button
-                key={div}
                 type="button"
-                onClick={() => setFilterDivision(div)}
+                onClick={() => setFilterDivision('ALL')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                  filterDivision === div
+                  filterDivision === 'ALL'
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800'
+                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
                 }`}
               >
-                {div} ({teams.filter((t) => t.division === div).length})
+                All ({teams.length})
               </button>
-            ))}
+              {divisions.map((div) => (
+                <button
+                  key={div}
+                  type="button"
+                  onClick={() => setFilterDivision(div)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                    filterDivision === div
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                  }`}
+                >
+                  {div} ({teams.filter((t) => t.division === div).length})
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -1253,152 +1255,162 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
       {/* TAB 2: FIXTURES MANAGER */}
       {activeTab === 'fixtures' && (
-        <div className="space-y-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-2.5">
-            {/* Division & Knockout Filter */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="space-y-3.5 min-w-0">
+          {/* Actions & Filters */}
+          <div className="space-y-2.5 min-w-0">
+            {/* Header / Schedule Fixture Action */}
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Filter Fixtures
+              </span>
               <button
                 type="button"
-                onClick={() => setFixtureFilterDivision('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                  fixtureFilterDivision === 'ALL'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800'
-                }`}
+                onClick={() => {
+                  setShowAddFixture((prev) => !prev);
+                  if (!newFixtureDraft.homeTeamId && teams.length > 0) {
+                    const availableTeams =
+                      newFixtureDraft.matchType === 'knockout'
+                        ? teams
+                        : teams.filter(
+                            (t) => t.division === newFixtureDraft.division
+                          );
+                    if (availableTeams.length >= 2) {
+                      setNewFixtureDraft((prev) => ({
+                        ...prev,
+                        homeTeamId: availableTeams[0].id,
+                        awayTeamId: availableTeams[1].id,
+                      }));
+                    }
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0"
               >
-                All ({fixtures.length})
-              </button>
-              {divisions.map((div) => {
-                const count = fixtures.filter(
-                  (f) => f.division === div && !isKnockoutFixture(f)
-                ).length;
-                return (
-                  <button
-                    key={div}
-                    type="button"
-                    onClick={() => setFixtureFilterDivision(div)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
-                      fixtureFilterDivision === div
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-900 text-slate-400 border border-slate-800'
-                    }`}
-                  >
-                    {div} ({count})
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setFixtureFilterDivision('KNOCKOUT')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1 ${
-                  fixtureFilterDivision === 'KNOCKOUT'
-                    ? 'bg-amber-500 text-slate-950 font-black'
-                    : 'bg-slate-900 text-amber-400 border border-slate-800 hover:border-amber-500/50'
-                }`}
-              >
-                <Trophy className="w-3.5 h-3.5" />
-                <span>
-                  Knockouts ({fixtures.filter((f) => isKnockoutFixture(f)).length})
-                </span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>{showAddFixture ? 'Close Form' : 'Schedule Fixture'}</span>
               </button>
             </div>
 
-            {/* Schedule Fixture Action Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowAddFixture((prev) => !prev);
-                if (!newFixtureDraft.homeTeamId && teams.length > 0) {
-                  const availableTeams =
-                    newFixtureDraft.matchType === 'knockout'
-                      ? teams
-                      : teams.filter(
-                          (t) => t.division === newFixtureDraft.division
-                        );
-                  if (availableTeams.length >= 2) {
-                    setNewFixtureDraft((prev) => ({
-                      ...prev,
-                      homeTeamId: availableTeams[0].id,
-                      awayTeamId: availableTeams[1].id,
-                    }));
-                  }
-                }
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{showAddFixture ? 'Close Form' : 'Schedule Fixture'}</span>
-            </button>
-
-            {/* Timeframe Filter Tabs */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setFixtureTimeframeFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
-                  fixtureTimeframeFilter === 'ALL'
-                    ? 'bg-emerald-600 text-white font-bold'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                All ({fixtureTimeframeCounts.all})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFixtureTimeframeFilter('live')}
-                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
-                  fixtureTimeframeFilter === 'live'
-                    ? 'bg-emerald-600 text-white font-bold'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Radio
-                  className={`w-3 h-3 ${
-                    fixtureTimeframeFilter === 'live'
-                      ? 'text-white'
-                      : 'text-red-400'
-                  }`}
-                />
-                Live ({fixtureTimeframeCounts.live})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFixtureTimeframeFilter('upcoming')}
-                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
-                  fixtureTimeframeFilter === 'upcoming'
-                    ? 'bg-sky-600 text-white font-bold'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Clock className="w-3 h-3 text-sky-400" />
-                Upcoming ({fixtureTimeframeCounts.upcoming})
-              </button>
-              {fixtureTimeframeCounts.today > 0 && (
+            {/* Division & Knockout Filter */}
+            <div className="w-full overflow-x-auto pb-1">
+              <div className="inline-flex items-center gap-1.5 min-w-max">
                 <button
                   type="button"
-                  onClick={() => setFixtureTimeframeFilter('today')}
-                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
-                    fixtureTimeframeFilter === 'today'
+                  onClick={() => setFixtureFilterDivision('ALL')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                    fixtureFilterDivision === 'ALL'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                  }`}
+                >
+                  All ({fixtures.length})
+                </button>
+                {divisions.map((div) => {
+                  const count = fixtures.filter(
+                    (f) => f.division === div && !isKnockoutFixture(f)
+                  ).length;
+                  return (
+                    <button
+                      key={div}
+                      type="button"
+                      onClick={() => setFixtureFilterDivision(div)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                        fixtureFilterDivision === div
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      {div} ({count})
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setFixtureFilterDivision('KNOCKOUT')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1 transition ${
+                    fixtureFilterDivision === 'KNOCKOUT'
+                      ? 'bg-amber-500 text-slate-950 font-black'
+                      : 'bg-slate-900 text-amber-400 border border-slate-800 hover:border-amber-500/50'
+                  }`}
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>
+                    Knockouts ({fixtures.filter((f) => isKnockoutFixture(f)).length})
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Timeframe Filter Tabs */}
+            <div className="w-full overflow-x-auto pb-1">
+              <div className="inline-flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold min-w-max">
+                <button
+                  type="button"
+                  onClick={() => setFixtureTimeframeFilter('ALL')}
+                  className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
+                    fixtureTimeframeFilter === 'ALL'
                       ? 'bg-emerald-600 text-white font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <Calendar className="w-3 h-3 text-emerald-400" />
-                  Today ({fixtureTimeframeCounts.today})
+                  All ({fixtureTimeframeCounts.all})
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setFixtureTimeframeFilter('past')}
-                className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
-                  fixtureTimeframeFilter === 'past'
-                    ? 'bg-slate-700 text-white font-bold'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <History className="w-3 h-3 text-slate-400" />
-                Past Date ({fixtureTimeframeCounts.past})
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setFixtureTimeframeFilter('live')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    fixtureTimeframeFilter === 'live'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Radio
+                    className={`w-3 h-3 ${
+                      fixtureTimeframeFilter === 'live'
+                        ? 'text-white'
+                        : 'text-red-400'
+                    }`}
+                  />
+                  Live ({fixtureTimeframeCounts.live})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFixtureTimeframeFilter('upcoming')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    fixtureTimeframeFilter === 'upcoming'
+                      ? 'bg-sky-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Clock className="w-3 h-3 text-sky-400" />
+                  Upcoming ({fixtureTimeframeCounts.upcoming})
+                </button>
+                {fixtureTimeframeCounts.today > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setFixtureTimeframeFilter('today')}
+                    className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                      fixtureTimeframeFilter === 'today'
+                        ? 'bg-emerald-600 text-white font-bold'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Calendar className="w-3 h-3 text-emerald-400" />
+                    Today ({fixtureTimeframeCounts.today})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setFixtureTimeframeFilter('past')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    fixtureTimeframeFilter === 'past'
+                      ? 'bg-slate-700 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <History className="w-3 h-3 text-slate-400" />
+                  Past Date ({fixtureTimeframeCounts.past})
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1657,9 +1669,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           )}
 
           {/* Search & Date Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="flex flex-col sm:flex-row gap-2.5 min-w-0">
             {/* Search Input */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-0">
               <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -1681,8 +1693,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </div>
 
             {/* Date Filter Dropdown & Native Picker */}
-            <div className="flex items-center gap-1.5 sm:w-72 sm:flex-shrink-0">
-              <div className="relative flex-1">
+            <div className="flex items-center gap-1.5 w-full sm:w-72 sm:flex-shrink-0 min-w-0">
+              <div className="relative flex-1 min-w-0">
                 <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <select
                   value={fixtureDateFilter}
@@ -1810,7 +1822,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   return (
                     <div
                       key={fix.id}
-                      className={`border rounded-xl p-3 space-y-3 text-xs transition ${
+                      className={`border rounded-xl p-3 space-y-3 text-xs transition min-w-0 ${
                         fix.status === 'live'
                           ? 'bg-slate-950 border-red-500/50 shadow-md shadow-red-950/20'
                           : timeframe === 'today'
@@ -1820,9 +1832,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           : 'bg-slate-950/60 border-slate-800/80'
                       }`}
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                             {isKnockoutFixture(fix) ? (
                               <span className="text-amber-400 font-bold inline-flex items-center gap-1">
                                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
@@ -1883,7 +1895,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             )}
                           </div>
 
-                          <div className="font-bold text-white text-sm flex flex-wrap items-center gap-1.5 sm:gap-2 leading-snug">
+                          <div className="font-bold text-white text-sm flex flex-wrap items-center gap-1.5 sm:gap-2 leading-snug break-words">
                             <span>{home.name}</span>
                             <span className="tabular-nums">
                               {score.completedFrames > 0 || fix.status !== 'scheduled' ? (
@@ -1917,7 +1929,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <span>{away.name}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0 pt-1 sm:pt-0">
                           <button
                             type="button"
                             onClick={() =>
@@ -1925,18 +1937,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 ? setEditingFixtureId(null)
                                 : startEditingFixture(fix)
                             }
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
                           >
-                            <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                            {isEditing ? 'Cancel' : 'Edit Date / Details'}
+                            <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>{isEditing ? 'Cancel' : 'Edit Date'}</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => onSelectFixture(fix)}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
                           >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            Edit Scorecard
+                            <Edit3 className="w-3.5 h-3.5 shrink-0" />
+                            <span>Scorecard</span>
                           </button>
                           <button
                             type="button"
@@ -1949,7 +1961,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 onConfirm: () => deleteFixture(fix.id),
                               })
                             }
-                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 shrink-0"
                             title="Delete Fixture"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2250,34 +2262,36 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </div>
 
             {/* Status Filter Buttons */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-              {filterTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setApprovalFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
-                    approvalFilter === tab.id
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+            <div className="w-full overflow-x-auto pb-1">
+              <div className="inline-flex items-center gap-1.5 min-w-max">
+                {filterTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setApprovalFilter(tab.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                       approvalFilter === tab.id
-                        ? 'bg-emerald-800 text-emerald-100'
-                        : tab.id === 'submitted' && tab.count > 0
-                        ? 'bg-amber-500/20 text-amber-300'
-                        : tab.id === 'live' && tab.count > 0
-                        ? 'bg-red-500/20 text-red-300'
-                        : 'bg-slate-800 text-slate-400'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                     }`}
                   >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
+                    <span>{tab.label}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        approvalFilter === tab.id
+                          ? 'bg-emerald-800 text-emerald-100'
+                          : tab.id === 'submitted' && tab.count > 0
+                          ? 'bg-amber-500/20 text-amber-300'
+                          : tab.id === 'live' && tab.count > 0
+                          ? 'bg-red-500/20 text-red-300'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {filtered.length === 0 ? (
@@ -2303,10 +2317,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   return (
                     <div
                       key={fix.id}
-                      className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3"
+                      className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0"
                     >
-                      <div>
-                        <div className="flex items-center gap-2 text-xs">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
                           <span className="font-bold text-emerald-400">
                             {fix.division}
                           </span>
@@ -2328,7 +2342,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             {fix.status}
                           </span>
                         </div>
-                        <div className="font-bold text-white text-sm sm:text-base mt-1">
+                        <div className="font-bold text-white text-sm sm:text-base break-words">
                           {home.name} ({score.homeFrames}) vs ({score.awayFrames}){' '}
                           {away.name}
                         </div>
@@ -2339,7 +2353,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 pt-1 sm:pt-0">
                         <button
                           type="button"
                           onClick={() => onSelectFixture(fix)}
