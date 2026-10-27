@@ -110,7 +110,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     { id: 'all', label: 'All Matches' },
     { id: 'live', label: 'Live Now' },
     { id: 'scheduled', label: 'Upcoming' },
-    { id: 'submitted', label: 'Submitted Cards' },
+    { id: 'submitted', label: 'Submitted Scorecards' },
     { id: 'approved', label: 'Approved Results' },
   ];
 

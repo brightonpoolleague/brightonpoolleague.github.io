@@ -78,7 +78,7 @@ b. Breaks alternate between teams: the team that breaks first gets **8 breaks**,
 ## 7. End of the Match
 
 a. Record the number of games each team has won at the bottom of the scorecard (the total should be **15**).  
-b. The **winning captain** must take a clear photo of the completed card and either post it on Facebook or send it to the captains’ WhatsApp group **before 10:00 AM the following day**.
+b. The **winning captain** must take a clear photo of the completed scorecard and either post it on Facebook or send it to the captains’ WhatsApp group **before 10:00 AM the following day**.
 
 ---
 

@@ -906,7 +906,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Live Cards</span>
+              <span className="hidden sm:inline">Live Scorecard</span>
             </button>
             <button
               type="button"
@@ -918,7 +918,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               }`}
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Result Card</span>
+              <span className="hidden sm:inline">Result Scorecard</span>
             </button>
           </div>
 
@@ -1418,7 +1418,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   City of Brighton and Hove Pool League
                 </div>
                 <div className="text-base font-black text-white mt-0.5">
-                  Official Result Card — {homeTeam.name} vs {awayTeam.name}
+                  Official Result Scorecard — {homeTeam.name} vs {awayTeam.name}
                 </div>
               </div>
 

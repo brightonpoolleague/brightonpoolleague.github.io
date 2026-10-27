@@ -416,7 +416,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>b.</strong> The <strong>winning captain</strong> must
-                  take a clear photo of the completed card and either post it
+                  take a clear photo of the completed scorecard and either post it
                   on Facebook or send it to the captains’ WhatsApp group{' '}
                   <strong>before 10:00 AM the following day</strong>.
                 </li>

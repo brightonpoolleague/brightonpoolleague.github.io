@@ -1303,7 +1303,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
-                            Edit Card
+                            Edit Scorecard
                           </button>
                           <button
                             type="button"
@@ -1517,7 +1517,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   Scorecard Review &amp; Official Approval Queue ({seasonName})
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Review match submissions, inspect scores, and approve official cards.
+                  Review match submissions, inspect scores, and approve official scorecards.
                 </p>
               </div>
             </div>
@@ -1618,7 +1618,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           onClick={() => onSelectFixture(fix)}
                           className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
                         >
-                          Inspect / Edit Card
+                          Inspect / Edit Scorecard
                         </button>
                         {fix.status !== 'approved' ? (
                           <button
