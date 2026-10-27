@@ -2,10 +2,13 @@ import React, { useMemo, useState } from 'react';
 import {
   Building2,
   ExternalLink,
+  Eye,
+  EyeOff,
   Layers,
   MapPin,
   Search,
   Shield,
+  Sparkles,
   Table as TableIcon,
   Users,
 } from 'lucide-react';
@@ -13,7 +16,29 @@ import { Division, Team } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 
 export const TeamsAndVenuesView: React.FC = () => {
-  const { seasonName, divisions, teams, players } = useLeague();
+  const { seasonName, divisions, teams, players, session } = useLeague();
+
+  const isCaptain = session.role === 'captain' && Boolean(session.teamId);
+  const myTeam = isCaptain ? teams.find((t) => t.id === session.teamId) : null;
+  const mySquad = myTeam
+    ? players.filter((p) => p.teamId === myTeam.id && p.active)
+    : [];
+
+  const [showMyTeamVenue, setShowMyTeamVenue] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem('bpl_show_my_team_venue');
+    return stored !== 'false';
+  });
+
+  const toggleMyTeamVenue = () => {
+    setShowMyTeamVenue((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bpl_show_my_team_venue', String(next));
+      }
+      return next;
+    });
+  };
 
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,6 +224,173 @@ export const TeamsAndVenuesView: React.FC = () => {
         </div>
       </div>
 
+      {/* Team Captain Spotlight: My Team & Venue */}
+      {isCaptain && myTeam && (() => {
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          `${myTeam.venue}, ${myTeam.address || 'Brighton'}`
+        )}`;
+
+        if (!showMyTeamVenue) {
+          return (
+            <div
+              onClick={toggleMyTeamVenue}
+              className="cursor-pointer bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-xs transition shadow-md group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold text-xs border border-emerald-500/30 shrink-0">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  MY TEAM &amp; VENUE
+                </span>
+                <span className="text-slate-300 truncate font-semibold">
+                  <span className="text-white font-bold">{myTeam.name}</span>
+                  <span className="text-slate-500 mx-1.5 font-normal">•</span>
+                  <span className="text-slate-300">{myTeam.venue}</span>
+                  {myTeam.tableNumber && (
+                    <span className="text-amber-300 ml-1.5 font-bold">({myTeam.tableNumber})</span>
+                  )}
+                </span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
+                <span className="text-slate-400 hidden sm:inline">
+                  {myTeam.division} • {mySquad.length} Players
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-emerald-400 group-hover:text-emerald-300 text-xs font-bold shrink-0">
+                <Eye className="w-3.5 h-3.5" />
+                <span>Show Details</span>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-5 shadow-xl space-y-3.5">
+            {/* Top Row: Tag, Division, Table, and Hide button */}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  MY TEAM &amp; VENUE
+                </span>
+                <span className="text-slate-400 font-semibold">
+                  {myTeam.division}
+                </span>
+                {myTeam.tableNumber && (
+                  <>
+                    <span className="text-slate-600">•</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold">
+                      <TableIcon className="w-3 h-3" />
+                      {myTeam.tableNumber}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleMyTeamVenue}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold border border-slate-700/80 transition shadow-sm"
+                title="Hide My Team & Venue spotlight"
+              >
+                <EyeOff className="w-3.5 h-3.5" />
+                <span>Hide</span>
+              </button>
+            </div>
+
+            {/* Middle: Team & Venue info grid */}
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {/* Left col: Team & Captain */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-black text-base sm:text-xl text-white">
+                    {myTeam.name}
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                    Your Team
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>
+                    Team Captain: <strong className="text-white">{myTeam.captainName || 'TBD'}</strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Right col: Home Venue & Directions */}
+              <div className="space-y-2 flex flex-col justify-between">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-sm sm:text-base truncate">
+                        {myTeam.venue}
+                      </div>
+                      {myTeam.address && (
+                        <div className="text-xs text-slate-400 leading-snug">
+                          {myTeam.address}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition shrink-0"
+                    title="Get directions on Google Maps"
+                  >
+                    <span>Directions</span>
+                    <ExternalLink className="w-3 h-3 text-emerald-400" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Registered Squad Section: show all players! */}
+            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-emerald-400" />
+                  Registered Squad ({mySquad.length} Players)
+                </span>
+              </div>
+
+              {mySquad.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {mySquad.map((player) => {
+                    const isCap =
+                      player.name.trim().toLowerCase() ===
+                      (myTeam.captainName || '').trim().toLowerCase();
+                    return (
+                      <span
+                        key={player.id}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border ${
+                          isCap
+                            ? 'bg-amber-500/20 text-amber-200 border-amber-500/40 font-bold'
+                            : 'bg-slate-900 text-slate-200 border-slate-800 font-medium'
+                        }`}
+                      >
+                        <span>{player.name}</span>
+                        {isCap && (
+                          <span className="text-[10px] bg-amber-500/30 text-amber-300 px-1 py-0.2 rounded font-black">
+                            CAPTAIN
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 italic">No players registered yet.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Content Area */}
       {filteredTeams.length === 0 ? (
         <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 space-y-1.5">
@@ -260,17 +452,29 @@ export const TeamsAndVenuesView: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {venueGroup.teams.map((team) => {
                     const squad = players.filter((p) => p.teamId === team.id && p.active);
+                    const isMyTeam = isCaptain && team.id === myTeam?.id;
 
                     return (
                       <div
                         key={team.id}
-                        className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3.5 space-y-2.5 flex flex-col justify-between"
+                        className={`bg-slate-950/80 border rounded-xl p-3.5 space-y-3 flex flex-col justify-between ${
+                          isMyTeam
+                            ? 'border-emerald-500/50 shadow-md shadow-emerald-950/20 ring-1 ring-emerald-500/30'
+                            : 'border-slate-800/80'
+                        }`}
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-                              {team.division}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                                {team.division}
+                              </span>
+                              {isMyTeam && (
+                                <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                  Your Team
+                                </span>
+                              )}
+                            </div>
                             {team.tableNumber ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold">
                                 <TableIcon className="w-3 h-3" />
@@ -294,13 +498,42 @@ export const TeamsAndVenuesView: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-                          <span>{squad.length} registered player{squad.length !== 1 ? 's' : ''}</span>
-                          {squad.length > 0 && (
-                            <span className="truncate max-w-[200px] text-slate-500">
-                              {squad.slice(0, 3).map((p) => p.name).join(', ')}
-                              {squad.length > 3 ? '...' : ''}
+                        {/* All Registered Players */}
+                        <div className="pt-2.5 border-t border-slate-800/60 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span className="font-semibold text-slate-300">
+                              Registered Players ({squad.length})
                             </span>
+                          </div>
+                          {squad.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {squad.map((p) => {
+                                const isCap =
+                                  p.name.trim().toLowerCase() ===
+                                  (team.captainName || '').trim().toLowerCase();
+                                return (
+                                  <span
+                                    key={p.id}
+                                    className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border ${
+                                      isCap
+                                        ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 font-semibold'
+                                        : 'bg-slate-900 text-slate-300 border-slate-800'
+                                    }`}
+                                  >
+                                    <span>{p.name}</span>
+                                    {isCap && (
+                                      <span className="text-[9px] text-amber-400 font-bold">
+                                        (C)
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-slate-500 italic">
+                              No players registered yet.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -316,6 +549,7 @@ export const TeamsAndVenuesView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredTeams.map((team) => {
             const squad = players.filter((p) => p.teamId === team.id && p.active);
+            const isMyTeam = isCaptain && team.id === myTeam?.id;
             const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
               `${team.venue}, ${team.address || 'Brighton'}`
             )}`;
@@ -323,13 +557,24 @@ export const TeamsAndVenuesView: React.FC = () => {
             return (
               <div
                 key={team.id}
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 flex flex-col justify-between transition hover:border-slate-700"
+                className={`bg-slate-900 border rounded-2xl p-4 space-y-3 flex flex-col justify-between transition hover:border-slate-700 ${
+                  isMyTeam
+                    ? 'border-emerald-500/50 shadow-md shadow-emerald-950/20 ring-1 ring-emerald-500/30'
+                    : 'border-slate-800'
+                }`}
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-                      {team.division}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                        {team.division}
+                      </span>
+                      {isMyTeam && (
+                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          Your Team
+                        </span>
+                      )}
+                    </div>
                     {team.tableNumber && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold">
                         <TableIcon className="w-3 h-3" />
@@ -369,20 +614,53 @@ export const TeamsAndVenuesView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs">
-                  <span className="text-[11px] text-slate-400">
-                    {squad.length} player{squad.length !== 1 ? 's' : ''}
-                  </span>
+                {/* All Registered Players */}
+                <div className="pt-2.5 border-t border-slate-800/80 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-300 text-[11px]">
+                      Registered Squad ({squad.length})
+                    </span>
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px] font-medium transition"
+                    >
+                      <span>Map</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                    </a>
+                  </div>
 
-                  <a
-                    href={mapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-[11px] font-medium transition"
-                  >
-                    <span>Map</span>
-                    <ExternalLink className="w-3 h-3 text-slate-400" />
-                  </a>
+                  {squad.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {squad.map((p) => {
+                        const isCap =
+                          p.name.trim().toLowerCase() ===
+                          (team.captainName || '').trim().toLowerCase();
+                        return (
+                          <span
+                            key={p.id}
+                            className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border ${
+                              isCap
+                                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 font-semibold'
+                                : 'bg-slate-950 text-slate-300 border-slate-800'
+                            }`}
+                          >
+                            <span>{p.name}</span>
+                            {isCap && (
+                              <span className="text-[9px] text-amber-400 font-bold">
+                                (C)
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500 italic">
+                      No players registered yet.
+                    </p>
+                  )}
                 </div>
               </div>
             );
