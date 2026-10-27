@@ -1196,19 +1196,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 onClick={() => setFixtureTimeframeFilter('live')}
                 className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
                   fixtureTimeframeFilter === 'live'
-                    ? 'bg-red-600 text-white font-bold'
-                    : fixtureTimeframeCounts.live > 0
-                    ? 'text-red-400 hover:text-red-300'
+                    ? 'bg-emerald-600 text-white font-bold'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Radio
-                  className={`w-3 h-3 ${
-                    fixtureTimeframeCounts.live > 0
-                      ? 'text-red-400 animate-pulse'
-                      : 'text-slate-400'
-                  }`}
-                />
+                <Radio className="w-3 h-3 text-slate-400" />
                 Live ({fixtureTimeframeCounts.live})
               </button>
               <button
