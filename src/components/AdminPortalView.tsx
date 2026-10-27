@@ -36,6 +36,7 @@ import {
   calculateMatchScore,
   formatMatchDate,
   getMatchTimeframe,
+  getScorecardApprovalWarnings,
   isKnockoutFixture,
 } from '../utils/leagueEngine';
 
@@ -156,11 +157,40 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   // Custom Confirmation Modal State
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
-    message: string;
+    message: React.ReactNode;
     confirmLabel: string;
     variant?: 'danger' | 'warning';
     onConfirm: () => void;
   } | null>(null);
+
+  const handleApproveFixture = (fix: Fixture) => {
+    const warnings = getScorecardApprovalWarnings(fix);
+    if (warnings.length > 0) {
+      setConfirmDialog({
+        title: 'Approve Incomplete Scorecard?',
+        message: (
+          <div className="space-y-2">
+            <p className="text-slate-300">
+              This scorecard is not yet complete:
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-amber-300 font-medium">
+              {warnings.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+            <p className="text-slate-400 text-xs pt-1">
+              Are you sure you want to approve this official scorecard anyway?
+            </p>
+          </div>
+        ),
+        confirmLabel: 'Approve Scorecard',
+        variant: 'warning',
+        onConfirm: () => approveFixture(fix.id),
+      });
+    } else {
+      approveFixture(fix.id);
+    }
+  };
 
   if (!canManageLeague) {
     return (
@@ -697,7 +727,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               type="text"
               value={teamSearchQuery}
               onChange={(e) => setTeamSearchQuery(e.target.value)}
-              placeholder="Search by team, venue, table, captain, player, or street..."
+              placeholder="Search by team, venue, table, captain, player or street..."
               className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
             />
             {teamSearchQuery && (
@@ -798,7 +828,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             type="text"
                             value={quickTableDraft}
                             onChange={(e) => setQuickTableDraft(e.target.value)}
-                            placeholder="e.g. Table 1, Table TBC, or blank"
+                            placeholder="e.g. Table 1, Table TBC or blank"
                             className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white w-full sm:w-48 font-semibold"
                             autoFocus
                             onKeyDown={(e) => {
@@ -1017,7 +1047,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   tableNumber: e.target.value,
                                 })
                               }
-                              placeholder="e.g. Table 1, Table TBC, or blank"
+                              placeholder="e.g. Table 1, Table TBC or blank"
                               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
                             />
                             {(() => {
@@ -1389,7 +1419,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   type="text"
                   value={fixtureSearchQuery}
                   onChange={(e) => setFixtureSearchQuery(e.target.value)}
-                  placeholder="Search by team, venue, table, division, date..."
+                  placeholder="Search by team, venue, table, division or date..."
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
                 />
                 {fixtureSearchQuery && (
@@ -2310,7 +2340,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 type="text"
                 value={scorecardSearchQuery}
                 onChange={(e) => setScorecardSearchQuery(e.target.value)}
-                placeholder="Search scorecards by team, division, status, date, or player..."
+                placeholder="Search by team, division, status, date or player..."
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
               />
               {scorecardSearchQuery && (
@@ -2446,7 +2476,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           {fix.status !== 'approved' ? (
                             <button
                               type="button"
-                              onClick={() => approveFixture(fix.id)}
+                              onClick={() => handleApproveFixture(fix)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -2524,9 +2554,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 <h3 className="text-base font-bold text-white">
                   {confirmDialog.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                   {confirmDialog.message}
-                </p>
+                </div>
               </div>
             </div>
 

@@ -692,3 +692,42 @@ export function getMatchTimeframe(dateStr: string, status?: string): MatchTimefr
 
   return 'upcoming';
 }
+
+/**
+ * Checks whether a scorecard has missing captain signatures or incomplete frames
+ * before admin approval. Returns an array of human-readable warning strings.
+ * If empty, the scorecard is fully completed and signed.
+ */
+export function getScorecardApprovalWarnings(fixture: Fixture): string[] {
+  const warnings: string[] = [];
+  const score = calculateMatchScore(fixture);
+
+  // 1. Check frame completion
+  if (score.isKnockout && !score.playAllFrames) {
+    // First to 8 frames (Standard Knockout)
+    if (score.homeFrames < 8 && score.awayFrames < 8) {
+      warnings.push(
+        `The match is not finished yet. Neither team has reached 8 frames (currently ${score.homeFrames}–${score.awayFrames}).`
+      );
+    }
+  } else {
+    // 15-frame matches (League match or Play-All-15 Knockout)
+    if (score.completedFrames < 15) {
+      warnings.push(
+        `Not all frames have been played (${score.completedFrames} of 15 completed).`
+      );
+    }
+  }
+
+  // 2. Check captain signatures
+  if (!fixture.homeCaptainSigned && !fixture.awayCaptainSigned) {
+    warnings.push('Neither team captain has signed the scorecard.');
+  } else if (!fixture.homeCaptainSigned) {
+    warnings.push('The Home captain has not signed the scorecard.');
+  } else if (!fixture.awayCaptainSigned) {
+    warnings.push('The Away captain has not signed the scorecard.');
+  }
+
+  return warnings;
+}
+

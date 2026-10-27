@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   Calendar,
   CheckCircle2,
   ChevronDown,
@@ -24,6 +25,7 @@ import {
   calculateMatchScore,
   formatMatchDate,
   getMatchTimeframe,
+  getScorecardApprovalWarnings,
   isKnockoutFixture,
 } from '../utils/leagueEngine';
 
@@ -80,6 +82,43 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
       }
       return next;
     });
+  };
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: React.ReactNode;
+    confirmLabel: string;
+    variant?: 'danger' | 'warning';
+    onConfirm: () => void;
+  } | null>(null);
+
+  const handleApproveFixture = (fix: Fixture) => {
+    const warnings = getScorecardApprovalWarnings(fix);
+    if (warnings.length > 0) {
+      setConfirmDialog({
+        title: 'Approve Incomplete Scorecard?',
+        message: (
+          <div className="space-y-2">
+            <p className="text-slate-300">
+              This scorecard is not yet complete:
+            </p>
+            <ul className="list-disc pl-4 space-y-1 text-amber-300 font-medium">
+              {warnings.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+            <p className="text-slate-400 text-xs pt-1">
+              Are you sure you want to approve this official scorecard anyway?
+            </p>
+          </div>
+        ),
+        confirmLabel: 'Approve Scorecard',
+        variant: 'warning',
+        onConfirm: () => approveFixture(fix.id),
+      });
+    } else {
+      approveFixture(fix.id);
+    }
   };
 
   useEffect(() => {
@@ -309,7 +348,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search fixtures by team, venue, table, division, or date..."
+              placeholder="Search by team, venue, table, division or date..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
             />
             {searchQuery && (
@@ -838,7 +877,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     {canManageLeague && fix.status === 'submitted' && (
                       <button
                         type="button"
-                        onClick={() => approveFixture(fix.id)}
+                        onClick={() => handleApproveFixture(fix)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -864,6 +903,63 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               </div>
             );
           })}
+          </div>
+        </div>
+      )}
+
+      {/* Admin Confirmation Modal for Incomplete Scorecard Approval */}
+      {confirmDialog && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setConfirmDialog(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                  confirmDialog.variant === 'warning'
+                    ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                    : 'bg-red-500/15 border-red-500/30 text-red-400'
+                }`}
+              >
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <h3 className="text-base font-bold text-white">
+                  {confirmDialog.title}
+                </h3>
+                <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  {confirmDialog.message}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmDialog.onConfirm();
+                  setConfirmDialog(null);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold shadow transition ${
+                  confirmDialog.variant === 'warning'
+                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                    : 'bg-red-600 hover:bg-red-500 text-white'
+                }`}
+              >
+                {confirmDialog.confirmLabel}
+              </button>
+            </div>
           </div>
         </div>
       )}

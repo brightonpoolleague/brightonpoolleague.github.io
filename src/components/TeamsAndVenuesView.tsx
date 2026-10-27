@@ -190,7 +190,7 @@ export const TeamsAndVenuesView: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by team, venue, table, captain, or street..."
+              placeholder="Search by team, venue, table, captain or street..."
               className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
             />
           </div>
