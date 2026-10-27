@@ -1,17 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { Award, Camera, Info, ShieldCheck, Trophy } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Award, Camera, Info, ShieldCheck, Sparkles, Trophy } from 'lucide-react';
 import { Division } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
-import { computeLeagueTable } from '../utils/leagueEngine';
+import { computeLeagueTable, getOrdinalSuffix } from '../utils/leagueEngine';
 import { ExportTableModal } from './ExportTableModal';
 
 export const LeagueTableView: React.FC = () => {
-  const { seasonName, divisions, teams, fixtures } = useLeague();
-  const [selectedDivision, setSelectedDivision] = useState<Division>(
-    divisions[0] || 'Premier League'
-  );
+  const { seasonName, divisions, teams, fixtures, session } = useLeague();
+
+  const isCaptain = session.role === 'captain' && Boolean(session.teamId);
+  const myTeam = isCaptain ? teams.find((t) => t.id === session.teamId) : null;
+  const myTeamDivision = myTeam?.division;
+
+  const [selectedDivision, setSelectedDivision] = useState<Division>(() => {
+    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+      return myTeamDivision;
+    }
+    return divisions[0] || 'Premier League';
+  });
   const [includeLive, setIncludeLive] = useState<boolean>(true);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+
+  const myTeamRowRef = useRef<HTMLTableRowElement | null>(null);
+
+  // Auto-switch to captain's division when visiting or switching captain teams
+  useEffect(() => {
+    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+      setSelectedDivision(myTeamDivision);
+    }
+  }, [session.teamId, myTeamDivision, divisions]);
 
   useEffect(() => {
     if (divisions.length > 0 && !divisions.includes(selectedDivision)) {
@@ -25,6 +42,23 @@ export const LeagueTableView: React.FC = () => {
     fixtures,
     includeLive
   );
+
+  const myRowIndex = rows.findIndex((r) => r.team.id === session.teamId);
+  const myTeamRow = myRowIndex !== -1 ? rows[myRowIndex] : null;
+  const myTeamPos = myRowIndex !== -1 ? myRowIndex + 1 : null;
+
+  // Auto-scroll to captain's team row when on the matching division table
+  useEffect(() => {
+    if (myTeam && selectedDivision === myTeamDivision && myTeamRowRef.current) {
+      const timer = setTimeout(() => {
+        myTeamRowRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedDivision, myTeamDivision, myTeam?.id]);
 
   return (
     <div className="space-y-5">
@@ -83,6 +117,7 @@ export const LeagueTableView: React.FC = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {divisions.map((div) => {
             const count = teams.filter((t) => t.division === div).length;
+            const isMyDiv = isCaptain && myTeamDivision === div;
             return (
               <button
                 key={div}
@@ -94,7 +129,15 @@ export const LeagueTableView: React.FC = () => {
                     : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                <span>{div}</span>
+                <div className="flex items-center gap-1.5">
+                  {isMyDiv && (
+                    <span
+                      className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"
+                      title="Your Team's Division"
+                    />
+                  )}
+                  <span>{div}</span>
+                </div>
                 <span
                   className={`px-1.5 py-0.5 rounded text-[10px] ${
                     selectedDivision === div
@@ -109,6 +152,65 @@ export const LeagueTableView: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* Team Captain Spotlight: Standing Banner */}
+      {isCaptain && myTeam && myTeamRow && myTeamPos && selectedDivision === myTeamDivision && (
+        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex flex-col items-center justify-center text-emerald-300 shrink-0 shadow-inner">
+              <span className="text-[10px] font-bold uppercase leading-none text-emerald-400">Pos</span>
+              <span className="text-base font-black leading-none mt-0.5">#{myTeamPos}</span>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-white font-extrabold text-sm sm:text-base truncate">
+                  {myTeam.name}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)] animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  Your Team
+                </span>
+              </div>
+              <div className="text-xs text-slate-300 mt-0.5">
+                Currently <strong className="text-emerald-400">{myTeamPos}{getOrdinalSuffix(myTeamPos)}</strong> in {selectedDivision} • <strong className="text-white">{myTeamRow.points} pts</strong> ({myTeamRow.won}W - {myTeamRow.lost}L • {myTeamRow.frameDiff > 0 ? `+${myTeamRow.frameDiff}` : myTeamRow.frameDiff} FD)
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              myTeamRowRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+              });
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 text-xs font-bold border border-emerald-500/40 transition shadow-sm shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Highlight in Table</span>
+          </button>
+        </div>
+      )}
+
+      {/* Switch back to Captain's own division notice if viewing other divisions */}
+      {isCaptain && myTeam && myTeamDivision && selectedDivision !== myTeamDivision && (
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 text-xs shadow-md">
+          <div className="flex items-center gap-2 text-slate-300">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>
+              Your team <strong className="text-white">{myTeam.name}</strong> plays in <strong className="text-emerald-400">{myTeamDivision}</strong>.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedDivision(myTeamDivision)}
+            className="px-3 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-bold border border-emerald-500/30 transition shrink-0"
+          >
+            View {myTeamDivision} Table
+          </button>
+        </div>
+      )}
 
       {/* Table Card */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
@@ -165,17 +267,26 @@ export const LeagueTableView: React.FC = () => {
                 {rows.map((row, idx) => {
                   const pos = idx + 1;
                   const isTopTwo = pos <= 2;
+                  const isMyTeam = isCaptain && row.team.id === session.teamId;
+
                   return (
                     <tr
                       key={row.team.id}
-                      className={`border-b border-slate-800/70 hover:bg-slate-800/40 transition ${
-                        pos === 1 ? 'bg-emerald-950/20' : ''
+                      ref={isMyTeam ? myTeamRowRef : null}
+                      className={`border-b border-slate-800/70 transition ${
+                        isMyTeam
+                          ? 'bg-gradient-to-r from-emerald-950/80 via-emerald-900/40 to-slate-900 border-l-4 border-l-emerald-400 border-y border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.18)] relative'
+                          : pos === 1
+                          ? 'bg-emerald-950/20 hover:bg-slate-800/40'
+                          : 'hover:bg-slate-800/40'
                       }`}
                     >
                       <td className="py-3 px-3 text-center font-bold">
                         <span
                           className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
-                            pos === 1
+                            isMyTeam
+                              ? 'bg-emerald-500 text-slate-950 font-black ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse'
+                              : pos === 1
                               ? 'bg-amber-500 text-slate-950 font-black'
                               : isTopTwo
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
@@ -186,10 +297,18 @@ export const LeagueTableView: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-3">
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          {row.team.name}
+                        <div className="font-bold text-white flex items-center gap-1.5 flex-wrap">
+                          <span className={isMyTeam ? 'text-emerald-200 font-black' : ''}>
+                            {row.team.name}
+                          </span>
                           {pos === 1 && (
                             <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          )}
+                          {isMyTeam && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)] animate-pulse shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                              Your Team
+                            </span>
                           )}
                         </div>
                         <div className="text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-xs">
@@ -224,7 +343,13 @@ export const LeagueTableView: React.FC = () => {
                           ? `+${row.frameDiff}`
                           : row.frameDiff}
                       </td>
-                      <td className="py-3 px-3 text-center tabular-nums font-black text-base text-white bg-slate-950/40">
+                      <td
+                        className={`py-3 px-3 text-center tabular-nums font-black text-base ${
+                          isMyTeam
+                            ? 'text-emerald-300 bg-emerald-950/60 font-black'
+                            : 'text-white bg-slate-950/40'
+                        }`}
+                      >
                         {row.points}
                       </td>
                       <td className="py-3 px-3 text-center hidden md:table-cell">
