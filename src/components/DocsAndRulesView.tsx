@@ -742,12 +742,12 @@ export const DocsAndRulesView: React.FC = () => {
                 <li>
                   <strong>a.</strong> Players may only participate in Cup
                   Semi-Finals or Finals if they have played{' '}
-                  <strong>a minimum of four (4) games</strong> for that team
+                  <strong>a minimum of four (4) matches</strong> for that team
                   during the season.
                 </li>
                 <li>
-                  <strong>b.</strong> Games played for another team (prior to a
-                  transfer) do <strong>not</strong> count towards the four-game
+                  <strong>b.</strong> Matches played for another team (prior to a
+                  transfer) do <strong>not</strong> count towards the four-match
                   requirement.
                 </li>
                 <li>

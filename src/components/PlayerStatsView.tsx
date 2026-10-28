@@ -218,7 +218,7 @@ export const PlayerStatsView: React.FC = () => {
                   </th>
                   <th
                     className="py-3 px-3 text-center hidden md:table-cell"
-                    title="Cup SF/Final Eligibility (min 4 games played)"
+                    title="Cup SF/Final Eligibility (min 4 matches played for team)"
                   >
                     Cup Eligible
                   </th>
@@ -227,7 +227,7 @@ export const PlayerStatsView: React.FC = () => {
               <tbody>
                 {list.map((row, idx) => {
                   const pos = idx + 1;
-                  const cupEligible = row.played >= 4;
+                  const cupEligible = (row.matchesPlayed ?? 0) >= 4;
                   return (
                     <tr
                       key={row.player.id}
@@ -279,8 +279,13 @@ export const PlayerStatsView: React.FC = () => {
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                               : 'bg-slate-800 text-slate-400'
                           }`}
+                          title={`${row.matchesPlayed ?? 0} match${
+                            (row.matchesPlayed ?? 0) === 1 ? '' : 'es'
+                          } played for ${row.team.name} this season (minimum 4 required for Cup SF/Final)`}
                         >
-                          {cupEligible ? '✓ Yes (4+)' : `${row.played}/4 gms`}
+                          {cupEligible
+                            ? '✓ Yes (4+)'
+                            : `${row.matchesPlayed ?? 0}/4 matches`}
                         </span>
                       </td>
                     </tr>

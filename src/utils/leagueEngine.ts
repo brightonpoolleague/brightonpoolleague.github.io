@@ -570,8 +570,12 @@ export function computePlayerStats(
 
   const statsMap: Record<string, PlayerStatsRow> = {};
   const playerH2H: Record<string, Record<string, number>> = {};
+  const playerMatchIds: Record<string, Set<string>> = {};
+  const playersById: Record<string, Player> = {};
 
   players.forEach((player) => {
+    playersById[player.id] = player;
+    playerMatchIds[player.id] = new Set();
     const team = teamsById[player.teamId];
     if (!team) return;
     if (division !== 'ALL' && team.division !== division) return;
@@ -585,8 +589,55 @@ export function computePlayerStats(
       lost: 0,
       winPercentage: 0,
       dishes: 0,
+      matchesPlayed: 0,
     };
     playerH2H[player.id] = {};
+  });
+
+  // Track distinct matches played per player for their team this season (Rules Section 5a/5b).
+  // A match is counted if it was played/in-progress and the player participated (in lineup or played frames) for their team.
+  const eligibleFixtures = fixtures.filter((f) =>
+    validStatuses.includes(f.status)
+  );
+
+  eligibleFixtures.forEach((fix) => {
+    const hasStarted =
+      fix.status === 'submitted' ||
+      fix.status === 'approved' ||
+      fix.frames.some((f) => Boolean(f.winner));
+    if (!hasStarted) return;
+
+    const homeParticipants = new Set<string>();
+    const awayParticipants = new Set<string>();
+
+    (['set1', 'set2', 'set3'] as const).forEach((setKey) => {
+      fix.lineups[setKey]?.home.forEach((id) => {
+        if (id && id !== 'BYE') homeParticipants.add(id);
+      });
+      fix.lineups[setKey]?.away.forEach((id) => {
+        if (id && id !== 'BYE') awayParticipants.add(id);
+      });
+    });
+
+    fix.frames.forEach((frame) => {
+      const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
+      if (homePlayerId && homePlayerId !== 'BYE') homeParticipants.add(homePlayerId);
+      if (awayPlayerId && awayPlayerId !== 'BYE') awayParticipants.add(awayPlayerId);
+    });
+
+    homeParticipants.forEach((pId) => {
+      const p = playersById[pId];
+      if (p && p.teamId === fix.homeTeamId) {
+        playerMatchIds[pId]?.add(fix.id);
+      }
+    });
+
+    awayParticipants.forEach((pId) => {
+      const p = playersById[pId];
+      if (p && p.teamId === fix.awayTeamId) {
+        playerMatchIds[pId]?.add(fix.id);
+      }
+    });
   });
 
   filteredFixtures.forEach((fix) => {
@@ -634,6 +685,7 @@ export function computePlayerStats(
   const allStats = Object.values(statsMap).map((row) => ({
     ...row,
     winPercentage: row.played > 0 ? (row.won / row.played) * 100 : 0,
+    matchesPlayed: playerMatchIds[row.player.id]?.size ?? 0,
   }));
 
   const averagesComparator = (a: PlayerStatsRow, b: PlayerStatsRow): number => {

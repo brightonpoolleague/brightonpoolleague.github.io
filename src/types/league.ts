@@ -131,4 +131,5 @@ export interface PlayerStatsRow {
   lost: number;
   winPercentage: number;
   dishes: number;
+  matchesPlayed: number;
 }
