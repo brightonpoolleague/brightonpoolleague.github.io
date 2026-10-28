@@ -121,6 +121,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const [showLineupEditor, setShowLineupEditor] = useState<boolean>(
     !fixture.homeSet1Locked || !fixture.awaySet1Locked
   );
+  const [isChangingLagWinner, setIsChangingLagWinner] = useState(false);
   const [subOutSlotBySide, setSubOutSlotBySide] = useState<{
     home: number | '';
     away: number | '';
@@ -1416,136 +1417,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </div>
             </div>
           </div>
-
-          {/* Lag Winner Bar */}
-          {viewMode === 'mobile' ? (
-            <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-slate-300 font-semibold flex items-center gap-1.5">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      fixture.lagWinner ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
-                    }`}
-                  />
-                  Lag Winner (Breaks 1st):
-                </span>
-                <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
-                  <button
-                    type="button"
-                    disabled={!editable || isMatchLockedBySignature}
-                    onClick={() => handleLagChange('home')}
-                    className={`px-3 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 ${
-                      fixture.lagWinner === 'home'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800/80 disabled:opacity-50'
-                    }`}
-                  >
-                    {fixture.lagWinner === 'home' && (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    )}
-                    <span>{homeTeam.name}</span>
-                    {getLagBreakCount('home') && (
-                      <span className="text-[10px] opacity-75 font-normal">
-                        {getLagBreakCount('home')}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!editable || isMatchLockedBySignature}
-                    onClick={() => handleLagChange('away')}
-                    className={`px-3 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 ${
-                      fixture.lagWinner === 'away'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800/80 disabled:opacity-50'
-                    }`}
-                  >
-                    {fixture.lagWinner === 'away' && (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    )}
-                    <span>{awayTeam.name}</span>
-                    {getLagBreakCount('away') && (
-                      <span className="text-[10px] opacity-75 font-normal">
-                        {getLagBreakCount('away')}
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {(canSignHome || canSignAway) &&
-                !isSignedByAny &&
-                fixture.status !== 'submitted' &&
-                fixture.status !== 'approved' && (
-                  <button
-                    type="button"
-                    onClick={() => setShowLineupEditor((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold border border-slate-700 shadow-sm ml-auto"
-                  >
-                    <Users className="w-3.5 h-3.5 text-emerald-400" />
-                    {showLineupEditor
-                      ? activeSet === 1
-                        ? 'Done Editing Lineup'
-                        : 'Done Making Subs'
-                      : activeSet === 1
-                      ? 'Edit Lineup'
-                      : 'Make Subs'}
-                  </button>
-                )}
-            </div>
-          ) : (
-            <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-300 font-semibold">
-                  Lag Winner (Breaks 1st):
-                </span>
-                {editable && !isMatchLockedBySignature ? (
-                  <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
-                    <button
-                      type="button"
-                      onClick={() => handleLagChange('home')}
-                      className={`px-2.5 py-0.5 rounded text-xs font-bold transition ${
-                        fixture.lagWinner === 'home'
-                          ? 'bg-emerald-600 text-white'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {homeTeam.name} {fixture.lagWinner === 'home' && '✓'}{' '}
-                      {getLagBreakCount('home') && (
-                        <span className="text-[10px] opacity-75 font-normal">
-                          {getLagBreakCount('home')}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleLagChange('away')}
-                      className={`px-2.5 py-0.5 rounded text-xs font-bold transition ${
-                        fixture.lagWinner === 'away'
-                          ? 'bg-emerald-600 text-white'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      {awayTeam.name} {fixture.lagWinner === 'away' && '✓'}{' '}
-                      {getLagBreakCount('away') && (
-                        <span className="text-[10px] opacity-75 font-normal">
-                          {getLagBreakCount('away')}
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <strong className="text-white">
-                    {fixture.lagWinner === 'home'
-                      ? `${homeTeam.name} (breaks odd frames, 8 breaks)`
-                      : fixture.lagWinner === 'away'
-                      ? `${awayTeam.name} (breaks odd frames, 8 breaks)`
-                      : 'Not Selected'}
-                  </strong>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1655,35 +1526,59 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
           {viewMode === 'mobile' ? (
             <>
-              {/* Set Tabs (Set 1, Set 2, Set 3) */}
-              <div className="grid grid-cols-3 gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
-                {([1, 2, 3] as const).map((setNum) => {
-                  const sKey = getSetKey(setNum);
-                  const sScore = score.setScores[sKey];
-                  return (
-                    <button
-                      key={setNum}
-                      type="button"
-                      onClick={() => handleSwitchSet(setNum)}
-                      className={`py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 ${
-                        activeSet === setNum
-                          ? 'bg-emerald-600 text-white shadow'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <span>Set {setNum}</span>
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[11px] ${
+              {/* Set Tabs (Set 1, Set 2, Set 3) and Lineup/Subs Button */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800 flex-1 min-w-[240px]">
+                  {([1, 2, 3] as const).map((setNum) => {
+                    const sKey = getSetKey(setNum);
+                    const sScore = score.setScores[sKey];
+                    return (
+                      <button
+                        key={setNum}
+                        type="button"
+                        onClick={() => handleSwitchSet(setNum)}
+                        className={`py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 sm:gap-2 ${
                           activeSet === setNum
-                            ? 'bg-emerald-800 text-emerald-100'
-                            : 'bg-slate-800 text-slate-300'
+                            ? 'bg-emerald-600 text-white shadow'
+                            : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        {sScore.home}–{sScore.away}
+                        <span>Set {setNum}</span>
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] ${
+                            activeSet === setNum
+                              ? 'bg-emerald-800 text-emerald-100'
+                              : 'bg-slate-800 text-slate-300'
+                          }`}
+                        >
+                          {sScore.home}–{sScore.away}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {(canSignHome || canSignAway) &&
+                  !isSignedByAny &&
+                  fixture.status !== 'submitted' &&
+                  fixture.status !== 'approved' && (
+                    <button
+                      type="button"
+                      onClick={() => setShowLineupEditor((v) => !v)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold border border-slate-800 shadow-sm shrink-0 text-xs transition"
+                    >
+                      <Users className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>
+                        {showLineupEditor
+                          ? activeSet === 1
+                            ? 'Done Lineup'
+                            : 'Done Subs'
+                          : activeSet === 1
+                          ? 'Edit Lineup'
+                          : 'Make Subs'}
                       </span>
                     </button>
-                  );
-                })}
+                  )}
               </div>
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
@@ -1821,9 +1716,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               )}
 
-              {/* Prompt to select lag winner if not yet chosen */}
-              {activeSet === 1 && bothSet1Locked && !fixture.lagWinner && (
-                <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md">
+              {/* Set 1 Lag Winner: Prompt box when unselected or changing; compact info bar when set */}
+              {activeSet === 1 && (!fixture.lagWinner || isChangingLagWinner) && (
+                <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
                     <div>
@@ -1831,33 +1726,82 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         Who won the lag to break first?
                       </strong>
                       <span className="text-slate-300 text-xs">
-                        Select which team broke in Frame 1 so break badges (
-                        <span className="text-amber-300 font-bold">
-                          X BREAK
-                        </span>
-                        ) appear across all frames.
+                        Select which team broke in Frame 1 so break badges appear across all frames.
                       </span>
                     </div>
                   </div>
-                  {editable && (
-                    <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
+                    {editable && !isMatchLockedBySignature && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleLagChange('home');
+                            setIsChangingLagWinner(false);
+                          }}
+                          className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
+                            fixture.lagWinner === 'home'
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{homeTeam.name}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleLagChange('away');
+                            setIsChangingLagWinner(false);
+                          }}
+                          className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
+                            fixture.lagWinner === 'away'
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{awayTeam.name}</span>
+                        </button>
+                      </>
+                    )}
+                    {isChangingLagWinner && (
                       <button
                         type="button"
-                        onClick={() => handleLagChange('home')}
-                        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow flex items-center gap-1.5"
+                        onClick={() => setIsChangingLagWinner(false)}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{homeTeam.name}</span>
+                        Cancel
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleLagChange('away')}
-                        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{awayTeam.name}</span>
-                      </button>
-                    </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeSet === 1 && fixture.lagWinner && !isChangingLagWinner && (
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2 text-slate-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                    <span>
+                      Lag Winner:{' '}
+                      <strong className="text-white">
+                        {fixture.lagWinner === 'home'
+                          ? homeTeam.name
+                          : awayTeam.name}
+                      </strong>{' '}
+                      <span className="text-slate-400 text-[11px]">
+                        (breaks odd frames, 8 breaks)
+                      </span>
+                    </span>
+                  </div>
+                  {editable && !isMatchLockedBySignature && (
+                    <button
+                      type="button"
+                      onClick={() => setIsChangingLagWinner(true)}
+                      className="text-xs font-semibold text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-700/80 transition"
+                    >
+                      Change Lag Winner
+                    </button>
                   )}
                 </div>
               )}
