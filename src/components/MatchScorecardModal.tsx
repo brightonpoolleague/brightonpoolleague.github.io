@@ -67,6 +67,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const isLoggedIn = session.role === 'captain' || session.role === 'admin';
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isFirstMount = useRef<boolean>(true);
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
   const [viewMode, setViewMode] = useState<'mobile' | 'paper'>(() =>
     isLoggedIn ? 'mobile' : 'paper'
@@ -79,6 +80,20 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    // Ensures scrolling to top succeeds even after Set 1 banners unmount and layout shifts
+    const timer = setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [activeSet]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -1354,7 +1369,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       </div>
 
       {/* Main Scrollable Content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-6 py-4">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto [overflow-anchor:none] px-3 sm:px-6 py-4"
+      >
         <div className="max-w-4xl mx-auto space-y-4 pb-12">
           {(!isOnline || syncError) && (
             <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200">
