@@ -101,6 +101,23 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       setViewMode('paper');
     }
   }, [fixture.id, isLoggedIn]);
+
+  // Prevent background page from scrolling or leaking touch gestures while scorecard is open
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    const originalOverscroll = document.body.style.overscrollBehavior;
+    const originalTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.overscrollBehavior = originalOverscroll;
+      document.body.style.touchAction = originalTouchAction;
+    };
+  }, []);
   const [showLineupEditor, setShowLineupEditor] = useState<boolean>(
     !fixture.homeSet1Locked || !fixture.awaySet1Locked
   );
@@ -1213,9 +1230,22 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col overflow-hidden overscroll-none touch-none"
+      onTouchMove={(e) => {
+        // Prevent background scrolling if touch didn't originate inside the scroll container
+        if (
+          scrollContainerRef.current &&
+          !scrollContainerRef.current.contains(e.target as Node)
+        ) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+        }
+      }}
+    >
       {/* Top Bar */}
-      <div className="bg-slate-900 border-b border-slate-800 px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0">
+      <div className="bg-slate-900 border-b border-slate-800 px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 touch-none select-none">
         <div className="flex items-center gap-2.5 min-w-0">
           <img
             src={`${import.meta.env.BASE_URL}logo.png`}
@@ -1297,7 +1327,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       </div>
 
       {/* Live Scoreboard Banner */}
-      <div className="bg-gradient-to-b from-emerald-950/60 to-slate-900 border-b border-slate-800 px-4 py-3 shrink-0">
+      <div className="bg-gradient-to-b from-emerald-950/60 to-slate-900 border-b border-slate-800 px-4 py-3 shrink-0 touch-none select-none">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-3 items-center gap-2">
             {/* Home Team */}
@@ -1522,7 +1552,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {/* Main Scrollable Content */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto [overflow-anchor:none] px-3 sm:px-6 py-4"
+        className="flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] px-3 sm:px-6 py-4 touch-pan-y"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="max-w-4xl mx-auto space-y-4 pb-12">
           {(!isOnline || syncError) && (

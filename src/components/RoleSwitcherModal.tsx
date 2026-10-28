@@ -64,6 +64,17 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
   }, [teams, teamSearchQuery]);
 
   useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    const originalOverscroll = document.body.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.overscrollBehavior = originalOverscroll;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isTeamDropdownOpen) return;
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
@@ -127,7 +138,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 touch-manipulation select-none"
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 touch-manipulation select-none overscroll-none"
       onMouseDown={(e) => {
         isPointerDownOnBackdrop.current = e.target === e.currentTarget;
       }}
@@ -142,7 +153,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
       }}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl select-text"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl select-text max-h-[90vh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
