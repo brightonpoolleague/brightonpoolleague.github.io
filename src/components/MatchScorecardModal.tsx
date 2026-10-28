@@ -1557,37 +1557,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 })}
               </div>
 
-              {/* Sub-bar below Set Tabs: Lag Winner status + Action buttons (Change Lag Winner, Edit Lineup/Make Subs) */}
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs py-0.5">
-                <div className="flex items-center gap-2 text-slate-300 min-w-0">
-                  {activeSet === 1 ? (
-                    <>
-                      <span
-                        className={`w-2 h-2 rounded-full shrink-0 ${
-                          fixture.lagWinner ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
-                        }`}
-                      />
-                      {fixture.lagWinner ? (
-                        <span className="truncate">
-                          Lag: <strong className="text-white">{fixture.lagWinner === 'home' ? homeTeam.name : awayTeam.name}</strong> breaks 1st
-                        </span>
-                      ) : (
-                        <span className="text-amber-300 font-semibold truncate">
-                          Lag Winner: not selected
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    fixture.lagWinner && (
-                      <span className="text-[11px] text-slate-400 truncate">
-                        Lag: <strong className="text-slate-300">{fixture.lagWinner === 'home' ? homeTeam.name : awayTeam.name}</strong> breaks odd frames
-                      </span>
-                    )
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0 ml-auto">
-                  {activeSet === 1 && editable && !isMatchLockedBySignature && (
+              {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Edit Lineup / Make Subs) */}
+              {((activeSet === 1 && editable && !isMatchLockedBySignature && fixture.lagWinner) ||
+                ((canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
+                <div className="flex items-center justify-end gap-2 text-xs py-0.5">
+                  {activeSet === 1 && editable && !isMatchLockedBySignature && fixture.lagWinner && (
                     <button
                       type="button"
                       onClick={() => setIsChangingLagWinner((v) => !v)}
@@ -1598,7 +1572,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       }`}
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{fixture.lagWinner ? 'Change Lag Winner' : 'Set Lag Winner'}</span>
+                      <span>{isChangingLagWinner ? 'Done Changing Lag' : 'Change Lag Winner'}</span>
                     </button>
                   )}
 
@@ -1628,7 +1602,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </button>
                     )}
                 </div>
-              </div>
+              )}
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
               {showLineupEditor &&
