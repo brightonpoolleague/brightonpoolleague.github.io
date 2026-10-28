@@ -1,6 +1,6 @@
 {
   "name": "City of Brighton & Hove Pool League",
-  "short_name": "BPL",
+  "short_name": "Brighton Pool League",
   "description": "Official live scoring, fixtures, tables, and player averages for the City of Brighton & Hove Pool League.",
   "start_url": "./",
   "scope": "./",
