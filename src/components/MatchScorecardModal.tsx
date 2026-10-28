@@ -53,6 +53,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     teams,
     players,
     seasons,
+    fixtures,
     session,
     canEditFixture,
     canManageLeague,
@@ -236,6 +237,39 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     fixture.lineups.unlockRequested?.home,
     fixture.lineups.unlockRequested?.away,
   ]);
+
+  // Auto-close lineup editor if a captain signs
+  useEffect(() => {
+    if (isSignedByAny) {
+      setShowLineupEditor(false);
+    }
+  }, [isSignedByAny]);
+
+  // Race condition protection: if the Finish & Submit dialog is open but a captain unsigns, cancel dialog immediately
+  useEffect(() => {
+    if (
+      confirmDialog &&
+      confirmDialog.confirmLabel === 'Finish & Submit Match' &&
+      (!fixture.homeCaptainSigned || !fixture.awayCaptainSigned)
+    ) {
+      setConfirmDialog({
+        title: 'Submission Cancelled',
+        message: (
+          <div className="space-y-2 text-slate-300">
+            <p>
+              A captain unsigned the match while the submission prompt was open.
+            </p>
+            <p className="text-amber-300 text-xs font-semibold">
+              Both captains must be signed before the match can be submitted.
+            </p>
+          </div>
+        ),
+        confirmLabel: 'OK',
+        variant: 'warning',
+        onConfirm: () => {},
+      });
+    }
+  }, [fixture.homeCaptainSigned, fixture.awayCaptainSigned, confirmDialog]);
 
   const score = calculateMatchScore({ ...fixture, frames, lineups });
 
@@ -521,6 +555,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const handleFinishMatch = () => {
+    // Guard against race conditions: verify both signatures exist
+    const current = fixtures.find((f) => f.id === fixture.id) || fixture;
+    if (!current.homeCaptainSigned || !current.awayCaptainSigned) {
+      return;
+    }
+
     setConfirmDialog({
       title: 'Finish & Submit Match Result?',
       message: (
@@ -541,8 +581,30 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       confirmLabel: 'Finish & Submit Match',
       variant: 'warning',
       onConfirm: async () => {
+        // Guard against race condition: ensure both captains are still signed at the moment of submission
+        const latest = fixtures.find((f) => f.id === fixture.id) || fixture;
+        if (!latest.homeCaptainSigned || !latest.awayCaptainSigned) {
+          setConfirmDialog({
+            title: 'Cannot Submit Match',
+            message: (
+              <div className="space-y-2 text-slate-300">
+                <p>
+                  Submission cancelled: One of the captains has unsigned the match.
+                </p>
+                <p className="text-amber-300 text-xs font-semibold">
+                  Both captains must have their signature recorded to submit the match.
+                </p>
+              </div>
+            ),
+            confirmLabel: 'OK',
+            variant: 'warning',
+            onConfirm: () => {},
+          });
+          return;
+        }
+
         await saveFixture({
-          ...fixture,
+          ...latest,
           status: 'submitted',
           submittedAt: new Date().toISOString(),
         });
@@ -1381,22 +1443,25 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               </div>
 
-              {(canSignHome || canSignAway) && (
-                <button
-                  type="button"
-                  onClick={() => setShowLineupEditor((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold border border-slate-700 shadow-sm ml-auto"
-                >
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
-                  {showLineupEditor
-                    ? activeSet === 1
-                      ? 'Done Editing Lineup'
-                      : 'Done Making Subs'
-                    : activeSet === 1
-                    ? 'Edit Lineup'
-                    : 'Make Subs'}
-                </button>
-              )}
+              {(canSignHome || canSignAway) &&
+                !isSignedByAny &&
+                fixture.status !== 'submitted' &&
+                fixture.status !== 'approved' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowLineupEditor((v) => !v)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold border border-slate-700 shadow-sm ml-auto"
+                  >
+                    <Users className="w-3.5 h-3.5 text-emerald-400" />
+                    {showLineupEditor
+                      ? activeSet === 1
+                        ? 'Done Editing Lineup'
+                        : 'Done Making Subs'
+                      : activeSet === 1
+                      ? 'Edit Lineup'
+                      : 'Make Subs'}
+                  </button>
+                )}
             </div>
           ) : (
             <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
@@ -1591,7 +1656,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </div>
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
-              {showLineupEditor && (canSignHome || canSignAway) && (
+              {showLineupEditor &&
+                !isSignedByAny &&
+                (canSignHome || canSignAway) && (
                 <div className="space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 sm:p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
