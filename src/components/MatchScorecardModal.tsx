@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  Camera,
   CheckCircle2,
   Clock,
   EyeOff,
@@ -35,6 +36,7 @@ import {
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
+import { ExportScorecardModal } from './ExportScorecardModal';
 
 interface MatchScorecardModalProps {
   fixture: Fixture;
@@ -48,6 +50,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const {
     teams,
     players,
+    seasons,
     session,
     canEditFixture,
     canManageLeague,
@@ -60,8 +63,18 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     retryPendingSync,
   } = useLeague();
 
+  const isLoggedIn = session.role === 'captain' || session.role === 'admin';
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
-  const [viewMode, setViewMode] = useState<'mobile' | 'paper'>('mobile');
+  const [viewMode, setViewMode] = useState<'mobile' | 'paper'>(() =>
+    isLoggedIn ? 'mobile' : 'paper'
+  );
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setViewMode('paper');
+    }
+  }, [fixture.id, isLoggedIn]);
   const [showLineupEditor, setShowLineupEditor] = useState<boolean>(
     !fixture.homeSet1Locked || !fixture.awaySet1Locked
   );
@@ -1818,31 +1831,59 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           ) : (
             /* Classic Paper Result Card View (replicates the physical Brighton Pool League Result Card) */
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-              <div className="bg-slate-950 px-4 py-3 border-b border-slate-800 text-center">
-                <div className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  City of Brighton and Hove Pool League
+              <div className="bg-slate-950 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-800 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-emerald-400 truncate">
+                    City of Brighton and Hove Pool League
+                  </div>
+                  <div className="text-xs sm:text-base font-black text-white mt-0.5 truncate">
+                    {isKnockout
+                      ? `${knockoutDisplay} Scorecard — ${homeTeam.name} vs ${awayTeam.name}`
+                      : `Official Result Scorecard — ${homeTeam.name} vs ${awayTeam.name}`}
+                  </div>
                 </div>
-                <div className="text-base font-black text-white mt-0.5">
-                  {isKnockout
-                    ? `${knockoutDisplay} Scorecard — ${homeTeam.name} vs ${awayTeam.name}`
-                    : `Official Result Scorecard — ${homeTeam.name} vs ${awayTeam.name}`}
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowExportModal(true)}
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] sm:text-xs font-bold border border-slate-700 transition shrink-0 shadow-sm"
+                  title="Export Result Scorecard as Image"
+                >
+                  <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Export Image</span>
+                  <span className="sm:hidden">Export</span>
+                </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
+              <div className="w-full overflow-hidden sm:overflow-x-auto">
+                <table className="w-full table-fixed text-[11px] sm:text-xs border-collapse">
                   <thead>
-                    <tr className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
-                      <th className="py-2 px-2 text-left">Set</th>
-                      <th className="py-2 px-2 text-center">Break</th>
-                      <th className="py-2 px-2 text-center">#</th>
-                      <th className="py-2 px-3 text-left">Home Player</th>
-                      <th className="py-2 px-2 text-center">W/L</th>
-                      <th className="py-2 px-2 text-center">W/L</th>
-                      <th className="py-2 px-3 text-left">Away Player</th>
-                      <th className="py-2 px-2 text-center">#</th>
-                      <th className="py-2 px-2 text-center">Break</th>
-                      <th className="py-2 px-2 text-center">Dish</th>
+                    <tr className="bg-slate-950/80 text-slate-400 border-b border-slate-800 text-[10px] sm:text-xs font-semibold">
+                      <th className="w-[8%] sm:w-[7%] py-1.5 sm:py-2 px-0.5 sm:px-2 text-left">Set</th>
+                      <th className="w-[5%] sm:w-[5%] py-1.5 sm:py-2 px-0.5 text-center" title="Break">
+                        <span className="sm:hidden">B</span>
+                        <span className="hidden sm:inline">Break</span>
+                      </th>
+                      <th className="w-[5%] sm:w-[5%] py-1.5 sm:py-2 px-0.5 text-center font-mono">#</th>
+                      <th className="w-[26%] sm:w-[28%] py-1.5 sm:py-2 px-1 sm:px-2 text-left">
+                        <span className="sm:hidden">Home</span>
+                        <span className="hidden sm:inline">Home Player</span>
+                      </th>
+                      <th className="w-[7%] sm:w-[6%] py-1.5 sm:py-2 px-0.5 text-center">W/L</th>
+                      <th className="w-[7%] sm:w-[6%] py-1.5 sm:py-2 px-0.5 text-center">W/L</th>
+                      <th className="w-[26%] sm:w-[28%] py-1.5 sm:py-2 px-1 sm:px-2 text-left">
+                        <span className="sm:hidden">Away</span>
+                        <span className="hidden sm:inline">Away Player</span>
+                      </th>
+                      <th className="w-[5%] sm:w-[5%] py-1.5 sm:py-2 px-0.5 text-center font-mono">#</th>
+                      <th className="w-[5%] sm:w-[5%] py-1.5 sm:py-2 px-0.5 text-center" title="Break">
+                        <span className="sm:hidden">B</span>
+                        <span className="hidden sm:inline">Break</span>
+                      </th>
+                      <th className="w-[6%] sm:w-[6%] py-1.5 sm:py-2 px-0.5 sm:px-1 text-center" title="Dish">
+                        <span className="sm:hidden">★</span>
+                        <span className="hidden sm:inline">Dish</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1867,30 +1908,37 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           key={frame.frameNumber}
                           className={`border-b ${
                             isLastInSet
-                              ? 'border-slate-700'
+                              ? 'border-slate-700 bg-slate-950/20'
                               : 'border-slate-800/60'
                           } hover:bg-slate-800/30`}
                         >
-                          <td className="py-2 px-2 font-bold text-emerald-400">
-                            {isFirstInSet ? `Set ${frame.setNumber}` : ''}
+                          <td className="py-1.5 sm:py-2 px-0.5 sm:px-2 font-bold text-emerald-400 truncate">
+                            {isFirstInSet ? (
+                              <>
+                                <span className="sm:hidden">S{frame.setNumber}</span>
+                                <span className="hidden sm:inline">Set {frame.setNumber}</span>
+                              </>
+                            ) : ''}
                           </td>
-                          <td className="py-2 px-2 text-center font-black text-amber-400">
+                          <td className="py-1.5 sm:py-2 px-0.5 text-center font-black text-amber-400">
                             {breaker === 'home' ? 'X' : ''}
                           </td>
-                          <td className="py-2 px-2 text-center font-mono text-slate-400">
+                          <td className="py-1.5 sm:py-2 px-0.5 text-center font-mono text-slate-400">
                             {frame.homeSlot}
                           </td>
-                          <td className="py-2 px-3 font-medium text-white">
-                            {getPlayerName(homePlayerId, hideHome)}
+                          <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-medium text-white truncate">
+                            <span title={getPlayerName(homePlayerId, hideHome)}>
+                              {getPlayerName(homePlayerId, hideHome)}
+                            </span>
                           </td>
-                          <td className="py-2 px-2 text-center">
+                          <td className="py-1.5 sm:py-2 px-0.5 text-center">
                             <button
                               type="button"
                               disabled={!canRecordFrame(frame.frameNumber)}
                               onClick={() =>
                                 handleFrameWinner(frame.frameNumber, 'home')
                               }
-                              className={`w-6 h-6 rounded font-black ${
+                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded text-[10px] sm:text-xs font-black inline-flex items-center justify-center transition mx-auto ${
                                 frame.winner === 'home'
                                   ? 'bg-emerald-500 text-slate-950'
                                   : frame.winner === 'away'
@@ -1905,14 +1953,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                 : '·'}
                             </button>
                           </td>
-                          <td className="py-2 px-2 text-center">
+                          <td className="py-1.5 sm:py-2 px-0.5 text-center">
                             <button
                               type="button"
                               disabled={!canRecordFrame(frame.frameNumber)}
                               onClick={() =>
                                 handleFrameWinner(frame.frameNumber, 'away')
                               }
-                              className={`w-6 h-6 rounded font-black ${
+                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded text-[10px] sm:text-xs font-black inline-flex items-center justify-center transition mx-auto ${
                                 frame.winner === 'away'
                                   ? 'bg-emerald-500 text-slate-950'
                                   : frame.winner === 'home'
@@ -1927,16 +1975,18 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                 : '·'}
                             </button>
                           </td>
-                          <td className="py-2 px-3 font-medium text-white">
-                            {getPlayerName(awayPlayerId, hideAway)}
+                          <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-medium text-white truncate">
+                            <span title={getPlayerName(awayPlayerId, hideAway)}>
+                              {getPlayerName(awayPlayerId, hideAway)}
+                            </span>
                           </td>
-                          <td className="py-2 px-2 text-center font-mono text-slate-400">
+                          <td className="py-1.5 sm:py-2 px-0.5 text-center font-mono text-slate-400">
                             {frame.awaySlot}
                           </td>
-                          <td className="py-2 px-2 text-center font-black text-amber-400">
+                          <td className="py-1.5 sm:py-2 px-0.5 text-center font-black text-amber-400">
                             {breaker === 'away' ? 'X' : ''}
                           </td>
-                          <td className="py-2 px-2 text-center text-xs font-bold text-emerald-400">
+                          <td className="py-1.5 sm:py-2 px-0.5 sm:px-1 text-center text-xs font-bold text-emerald-400">
                             {editable &&
                             frame.winner &&
                             canRecordFrame(frame.frameNumber) ? (
@@ -1945,17 +1995,27 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                 onClick={() =>
                                   handleToggleDish(frame.frameNumber)
                                 }
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition border ${
+                                className={`px-1 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold transition border ${
                                   frame.dish
                                     ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
                                     : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800 border-transparent'
                                 }`}
                                 title={frame.dish ? 'Click to remove dish' : 'Click to record dish'}
                               >
-                                {frame.dish ? '★ Dish' : '+ Dish'}
+                                {frame.dish ? (
+                                  <>
+                                    <span className="sm:hidden">★</span>
+                                    <span className="hidden sm:inline">★ Dish</span>
+                                  </>
+                                ) : (
+                                  '+'
+                                )}
                               </button>
                             ) : frame.dish ? (
-                              <span className="text-emerald-400 font-bold">★ Dish</span>
+                              <span className="text-emerald-400 font-bold">
+                                <span className="sm:hidden">★</span>
+                                <span className="hidden sm:inline">★ Dish</span>
+                              </span>
                             ) : (
                               ''
                             )}
@@ -1965,26 +2025,31 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-slate-950 font-black text-sm text-white">
-                      <td colSpan={4} className="py-3 px-3 text-right">
-                        {isKnockout
-                          ? `${knockoutDisplay} Result (${playAllFrames ? 'All 15' : 'First to 8'}):`
-                          : 'Result (Total 15):'}
+                    <tr className="bg-slate-950 font-black text-xs sm:text-sm text-white">
+                      <td colSpan={4} className="py-2.5 sm:py-3 px-1 sm:px-3 text-right">
+                        <span className="hidden sm:inline">
+                          {isKnockout
+                            ? `${knockoutDisplay} Result (${playAllFrames ? 'All 15' : 'First to 8'}):`
+                            : 'Result (Total 15):'}
+                        </span>
+                        <span className="sm:hidden text-[10px]">
+                          {isKnockout ? 'Result:' : 'Total:'}
+                        </span>
                       </td>
-                      <td className="py-3 px-2 text-center text-emerald-400 text-base">
+                      <td className="py-2.5 sm:py-3 px-0.5 text-center text-emerald-400 text-sm sm:text-base font-black">
                         {score.homeFrames}
                       </td>
-                      <td className="py-3 px-2 text-center text-emerald-400 text-base">
+                      <td className="py-2.5 sm:py-3 px-0.5 text-center text-emerald-400 text-sm sm:text-base font-black">
                         {score.awayFrames}
                       </td>
-                      <td colSpan={4} className="py-3 px-3 text-xs text-slate-400 font-normal">
+                      <td colSpan={4} className="py-2.5 sm:py-3 px-1 sm:px-2 text-[10px] sm:text-xs text-slate-400 font-normal truncate">
                         {isKnockout
                           ? isKnockoutDecided
-                            ? `Knockout Winner: ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'}`
+                            ? `🏆 ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'}`
                             : playAllFrames
-                            ? `${knockoutDisplay} • All 15 frames to be played`
-                            : `${knockoutDisplay} • First team to 8 frames wins match`
-                          : `Points: ${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
+                            ? 'All 15 frames'
+                            : 'First to 8 wins'
+                          : `${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
                       </td>
                     </tr>
                   </tfoot>
@@ -2053,6 +2118,22 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Export Result Scorecard Modal */}
+      {showExportModal && (
+        <ExportScorecardModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          fixture={fixture}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          seasonName={
+            seasons.find((s) => s.id === fixture.seasonId)?.name ||
+            'Brighton & Hove Pool League'
+          }
+          players={players}
+        />
       )}
     </div>
   );
