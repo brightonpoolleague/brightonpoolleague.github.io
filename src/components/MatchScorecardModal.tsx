@@ -1979,24 +1979,37 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
 
                       {/* Dish toggle when a winner is recorded */}
-                      {frame.winner && !isByeFrame && canRecordFrame(frame.frameNumber) && (() => {
+                      {frame.winner && !isByeFrame && (() => {
                         const winnerName =
                           frame.winner === 'home'
                             ? getPlayerName(homePlayerId, hideHome)
                             : getPlayerName(awayPlayerId, hideAway);
+                        const isUsable =
+                          editable && !isMatchLockedBySignature && bothSet1Locked;
 
                         return (
                           <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex items-center justify-end text-xs">
                             <button
                               type="button"
-                              onClick={() => handleToggleDish(frame.frameNumber)}
+                              disabled={!isUsable}
+                              onClick={() => isUsable && handleToggleDish(frame.frameNumber)}
                               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition border ${
                                 frame.dish
                                   ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
                                   : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:text-white hover:border-slate-600'
+                              } ${
+                                !isUsable
+                                  ? 'opacity-60 cursor-not-allowed hover:text-slate-300 hover:border-slate-700/80'
+                                  : ''
                               }`}
                               title={
-                                frame.dish
+                                !isUsable
+                                  ? isMatchLockedBySignature
+                                    ? 'Match is signed. Both captains must unsign to edit dish status.'
+                                    : !editable
+                                    ? 'Scorecard is in read-only mode'
+                                    : 'Lineups must be confirmed first'
+                                  : frame.dish
                                   ? 'Click to remove dish'
                                   : `Click if ${winnerName} cleared the table from the break (Dish / Reverse Dish)`
                               }
