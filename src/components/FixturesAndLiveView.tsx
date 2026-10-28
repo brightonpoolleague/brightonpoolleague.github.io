@@ -553,9 +553,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
             <div
               onClick={() => onSelectFixture(myNextMatch)}
-              className="cursor-pointer bg-slate-950/90 border border-slate-800 rounded-xl p-3 sm:p-4 grid grid-cols-7 items-center gap-1 sm:gap-2 hover:border-emerald-500/50 transition shadow-inner"
+              className="cursor-pointer bg-slate-950/90 border border-slate-800 rounded-xl p-3 sm:p-4 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 hover:border-emerald-500/50 transition shadow-inner"
             >
-              <div className="col-span-3 text-left min-w-0 pr-1 sm:pr-2">
+              <div className="text-left min-w-0 pr-1 sm:pr-2">
                 <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
                   {home?.name}
                 </div>
@@ -571,7 +571,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 </div>
               </div>
 
-              <div className="col-span-1 flex flex-col items-center justify-center px-0.5 sm:px-1 shrink-0">
+              <div className="flex flex-col items-center justify-center px-1 shrink-0">
                 {nextScore.completedFrames > 0 || myNextMatch.status !== 'scheduled' ? (
                   <div className="flex items-center gap-1 sm:gap-1.5 font-black text-base sm:text-2xl text-white tabular-nums">
                     <span
@@ -601,7 +601,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 )}
               </div>
 
-              <div className="col-span-3 text-right min-w-0 pl-1 sm:pl-2">
+              <div className="text-right min-w-0 pl-1 sm:pl-2">
                 <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
                   {away?.name}
                 </div>
@@ -829,9 +829,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
                 <div
                   onClick={() => onSelectFixture(fix)}
-                  className="cursor-pointer bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-7 items-center gap-1 sm:gap-2 hover:border-slate-700 transition"
+                  className="cursor-pointer bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 hover:border-slate-700 transition"
                 >
-                  <div className="col-span-3 text-left min-w-0 pr-1 sm:pr-2">
+                  <div className="text-left min-w-0 pr-1 sm:pr-2">
                     <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
                       {home.name}
                     </div>
@@ -844,7 +844,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="col-span-1 flex flex-col items-center justify-center px-0.5 sm:px-1 shrink-0">
+                  <div className="flex flex-col items-center justify-center px-1 shrink-0">
                     {score.completedFrames > 0 || fix.status !== 'scheduled' ? (
                       <div className="flex items-center gap-1 sm:gap-1.5 font-black text-base sm:text-lg text-white tabular-nums">
                         <span
@@ -874,7 +874,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     )}
                   </div>
 
-                  <div className="col-span-3 text-right min-w-0 pl-1 sm:pl-2">
+                  <div className="text-right min-w-0 pl-1 sm:pl-2">
                     <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
                       {away.name}
                     </div>

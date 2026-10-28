@@ -100,12 +100,12 @@ const MainShell: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-8">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-8">
       {/* Top Header */}
-      <header className="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+      <header className="sticky top-0 z-30 w-full bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Brand & Season Switcher */}
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
               alt="Brighton Pool League Crest"
@@ -213,7 +213,7 @@ const MainShell: React.FC = () => {
       <NetworkStatusBanner />
 
       {/* Main Content Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6 min-w-0">
         {currentTab === 'fixtures' && (
           <FixturesAndLiveView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}
@@ -234,7 +234,7 @@ const MainShell: React.FC = () => {
       </main>
 
       {/* Mobile Bottom Tab Navigation */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-1.5">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full z-30 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
         <div
           className="grid gap-1"
           style={{
@@ -249,14 +249,16 @@ const MainShell: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveTab(item.id)}
-                className={`relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition ${
+                className={`relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[11px] font-bold transition min-w-0 ${
                   isActive
                     ? 'text-emerald-400 bg-emerald-500/10'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Icon className="w-4 h-4 mb-0.5" />
-                <span>{item.shortLabel}</span>
+                <Icon className="w-4 h-4 mb-0.5 shrink-0" />
+                <span className="truncate max-w-full text-center leading-tight">
+                  {item.shortLabel}
+                </span>
                 {item.badge !== undefined && (
                   <span className="absolute top-1 right-3 w-2 h-2 rounded-full bg-red-500" />
                 )}
