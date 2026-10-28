@@ -156,6 +156,39 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       session.teamId === fixture.awayTeamId);
   const canEditSide = (side: 'home' | 'away'): boolean =>
     side === 'home' ? canSignHome : canSignAway;
+
+  const mySide: 'home' | 'away' | null =
+    session.role === 'captain'
+      ? session.teamId === fixture.homeTeamId
+        ? 'home'
+        : session.teamId === fixture.awayTeamId
+        ? 'away'
+        : null
+      : null;
+  const otherSide: 'home' | 'away' | null =
+    mySide === 'home' ? 'away' : mySide === 'away' ? 'home' : null;
+  const otherTeamName =
+    otherSide === 'home'
+      ? homeTeam.name
+      : otherSide === 'away'
+      ? awayTeam.name
+      : 'Opponent';
+
+  // Automatically open the lineup editor and switch to Set 1 if either captain requests changes
+  useEffect(() => {
+    const hasUnlockRequest = Boolean(
+      fixture.lineups.unlockRequested?.home ||
+      fixture.lineups.unlockRequested?.away
+    );
+    if (hasUnlockRequest) {
+      setShowLineupEditor(true);
+      setActiveSet(1);
+    }
+  }, [
+    fixture.lineups.unlockRequested?.home,
+    fixture.lineups.unlockRequested?.away,
+  ]);
+
   const score = calculateMatchScore({ ...fixture, frames, lineups });
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
@@ -1338,6 +1371,53 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </span>
             </div>
           )}
+
+          {/* Active Lineup Change Request Banner */}
+          {bothSet1Locked &&
+            (fixture.lineups.unlockRequested?.home ||
+              fixture.lineups.unlockRequested?.away) && (
+              <div className="bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-lg animate-in fade-in duration-200">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
+                  <div>
+                    <strong className="text-white block text-sm font-bold">
+                      {otherSide && fixture.lineups.unlockRequested?.[otherSide]
+                        ? `${otherTeamName} captain requested to change their Set 1 lineup`
+                        : `You have requested to change your Set 1 lineup`}
+                    </strong>
+                    <span className="text-slate-300 text-xs">
+                      {otherSide && fixture.lineups.unlockRequested?.[otherSide]
+                        ? `Lineups can only be edited if both captains agree. Click "Allow Lineup Changes" to unlock both teams for editing.`
+                        : `Waiting for ${otherTeamName} captain to agree. Once they allow changes, both lineups will unlock for editing.`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {otherSide &&
+                    fixture.lineups.unlockRequested?.[otherSide] &&
+                    mySide && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleLockSet1(mySide)}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                        <span>Allow Lineup Changes</span>
+                      </button>
+                    )}
+                  {mySide && fixture.lineups.unlockRequested?.[mySide] && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleLockSet1(mySide)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition"
+                    >
+                      Cancel Request
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
           {viewMode === 'mobile' ? (
             <>
