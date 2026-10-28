@@ -1669,11 +1669,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           )}
                           {frame.dish && (
                             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-[10px]">
-                              {breaker
-                                ? frame.winner === breaker
-                                  ? '★ BREAK & DISH'
-                                  : '★ REVERSE DISH'
-                                : '★ DISH'}
+                              ★ DISH
                             </span>
                           )}
                         </div>
@@ -1779,13 +1775,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
                       {/* Dish toggle when a winner is recorded */}
                       {frame.winner && !isByeFrame && canRecordFrame(frame.frameNumber) && (() => {
-                        const isBreaker = breaker ? frame.winner === breaker : null;
-                        const dishTypeLabel =
-                          isBreaker === true
-                            ? 'Break & Dish'
-                            : isBreaker === false
-                            ? 'Reverse Dish'
-                            : 'Dish / Reverse Dish';
                         const winnerName =
                           frame.winner === 'home'
                             ? getPlayerName(homePlayerId, hideHome)
@@ -1794,7 +1783,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         return (
                           <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2 text-xs">
                             <span className="text-[11px] text-slate-400">
-                              Cleared the table in 1 visit?
+                              Cleared the table from the break?
                             </span>
                             <button
                               type="button"
@@ -1807,7 +1796,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               title={
                                 frame.dish
                                   ? 'Click to remove dish'
-                                  : `Click if ${winnerName} cleared the table in one visit (${dishTypeLabel})`
+                                  : `Click if ${winnerName} cleared the table from the break`
                               }
                             >
                               <Sparkles
@@ -1817,8 +1806,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               />
                               <span>
                                 {frame.dish
-                                  ? `★ ${dishTypeLabel} Recorded`
-                                  : `Tap if ${dishTypeLabel}`}
+                                  ? '★ Dish Recorded'
+                                  : 'Tap if Dish'}
                               </span>
                             </button>
                           </div>
@@ -1964,24 +1953,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
                                     : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800 border-transparent'
                                 }`}
-                                title="Click to toggle Break & Dish / Reverse Dish"
+                                title={frame.dish ? 'Click to remove dish' : 'Click to record dish'}
                               >
-                                {frame.dish
-                                  ? breaker
-                                    ? frame.winner === breaker
-                                      ? '★ Dish'
-                                      : '★ Rev'
-                                    : '★ Dish'
-                                  : '+ Dish'}
+                                {frame.dish ? '★ Dish' : '+ Dish'}
                               </button>
                             ) : frame.dish ? (
-                              <span className="text-emerald-400 font-black">
-                                {breaker
-                                  ? frame.winner === breaker
-                                    ? 'Dish'
-                                    : 'Rev'
-                                  : '★'}
-                              </span>
+                              <span className="text-emerald-400 font-bold">★ Dish</span>
                             ) : (
                               ''
                             )}
