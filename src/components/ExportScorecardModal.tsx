@@ -468,26 +468,51 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                       })}
                     </tbody>
                     <tfoot>
-                      <tr className="bg-slate-950 font-black text-xs text-white">
+                      {/* Frames Won Row */}
+                      <tr className="bg-slate-950 font-black text-xs text-white border-t border-slate-800">
                         <td colSpan={4} className="py-2.5 px-3 text-right">
                           {isKnockout
-                            ? `${competitionTitle} Result (${fixture.playAllFrames ? 'All 15' : 'First to 8'}):`
-                            : 'Result (Total 15):'}
+                            ? `${competitionTitle} Frames:`
+                            : 'Frames Won:'}
                         </td>
-                        <td className="py-2.5 px-2 text-center text-emerald-400 text-sm">
+                        <td className="py-2.5 px-2 text-center text-emerald-400 text-sm font-black">
                           {score.homeFrames}
                         </td>
-                        <td className="py-2.5 px-2 text-center text-emerald-400 text-sm">
+                        <td className="py-2.5 px-2 text-center text-emerald-400 text-sm font-black">
                           {score.awayFrames}
                         </td>
                         <td colSpan={4} className="py-2.5 px-3 text-xs text-slate-400 font-normal">
-                          {isKnockout
-                            ? score.matchWinner
-                              ? `Knockout Winner: ${score.matchWinner === 'home' ? homeTeam.name : awayTeam.name}`
-                              : 'Knockout Match'
-                            : `Points: ${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
+                          {isKnockout && score.matchWinner && (
+                            <span>Knockout Winner: {score.matchWinner === 'home' ? homeTeam.name : awayTeam.name}</span>
+                          )}
                         </td>
                       </tr>
+
+                      {/* Match Points Row */}
+                      {!isKnockout && (
+                        <tr className="bg-slate-950/90 border-t border-slate-800/70">
+                          <td colSpan={10} className="py-2 px-3">
+                            <div className="flex items-center justify-center gap-4 text-xs">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                League Points:
+                              </span>
+                              <span className="font-bold text-white">
+                                {homeTeam.name}:{' '}
+                                <span className="text-emerald-400 font-black">
+                                  {score.homePoints} pts
+                                </span>
+                              </span>
+                              <span className="text-slate-600">•</span>
+                              <span className="font-bold text-white">
+                                {awayTeam.name}:{' '}
+                                <span className="text-emerald-400 font-black">
+                                  {score.awayPoints} pts
+                                </span>
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                     </tfoot>
                   </table>
                 </div>

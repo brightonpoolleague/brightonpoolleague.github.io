@@ -1995,10 +1995,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                 onClick={() =>
                                   handleToggleDish(frame.frameNumber)
                                 }
-                                className={`px-1 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold transition border ${
+                                className={`px-1 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold transition ${
                                   frame.dish
-                                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800 border-transparent'
+                                    ? 'bg-emerald-600 text-white border border-emerald-500 shadow-sm'
+                                    : 'text-transparent hover:text-slate-400 hover:bg-slate-800/80 min-w-4 min-h-4'
                                 }`}
                                 title={frame.dish ? 'Click to remove dish' : 'Click to record dish'}
                               >
@@ -2008,7 +2008,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     <span className="hidden sm:inline">★ Dish</span>
                                   </>
                                 ) : (
-                                  '+'
+                                  ''
                                 )}
                               </button>
                             ) : frame.dish ? (
@@ -2025,15 +2025,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     })}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-slate-950 font-black text-xs sm:text-sm text-white">
+                    {/* Frames Won Row */}
+                    <tr className="bg-slate-950 font-black text-xs sm:text-sm text-white border-t border-slate-800">
                       <td colSpan={4} className="py-2.5 sm:py-3 px-1 sm:px-3 text-right">
                         <span className="hidden sm:inline">
                           {isKnockout
-                            ? `${knockoutDisplay} Result (${playAllFrames ? 'All 15' : 'First to 8'}):`
-                            : 'Result (Total 15):'}
+                            ? `${knockoutDisplay} Frames:`
+                            : 'Frames Won:'}
                         </span>
-                        <span className="sm:hidden text-[10px]">
-                          {isKnockout ? 'Result:' : 'Total:'}
+                        <span className="sm:hidden text-xs font-bold text-slate-300">
+                          Frames:
                         </span>
                       </td>
                       <td className="py-2.5 sm:py-3 px-0.5 text-center text-emerald-400 text-sm sm:text-base font-black">
@@ -2042,16 +2043,42 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       <td className="py-2.5 sm:py-3 px-0.5 text-center text-emerald-400 text-sm sm:text-base font-black">
                         {score.awayFrames}
                       </td>
-                      <td colSpan={4} className="py-2.5 sm:py-3 px-1 sm:px-2 text-[10px] sm:text-xs text-slate-400 font-normal truncate">
-                        {isKnockout
-                          ? isKnockoutDecided
+                      <td colSpan={4} className="py-2.5 sm:py-3 px-1 sm:px-2 text-xs text-slate-400 font-normal">
+                        {isKnockout && (
+                          isKnockoutDecided
                             ? `🏆 ${score.matchWinner === 'home' ? homeTeam.name : score.matchWinner === 'away' ? awayTeam.name : 'Tie'}`
                             : playAllFrames
                             ? 'All 15 frames'
                             : 'First to 8 wins'
-                          : `${homeTeam.name} (${score.homePoints} pts) – ${awayTeam.name} (${score.awayPoints} pts)`}
+                        )}
                       </td>
                     </tr>
+
+                    {/* League Points Banner (Full Width, never cut off) */}
+                    {!isKnockout && (
+                      <tr className="bg-slate-950/90 border-t border-slate-800/70">
+                        <td colSpan={10} className="py-2.5 px-3">
+                          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                              Points:
+                            </span>
+                            <span className="font-bold text-white">
+                              {homeTeam.name}:{' '}
+                              <span className="text-emerald-400 font-black">
+                                {score.homePoints} pts
+                              </span>
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span className="font-bold text-white">
+                              {awayTeam.name}:{' '}
+                              <span className="text-emerald-400 font-black">
+                                {score.awayPoints} pts
+                              </span>
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tfoot>
                 </table>
               </div>
