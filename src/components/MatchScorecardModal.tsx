@@ -377,7 +377,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     await saveFixture(
       {
         ...fixture,
-        lagWinner: fixture.lagWinner === winner ? null : winner,
+        lagWinner: winner,
       },
       'frames'
     );
@@ -1526,59 +1526,108 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
           {viewMode === 'mobile' ? (
             <>
-              {/* Set Tabs (Set 1, Set 2, Set 3) and Lineup/Subs Button */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800 flex-1 min-w-[240px]">
-                  {([1, 2, 3] as const).map((setNum) => {
-                    const sKey = getSetKey(setNum);
-                    const sScore = score.setScores[sKey];
-                    return (
-                      <button
-                        key={setNum}
-                        type="button"
-                        onClick={() => handleSwitchSet(setNum)}
-                        className={`py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 sm:gap-2 ${
+              {/* Set Tabs (Set 1, Set 2, Set 3) */}
+              <div className="grid grid-cols-3 gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                {([1, 2, 3] as const).map((setNum) => {
+                  const sKey = getSetKey(setNum);
+                  const sScore = score.setScores[sKey];
+                  return (
+                    <button
+                      key={setNum}
+                      type="button"
+                      onClick={() => handleSwitchSet(setNum)}
+                      className={`py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 sm:gap-2 ${
+                        activeSet === setNum
+                          ? 'bg-emerald-600 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <span>Set {setNum}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] ${
                           activeSet === setNum
-                            ? 'bg-emerald-600 text-white shadow'
-                            : 'text-slate-400 hover:text-white'
+                            ? 'bg-emerald-800 text-emerald-100'
+                            : 'bg-slate-800 text-slate-300'
                         }`}
                       >
-                        <span>Set {setNum}</span>
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] ${
-                            activeSet === setNum
-                              ? 'bg-emerald-800 text-emerald-100'
-                              : 'bg-slate-800 text-slate-300'
-                          }`}
-                        >
-                          {sScore.home}–{sScore.away}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {(canSignHome || canSignAway) &&
-                  !isSignedByAny &&
-                  fixture.status !== 'submitted' &&
-                  fixture.status !== 'approved' && (
-                    <button
-                      type="button"
-                      onClick={() => setShowLineupEditor((v) => !v)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold border border-slate-800 shadow-sm shrink-0 text-xs transition"
-                    >
-                      <Users className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>
-                        {showLineupEditor
-                          ? activeSet === 1
-                            ? 'Done Lineup'
-                            : 'Done Subs'
-                          : activeSet === 1
-                          ? 'Edit Lineup'
-                          : 'Make Subs'}
+                        {sScore.home}–{sScore.away}
                       </span>
                     </button>
+                  );
+                })}
+              </div>
+
+              {/* Sub-bar below Set Tabs: Lag Winner status + Action buttons (Change Lag Winner, Edit Lineup/Make Subs) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs py-0.5">
+                <div className="flex items-center gap-2 text-slate-300 min-w-0">
+                  {activeSet === 1 ? (
+                    <>
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          fixture.lagWinner ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
+                        }`}
+                      />
+                      {fixture.lagWinner ? (
+                        <span className="truncate">
+                          Lag: <strong className="text-white">{fixture.lagWinner === 'home' ? homeTeam.name : awayTeam.name}</strong> breaks 1st
+                        </span>
+                      ) : (
+                        <span className="text-amber-300 font-semibold truncate">
+                          Lag Winner: not selected
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    fixture.lagWinner && (
+                      <span className="text-[11px] text-slate-400 truncate">
+                        Lag: <strong className="text-slate-300">{fixture.lagWinner === 'home' ? homeTeam.name : awayTeam.name}</strong> breaks odd frames
+                      </span>
+                    )
                   )}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 ml-auto">
+                  {activeSet === 1 && editable && !isMatchLockedBySignature && (
+                    <button
+                      type="button"
+                      onClick={() => setIsChangingLagWinner((v) => !v)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                        isChangingLagWinner
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800 shadow-sm'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{fixture.lagWinner ? 'Change Lag Winner' : 'Set Lag Winner'}</span>
+                    </button>
+                  )}
+
+                  {(canSignHome || canSignAway) &&
+                    !isSignedByAny &&
+                    fixture.status !== 'submitted' &&
+                    fixture.status !== 'approved' && (
+                      <button
+                        type="button"
+                        onClick={() => setShowLineupEditor((v) => !v)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm ${
+                          showLineupEditor
+                            ? 'bg-emerald-600 text-white border-emerald-500'
+                            : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800'
+                        }`}
+                      >
+                        <Users className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>
+                          {showLineupEditor
+                            ? activeSet === 1
+                              ? 'Done Lineup'
+                              : 'Done Subs'
+                            : activeSet === 1
+                            ? 'Edit Lineup'
+                            : 'Make Subs'}
+                        </span>
+                      </button>
+                    )}
+                </div>
               </div>
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
@@ -1716,7 +1765,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               )}
 
-              {/* Set 1 Lag Winner: Prompt box when unselected or changing; compact info bar when set */}
+              {/* Set 1 Lag Winner Prompt Box (shown when unselected or when Change Lag Winner is clicked) */}
               {activeSet === 1 && (!fixture.lagWinner || isChangingLagWinner) && (
                 <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -1741,8 +1790,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           }}
                           className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
                             fixture.lagWinner === 'home'
-                              ? 'bg-emerald-600 text-white shadow-sm'
-                              : 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+                              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                           }`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1756,8 +1805,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           }}
                           className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
                             fixture.lagWinner === 'away'
-                              ? 'bg-emerald-600 text-white shadow-sm'
-                              : 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+                              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                           }`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1765,44 +1814,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         </button>
                       </>
                     )}
-                    {isChangingLagWinner && (
-                      <button
-                        type="button"
-                        onClick={() => setIsChangingLagWinner(false)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition"
-                      >
-                        Cancel
-                      </button>
-                    )}
                   </div>
-                </div>
-              )}
-
-              {activeSet === 1 && fixture.lagWinner && !isChangingLagWinner && (
-                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2 text-slate-300">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                    <span>
-                      Lag Winner:{' '}
-                      <strong className="text-white">
-                        {fixture.lagWinner === 'home'
-                          ? homeTeam.name
-                          : awayTeam.name}
-                      </strong>{' '}
-                      <span className="text-slate-400 text-[11px]">
-                        (breaks odd frames, 8 breaks)
-                      </span>
-                    </span>
-                  </div>
-                  {editable && !isMatchLockedBySignature && (
-                    <button
-                      type="button"
-                      onClick={() => setIsChangingLagWinner(true)}
-                      className="text-xs font-semibold text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-700/80 transition"
-                    >
-                      Change Lag Winner
-                    </button>
-                  )}
                 </div>
               )}
 
