@@ -182,18 +182,28 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
   }, [fixture.id, fixture.frames, editable, saveFixture]);
 
+  const isSignedByAny =
+    Boolean(fixture.homeCaptainSigned || fixture.awayCaptainSigned);
+  const isSignedByBoth =
+    Boolean(fixture.homeCaptainSigned && fixture.awayCaptainSigned);
+  const isMatchLockedBySignature = !canManageLeague && isSignedByAny;
+
   const canSignHome =
     canManageLeague ||
-    (editable &&
-      session.role === 'captain' &&
-      session.teamId === fixture.homeTeamId);
+    (session.role === 'captain' &&
+      session.teamId === fixture.homeTeamId &&
+      fixture.status !== 'submitted' &&
+      fixture.status !== 'approved');
   const canSignAway =
     canManageLeague ||
-    (editable &&
-      session.role === 'captain' &&
-      session.teamId === fixture.awayTeamId);
-  const canEditSide = (side: 'home' | 'away'): boolean =>
-    side === 'home' ? canSignHome : canSignAway;
+    (session.role === 'captain' &&
+      session.teamId === fixture.awayTeamId &&
+      fixture.status !== 'submitted' &&
+      fixture.status !== 'approved');
+  const canEditSide = (side: 'home' | 'away'): boolean => {
+    if (isMatchLockedBySignature) return false;
+    return side === 'home' ? canSignHome : canSignAway;
+  };
 
   const mySide: 'home' | 'away' | null =
     session.role === 'captain'
@@ -263,9 +273,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   // Frame results can only be recorded once both Set 1 lineups are locked
   // and both players for that frame have been assigned (player or BYE).
+  // When a captain signs, further changes by captains are locked.
   // In Knockout matches with first-to-8 rules, unplayed frames are locked once either team reaches 8 frames.
   const canRecordFrame = (frameNumber: number): boolean => {
-    if (!editable || !bothSet1Locked) return false;
+    if (!editable || !bothSet1Locked || isMatchLockedBySignature) return false;
     const frame = frames.find((f) => f.frameNumber === frameNumber);
     if (!frame) return false;
     // In first-to-8 knockout matches, once a team has reached 8 frames, unrecorded frames cannot be played
@@ -310,7 +321,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const handleLagChange = async (winner: 'home' | 'away') => {
-    if (!editable) return;
+    if (!editable || isMatchLockedBySignature) return;
     await saveFixture(
       {
         ...fixture,
@@ -490,8 +501,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const handleToggleSign = async (side: 'home' | 'away') => {
-    if (!editable) return;
-    if (!isMatchComplete) return;
+    if (fixture.status === 'submitted' || fixture.status === 'approved') return;
+    if (!isMatchComplete && !canManageLeague) return;
     if (side === 'home' && !canSignHome) return;
     if (side === 'away' && !canSignAway) return;
     const nextHomeSigned =
@@ -499,25 +510,44 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     const nextAwaySigned =
       side === 'away' ? !fixture.awayCaptainSigned : fixture.awayCaptainSigned;
 
-    const bothSigned = nextHomeSigned && nextAwaySigned;
     await saveFixture(
       {
         ...fixture,
         homeCaptainSigned: nextHomeSigned,
         awayCaptainSigned: nextAwaySigned,
-        status:
-          bothSigned && isMatchComplete
-            ? 'submitted'
-            : fixture.status === 'submitted' && !bothSigned
-            ? 'live'
-            : fixture.status,
-        submittedAt:
-          bothSigned && isMatchComplete
-            ? new Date().toISOString()
-            : fixture.submittedAt,
       },
       side
     );
+  };
+
+  const handleFinishMatch = () => {
+    setConfirmDialog({
+      title: 'Finish & Submit Match Result?',
+      message: (
+        <div className="space-y-3">
+          <p className="text-slate-200">
+            Submit the official match result between{' '}
+            <strong className="text-white">{homeTeam.name}</strong> ({score.homeFrames}) and{' '}
+            <strong className="text-white">{awayTeam.name}</strong> ({score.awayFrames})?
+          </p>
+          <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <span className="leading-relaxed">
+              Once this match has been submitted, changes can only be made by league admins. If you need to make changes before submitting, both captains need to unsign.
+            </span>
+          </div>
+        </div>
+      ),
+      confirmLabel: 'Finish & Submit Match',
+      variant: 'warning',
+      onConfirm: async () => {
+        await saveFixture({
+          ...fixture,
+          status: 'submitted',
+          submittedAt: new Date().toISOString(),
+        });
+      },
+    });
   };
 
   const renderLineupSelector = (setNumber: 1 | 2 | 3, side: 'home' | 'away') => {
@@ -956,7 +986,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     fixture.status === 'approved';
 
   const renderSignOffCard = () => (
-    <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+    <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h4 className="text-sm font-bold text-white">
@@ -974,6 +1004,58 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           </span>
         )}
       </div>
+
+      {/* Prompt to Finish Match once 2nd captain signs */}
+      {isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/90 to-slate-900 border-2 border-emerald-500/50 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="text-sm font-black text-white flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Both Captains Have Signed</span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              All signatures are complete. Press <strong>Finish Match</strong> to submit this official result to the league.
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Need to make changes before submitting? Both captains need to unsign below to unlock editing.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={!canSignHome && !canSignAway && !canManageLeague}
+            onClick={handleFinishMatch}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm shadow-md transition shrink-0 disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Finish Match</span>
+          </button>
+        </div>
+      )}
+
+      {/* Warning when 1 captain has signed and waiting for the 2nd */}
+      {isSignedByAny && !isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
+          <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <span className="leading-relaxed">
+            {fixture.homeCaptainSigned
+              ? `${homeTeam.name} captain has signed. Match editing is now locked for captains.`
+              : `${awayTeam.name} captain has signed. Match editing is now locked for captains.`}{' '}
+            Waiting for the second captain to sign. If you need to make changes before submitting, both captains need to unsign.
+          </span>
+        </div>
+      )}
+
+      {/* Submitted status notice */}
+      {fixture.status === 'submitted' && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>
+              Match has been submitted. Changes can only be made by league admins.
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
@@ -998,7 +1080,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           </div>
           <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
             {fixture.homeCaptainSigned
-              ? '✓ Signed'
+              ? canSignHome && fixture.status !== 'submitted' && fixture.status !== 'approved'
+                ? '✓ Signed (Tap to Unsign)'
+                : '✓ Signed'
               : canSignHome
               ? 'Tap to Sign'
               : 'Home Captain Only'}
@@ -1027,7 +1111,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           </div>
           <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
             {fixture.awayCaptainSigned
-              ? '✓ Signed'
+              ? canSignAway && fixture.status !== 'submitted' && fixture.status !== 'approved'
+                ? '✓ Signed (Tap to Unsign)'
+                : '✓ Signed'
               : canSignAway
               ? 'Tap to Sign'
               : 'Away Captain Only'}
@@ -1254,7 +1340,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
                   <button
                     type="button"
-                    disabled={!editable}
+                    disabled={!editable || isMatchLockedBySignature}
                     onClick={() => handleLagChange('home')}
                     className={`px-3 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 ${
                       fixture.lagWinner === 'home'
@@ -1274,7 +1360,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   </button>
                   <button
                     type="button"
-                    disabled={!editable}
+                    disabled={!editable || isMatchLockedBySignature}
                     onClick={() => handleLagChange('away')}
                     className={`px-3 py-1 rounded-md text-xs font-bold transition flex items-center gap-1.5 ${
                       fixture.lagWinner === 'away'
@@ -1318,7 +1404,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 <span className="text-slate-300 font-semibold">
                   Lag Winner (Breaks 1st):
                 </span>
-                {editable ? (
+                {editable && !isMatchLockedBySignature ? (
                   <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800">
                     <button
                       type="button"
@@ -1402,16 +1488,27 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           )}
 
-          {!editable && (
+          {!editable ? (
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-300">
               <span>
                 Viewing live scorecard in <strong>Read-Only Mode</strong>.
                 {fixture.status === 'approved'
                   ? ' This match has been officially approved by the League Admin.'
+                  : fixture.status === 'submitted'
+                  ? ' This match has been submitted. Changes can only be made by league admins.'
                   : ' Log in as Team Captain or League Admin to enter scores.'}
               </span>
             </div>
-          )}
+          ) : isMatchLockedBySignature && fixture.status !== 'submitted' && fixture.status !== 'approved' ? (
+            <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs text-amber-200">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  Match signed by {isSignedByBoth ? 'both captains' : fixture.homeCaptainSigned ? `${homeTeam.name} captain` : `${awayTeam.name} captain`}. Further changes to scores and lineups are locked. If you need to make changes before submitting, both captains need to unsign below.
+                </span>
+              </div>
+            </div>
+          ) : null}
 
           {/* Active Lineup Change Request Banner */}
           {bothSet1Locked &&

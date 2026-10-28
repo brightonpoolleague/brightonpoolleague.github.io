@@ -1803,6 +1803,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         ...target,
         status: 'live',
         approvedAt: undefined,
+        homeCaptainSigned: false,
+        awayCaptainSigned: false,
       });
     },
     [allFixtures, saveFixture]
@@ -1829,7 +1831,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const canEditFixture = useCallback(
     (fixture: Fixture): boolean => {
       if (session.role === 'admin') return true;
-      if (session.role === 'captain' && fixture.status !== 'approved') {
+      if (
+        session.role === 'captain' &&
+        fixture.status !== 'approved' &&
+        fixture.status !== 'submitted'
+      ) {
         return (
           session.teamId === fixture.homeTeamId ||
           session.teamId === fixture.awayTeamId
