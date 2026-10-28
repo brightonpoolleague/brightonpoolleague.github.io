@@ -1781,10 +1781,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             : getPlayerName(awayPlayerId, hideAway);
 
                         return (
-                          <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <span className="text-[11px] text-slate-400">
-                              Cleared the table from yours or your opponent's break?
-                            </span>
+                          <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex items-center justify-end text-xs">
                             <button
                               type="button"
                               onClick={() => handleToggleDish(frame.frameNumber)}
