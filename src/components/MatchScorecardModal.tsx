@@ -1558,21 +1558,17 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </div>
 
               {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Edit Lineup / Make Subs) */}
-              {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner) ||
+              {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner) ||
                 ((canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
-                  {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && (
+                  {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner && (
                     <button
                       type="button"
-                      onClick={() => setIsChangingLagWinner((v) => !v)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition ${
-                        isChangingLagWinner
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                          : 'bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800 shadow-sm'
-                      }`}
+                      onClick={() => setIsChangingLagWinner(true)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800 shadow-sm"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{isChangingLagWinner ? 'Done Changing Lag' : 'Change Lag Winner'}</span>
+                      <span>Change Lag Winner</span>
                     </button>
                   )}
 
