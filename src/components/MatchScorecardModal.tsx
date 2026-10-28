@@ -1783,7 +1783,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         return (
                           <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2 text-xs">
                             <span className="text-[11px] text-slate-400">
-                              Cleared the table from the break?
+                              Cleared the table from yours or your opponent's break?
                             </span>
                             <button
                               type="button"
@@ -1796,7 +1796,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               title={
                                 frame.dish
                                   ? 'Click to remove dish'
-                                  : `Click if ${winnerName} cleared the table from the break`
+                                  : `Click if ${winnerName} cleared the table from the break (Dish / Reverse Dish)`
                               }
                             >
                               <Sparkles
@@ -1807,7 +1807,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               <span>
                                 {frame.dish
                                   ? '★ Dish Recorded'
-                                  : 'Tap if Dish'}
+                                  : 'Tap if Dish / Reverse Dish'}
                               </span>
                             </button>
                           </div>
