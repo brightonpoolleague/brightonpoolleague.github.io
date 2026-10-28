@@ -1804,7 +1804,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               <span>
                                 {frame.dish
                                   ? '★ Dish Recorded'
-                                  : 'Tap if Dish / Reverse Dish'}
+                                  : 'Dish / Reverse Dish'}
                               </span>
                             </button>
                           </div>
