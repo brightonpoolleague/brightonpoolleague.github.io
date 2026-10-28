@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Camera,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   EyeOff,
   FileSpreadsheet,
@@ -64,11 +66,19 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   } = useLeague();
 
   const isLoggedIn = session.role === 'captain' || session.role === 'admin';
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
   const [viewMode, setViewMode] = useState<'mobile' | 'paper'>(() =>
     isLoggedIn ? 'mobile' : 'paper'
   );
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+
+  const handleSwitchSet = (targetSet: 1 | 2 | 3) => {
+    setActiveSet(targetSet);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -1344,7 +1354,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       </div>
 
       {/* Main Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-6 py-4">
         <div className="max-w-4xl mx-auto space-y-4 pb-12">
           {(!isOnline || syncError) && (
             <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200">
@@ -1443,7 +1453,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <button
                       key={setNum}
                       type="button"
-                      onClick={() => setActiveSet(setNum)}
+                      onClick={() => handleSwitchSet(setNum)}
                       className={`py-2 px-3 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 ${
                         activeSet === setNum
                           ? 'bg-emerald-600 text-white shadow'
@@ -1826,6 +1836,33 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Bottom Set Navigation */}
+              <div className="pt-2 flex items-center justify-between gap-3">
+                {activeSet > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchSet((activeSet - 1) as 1 | 2 | 3)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-bold text-xs sm:text-sm transition shadow-sm"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-emerald-400" />
+                    <span>Previous: Set {activeSet - 1}</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                {activeSet < 3 && (
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchSet((activeSet + 1) as 1 | 2 | 3)}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-md transition ml-auto"
+                  >
+                    <span>Next: Set {activeSet + 1}</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </>
           ) : (
