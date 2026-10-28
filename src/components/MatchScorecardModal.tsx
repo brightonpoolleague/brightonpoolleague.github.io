@@ -1668,8 +1668,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             </span>
                           )}
                           {frame.dish && (
-                            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-                              ★ DISH
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-[10px]">
+                              {breaker
+                                ? frame.winner === breaker
+                                  ? '★ BREAK & DISH'
+                                  : '★ REVERSE DISH'
+                                : '★ DISH'}
                             </span>
                           )}
                         </div>
@@ -1774,27 +1778,52 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
 
                       {/* Dish toggle when a winner is recorded */}
-                      {frame.winner && !isByeFrame && canRecordFrame(frame.frameNumber) && (
-                        <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex items-center justify-end gap-2">
-                          <span className="text-[11px] text-slate-400 mr-auto">
-                            Did the frame winner dish / reverse dish?
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleDish(frame.frameNumber)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold border transition ${
-                              frame.dish
-                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            {frame.dish
-                              ? '✓ Dish Recorded (Yes)'
-                              : 'Mark Dish / Reverse Dish'}
-                          </button>
-                        </div>
-                      )}
+                      {frame.winner && !isByeFrame && canRecordFrame(frame.frameNumber) && (() => {
+                        const isBreaker = breaker ? frame.winner === breaker : null;
+                        const dishTypeLabel =
+                          isBreaker === true
+                            ? 'Break & Dish'
+                            : isBreaker === false
+                            ? 'Reverse Dish'
+                            : 'Dish / Reverse Dish';
+                        const winnerName =
+                          frame.winner === 'home'
+                            ? getPlayerName(homePlayerId, hideHome)
+                            : getPlayerName(awayPlayerId, hideAway);
+
+                        return (
+                          <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <span className="text-[11px] text-slate-400">
+                              Cleared the table in 1 visit?
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleDish(frame.frameNumber)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition border ${
+                                frame.dish
+                                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
+                                  : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:text-white hover:border-slate-600'
+                              }`}
+                              title={
+                                frame.dish
+                                  ? 'Click to remove dish'
+                                  : `Click if ${winnerName} cleared the table in one visit (${dishTypeLabel})`
+                              }
+                            >
+                              <Sparkles
+                                className={`w-3.5 h-3.5 ${
+                                  frame.dish ? 'text-amber-300' : 'text-slate-400'
+                                }`}
+                              />
+                              <span>
+                                {frame.dish
+                                  ? `★ ${dishTypeLabel} Recorded`
+                                  : `Tap if ${dishTypeLabel}`}
+                              </span>
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
@@ -1921,8 +1950,41 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           <td className="py-2 px-2 text-center font-black text-amber-400">
                             {breaker === 'away' ? 'X' : ''}
                           </td>
-                          <td className="py-2 px-2 text-center font-bold text-emerald-400">
-                            {frame.dish ? 'Yes' : ''}
+                          <td className="py-2 px-2 text-center text-xs font-bold text-emerald-400">
+                            {editable &&
+                            frame.winner &&
+                            canRecordFrame(frame.frameNumber) ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleToggleDish(frame.frameNumber)
+                                }
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition border ${
+                                  frame.dish
+                                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800 border-transparent'
+                                }`}
+                                title="Click to toggle Break & Dish / Reverse Dish"
+                              >
+                                {frame.dish
+                                  ? breaker
+                                    ? frame.winner === breaker
+                                      ? '★ Dish'
+                                      : '★ Rev'
+                                    : '★ Dish'
+                                  : '+ Dish'}
+                              </button>
+                            ) : frame.dish ? (
+                              <span className="text-emerald-400 font-black">
+                                {breaker
+                                  ? frame.winner === breaker
+                                    ? 'Dish'
+                                    : 'Rev'
+                                  : '★'}
+                              </span>
+                            ) : (
+                              ''
+                            )}
                           </td>
                         </tr>
                       );
