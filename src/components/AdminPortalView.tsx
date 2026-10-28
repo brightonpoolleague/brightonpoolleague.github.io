@@ -1580,17 +1580,30 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Match Date
                   </label>
-                  <input
-                    type="date"
-                    value={newFixtureDraft.matchDate}
-                    onChange={(e) =>
-                      setNewFixtureDraft({
-                        ...newFixtureDraft,
-                        matchDate: e.target.value,
-                      })
-                    }
-                    className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white box-border appearance-none"
-                  />
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={newFixtureDraft.matchDate}
+                      onChange={(e) =>
+                        setNewFixtureDraft({
+                          ...newFixtureDraft,
+                          matchDate: e.target.value,
+                        })
+                      }
+                      onClick={(e) => {
+                        try {
+                          e.currentTarget.showPicker?.();
+                        } catch {}
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
+                    />
+                    <Calendar className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                  {newFixtureDraft.matchDate && (
+                    <div className="text-[10px] text-emerald-400 font-medium mt-1 truncate">
+                      {formatMatchDate(newFixtureDraft.matchDate)}
+                    </div>
+                  )}
                 </div>
 
                 {newFixtureDraft.matchType !== 'knockout' && (
@@ -2032,17 +2045,30 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               <label className="block text-[11px] text-slate-400 mb-1">
                                 Match Date
                               </label>
-                              <input
-                                type="date"
-                                value={fixtureDraft.matchDate}
-                                onChange={(e) =>
-                                  setFixtureDraft({
-                                    ...fixtureDraft,
-                                    matchDate: e.target.value,
-                                  })
-                                }
-                                className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white box-border appearance-none"
-                              />
+                              <div className="relative">
+                                <input
+                                  type="date"
+                                  value={fixtureDraft.matchDate}
+                                  onChange={(e) =>
+                                    setFixtureDraft({
+                                      ...fixtureDraft,
+                                      matchDate: e.target.value,
+                                    })
+                                  }
+                                  onClick={(e) => {
+                                    try {
+                                      e.currentTarget.showPicker?.();
+                                    } catch {}
+                                  }}
+                                  className="w-full bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
+                                />
+                                <Calendar className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                              </div>
+                              {fixtureDraft.matchDate && (
+                                <div className="text-[10px] text-emerald-400 font-medium mt-1 truncate">
+                                  {formatMatchDate(fixtureDraft.matchDate)}
+                                </div>
+                              )}
                             </div>
                             {fixtureDraft.matchType !== 'knockout' && (
                               <div>
