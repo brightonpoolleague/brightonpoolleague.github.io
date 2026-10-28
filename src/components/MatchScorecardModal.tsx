@@ -1558,10 +1558,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               </div>
 
               {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Edit Lineup / Make Subs) */}
-              {((activeSet === 1 && editable && !isMatchLockedBySignature && fixture.lagWinner) ||
+              {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner) ||
                 ((canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
-                  {activeSet === 1 && editable && !isMatchLockedBySignature && fixture.lagWinner && (
+                  {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && (
                     <button
                       type="button"
                       onClick={() => setIsChangingLagWinner((v) => !v)}
@@ -1593,8 +1593,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         <span>
                           {showLineupEditor
                             ? activeSet === 1
-                              ? 'Done Lineup'
-                              : 'Done Subs'
+                              ? 'Done Editing Lineup'
+                              : 'Done Making Subs'
                             : activeSet === 1
                             ? 'Edit Lineup'
                             : 'Make Subs'}
@@ -1739,8 +1739,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               )}
 
-              {/* Set 1 Lag Winner Prompt Box (shown when unselected or when Change Lag Winner is clicked) */}
-              {activeSet === 1 && (!fixture.lagWinner || isChangingLagWinner) && (
+              {/* Set 1 Lag Winner Prompt Box (shown when both lineups confirmed and unselected, or when Change Lag Winner is clicked) */}
+              {activeSet === 1 && bothSet1Locked && (!fixture.lagWinner || isChangingLagWinner) && (
                 <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
