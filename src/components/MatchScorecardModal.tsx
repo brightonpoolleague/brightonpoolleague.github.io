@@ -1230,6 +1230,60 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     </div>
   );
 
+  const renderLineupChangeRequestBanner = () => {
+    if (
+      !bothSet1Locked ||
+      (!fixture.lineups.unlockRequested?.home &&
+        !fixture.lineups.unlockRequested?.away)
+    ) {
+      return null;
+    }
+
+    return (
+      <div className="bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-lg animate-in fade-in duration-200">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
+          <div>
+            <strong className="text-white block text-sm font-bold">
+              {otherSide && fixture.lineups.unlockRequested?.[otherSide]
+                ? `${otherTeamName} captain requested to change their Set 1 lineup`
+                : `You have requested to change your Set 1 lineup`}
+            </strong>
+            <span className="text-slate-300 text-xs">
+              {otherSide && fixture.lineups.unlockRequested?.[otherSide]
+                ? `Lineups can only be edited if both captains agree. Click "Allow Lineup Changes" to unlock both teams for editing.`
+                : `Waiting for ${otherTeamName} captain to agree. Once they allow changes, both lineups will unlock for editing.`}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {otherSide &&
+            fixture.lineups.unlockRequested?.[otherSide] &&
+            mySide && (
+              <button
+                type="button"
+                onClick={() => handleToggleLockSet1(mySide)}
+                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                <span>Allow Lineup Changes</span>
+              </button>
+            )}
+          {mySide && fixture.lineups.unlockRequested?.[mySide] && (
+            <button
+              type="button"
+              onClick={() => handleToggleLockSet1(mySide)}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition"
+            >
+              Cancel Request
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col overflow-hidden overscroll-none touch-none"
@@ -1477,53 +1531,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           ) : null}
 
-          {/* Active Lineup Change Request Banner */}
-          {bothSet1Locked &&
-            (fixture.lineups.unlockRequested?.home ||
-              fixture.lineups.unlockRequested?.away) && (
-              <div className="bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-lg animate-in fade-in duration-200">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
-                  <div>
-                    <strong className="text-white block text-sm font-bold">
-                      {otherSide && fixture.lineups.unlockRequested?.[otherSide]
-                        ? `${otherTeamName} captain requested to change their Set 1 lineup`
-                        : `You have requested to change your Set 1 lineup`}
-                    </strong>
-                    <span className="text-slate-300 text-xs">
-                      {otherSide && fixture.lineups.unlockRequested?.[otherSide]
-                        ? `Lineups can only be edited if both captains agree. Click "Allow Lineup Changes" to unlock both teams for editing.`
-                        : `Waiting for ${otherTeamName} captain to agree. Once they allow changes, both lineups will unlock for editing.`}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  {otherSide &&
-                    fixture.lineups.unlockRequested?.[otherSide] &&
-                    mySide && (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleLockSet1(mySide)}
-                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                        <span>Allow Lineup Changes</span>
-                      </button>
-                    )}
-                  {mySide && fixture.lineups.unlockRequested?.[mySide] && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleLockSet1(mySide)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition"
-                    >
-                      Cancel Request
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
           {viewMode === 'mobile' ? (
             <>
               {/* Set Tabs (Set 1, Set 2, Set 3) */}
@@ -1599,6 +1606,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     )}
                 </div>
               )}
+
+              {/* Set 1 Lineup Change Request Banner (appears below Done Editing / Edit Lineup) */}
+              {activeSet === 1 && renderLineupChangeRequestBanner()}
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
               {showLineupEditor &&
@@ -1688,53 +1698,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               )}
 
-              {/* 5 Frame Cards for Active Set */}
-              {activeSet === 1 && (
-                <div
-                  className={`rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs border ${
-                    bothSet1Locked
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                      : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {bothSet1Locked ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                    )}
-                    <span className="leading-snug">
-                      {bothSet1Locked ? (
-                        <>
-                          <strong>Both Set 1 lineups confirmed!</strong> Match running order revealed &amp; frame scoring active.
-                        </>
-                      ) : fixture.homeSet1Locked && !fixture.awaySet1Locked ? (
-                        <>
-                          <strong className="text-white">{homeTeam.name}</strong> lineup confirmed (1/2). Waiting for <strong className="text-white">{awayTeam.name}</strong> captain to confirm.
-                        </>
-                      ) : !fixture.homeSet1Locked && fixture.awaySet1Locked ? (
-                        <>
-                          <strong className="text-white">{awayTeam.name}</strong> lineup confirmed (1/2). Waiting for <strong className="text-white">{homeTeam.name}</strong> captain to confirm.
-                        </>
-                      ) : (
-                        <>
-                          Both captains must confirm their Set 1 lineup before the running order is revealed and frame scores can be set (0/2 confirmed).
-                        </>
-                      )}
-                    </span>
-                  </div>
-                  {canManageLeague && !bothSet1Locked && (
-                    <button
-                      type="button"
-                      onClick={handleAdminQuickLockBoth}
-                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap shadow transition"
-                    >
-                      Admin: Confirm Both &amp; Begin
-                    </button>
-                  )}
-                </div>
-              )}
-
               {/* Set 1 Lag Winner Prompt Box (shown when both lineups confirmed and unselected, or when Change Lag Winner is clicked) */}
               {activeSet === 1 && bothSet1Locked && (!fixture.lagWinner || isChangingLagWinner) && (
                 <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
@@ -1785,6 +1748,53 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Set 1 Confirmation Status Banner */}
+              {activeSet === 1 && (
+                <div
+                  className={`rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs border ${
+                    bothSet1Locked
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {bothSet1Locked ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                    )}
+                    <span className="leading-snug">
+                      {bothSet1Locked ? (
+                        <>
+                          <strong>Both Set 1 lineups confirmed!</strong> Match running order revealed &amp; frame scoring active.
+                        </>
+                      ) : fixture.homeSet1Locked && !fixture.awaySet1Locked ? (
+                        <>
+                          <strong className="text-white">{homeTeam.name}</strong> lineup confirmed (1/2). Waiting for <strong className="text-white">{awayTeam.name}</strong> captain to confirm.
+                        </>
+                      ) : !fixture.homeSet1Locked && fixture.awaySet1Locked ? (
+                        <>
+                          <strong className="text-white">{awayTeam.name}</strong> lineup confirmed (1/2). Waiting for <strong className="text-white">{homeTeam.name}</strong> captain to confirm.
+                        </>
+                      ) : (
+                        <>
+                          Both captains must confirm their Set 1 lineup before the running order is revealed and frame scores can be set (0/2 confirmed).
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  {canManageLeague && !bothSet1Locked && (
+                    <button
+                      type="button"
+                      onClick={handleAdminQuickLockBoth}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap shadow transition"
+                    >
+                      Admin: Confirm Both &amp; Begin
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -2019,7 +2029,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </>
           ) : (
             /* Classic Paper Result Card View (replicates the physical Brighton Pool League Result Card) */
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="space-y-3">
+              {renderLineupChangeRequestBanner()}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
               <div className="bg-slate-950 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-800 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-emerald-400 truncate">
@@ -2271,6 +2283,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   </tfoot>
                 </table>
               </div>
+            </div>
             </div>
           )}
 
