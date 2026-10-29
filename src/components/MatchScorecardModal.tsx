@@ -1336,7 +1336,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5">
                 <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                 <span>
-                  Editing locked • Waiting for {fixture.homeCaptainSigned ? awayTeam.name : homeTeam.name} captain to sign
+                  Changes locked, waiting for {fixture.homeCaptainSigned ? awayTeam.name : homeTeam.name} captain to sign
                 </span>
               </div>
             )}
@@ -1344,7 +1344,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             {fixture.status === 'submitted' && (
               <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Match submitted • Awaiting league admin approval</span>
+                <span>Match submitted, awaiting league admin approval</span>
               </div>
             )}
 
