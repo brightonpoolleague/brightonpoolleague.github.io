@@ -976,7 +976,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Lock className="w-4 h-4 text-emerald-400" />
                     <span className="text-xs font-bold text-white">
-                      Set {setNumber} {setNumber === 1 ? 'Lineup' : 'Substitutions'} Confirmed &amp; Locked
+                      Set {setNumber} {setNumber === 1 ? 'Lineup' : 'Substitutions'} Confirmed
                     </span>
                   </div>
                   {canManageLeague && (
