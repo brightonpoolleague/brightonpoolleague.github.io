@@ -1972,29 +1972,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
                       >
-                        {activeSet === 1 ? (
-                          bothSet1Locked ? (
-                            <>
-                              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>Set 1 Lineup</span>
-                            </>
-                          ) : (
-                            <>
-                              <Users className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>Select Lineup</span>
-                            </>
-                          )
-                        ) : mySide && isSubsLocked(fixture.lineups, activeSet, mySide) ? (
-                          <>
-                            <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Make Subs</span>
-                          </>
-                        ) : (
-                          <>
-                            <Users className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Make Subs</span>
-                          </>
-                        )}
+                        <Users className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>
+                          {activeSet === 1 ? 'Select Lineup' : 'Make Subs'}
+                        </span>
                       </button>
                     )}
                 </div>
