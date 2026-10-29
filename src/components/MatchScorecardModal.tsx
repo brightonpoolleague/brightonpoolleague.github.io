@@ -2371,7 +2371,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                 {opponentLocked ? (
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                                 ) : (
-                                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                  <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />
                                 )}
                                 <span>
                                   {opponentTeam.name}:{' '}
@@ -2410,8 +2410,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {bothSet1Locked ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : fixture.homeSet1Locked || fixture.awaySet1Locked ? (
+                      <Loader2 className="w-4 h-4 text-amber-400 shrink-0 animate-spin" />
                     ) : (
-                      <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                      <EyeOff className="w-4 h-4 text-amber-400 shrink-0" />
                     )}
                     <span className="leading-snug">
                       {bothSet1Locked ? (
