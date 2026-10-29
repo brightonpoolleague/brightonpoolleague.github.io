@@ -727,8 +727,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       (side === 'home' ? fixture.homeSet1Locked : fixture.awaySet1Locked);
     const set1Complete = isSet1LineupComplete(side);
     const set1FilledCount = fixture.lineups.set1[side].filter(Boolean).length;
-    const hideSideSlots =
-      setNumber === 1 && !bothSet1Locked && !sideEditable;
+    const hideSideSlots = !bothSet1Locked && !sideEditable;
 
     const otherSide = side === 'home' ? 'away' : 'home';
     const myUnlockReq = Boolean(fixture.lineups.unlockRequested?.[side]);
@@ -1669,7 +1668,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
               {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Select Lineup / Make Subs) */}
               {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner) ||
-                (!showLineupEditor && (canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
+                (!showLineupEditor && (canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved' && (activeSet === 1 || bothSet1Locked))) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
                   {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner && (
                     <button
@@ -1689,7 +1688,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     (canSignHome || canSignAway) &&
                     !isSignedByAny &&
                     fixture.status !== 'submitted' &&
-                    fixture.status !== 'approved' && (
+                    fixture.status !== 'approved' &&
+                    (activeSet === 1 || bothSet1Locked) && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1765,6 +1765,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {showLineupEditor &&
                 !isSignedByAny &&
                 (canSignHome || canSignAway) &&
+                (activeSet === 1 || bothSet1Locked) &&
                 (() => {
                   const hasConfirmedSet1 =
                     mySide === 'home'
@@ -1881,8 +1882,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   );
                 })()}
 
-              {/* Set 1 Confirmation Status Banner */}
-              {activeSet === 1 && (
+              {/* Lineup Confirmation Status Banner */}
+              {(activeSet === 1 || !bothSet1Locked) && (
                 <div
                   className={`rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs border ${
                     bothSet1Locked
@@ -1938,10 +1939,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     fixture.lagWinner,
                     frame.frameNumber
                   );
-                  const hideHome =
-                    frame.setNumber === 1 && !bothSet1Locked && !canSignHome;
-                  const hideAway =
-                    frame.setNumber === 1 && !bothSet1Locked && !canSignAway;
+                  const hideHome = !bothSet1Locked && !canSignHome;
+                  const hideAway = !bothSet1Locked && !canSignAway;
 
                   const isByeFrame =
                     homePlayerId === 'BYE' || awayPlayerId === 'BYE';
@@ -2228,10 +2227,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       );
                       const isFirstInSet = frame.gameInSet === 1;
                       const isLastInSet = frame.gameInSet === 5;
-                      const hideHome =
-                        frame.setNumber === 1 && !bothSet1Locked && !canSignHome;
-                      const hideAway =
-                        frame.setNumber === 1 && !bothSet1Locked && !canSignAway;
+                      const hideHome = !bothSet1Locked && !canSignHome;
+                      const hideAway = !bothSet1Locked && !canSignAway;
 
                       return (
                         <tr

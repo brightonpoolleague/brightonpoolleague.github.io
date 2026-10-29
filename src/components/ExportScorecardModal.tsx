@@ -76,8 +76,10 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
     fixture.cupName ||
     (isKnockout ? 'Knockout Cup' : fixture.division);
 
+  const bothSet1Locked = fixture.homeSet1Locked && fixture.awaySet1Locked;
   const getPlayerName = (id: SlotPlayerId) => {
     if (!id) return '–';
+    if (!bothSet1Locked) return 'Hidden';
     if (id === 'BYE') return 'BYE';
     return players.find((p) => p.id === id)?.name || 'Unknown';
   };
