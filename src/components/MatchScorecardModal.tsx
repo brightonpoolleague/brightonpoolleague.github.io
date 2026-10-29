@@ -292,7 +292,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const score = calculateMatchScore({ ...fixture, frames, lineups });
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
-    if (hidden) return 'Hidden (Folded Scorecard)';
+    if (hidden) return 'Hidden';
     if (!playerId) return 'Unassigned';
     if (playerId === 'BYE') return 'No Player (BYE)';
     return players.find((p) => p.id === playerId)?.name ?? 'Unknown Player';
@@ -359,6 +359,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     fillMissing('home');
     fillMissing('away');
 
+    setShowLineupEditor(false);
     const updatedLineups = syncDefaultSubsequentSets(nextLineups);
     await saveFixture(
       {
@@ -486,6 +487,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (side === 'home') {
       const nextLocked = !fixture.homeSet1Locked;
       if (nextLocked && !isSet1LineupComplete('home')) return;
+      if (nextLocked) {
+        setShowLineupEditor(false);
+      }
       await saveFixture(
         {
           ...fixture,
@@ -500,6 +504,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     } else {
       const nextLocked = !fixture.awaySet1Locked;
       if (nextLocked && !isSet1LineupComplete('away')) return;
+      if (nextLocked) {
+        setShowLineupEditor(false);
+      }
       await saveFixture(
         {
           ...fixture,
@@ -793,7 +800,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 : `Awaiting ${team.name} Captain Set 1 Entry`}
             </p>
             <p className="text-[11px] text-slate-500">
-              Running order remains hidden (&ldquo;Folded Scorecard&rdquo;) until both captains confirm their Set 1 lineups.
+              Running order remains hidden until both captains confirm their Set 1 lineups.
             </p>
           </div>
         ) : setNumber === 1 ? (
@@ -1658,110 +1665,125 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {/* Set 1 Lineup Change Request Banner (appears below buttons and below Who Won the Lag box) */}
               {activeSet === 1 && renderLineupChangeRequestBanner()}
 
-              {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
+              {/* Blind Set 1 or Set 2/3 Substitutions Editor */}
               {showLineupEditor &&
                 !isSignedByAny &&
-                (canSignHome || canSignAway) && (
-                <div className="relative space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 sm:p-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowLineupEditor(false)}
-                    className="absolute top-3 right-3 p-1.5 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition shadow-sm z-10"
-                    title="Close"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                (canSignHome || canSignAway) &&
+                (() => {
+                  const hasConfirmedSet1 =
+                    mySide === 'home'
+                      ? Boolean(fixture.homeSet1Locked)
+                      : mySide === 'away'
+                      ? Boolean(fixture.awaySet1Locked)
+                      : Boolean(bothSet1Locked || canManageLeague);
+                  const canCloseLineupEditor = activeSet > 1 || hasConfirmedSet1;
 
-                  <div className="pr-10">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                      {activeSet === 1 ? (
-                        <>
-                          <EyeOff className="w-4 h-4 text-emerald-400" />
-                          Set 1 Blind Lineup Entry ("Folded Scorecard")
-                        </>
-                      ) : (
-                        <>
-                          <Users className="w-4 h-4 text-emerald-400" />
-                          Set {activeSet} Substitutions
-                        </>
-                      )}
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {activeSet === 1
-                        ? 'Each captain selects and confirms their own team’s 1–5 running order. Lineups are revealed once both teams confirm Set 1.'
-                        : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
-                    </p>
-                  </div>
-
-                  {(() => {
-                    const editableSides = (['home', 'away'] as const).filter(
-                      (s) => canEditSide(s)
-                    );
-                    const opponentSide =
-                      editableSides.length === 1
-                        ? editableSides[0] === 'home'
-                          ? 'away'
-                          : 'home'
-                        : null;
-                    const opponentTeam =
-                      opponentSide === 'home' ? homeTeam : awayTeam;
-                    const opponentLocked =
-                      opponentSide === 'home'
-                        ? fixture.homeSet1Locked
-                        : fixture.awaySet1Locked;
-
-                    return (
-                      <>
-                        <div
-                          className={`grid grid-cols-1 gap-3 ${
-                            editableSides.length > 1 ? 'md:grid-cols-2' : ''
-                          }`}
+                  return (
+                    <div className="relative space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 sm:p-4">
+                      {canCloseLineupEditor && (
+                        <button
+                          type="button"
+                          onClick={() => setShowLineupEditor(false)}
+                          className="absolute top-3 right-3 p-1.5 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition shadow-sm z-10"
+                          title="Close"
                         >
-                          {editableSides.map((s) => (
-                            <React.Fragment key={s}>
-                              {renderLineupSelector(activeSet, s)}
-                            </React.Fragment>
-                          ))}
-                        </div>
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
 
-                        {activeSet === 1 && opponentSide && (
-                          <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
-                            {opponentLocked ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Clock className="w-3.5 h-3.5 text-slate-500" />
+                      <div className={canCloseLineupEditor ? 'pr-10' : ''}>
+                        <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                          {activeSet === 1 ? (
+                            <>
+                              <EyeOff className="w-4 h-4 text-emerald-400" />
+                              Select your lineup
+                            </>
+                          ) : (
+                            <>
+                              <Users className="w-4 h-4 text-emerald-400" />
+                              Set {activeSet} Substitutions
+                            </>
+                          )}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {activeSet === 1
+                            ? 'Each captain selects and confirms their own team’s 1–5 running order. Lineups are revealed once both teams confirm Set 1.'
+                            : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
+                        </p>
+                      </div>
+
+                      {(() => {
+                        const editableSides = (['home', 'away'] as const).filter(
+                          (s) => canEditSide(s)
+                        );
+                        const opponentSide =
+                          editableSides.length === 1
+                            ? editableSides[0] === 'home'
+                              ? 'away'
+                              : 'home'
+                            : null;
+                        const opponentTeam =
+                          opponentSide === 'home' ? homeTeam : awayTeam;
+                        const opponentLocked =
+                          opponentSide === 'home'
+                            ? fixture.homeSet1Locked
+                            : fixture.awaySet1Locked;
+
+                        return (
+                          <>
+                            <div
+                              className={`grid grid-cols-1 gap-3 ${
+                                editableSides.length > 1 ? 'md:grid-cols-2' : ''
+                              }`}
+                            >
+                              {editableSides.map((s) => (
+                                <React.Fragment key={s}>
+                                  {renderLineupSelector(activeSet, s)}
+                                </React.Fragment>
+                              ))}
+                            </div>
+
+                            {activeSet === 1 && opponentSide && (
+                              <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
+                                {opponentLocked ? (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                ) : (
+                                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                )}
+                                <span>
+                                  {opponentTeam.name}:{' '}
+                                  <strong
+                                    className={
+                                      opponentLocked
+                                        ? 'text-emerald-300'
+                                        : 'text-slate-300'
+                                    }
+                                  >
+                                    {opponentLocked
+                                      ? 'Lineup confirmed'
+                                      : 'Awaiting lineup'}
+                                  </strong>
+                                </span>
+                              </div>
                             )}
-                            <span>
-                              {opponentTeam.name}:{' '}
-                              <strong
-                                className={
-                                  opponentLocked
-                                    ? 'text-emerald-300'
-                                    : 'text-slate-300'
-                                }
-                              >
-                                {opponentLocked
-                                  ? 'Lineup confirmed'
-                                  : 'Awaiting lineup'}
-                              </strong>
-                            </span>
-                          </div>
-                        )}
 
-                        <div className="flex items-center justify-end pt-2 border-t border-slate-800/60">
-                          <button
-                            type="button"
-                            onClick={() => setShowLineupEditor(false)}
-                            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700/60 transition shadow-sm"
-                          >
-                            {activeSet === 1 ? 'Close Lineup' : 'Close Subs'}
-                          </button>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+                            {activeSet > 1 && (
+                              <div className="flex items-center justify-end pt-2 border-t border-slate-800/60">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowLineupEditor(false)}
+                                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700/60 transition shadow-sm"
+                                >
+                                  Done Making Subs
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  );
+                })()}
 
               {/* Set 1 Confirmation Status Banner */}
               {activeSet === 1 && (
