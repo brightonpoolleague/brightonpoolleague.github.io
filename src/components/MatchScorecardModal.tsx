@@ -1277,11 +1277,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               -- Select Position {slotNum} Player --
                             </option>
                             {canSlotBeBye && (
-                              <option value="BYE">
-                                {slotIdx === 4
-                                  ? 'No Player (BYE)'
-                                  : 'No Player (BYE) — 3 players only'}
-                              </option>
+                              <option value="BYE">No Player (BYE)</option>
                             )}
                             {eligible.map(({ player, disabledReason }) => (
                               <option
