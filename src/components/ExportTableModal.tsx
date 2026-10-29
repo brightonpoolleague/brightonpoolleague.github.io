@@ -230,9 +230,6 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
               <h3 className="font-black text-white text-sm sm:text-base leading-tight">
                 {modalTitle || 'Export Image'}
               </h3>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                High-resolution ready to share on WhatsApp, Facebook, or print
-              </p>
             </div>
           </div>
 

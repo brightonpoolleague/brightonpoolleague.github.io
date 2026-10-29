@@ -225,9 +225,6 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
               <h3 className="font-black text-white text-sm sm:text-base leading-tight">
                 Export Result Scorecard
               </h3>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                High-resolution official scorecard graphic ready to share or save
-              </p>
             </div>
           </div>
 
