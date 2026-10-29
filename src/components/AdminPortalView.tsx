@@ -10,6 +10,7 @@ import {
   Edit3,
   History,
   KeyRound,
+  PlayCircle,
   Plus,
   Radio,
   RefreshCw,
@@ -1935,7 +1936,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             onClick={() => onSelectFixture(fix)}
                             className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
                           >
-                            <Edit3 className="w-3.5 h-3.5 shrink-0" />
+                            <PlayCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Scorecard</span>
                           </button>
                           <button
@@ -2451,9 +2452,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onSelectFixture(fix)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
                           >
-                            Inspect / Edit Scorecard
+                            <PlayCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>Scorecard</span>
                           </button>
                           {fix.status !== 'approved' ? (
                             <button
