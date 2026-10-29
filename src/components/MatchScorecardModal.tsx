@@ -1564,14 +1564,20 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 })}
               </div>
 
-              {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Edit Lineup / Make Subs) */}
+              {/* Set 1 Lineup Change Request Banner (above Select Lineup / Make Subs, below set selectors) */}
+              {activeSet === 1 && renderLineupChangeRequestBanner()}
+
+              {/* Action buttons below Set Tabs & Change Request Banner (Change Lag Winner on Set 1 & Select Lineup / Make Subs) */}
               {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner) ||
-                ((canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
+                (!showLineupEditor && (canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
                   {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner && (
                     <button
                       type="button"
-                      onClick={() => setIsChangingLagWinner(true)}
+                      onClick={() => {
+                        setIsChangingLagWinner(true);
+                        setShowLineupEditor(false);
+                      }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800 shadow-sm"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -1579,36 +1585,25 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </button>
                   )}
 
-                  {(canSignHome || canSignAway) &&
+                  {!showLineupEditor &&
+                    (canSignHome || canSignAway) &&
                     !isSignedByAny &&
                     fixture.status !== 'submitted' &&
                     fixture.status !== 'approved' && (
                       <button
                         type="button"
-                        onClick={() => setShowLineupEditor((v) => !v)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm ${
-                          showLineupEditor
-                            ? 'bg-emerald-600 text-white border-emerald-500'
-                            : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800'
-                        }`}
+                        onClick={() => {
+                          setShowLineupEditor(true);
+                          setIsChangingLagWinner(false);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
                       >
                         <Users className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>
-                          {showLineupEditor
-                            ? activeSet === 1
-                              ? 'Done Editing Lineup'
-                              : 'Done Making Subs'
-                            : activeSet === 1
-                            ? 'Edit Lineup'
-                            : 'Make Subs'}
-                        </span>
+                        <span>{activeSet === 1 ? 'Select Lineup' : 'Make Subs'}</span>
                       </button>
                     )}
                 </div>
               )}
-
-              {/* Set 1 Lineup Change Request Banner (appears below Done Editing / Edit Lineup) */}
-              {activeSet === 1 && renderLineupChangeRequestBanner()}
 
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
               {showLineupEditor &&
@@ -1636,6 +1631,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
                       </p>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowLineupEditor(false)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 transition shrink-0"
+                      title="Close"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Close</span>
+                    </button>
                   </div>
 
                   {(() => {
@@ -1698,8 +1703,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               )}
 
-              {/* Set 1 Lag Winner Prompt Box (shown when both lineups confirmed and unselected, or when Change Lag Winner is clicked) */}
-              {activeSet === 1 && bothSet1Locked && (!fixture.lagWinner || isChangingLagWinner) && (
+              {/* Set 1 Lag Winner Prompt Box (shown when both lineups confirmed and unselected, or when Change Lag Winner is clicked; collapsed when lineup box is open) */}
+              {activeSet === 1 && bothSet1Locked && !showLineupEditor && (!fixture.lagWinner || isChangingLagWinner) && (
                 <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
