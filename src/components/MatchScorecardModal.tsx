@@ -934,7 +934,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               ) : (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
                   <Clock className="w-3.5 h-3.5" />
-                  <span>{set1FilledCount}/5 Selected</span>
+                  <span>Awaiting Lineup</span>
                 </span>
               )
             ) : isSubsConfirmedAndLocked ? (
@@ -1053,7 +1053,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5"
                       >
                         <Pencil className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Edit Lineup</span>
+                        <span>Change Lineup</span>
                       </button>
                     )
                   ) : (
@@ -1091,13 +1091,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               setNumber === 1 ? (
                 /* Set 1 Lineup Selection Box */
                 <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-bold text-emerald-400">
-                      Select 1–5 Running Order
-                    </div>
-                    <span className="text-[11px] text-slate-400">
-                      {set1FilledCount}/5 slots chosen
-                    </span>
+                  <div className="text-xs font-bold text-emerald-400">
+                    Select 1–5 Running Order
                   </div>
 
                   <div className="space-y-2">
@@ -1149,20 +1144,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     })}
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-slate-400">
-                      {set1Complete
-                        ? 'All 5 positions selected'
-                        : `Select all 5 positions (${set1FilledCount}/5)`}
-                    </span>
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-end gap-2">
                     <button
                       type="button"
                       disabled={!set1Complete}
                       onClick={() => handleToggleLockSet1(side)}
                       className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
                     >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Confirm Lineup &amp; Lock</span>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Confirm</span>
                     </button>
                   </div>
                 </div>
@@ -1315,11 +1305,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       onClick={() => handleConfirmSubs(setNumber as 2 | 3, side)}
                       className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
                     >
-                      <Lock className="w-3.5 h-3.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>
                         {subsMade.length > 0
-                          ? `Confirm ${subsMade.length} Sub${subsMade.length > 1 ? 's' : ''} & Lock`
-                          : 'Confirm Lineup (No Subs) & Lock'}
+                          ? `Confirm ${subsMade.length} Sub${subsMade.length > 1 ? 's' : ''}`
+                          : 'Confirm'}
                       </span>
                     </button>
                   </div>
@@ -1420,8 +1410,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const renderLineupChangeRequestBanner = () => {
     if (
       !bothSet1Locked ||
-      (!fixture.lineups.unlockRequested?.home &&
-        !fixture.lineups.unlockRequested?.away)
+      !otherSide ||
+      !fixture.lineups.unlockRequested?.[otherSide]
     ) {
       return null;
     }
@@ -1432,38 +1422,23 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
           <div>
             <strong className="text-white block text-sm font-bold">
-              {otherSide && fixture.lineups.unlockRequested?.[otherSide]
-                ? `${otherTeamName} captain requested to change their Set 1 lineup`
-                : `You have requested to change your Set 1 lineup`}
+              {otherTeamName} captain requested to change their Set 1 lineup
             </strong>
             <span className="text-slate-300 text-xs">
-              {otherSide && fixture.lineups.unlockRequested?.[otherSide]
-                ? `Lineups can only be edited if both captains agree. Click "Allow Lineup Changes" to unlock both teams for editing.`
-                : `Waiting for ${otherTeamName} captain to agree. Once they allow changes, both lineups will unlock for editing.`}
+              Lineups are locked once confirmed. Click &ldquo;Allow Lineup Changes&rdquo; to unlock both teams for editing.
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {otherSide &&
-            fixture.lineups.unlockRequested?.[otherSide] &&
-            mySide && (
-              <button
-                type="button"
-                onClick={() => handleToggleLockSet1(mySide)}
-                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
-              >
-                <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                <span>Allow Lineup Changes</span>
-              </button>
-            )}
-          {mySide && fixture.lineups.unlockRequested?.[mySide] && (
+          {mySide && (
             <button
               type="button"
               onClick={() => handleToggleLockSet1(mySide)}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 transition"
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
             >
-              Cancel Request
+              <CheckCircle2 className="w-4 h-4 text-slate-950" />
+              <span>Allow Lineup Changes</span>
             </button>
           )}
         </div>
