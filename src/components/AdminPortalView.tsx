@@ -93,7 +93,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     'ALL' | 'live' | 'upcoming' | 'today' | 'past'
   >('ALL');
   const [approvalFilter, setApprovalFilter] = useState<
-    'all' | 'submitted' | 'live' | 'scheduled' | 'approved'
+    'all' | 'submitted' | 'live' | 'scheduled' | 'overdue' | 'approved'
   >('all');
   const [scorecardSearchQuery, setScorecardSearchQuery] = useState('');
 
@@ -2209,6 +2209,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
       {/* TAB 3: SCORECARD APPROVALS */}
       {activeTab === 'approvals' && (() => {
+        const isFixtureOverdue = (f: Fixture) => {
+          return (
+            f.status === 'scheduled' &&
+            getMatchTimeframe(f.matchDate, 'scheduled') === 'past'
+          );
+        };
+
         const submittedCount = fixtures.filter(
           (f) => f.status === 'submitted'
         ).length;
@@ -2216,12 +2223,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         const scheduledCount = fixtures.filter(
           (f) => f.status === 'scheduled'
         ).length;
+        const overdueCount = fixtures.filter(isFixtureOverdue).length;
         const approvedCount = fixtures.filter(
           (f) => f.status === 'approved'
         ).length;
 
         const filterTabs: {
-          id: 'all' | 'submitted' | 'live' | 'scheduled' | 'approved';
+          id: 'all' | 'submitted' | 'live' | 'scheduled' | 'overdue' | 'approved';
           label: string;
           count: number;
         }[] = [
@@ -2229,6 +2237,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           { id: 'submitted', label: 'Awaiting Approval', count: submittedCount },
           { id: 'live', label: 'Live', count: liveCount },
           { id: 'scheduled', label: 'Scheduled', count: scheduledCount },
+          { id: 'overdue', label: 'Overdue', count: overdueCount },
           { id: 'approved', label: 'Approved', count: approvedCount },
         ];
 
@@ -2241,7 +2250,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
         const filtered = fixtures
           .filter((f) => {
-            if (approvalFilter !== 'all' && f.status !== approvalFilter) {
+            if (approvalFilter === 'overdue') {
+              if (!isFixtureOverdue(f)) return false;
+            } else if (approvalFilter !== 'all' && f.status !== approvalFilter) {
               return false;
             }
             if (scorecardSearchQuery.trim()) {
@@ -2306,6 +2317,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           ? 'bg-amber-500/20 text-amber-300'
                           : tab.id === 'live' && tab.count > 0
                           ? 'bg-red-500/20 text-red-300'
+                          : tab.id === 'overdue' && tab.count > 0
+                          ? 'bg-rose-500/20 text-rose-300'
                           : 'bg-slate-800 text-slate-400'
                       }`}
                     >
@@ -2357,7 +2370,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     <>
                       <p>
                         No scorecards match &ldquo;<strong>{scorecardSearchQuery}</strong>&rdquo;
-                        {approvalFilter !== 'all' && <span> with status <strong>{approvalFilter}</strong></span>}.
+                        {approvalFilter !== 'all' && (
+                          <span>
+                            {' '}with status <strong>{approvalFilter === 'overdue' ? 'Overdue' : approvalFilter === 'submitted' ? 'Awaiting Approval' : approvalFilter}</strong>
+                          </span>
+                        )}.
                       </p>
                       <button
                         type="button"
@@ -2379,6 +2396,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         ? 'No matches currently live.'
                         : approvalFilter === 'scheduled'
                         ? 'No upcoming scheduled matches.'
+                        : approvalFilter === 'overdue'
+                        ? 'No overdue scorecards.'
                         : approvalFilter === 'approved'
                         ? 'No approved scorecards yet.'
                         : `No matches recorded for ${seasonName} yet.`}
@@ -2431,10 +2450,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   ? 'bg-amber-500/20 text-amber-300'
                                   : fix.status === 'live'
                                   ? 'bg-red-500/20 text-red-300 animate-pulse'
+                                  : isFixtureOverdue(fix)
+                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                                   : 'bg-slate-800 text-slate-400'
                               }`}
                             >
-                              {fix.status === 'submitted' ? 'Awaiting Approval' : fix.status}
+                              {fix.status === 'submitted'
+                                ? 'Awaiting Approval'
+                                : isFixtureOverdue(fix)
+                                ? 'Overdue'
+                                : fix.status}
                             </span>
                           </div>
                           <div className="font-bold text-white text-sm sm:text-base break-words">
