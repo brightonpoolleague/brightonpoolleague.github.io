@@ -299,7 +299,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (mySide === 'home') {
       if (homeSigned) {
         // I have signed, waiting for away
-        return `Waiting for ${awayTeam.name} to sign (to make changes, you must unsign)`;
+        return `Waiting for ${awayTeam.name} captain to sign (to make changes, you must unsign)`;
       } else {
         // Away signed, waiting for me
         return `Waiting for you to sign (to make changes, ${awayTeam.name} captain must unsign)`;
@@ -309,7 +309,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (mySide === 'away') {
       if (awaySigned) {
         // I have signed, waiting for home
-        return `Waiting for ${homeTeam.name} to sign (to make changes, you must unsign)`;
+        return `Waiting for ${homeTeam.name} captain to sign (to make changes, you must unsign)`;
       } else {
         // Home signed, waiting for me
         return `Waiting for you to sign (to make changes, ${homeTeam.name} captain must unsign)`;
@@ -318,9 +318,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
     // Admin or neutral viewing
     if (homeSigned) {
-      return `Waiting for ${awayTeam.name} to sign (to make changes, ${homeTeam.name} captain must unsign)`;
+      return `Waiting for ${awayTeam.name} captain to sign (to make changes, ${homeTeam.name} captain must unsign)`;
     } else {
-      return `Waiting for ${homeTeam.name} to sign (to make changes, ${awayTeam.name} captain must unsign)`;
+      return `Waiting for ${homeTeam.name} captain to sign (to make changes, ${awayTeam.name} captain must unsign)`;
     }
   }, [
     isSignedByAny,
