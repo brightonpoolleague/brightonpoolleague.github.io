@@ -107,7 +107,7 @@ export const LeagueTableView: React.FC = () => {
               >
                 <span className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
               </span>
-              <span>Include Live &amp; Unapproved Matches</span>
+              <span>Include Live &amp; Unapproved</span>
             </button>
           </div>
         </div>

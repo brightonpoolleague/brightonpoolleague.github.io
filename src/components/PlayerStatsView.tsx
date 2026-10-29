@@ -3,7 +3,6 @@ import {
   BarChart3,
   Camera,
   Search,
-  ShieldCheck,
   Sparkles,
   Trophy,
 } from 'lucide-react';
@@ -21,7 +20,7 @@ export const PlayerStatsView: React.FC = () => {
     'averages'
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const [includeLive, setIncludeLive] = useState(true);
+  const [includeLive, setIncludeLive] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Player averages are strictly per division (never across All Divisions)
@@ -80,31 +79,30 @@ export const PlayerStatsView: React.FC = () => {
               <span>Export</span>
             </button>
 
-            <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-              <button
-                type="button"
-                onClick={() => setIncludeLive(true)}
-                className={`px-3 py-1.5 rounded-lg font-bold transition ${
-                  includeLive
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-400 hover:text-white'
+            <button
+              type="button"
+              onClick={() => setIncludeLive((prev) => !prev)}
+              aria-pressed={includeLive}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                includeLive
+                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/40'
+                  : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title={
+                includeLive
+                  ? 'Currently including live & unapproved matches'
+                  : 'Currently showing approved matches only'
+              }
+            >
+              <span
+                className={`w-6 h-3.5 rounded-full transition-colors flex items-center p-0.5 ${
+                  includeLive ? 'bg-emerald-500 justify-end' : 'bg-slate-700 justify-start'
                 }`}
               >
-                Include Live
-              </button>
-              <button
-                type="button"
-                onClick={() => setIncludeLive(false)}
-                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg font-bold transition ${
-                  !includeLive
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Approved Only
-              </button>
-            </div>
+                <span className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
+              </span>
+              <span>Include Live &amp; Unapproved</span>
+            </button>
           </div>
         </div>
 
