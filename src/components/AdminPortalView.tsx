@@ -604,42 +604,46 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
 
         {/* Admin Section Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="grid grid-cols-3 gap-1 sm:gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
           <button
             type="button"
             onClick={() => setActiveTab('teams')}
-            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 sm:px-2.5 rounded-lg text-[11px] sm:text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${
               activeTab === 'teams'
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
-            <span className="truncate">Teams &amp; PINs ({teams.length})</span>
+            <Users className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+            <span className="text-center whitespace-nowrap">
+              Teams &amp; PINs<span className="hidden sm:inline"> ({teams.length})</span>
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('fixtures')}
-            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 sm:px-2.5 rounded-lg text-[11px] sm:text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${
               activeTab === 'fixtures'
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            <span className="truncate">Fixtures ({fixtures.length})</span>
+            <Calendar className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+            <span className="text-center whitespace-nowrap">
+              Fixtures<span className="hidden sm:inline"> ({fixtures.length})</span>
+            </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('approvals')}
-            className={`py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 sm:px-2.5 rounded-lg text-[11px] sm:text-xs font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 ${
               activeTab === 'approvals'
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span className="truncate">Scorecards</span>
+            <CheckCircle2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+            <span className="text-center whitespace-nowrap">Scorecards</span>
           </button>
         </div>
       </div>
