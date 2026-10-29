@@ -546,11 +546,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         nextLineups.set3[side][slotIndex] = value;
       }
     } else if (setNumber === 2) {
-      if (
-        nextLineups.set3[side][slotIndex] === null ||
-        nextLineups.set3[side][slotIndex] === fixture.lineups.set2[side][slotIndex]
-      ) {
-        nextLineups.set3[side][slotIndex] = value;
+      const s3Locked = Boolean(fixture.lineups.subsLocked?.set3?.[side]);
+      const s3Pending = Boolean(fixture.lineups.subsPendingApproval?.set3?.[side]);
+      if (!s3Locked && !s3Pending) {
+        if (
+          nextLineups.set3[side][slotIndex] === null ||
+          nextLineups.set3[side][slotIndex] === fixture.lineups.set2[side][slotIndex] ||
+          nextLineups.set3[side][slotIndex] === fixture.lineups.set1[side][slotIndex]
+        ) {
+          nextLineups.set3[side][slotIndex] = value;
+        }
       }
     }
 
@@ -667,6 +672,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       nextLineups.subsUnlockRequested[setKey]![side] = false;
     }
 
+    // If confirming Set 2 subs, cascade to Set 3 if Set 3 has not been customized/locked
+    if (setNumber === 2) {
+      const s3Locked = Boolean(nextLineups.subsLocked?.set3?.[side]);
+      const s3Pending = Boolean(nextLineups.subsPendingApproval?.set3?.[side]);
+      if (!s3Locked && !s3Pending) {
+        nextLineups.set3[side] = [...nextLineups.set2[side]] as MatchLineups['set3']['home'];
+      }
+    }
+
     await saveFixture(
       {
         ...fixture,
@@ -692,6 +706,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         ? fixture.lineups.set1[side]
         : fixture.lineups.set2[side];
     nextLineups[setKey][side] = [...prevSlots] as MatchLineups['set2']['home'];
+
+    // If cancelling Set 2 subs, also revert Set 3 if Set 3 was not customized/locked
+    if (setNumber === 2) {
+      const s3Locked = Boolean(nextLineups.subsLocked?.set3?.[side]);
+      const s3Pending = Boolean(nextLineups.subsPendingApproval?.set3?.[side]);
+      if (!s3Locked && !s3Pending) {
+        nextLineups.set3[side] = [...prevSlots] as MatchLineups['set3']['home'];
+      }
+    }
 
     await saveFixture(
       {
@@ -723,6 +746,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       nextLineups.subsPendingApproval[setKey] = {};
     }
     nextLineups.subsPendingApproval[setKey]![sideToApprove] = false;
+
+    // If approving Set 2 subs, cascade to Set 3 if Set 3 has not been customized/locked
+    if (setNumber === 2) {
+      const s3Locked = Boolean(nextLineups.subsLocked?.set3?.[sideToApprove]);
+      const s3Pending = Boolean(nextLineups.subsPendingApproval?.set3?.[sideToApprove]);
+      if (!s3Locked && !s3Pending) {
+        nextLineups.set3[sideToApprove] = [...nextLineups.set2[sideToApprove]] as MatchLineups['set3']['home'];
+      }
+    }
 
     setShowLineupEditorBySet((prev) => ({ ...prev, [setNumber]: false }));
     await saveFixture(
