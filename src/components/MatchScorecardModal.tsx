@@ -1768,8 +1768,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     }
                                   >
                                     {opponentLocked
-                                      ? 'Lineup confirmed'
-                                      : 'Awaiting lineup'}
+                                      ? 'Lineup Confirmed'
+                                      : 'Awaiting Lineup'}
                                   </strong>
                                 </span>
                               </div>
