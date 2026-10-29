@@ -249,11 +249,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const statusTabs: { id: StatusFilter; label: string }[] = [
     ...(isCaptain ? [{ id: 'mine' as const, label: 'My Matches' }] : []),
     { id: 'all', label: 'All Matches' },
-    { id: 'live', label: 'Live Now' },
+    { id: 'live', label: 'Live' },
     { id: 'scheduled', label: 'Upcoming' },
     { id: 'past', label: 'Past Date' },
     { id: 'submitted', label: 'Awaiting Approval' },
-    { id: 'approved', label: 'Approved Results' },
+    { id: 'approved', label: 'Approved' },
   ];
 
   return (
