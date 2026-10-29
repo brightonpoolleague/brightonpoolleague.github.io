@@ -1081,170 +1081,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       fixture.status === 'submitted' ||
       fixture.status === 'approved');
 
-  const renderSignOffCard = () => (
-    <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3.5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h4 className="text-sm font-bold text-white">
-            Captain Sign-Off & Result Submission
-          </h4>
-          <p className="text-xs text-slate-400">
-            {isKnockout
-              ? `${knockoutDisplay} match decided (${playAllFrames ? 'all 15 frames recorded' : 'first to 8 frames'}) — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the knockout result.`
-              : `All 15 frames recorded — final score ${homeTeam.name} ${score.homeFrames}–${score.awayFrames} ${awayTeam.name}. Both captains sign to submit the result.`}
-          </p>
-        </div>
-        {fixture.status === 'approved' && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
-            <ShieldCheck className="w-4 h-4" /> Officially Approved
-          </span>
-        )}
-      </div>
 
-      {/* Prompt to Finish Match once 2nd captain signs */}
-      {isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-        <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/90 to-slate-900 border-2 border-emerald-500/50 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="text-sm font-black text-white flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Both Captains Have Signed</span>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              All signatures are complete. Press <strong>Finish Match</strong> to submit this official result to the league.
-            </p>
-            <p className="text-[11px] text-slate-400">
-              Need to make changes before submitting? Both captains need to unsign below to unlock editing.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={!canSignHome && !canSignAway && !canManageLeague}
-            onClick={handleFinishMatch}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm shadow-md transition shrink-0 disabled:opacity-50"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Finish Match</span>
-          </button>
-        </div>
-      )}
-
-      {/* Warning when 1 captain has signed and waiting for the 2nd */}
-      {isSignedByAny && !isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
-          <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <span className="leading-relaxed">
-            {fixture.homeCaptainSigned
-              ? `${homeTeam.name} captain has signed. Match editing is now locked for captains.`
-              : `${awayTeam.name} captain has signed. Match editing is now locked for captains.`}{' '}
-            Waiting for the second captain to sign. If you need to make changes before submitting, both captains need to unsign.
-          </span>
-        </div>
-      )}
-
-      {/* Submitted status notice */}
-      {fixture.status === 'submitted' && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              Match has been submitted. Changes can only be made by league admins.
-            </span>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          type="button"
-          disabled={!canSignHome}
-          onClick={() => handleToggleSign('home')}
-          className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
-            fixture.homeCaptainSigned
-              ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
-              : canSignHome
-              ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-              : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
-          }`}
-        >
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-400">
-              Home Captain Signature
-            </div>
-            <div className="font-bold text-sm">
-              {homeTeam.captainName || homeTeam.name}
-            </div>
-          </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
-            {fixture.homeCaptainSigned
-              ? canSignHome && fixture.status !== 'submitted' && fixture.status !== 'approved'
-                ? '✓ Signed (Tap to Unsign)'
-                : '✓ Signed'
-              : canSignHome
-              ? 'Tap to Sign'
-              : 'Home Captain Only'}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          disabled={!canSignAway}
-          onClick={() => handleToggleSign('away')}
-          className={`flex items-center justify-between p-3 rounded-xl border text-left transition ${
-            fixture.awayCaptainSigned
-              ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
-              : canSignAway
-              ? 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
-              : 'bg-slate-950/60 border-slate-800/60 text-slate-500 opacity-75 cursor-not-allowed'
-          }`}
-        >
-          <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-400">
-              Away Captain Signature
-            </div>
-            <div className="font-bold text-sm">
-              {awayTeam.captainName || awayTeam.name}
-            </div>
-          </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700">
-            {fixture.awayCaptainSigned
-              ? canSignAway && fixture.status !== 'submitted' && fixture.status !== 'approved'
-                ? '✓ Signed (Tap to Unsign)'
-                : '✓ Signed'
-              : canSignAway
-              ? 'Tap to Sign'
-              : 'Away Captain Only'}
-          </span>
-        </button>
-      </div>
-
-      {canManageLeague && (
-        <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs text-slate-400">League Admin Controls:</span>
-          <div className="flex items-center gap-2">
-            {fixture.status !== 'approved' ? (
-              <button
-                type="button"
-                onClick={handleApproveScorecard}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                Approve Official Scorecard
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => reopenFixture(fixture.id)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold"
-              >
-                <Unlock className="w-3.5 h-3.5" />
-                Reopen Scorecard for Editing
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   const renderLineupChangeRequestBanner = () => {
     if (
@@ -1490,6 +1327,157 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         </div>
       </div>
 
+      {/* Fixed Captain Sign-Off & Finish Match Section (appears once match is complete for logged-in captains/admin) */}
+      {showSignOff && (
+        <div className="bg-slate-900/95 border-b border-slate-800 px-3 sm:px-6 py-2.5 shrink-0 shadow-md">
+          <div className="max-w-4xl mx-auto space-y-2">
+            {/* Shorter, simpler status indicator */}
+            {isSignedByAny && !isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5">
+                <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>
+                  Editing locked • Waiting for {fixture.homeCaptainSigned ? awayTeam.name : homeTeam.name} captain to sign
+                </span>
+              </div>
+            )}
+
+            {fixture.status === 'submitted' && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Match submitted • Awaiting league admin approval</span>
+              </div>
+            )}
+
+            {fixture.status === 'approved' && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Officially Approved by League Admin</span>
+              </div>
+            )}
+
+            {/* Captain Signatures Row */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {/* Home Captain */}
+              <button
+                type="button"
+                disabled={!canSignHome}
+                onClick={() => handleToggleSign('home')}
+                className={`flex items-center justify-between gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-left transition ${
+                  fixture.homeCaptainSigned
+                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
+                    : canSignHome
+                    ? 'bg-slate-950 border-slate-700 hover:border-emerald-500 text-slate-200 hover:bg-slate-800 cursor-pointer shadow-sm'
+                    : 'bg-slate-950/60 border-slate-800/80 text-slate-500 cursor-not-allowed opacity-75'
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
+                    Home Captain
+                  </div>
+                  <div className="font-semibold text-white truncate text-[11px] sm:text-xs">
+                    {homeTeam.captainName || homeTeam.name}
+                  </div>
+                </div>
+                <span
+                  className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap ${
+                    fixture.homeCaptainSigned
+                      ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                      : canSignHome
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  {fixture.homeCaptainSigned
+                    ? canSignHome && fixture.status !== 'submitted' && fixture.status !== 'approved'
+                      ? '✓ Signed (Unsign)'
+                      : '✓ Signed'
+                    : canSignHome
+                    ? 'Sign'
+                    : 'Pending'}
+                </span>
+              </button>
+
+              {/* Away Captain */}
+              <button
+                type="button"
+                disabled={!canSignAway}
+                onClick={() => handleToggleSign('away')}
+                className={`flex items-center justify-between gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-left transition ${
+                  fixture.awayCaptainSigned
+                    ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-200'
+                    : canSignAway
+                    ? 'bg-slate-950 border-slate-700 hover:border-emerald-500 text-slate-200 hover:bg-slate-800 cursor-pointer shadow-sm'
+                    : 'bg-slate-950/60 border-slate-800/80 text-slate-500 cursor-not-allowed opacity-75'
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
+                    Away Captain
+                  </div>
+                  <div className="font-semibold text-white truncate text-[11px] sm:text-xs">
+                    {awayTeam.captainName || awayTeam.name}
+                  </div>
+                </div>
+                <span
+                  className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap ${
+                    fixture.awayCaptainSigned
+                      ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                      : canSignAway
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  {fixture.awayCaptainSigned
+                    ? canSignAway && fixture.status !== 'submitted' && fixture.status !== 'approved'
+                      ? '✓ Signed (Unsign)'
+                      : '✓ Signed'
+                    : canSignAway
+                    ? 'Sign'
+                    : 'Pending'}
+                </span>
+              </button>
+            </div>
+
+            {/* Attached Finish Match Button once both have signed */}
+            {isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+              <button
+                type="button"
+                disabled={!canSignHome && !canSignAway && !canManageLeague}
+                onClick={handleFinishMatch}
+                className="w-full inline-flex items-center justify-center gap-2 py-2 sm:py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm shadow-md transition disabled:opacity-50 animate-in fade-in slide-in-from-top-1 duration-150"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Finish Match</span>
+              </button>
+            )}
+
+            {/* League Admin Controls */}
+            {canManageLeague && fixture.status === 'submitted' && (
+              <button
+                type="button"
+                onClick={handleApproveScorecard}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Approve Official Scorecard</span>
+              </button>
+            )}
+            {canManageLeague && fixture.status === 'approved' && (
+              <div className="flex justify-end pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => reopenFixture(fixture.id)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition"
+                >
+                  <Unlock className="w-3 h-3" />
+                  <span>Reopen Scorecard</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Main Scrollable Content */}
       <div
         ref={scrollContainerRef}
@@ -1525,24 +1513,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           )}
 
-          {!editable && isLoggedIn && (fixture.status === 'submitted' || fixture.status === 'approved') ? (
-            <div className="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-300">
-              <span>
-                {fixture.status === 'approved'
-                  ? 'This match has been officially approved by the League Admin.'
-                  : 'This match has been submitted. Changes can only be made by league admins.'}
-              </span>
-            </div>
-          ) : isLoggedIn && isMatchLockedBySignature && fixture.status !== 'submitted' && fixture.status !== 'approved' ? (
-            <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs text-amber-200">
-              <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>
-                  Match signed by {isSignedByBoth ? 'both captains' : fixture.homeCaptainSigned ? `${homeTeam.name} captain` : `${awayTeam.name} captain`}. Further changes to scores and lineups are locked. If you need to make changes before submitting, both captains need to unsign below.
-                </span>
-              </div>
-            </div>
-          ) : null}
+
 
           {viewMode === 'mobile' ? (
             <>
@@ -2327,8 +2298,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           )}
 
-          {/* Captain Signatures & League Admin Approval Card (bottom) */}
-          {showSignOff && renderSignOffCard()}
+
         </div>
       </div>
 
