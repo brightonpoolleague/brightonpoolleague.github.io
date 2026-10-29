@@ -6,7 +6,6 @@ import {
   MapPin,
   Search,
   Shield,
-  Sparkles,
   Table as TableIcon,
   Users,
 } from 'lucide-react';
@@ -18,9 +17,6 @@ export const TeamsAndVenuesView: React.FC = () => {
 
   const isCaptain = session.role === 'captain' && Boolean(session.teamId);
   const myTeam = isCaptain ? teams.find((t) => t.id === session.teamId) : null;
-  const mySquad = myTeam
-    ? players.filter((p) => p.teamId === myTeam.id && p.active)
-    : [];
 
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,130 +210,6 @@ export const TeamsAndVenuesView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Team Captain Spotlight: My Team & Venue */}
-      {isCaptain && myTeam && (() => {
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${myTeam.venue}, ${myTeam.address || 'Brighton'}`
-        )}`;
-
-        return (
-          <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-5 shadow-xl space-y-3.5">
-            {/* Top Row: Tag, Division, Table */}
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  MY TEAM &amp; VENUE
-                </span>
-                <span className="text-slate-400 font-semibold">
-                  {myTeam.division}
-                </span>
-                {myTeam.tableNumber && (
-                  <>
-                    <span className="text-slate-600">•</span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold">
-                      <TableIcon className="w-3 h-3" />
-                      {myTeam.tableNumber}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Middle: Team & Venue info grid */}
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {/* Left col: Team & Captain */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-black text-base sm:text-xl text-white">
-                    {myTeam.name}
-                  </h3>
-                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
-                    Your Team
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                  <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>
-                    Team Captain: <strong className="text-white">{myTeam.captainName || 'TBD'}</strong>
-                  </span>
-                </div>
-              </div>
-
-              {/* Right col: Home Venue & Directions */}
-              <div className="space-y-2 flex flex-col justify-between">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 min-w-0">
-                    <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <div className="min-w-0">
-                      <div className="font-bold text-white text-sm sm:text-base truncate">
-                        {myTeam.venue}
-                      </div>
-                      {myTeam.address && (
-                        <div className="text-xs text-slate-400 leading-snug">
-                          {myTeam.address}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <a
-                    href={mapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition shrink-0"
-                    title="Get directions on Google Maps"
-                  >
-                    <span>Directions</span>
-                    <ExternalLink className="w-3 h-3 text-emerald-400" />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Registered Squad Section: show all players! */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-white flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
-                  Registered Squad ({mySquad.length} Players)
-                </span>
-              </div>
-
-              {mySquad.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {mySquad.map((player) => {
-                    const isCap =
-                      player.name.trim().toLowerCase() ===
-                      (myTeam.captainName || '').trim().toLowerCase();
-                    return (
-                      <span
-                        key={player.id}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border ${
-                          isCap
-                            ? 'bg-amber-500/20 text-amber-200 border-amber-500/40 font-bold'
-                            : 'bg-slate-900 text-slate-200 border-slate-800 font-medium'
-                        }`}
-                      >
-                        <span>{player.name}</span>
-                        {isCap && (
-                      <span className="text-[10px] bg-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded font-black leading-none">
-                            CAPTAIN
-                          </span>
-                        )}
-                      </span>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 italic">No players registered yet.</p>
-              )}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Content Area */}
       {filteredTeams.length === 0 ? (
