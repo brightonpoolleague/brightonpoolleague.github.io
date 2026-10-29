@@ -905,18 +905,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: 'Please enter your 6-digit Team PIN.' };
       }
 
-      // Check if user accidentally entered the League Admin PIN in the captain box
-      if (
-        (adminPin && cleanPin === adminPin.trim()) ||
-        cleanPin === DEFAULT_ADMIN_PIN ||
-        cleanPin === '00000000'
-      ) {
-        return {
-          success: false,
-          error: 'This is the League Admin PIN. Please switch to the League Admin tab above to log in.',
-        };
-      }
-
       const supabase = getSupabaseClient();
       if (supabase) {
         // Direct lookup by unique PIN via dedicated RPC
