@@ -5,7 +5,6 @@ import {
   KeyRound,
   Search,
   Shield,
-  ShieldCheck,
   UserCheck,
   X,
 } from 'lucide-react';
@@ -29,9 +28,8 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     loginAsAdminWithPin,
   } = useLeague();
 
-  const [loginTab, setLoginTab] = useState<'captain' | 'admin'>(
-    session.role === 'admin' ? 'admin' : 'captain'
-  );
+  const [loginTab, setLoginTab] = useState<'captain' | 'admin'>('captain');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [selectedTeamId, setSelectedTeamId] = useState<string>(
     session.teamId || ''
@@ -109,7 +107,8 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
 
   const handleCaptainLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTeamId) return;
+    if (!selectedTeamId || isSubmitting) return;
+    setIsSubmitting(true);
     const res = await loginAsCaptainWithPin(selectedTeamId, captainPinInput);
     if (res.success) {
       setCaptainError('');
@@ -118,11 +117,14 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
       setCaptainError(
         res.error || 'Incorrect Team Captain PIN. Check with League Admin.'
       );
+      setIsSubmitting(false);
     }
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const res = await loginAsAdminWithPin(adminPinInput);
     if (res.success) {
       setAdminError('');
@@ -130,6 +132,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
       onClose();
     } else {
       setAdminError(res.error || 'Incorrect League Admin PIN.');
+      setIsSubmitting(false);
     }
   };
 
@@ -324,10 +327,10 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   />
                   <button
                     type="submit"
-                    disabled={!selectedTeamId}
+                    disabled={!selectedTeamId || isSubmitting}
                     className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
                   >
-                    Log In
+                    {isSubmitting ? 'Logging In...' : 'Log In'}
                   </button>
                 </div>
                 {captainError && (
@@ -342,25 +345,6 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               </p>
             )}
           </form>
-        ) : session.role === 'admin' ? (
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 text-center">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/40">
-              <ShieldCheck className="w-4 h-4" /> You are logged in as League Admin
-            </div>
-            <p className="text-xs text-slate-400">
-              You have full administrative privileges to manage teams, players, fixtures, and scorecards.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                onAdminLoginSuccess?.();
-                onClose();
-              }}
-              className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
-            >
-              Go to League Admin Control Panel
-            </button>
-          </div>
         ) : (
           <form
             onSubmit={handleAdminLogin}
@@ -387,9 +371,10 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
               >
-                Log In
+                {isSubmitting ? 'Logging In...' : 'Log In'}
               </button>
             </div>
             {adminError && (
