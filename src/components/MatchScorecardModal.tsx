@@ -2128,36 +2128,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               </div>
                             )}
 
-                            {activeSet > 1 && (
-                              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setShowLineupEditor(false)}
-                                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700/60 transition shadow-sm"
-                                >
-                                  Close Box
-                                </button>
-                                {mySide &&
-                                  !isSubsLocked(
-                                    fixture.lineups,
-                                    activeSet,
-                                    mySide
-                                  ) && (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleConfirmSubs(activeSet as 2 | 3, mySide)
-                                      }
-                                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5"
-                                    >
-                                      <Lock className="w-3.5 h-3.5" />
-                                      <span>
-                                        Confirm Set {activeSet} Lineup &amp; Lock
-                                      </span>
-                                    </button>
-                                  )}
-                              </div>
-                            )}
+
                           </>
                         );
                       })()}
