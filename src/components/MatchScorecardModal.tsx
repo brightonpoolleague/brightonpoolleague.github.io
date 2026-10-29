@@ -1235,14 +1235,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               ) : isPendingApproval ? (
                 /* Set 2 / Set 3 Pending Approval Card */
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-                      <span className="text-xs font-bold text-white">
-                        Waiting for {otherTeam.name} captain to approve substitutions
-                      </span>
-                    </div>
+                <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5">
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <span className="text-[11px] text-amber-300 flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Waiting for {otherTeam.name} captain to approve substitutions...
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleCancelSubsPendingApproval(setNumber as 2 | 3, side)}
@@ -1251,18 +1249,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       Cancel Request
                     </button>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    <strong className="text-amber-300">
-                      {subsMade.length} substitution{subsMade.length > 1 ? 's' : ''} submitted:
-                    </strong>{' '}
-                    {subsMade
-                      .map(
-                        (s) =>
-                          `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
-                      )
-                      .join(', ')}
-                    .
-                  </p>
                 </div>
               ) : (
                 /* Set 2 & Set 3 Substitution Box */
@@ -1594,9 +1580,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     );
 
     return (
-      <div className="bg-emerald-500/15 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-200 shadow-lg animate-in fade-in duration-200">
+      <div className="bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-lg animate-in fade-in duration-200">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Users className="w-5 h-5 text-emerald-400 shrink-0" />
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
           <div>
             <strong className="text-white block text-sm font-bold">
               {otherTeamName} captain made Set {activeSet} substitution{otherSubs.length > 1 ? 's' : ''}
@@ -1619,9 +1605,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           <button
             type="button"
             onClick={() => handleApproveSubs(activeSet as 2 | 3, otherSide)}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
           >
-            <CheckCircle2 className="w-4 h-4 text-white" />
+            <CheckCircle2 className="w-4 h-4 text-slate-950" />
             <span>Approve Substitutions</span>
           </button>
         </div>
