@@ -72,6 +72,10 @@ export interface MatchLineups {
     set2?: { home?: boolean; away?: boolean };
     set3?: { home?: boolean; away?: boolean };
   };
+  subsPendingApproval?: {
+    set2?: { home?: boolean; away?: boolean };
+    set3?: { home?: boolean; away?: boolean };
+  };
 }
 
 export type FrameWinner = 'home' | 'away' | null;

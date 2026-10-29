@@ -135,6 +135,7 @@ export function ensureValidLineups(rawLineups: unknown): MatchLineups {
     unlockRequested: typed.unlockRequested ?? { home: false, away: false },
     subsLocked: typed.subsLocked ?? { set2: {}, set3: {} },
     subsUnlockRequested: typed.subsUnlockRequested ?? { set2: {}, set3: {} },
+    subsPendingApproval: typed.subsPendingApproval ?? { set2: {}, set3: {} },
   };
 }
 
@@ -297,6 +298,14 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
           },
         }
       : {}),
+    ...(lineups.subsPendingApproval
+      ? {
+          subsPendingApproval: {
+            set2: { ...lineups.subsPendingApproval.set2 },
+            set3: { ...lineups.subsPendingApproval.set3 },
+          },
+        }
+      : {}),
   };
 
   (['home', 'away'] as const).forEach((side) => {
@@ -330,6 +339,7 @@ export function isSlotSubstituted(
   slotIdx: number
 ): boolean {
   if (setNumber === 1) return false;
+  if (!isSubsLocked(lineups, setNumber, side)) return false;
   const current = lineups[`set${setNumber}` as 'set2' | 'set3']?.[side]?.[slotIdx];
   if (!current || current === 'BYE') return false;
   const set1 = lineups.set1?.[side]?.[slotIdx];
@@ -392,6 +402,19 @@ export function isSubsUnlockRequested(
   if (setNumber === 1) return false;
   const setKey = `set${setNumber}` as 'set2' | 'set3';
   return Boolean(lineups.subsUnlockRequested?.[setKey]?.[side]);
+}
+
+/**
+ * Checks if a team has substitutions pending approval from the opposing captain for Set 2 or Set 3.
+ */
+export function isSubsPendingApproval(
+  lineups: MatchLineups,
+  setNumber: 1 | 2 | 3,
+  side: 'home' | 'away'
+): boolean {
+  if (setNumber === 1) return false;
+  const setKey = `set${setNumber}` as 'set2' | 'set3';
+  return Boolean(lineups.subsPendingApproval?.[setKey]?.[side]);
 }
 
 export function isKnockoutFixture(fixture: Fixture): boolean {

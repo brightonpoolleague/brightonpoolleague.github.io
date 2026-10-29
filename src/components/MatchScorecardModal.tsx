@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import {
   Fixture,
+  MatchLineups,
   SlotPlayerId,
 } from '../types/league';
 import {
@@ -39,6 +40,7 @@ import {
   isSlotSubstituted,
   isSubsLocked,
   isSubsUnlockRequested,
+  isSubsPendingApproval,
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
@@ -423,6 +425,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (isKnockout && !playAllFrames && isKnockoutDecided && !frame.winner) {
       return false;
     }
+    // If substitutions are pending approval for this set, frames cannot be recorded until approved
+    if (
+      frame.setNumber > 1 &&
+      (isSubsPendingApproval(lineups, frame.setNumber, 'home') ||
+        isSubsPendingApproval(lineups, frame.setNumber, 'away'))
+    ) {
+      return false;
+    }
     const { homePlayerId, awayPlayerId } = getFramePlayers(
       lineups,
       frame
@@ -623,13 +633,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (!editable || !canEditSide(side)) return;
     const setKey = `set${setNumber}` as 'set2' | 'set3';
     const nextLineups = structuredClone(fixture.lineups);
-    if (!nextLineups.subsLocked) {
-      nextLineups.subsLocked = { set2: {}, set3: {} };
+    if (!nextLineups.subsPendingApproval) {
+      nextLineups.subsPendingApproval = { set2: {}, set3: {} };
     }
-    if (!nextLineups.subsLocked[setKey]) {
-      nextLineups.subsLocked[setKey] = {};
+    if (!nextLineups.subsPendingApproval[setKey]) {
+      nextLineups.subsPendingApproval[setKey] = {};
     }
-    nextLineups.subsLocked[setKey]![side] = true;
+    nextLineups.subsPendingApproval[setKey]![side] = true;
 
     if (nextLineups.subsUnlockRequested?.[setKey]) {
       nextLineups.subsUnlockRequested[setKey]![side] = false;
@@ -642,6 +652,63 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         lineups: nextLineups,
       },
       side
+    );
+  };
+
+  const handleCancelSubsPendingApproval = async (
+    setNumber: 2 | 3,
+    side: 'home' | 'away'
+  ) => {
+    if (!editable || !canEditSide(side)) return;
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (nextLineups.subsPendingApproval?.[setKey]) {
+      nextLineups.subsPendingApproval[setKey]![side] = false;
+    }
+    // Revert the slots back to the previous set
+    const prevSlots =
+      setNumber === 2
+        ? fixture.lineups.set1[side]
+        : fixture.lineups.set2[side];
+    nextLineups[setKey][side] = [...prevSlots] as MatchLineups['set2']['home'];
+
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      side
+    );
+  };
+
+  const handleApproveSubs = async (
+    setNumber: 2 | 3,
+    sideToApprove: 'home' | 'away'
+  ) => {
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (!nextLineups.subsLocked) {
+      nextLineups.subsLocked = { set2: {}, set3: {} };
+    }
+    if (!nextLineups.subsLocked[setKey]) {
+      nextLineups.subsLocked[setKey] = {};
+    }
+    nextLineups.subsLocked[setKey]![sideToApprove] = true;
+
+    if (!nextLineups.subsPendingApproval) {
+      nextLineups.subsPendingApproval = { set2: {}, set3: {} };
+    }
+    if (!nextLineups.subsPendingApproval[setKey]) {
+      nextLineups.subsPendingApproval[setKey] = {};
+    }
+    nextLineups.subsPendingApproval[setKey]![sideToApprove] = false;
+
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      mySide || sideToApprove
     );
   };
 
@@ -729,6 +796,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
     if (nextLineups.subsUnlockRequested?.[setKey]) {
       nextLineups.subsUnlockRequested[setKey]![side] = false;
+    }
+    if (nextLineups.subsPendingApproval?.[setKey]) {
+      nextLineups.subsPendingApproval[setKey]![side] = false;
     }
     await saveFixture(
       {
@@ -879,6 +949,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       setNumber > 1 && isSubsLocked(fixture.lineups, setNumber, side);
     const mySubsUnlockReq =
       setNumber > 1 && isSubsUnlockRequested(fixture.lineups, setNumber, side);
+    const isPendingApproval =
+      setNumber > 1 && isSubsPendingApproval(fixture.lineups, setNumber, side);
     const subsMade =
       setNumber > 1
         ? getSubstitutionsMade(fixture.lineups, setNumber as 2 | 3, side)
@@ -937,6 +1009,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <span>Awaiting Lineup</span>
                 </span>
               )
+            ) : isPendingApproval ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Awaiting Approval</span>
+              </span>
             ) : isSubsConfirmedAndLocked ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -1156,18 +1233,42 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </button>
                   </div>
                 </div>
+              ) : isPendingApproval ? (
+                /* Set 2 / Set 3 Pending Approval Card */
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-400 animate-spin" />
+                      <span className="text-xs font-bold text-white">
+                        Waiting for {otherTeam.name} captain to approve substitutions
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCancelSubsPendingApproval(setNumber as 2 | 3, side)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition"
+                    >
+                      Cancel Request
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    <strong className="text-amber-300">
+                      {subsMade.length} substitution{subsMade.length > 1 ? 's' : ''} submitted:
+                    </strong>{' '}
+                    {subsMade
+                      .map(
+                        (s) =>
+                          `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
+                      )
+                      .join(', ')}
+                    .
+                  </p>
+                </div>
               ) : (
                 /* Set 2 & Set 3 Substitution Box */
                 <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-bold text-emerald-400">
-                      Make a Set {setNumber} Substitution
-                    </div>
-                    <span className="text-[11px] text-slate-400">
-                      {subsMade.length > 0
-                        ? `${subsMade.length} sub${subsMade.length > 1 ? 's' : ''} staged`
-                        : 'No subs staged yet'}
-                    </span>
+                  <div className="text-xs font-bold text-emerald-400">
+                    Make a Set {setNumber} Substitution
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div className="min-w-0">
@@ -1294,25 +1395,18 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-slate-400">
-                      {subsMade.length > 0
-                        ? `${subsMade.length} substitution${subsMade.length > 1 ? 's' : ''} staged`
-                        : 'No substitutions made (lineup unchanged)'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleConfirmSubs(setNumber as 2 | 3, side)}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>
-                        {subsMade.length > 0
-                          ? `Confirm ${subsMade.length} Sub${subsMade.length > 1 ? 's' : ''}`
-                          : 'Confirm'}
-                      </span>
-                    </button>
-                  </div>
+                  {subsMade.length > 0 && (
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmSubs(setNumber as 2 | 3, side)}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Confirm Subs</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             )}
@@ -1366,7 +1460,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                               SUB
                             </span>
-                            {sideEditable && !isSubsConfirmedAndLocked && (
+                            {sideEditable && !isSubsConfirmedAndLocked && !isPendingApproval && (
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1477,6 +1571,58 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           >
             <CheckCircle2 className="w-4 h-4 text-slate-950" />
             <span>Allow Substitution Changes</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSubsApprovalRequestBanner = () => {
+    if (
+      activeSet <= 1 ||
+      !bothSet1Locked ||
+      !otherSide ||
+      !isSubsPendingApproval(fixture.lineups, activeSet, otherSide)
+    ) {
+      return null;
+    }
+
+    const otherSubs = getSubstitutionsMade(
+      fixture.lineups,
+      activeSet as 2 | 3,
+      otherSide
+    );
+
+    return (
+      <div className="bg-emerald-500/15 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-200 shadow-lg animate-in fade-in duration-200">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Users className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div>
+            <strong className="text-white block text-sm font-bold">
+              {otherTeamName} captain made Set {activeSet} substitution{otherSubs.length > 1 ? 's' : ''}
+            </strong>
+            <span className="text-slate-300 text-xs">
+              {otherSubs.length > 0 ? (
+                otherSubs
+                  .map(
+                    (s) =>
+                      `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
+                  )
+                  .join(', ')
+              ) : (
+                'Lineup unchanged'
+              )}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleApproveSubs(activeSet as 2 | 3, otherSide)}
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+          >
+            <CheckCircle2 className="w-4 h-4 text-white" />
+            <span>Approve Substitutions</span>
           </button>
         </div>
       </div>
@@ -2037,6 +2183,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {/* Set 1 Lineup Change Request Banner (appears below buttons and below Who Won the Lag box) */}
               {activeSet === 1 && renderLineupChangeRequestBanner()}
 
+              {/* Set 2 / Set 3 Subs Approval Request Banner (when Make Subs box is EXPANDED: above the editor) */}
+              {activeSet > 1 && showLineupEditor && renderSubsApprovalRequestBanner()}
+
               {/* Set 2 / Set 3 Subs Unlock Request Banner (when Make Subs box is EXPANDED: above the editor) */}
               {activeSet > 1 && showLineupEditor && renderSubsUnlockRequestBanner()}
 
@@ -2197,6 +2346,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   )}
                 </div>
               )}
+
+              {/* Set 2 / Set 3 Subs Approval Request Banner (when Make Subs box is COLLAPSED) */}
+              {activeSet > 1 && !showLineupEditor && renderSubsApprovalRequestBanner()}
 
               {/* Set 2 / Set 3 Subs Unlock Request Banner (when Make Subs box is COLLAPSED) */}
               {activeSet > 1 && !showLineupEditor && renderSubsUnlockRequestBanner()}
