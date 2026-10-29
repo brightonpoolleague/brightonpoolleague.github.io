@@ -2602,9 +2602,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             )}
                             <span className="font-bold text-sm truncate">
                               {hideHome ? (
-                                <span title="Hidden" className="inline-flex items-center">
-                                  <EyeOff className="w-4 h-4 text-slate-500" />
-                                </span>
+                                isLoggedIn ? (
+                                  <span title="Hidden" className="inline-flex items-center">
+                                    <EyeOff className="w-4 h-4 text-slate-500" />
+                                  </span>
+                                ) : null
                               ) : (
                                 getPlayerName(homePlayerId)
                               )}
@@ -2670,9 +2672,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             )}
                             <span className="font-bold text-sm truncate">
                               {hideAway ? (
-                                <span title="Hidden" className="inline-flex items-center">
-                                  <EyeOff className="w-4 h-4 text-slate-500" />
-                                </span>
+                                isLoggedIn ? (
+                                  <span title="Hidden" className="inline-flex items-center">
+                                    <EyeOff className="w-4 h-4 text-slate-500" />
+                                  </span>
+                                ) : null
                               ) : (
                                 getPlayerName(awayPlayerId)
                               )}
@@ -2877,9 +2881,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           </td>
                           <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-medium text-white truncate">
                             {hideHome ? (
-                              <span title="Hidden" className="inline-flex items-center align-middle">
-                                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
-                              </span>
+                              isLoggedIn ? (
+                                <span title="Hidden" className="inline-flex items-center align-middle">
+                                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                                </span>
+                              ) : null
                             ) : (
                               <span title={getPlayerName(homePlayerId)}>
                                 {getPlayerName(homePlayerId)}
@@ -2932,9 +2938,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           </td>
                           <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-medium text-white truncate">
                             {hideAway ? (
-                              <span title="Hidden" className="inline-flex items-center align-middle">
-                                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
-                              </span>
+                              isLoggedIn ? (
+                                <span title="Hidden" className="inline-flex items-center align-middle">
+                                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                                </span>
+                              ) : null
                             ) : (
                               <span title={getPlayerName(awayPlayerId)}>
                                 {getPlayerName(awayPlayerId)}

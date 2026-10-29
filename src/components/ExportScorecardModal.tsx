@@ -7,7 +7,6 @@ import {
   Check,
   Camera,
   CheckCircle2,
-  EyeOff,
   Trophy,
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
@@ -439,13 +438,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                               {frame.homeSlot}
                             </td>
                             <td className="py-1.5 px-3 font-medium text-white truncate max-w-[150px]">
-                              {!bothSet1Locked ? (
-                                <span title="Hidden" className="inline-flex items-center align-middle">
-                                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
-                                </span>
-                              ) : (
-                                <span>{getPlayerName(homePlayerId)}</span>
-                              )}
+                              <span>{getPlayerName(homePlayerId)}</span>
                             </td>
                             <td className="py-1.5 px-2 text-center">
                               <span
@@ -482,13 +475,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                               </span>
                             </td>
                             <td className="py-1.5 px-3 font-medium text-white truncate max-w-[150px]">
-                              {!bothSet1Locked ? (
-                                <span title="Hidden" className="inline-flex items-center align-middle">
-                                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
-                                </span>
-                              ) : (
-                                <span>{getPlayerName(awayPlayerId)}</span>
-                              )}
+                              <span>{getPlayerName(awayPlayerId)}</span>
                             </td>
                             <td className="py-1.5 px-2 text-center font-mono text-slate-400">
                               {frame.awaySlot}
