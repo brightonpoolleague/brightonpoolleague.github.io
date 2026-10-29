@@ -825,7 +825,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               );
 
               return (
-                <div key={slotNum} className="flex items-center gap-2">
+                <div key={slotNum} className="flex items-center gap-2 min-w-0">
                   <span className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
                     {slotNum}
                   </span>
@@ -840,7 +840,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         (e.target.value || null) as SlotPlayerId
                       )
                     }
-                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60"
+                    className="flex-1 min-w-0 max-w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-60 truncate"
                   >
                     <option value="">
                       -- Select Position {slotNum} Player --
@@ -870,7 +870,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   Make a Set {setNumber} Substitution
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
+                  <div className="min-w-0">
                     <label className="block text-[11px] font-medium text-slate-400 mb-1">
                       Who do you want to take out?
                     </label>
@@ -888,7 +888,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           [side]: '',
                         }));
                       }}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 truncate"
                     >
                       <option value="">-- Select player to take out --</option>
                       {[0, 1, 2, 3, 4].map((idx) => {
@@ -910,7 +910,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     </select>
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <label className="block text-[11px] font-medium text-slate-400 mb-1">
                       Who do you want to put in?
                     </label>
@@ -923,7 +923,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           [side]: e.target.value,
                         }))
                       }
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50"
+                      className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 truncate"
                     >
                       <option value="">
                         {subOutSlotIdx === null

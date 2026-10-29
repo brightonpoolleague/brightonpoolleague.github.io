@@ -24,7 +24,7 @@ export const PinInput: React.FC<PinInputProps> = ({
         {...inputProps}
         type={visible ? 'text' : 'password'}
         autoComplete="off"
-        className={`text-base sm:text-xs ${className} pr-9`}
+        className={`${className} pr-9`}
       />
       <button
         type="button"

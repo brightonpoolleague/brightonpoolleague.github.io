@@ -275,7 +275,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                             value={teamSearchQuery}
                             onChange={(e) => setTeamSearchQuery(e.target.value)}
                             placeholder="Search team name or division..."
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-7 py-2 text-base sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-7 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                           />
                           {teamSearchQuery && (
                             <button
@@ -343,7 +343,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                       setCaptainError('');
                     }}
                     placeholder="8-digit Team PIN"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-base sm:text-xs text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
                   />
                   <button
                     type="submit"
@@ -406,7 +406,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   setAdminError('');
                 }}
                 placeholder="Enter Admin PIN"
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-base sm:text-xs text-white"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
               />
               <button
                 type="submit"
