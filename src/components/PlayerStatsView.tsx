@@ -70,7 +70,11 @@ export const PlayerStatsView: React.FC = () => {
               type="button"
               onClick={() => setShowExportModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
-              title="Export Player Averages"
+              title={
+                activeBoard === 'dishes'
+                  ? 'Export Dish Leaderboard'
+                  : 'Export Player Averages'
+              }
             >
               <Camera className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export</span>
@@ -300,7 +304,11 @@ export const PlayerStatsView: React.FC = () => {
       <ExportTableModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
-        modalTitle="Export Player Averages"
+        modalTitle={
+          activeBoard === 'dishes'
+            ? 'Export Dish Leaderboard'
+            : 'Export Player Averages'
+        }
         title={activeBoard === 'dishes' ? 'Dish Leaderboard' : 'Player Averages'}
         divisionName={
           activeBoard === 'dishes' && effectiveDivision === 'ALL'
