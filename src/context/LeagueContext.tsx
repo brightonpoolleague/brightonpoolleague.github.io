@@ -12,6 +12,7 @@ import {
   Division,
   Fixture,
   KnockoutFormat,
+  MatchLineups,
   Player,
   Season,
   Team,
@@ -134,6 +135,37 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,
     approvedAt: r.approved_at ? String(r.approved_at) : undefined,
     updatedAt: String(r.updated_at ?? new Date().toISOString()),
+  };
+}
+
+function mergeIncomingLineups(
+  incomingLineups: MatchLineups,
+  existingLineups?: MatchLineups
+): MatchLineups {
+  if (!existingLineups) return incomingLineups;
+
+  return {
+    ...incomingLineups,
+    subsLocked: {
+      set2: {
+        ...(existingLineups.subsLocked?.set2 ?? {}),
+        ...(incomingLineups.subsLocked?.set2 ?? {}),
+      },
+      set3: {
+        ...(existingLineups.subsLocked?.set3 ?? {}),
+        ...(incomingLineups.subsLocked?.set3 ?? {}),
+      },
+    },
+    subsUnlockRequested: {
+      set2: {
+        ...(existingLineups.subsUnlockRequested?.set2 ?? {}),
+        ...(incomingLineups.subsUnlockRequested?.set2 ?? {}),
+      },
+      set3: {
+        ...(existingLineups.subsUnlockRequested?.set3 ?? {}),
+        ...(incomingLineups.subsUnlockRequested?.set3 ?? {}),
+      },
+    },
   };
 }
 
@@ -456,14 +488,25 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!fixturesRes.error && fixturesRes.data) {
-        const mappedFixtures: Fixture[] = fixturesRes.data.map((r) =>
-          mapFixtureRow(r as Record<string, unknown>)
-        );
-        setAllFixtures(mappedFixtures);
-        localStorage.setItem(
-          STORAGE_KEYS.FIXTURES,
-          JSON.stringify(mappedFixtures)
-        );
+        setAllFixtures((prev) => {
+          const prevById = new Map(prev.map((f) => [f.id, f]));
+          const mappedFixtures: Fixture[] = fixturesRes.data.map((r) => {
+            const mapped = mapFixtureRow(r as Record<string, unknown>);
+            const prevFixture = prevById.get(mapped.id);
+            if (prevFixture) {
+              mapped.lineups = mergeIncomingLineups(
+                mapped.lineups,
+                prevFixture.lineups
+              );
+            }
+            return mapped;
+          });
+          localStorage.setItem(
+            STORAGE_KEYS.FIXTURES,
+            JSON.stringify(mappedFixtures)
+          );
+          return mappedFixtures;
+        });
         advanceFixturesHighWater(fixturesRes.data as Record<string, unknown>[]);
         lastFullRefreshAtRef.current = Date.now();
       }
@@ -499,9 +542,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error || !data) return;
       advanceFixturesHighWater(data as Record<string, unknown>[]);
       if (data.length === 0) return;
-      const changed = data.map((r) => mapFixtureRow(r as Record<string, unknown>));
-      const changedById = new Map(changed.map((f) => [f.id, f]));
       setAllFixtures((prev) => {
+        const prevById = new Map(prev.map((f) => [f.id, f]));
+        const changed = (data as Record<string, unknown>[]).map((r) => {
+          const mapped = mapFixtureRow(r);
+          const prevFixture = prevById.get(mapped.id);
+          if (prevFixture) {
+            mapped.lineups = mergeIncomingLineups(
+              mapped.lineups,
+              prevFixture.lineups
+            );
+          }
+          return mapped;
+        });
+        const changedById = new Map(changed.map((f) => [f.id, f]));
         const next = prev.map((f) => changedById.get(f.id) ?? f);
         const existingIds = new Set(prev.map((f) => f.id));
         for (const f of changed) {
@@ -527,6 +581,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!error && data) {
         const updated = mapFixtureRow(data as Record<string, unknown>);
         setAllFixtures((prev) => {
+          const prevFixture = prev.find((f) => f.id === updated.id);
+          if (prevFixture) {
+            updated.lineups = mergeIncomingLineups(
+              updated.lineups,
+              prevFixture.lineups
+            );
+          }
           const next = prev.map((f) => (f.id === updated.id ? updated : f));
           localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(next));
           return next;
@@ -645,7 +706,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
                 payload.new as Record<string, unknown>
               );
               setAllFixtures((prev) => {
-                const exists = prev.some((f) => f.id === updated.id);
+                const prevFixture = prev.find((f) => f.id === updated.id);
+                if (prevFixture) {
+                  updated.lineups = mergeIncomingLineups(
+                    updated.lineups,
+                    prevFixture.lineups
+                  );
+                }
+                const exists = Boolean(prevFixture);
                 const next = exists
                   ? prev.map((f) => (f.id === updated.id ? updated : f))
                   : [...prev, updated];
