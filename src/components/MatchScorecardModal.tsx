@@ -1564,10 +1564,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 })}
               </div>
 
-              {/* Set 1 Lineup Change Request Banner (above Select Lineup / Make Subs, below set selectors) */}
-              {activeSet === 1 && renderLineupChangeRequestBanner()}
-
-              {/* Action buttons below Set Tabs & Change Request Banner (Change Lag Winner on Set 1 & Select Lineup / Make Subs) */}
+              {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Select Lineup / Make Subs) */}
               {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner) ||
                 (!showLineupEditor && (canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved')) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
@@ -1605,42 +1602,95 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
               )}
 
+              {/* Set 1 Lag Winner Prompt Box (shown when both lineups confirmed and unselected, or when Change Lag Winner is clicked; collapsed when lineup box is open) */}
+              {activeSet === 1 && bothSet1Locked && !showLineupEditor && (!fixture.lagWinner || isChangingLagWinner) && (
+                <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+                    <div>
+                      <strong className="text-white block text-sm font-bold">
+                        Who won the lag to break first?
+                      </strong>
+                      <span className="text-slate-300 text-xs">
+                        Select which team broke in Frame 1 so break badges appear across all frames.
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {editable && !isMatchLockedBySignature && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleLagChange('home');
+                            setIsChangingLagWinner(false);
+                          }}
+                          className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
+                            fixture.lagWinner === 'home'
+                              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{homeTeam.name}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await handleLagChange('away');
+                            setIsChangingLagWinner(false);
+                          }}
+                          className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
+                            fixture.lagWinner === 'away'
+                              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{awayTeam.name}</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Set 1 Lineup Change Request Banner (appears below buttons and below Who Won the Lag box) */}
+              {activeSet === 1 && renderLineupChangeRequestBanner()}
+
               {/* Blind Set 1 ("Folded Paper") or Set 2/3 Substitutions Editor */}
               {showLineupEditor &&
                 !isSignedByAny &&
                 (canSignHome || canSignAway) && (
-                <div className="space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 sm:p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                        {activeSet === 1 ? (
-                          <>
-                            <EyeOff className="w-4 h-4 text-emerald-400" />
-                            Set 1 Blind Lineup Entry ("Folded Scorecard")
-                          </>
-                        ) : (
-                          <>
-                            <Users className="w-4 h-4 text-emerald-400" />
-                            Set {activeSet} Substitutions
-                          </>
-                        )}
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        {activeSet === 1
-                          ? 'Each captain selects and confirms their own team’s 1–5 running order. Lineups are revealed once both teams confirm Set 1.'
-                          : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
-                      </p>
-                    </div>
+                <div className="relative space-y-3 bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 sm:p-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowLineupEditor(false)}
+                    className="absolute top-3 right-3 p-1.5 rounded-xl text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition shadow-sm z-10"
+                    title="Close"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowLineupEditor(false)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 transition shrink-0"
-                      title="Close"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      <span>Close</span>
-                    </button>
+                  <div className="pr-10">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      {activeSet === 1 ? (
+                        <>
+                          <EyeOff className="w-4 h-4 text-emerald-400" />
+                          Set 1 Blind Lineup Entry ("Folded Scorecard")
+                        </>
+                      ) : (
+                        <>
+                          <Users className="w-4 h-4 text-emerald-400" />
+                          Set {activeSet} Substitutions
+                        </>
+                      )}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {activeSet === 1
+                        ? 'Each captain selects and confirms their own team’s 1–5 running order. Lineups are revealed once both teams confirm Set 1.'
+                        : 'Substitutes take the exact slot number of the player they replace and cannot have played in the previous set.'}
+                    </p>
                   </div>
 
                   {(() => {
@@ -1697,62 +1747,19 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             </span>
                           </div>
                         )}
+
+                        <div className="flex items-center justify-end pt-2 border-t border-slate-800/60">
+                          <button
+                            type="button"
+                            onClick={() => setShowLineupEditor(false)}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700/60 transition shadow-sm"
+                          >
+                            {activeSet === 1 ? 'Close Lineup' : 'Close Subs'}
+                          </button>
+                        </div>
                       </>
                     );
                   })()}
-                </div>
-              )}
-
-              {/* Set 1 Lag Winner Prompt Box (shown when both lineups confirmed and unselected, or when Change Lag Winner is clicked; collapsed when lineup box is open) */}
-              {activeSet === 1 && bothSet1Locked && !showLineupEditor && (!fixture.lagWinner || isChangingLagWinner) && (
-                <div className="bg-amber-500/15 border-2 border-amber-500/40 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-md animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
-                    <div>
-                      <strong className="text-white block text-sm font-bold">
-                        Who won the lag to break first?
-                      </strong>
-                      <span className="text-slate-300 text-xs">
-                        Select which team broke in Frame 1 so break badges appear across all frames.
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {editable && !isMatchLockedBySignature && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            await handleLagChange('home');
-                            setIsChangingLagWinner(false);
-                          }}
-                          className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
-                            fixture.lagWinner === 'home'
-                              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
-                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{homeTeam.name}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            await handleLagChange('away');
-                            setIsChangingLagWinner(false);
-                          }}
-                          className={`px-3.5 py-1.5 rounded-lg font-bold text-xs transition shadow flex items-center gap-1.5 ${
-                            fixture.lagWinner === 'away'
-                              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
-                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{awayTeam.name}</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
                 </div>
               )}
 
