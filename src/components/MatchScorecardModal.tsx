@@ -1239,7 +1239,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     : 'bg-slate-800 text-slate-300'
                 }`}
               >
-                {fixture.status}
+                {fixture.status === 'submitted' ? 'Awaiting Approval' : fixture.status}
               </span>
             </div>
             <p className="text-xs text-slate-400 truncate">
@@ -1437,9 +1437,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             )}
 
             {fixture.status === 'submitted' && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5 text-center">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Match submitted, awaiting league admin approval</span>
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5 text-center">
+                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Awaiting league admin approval</span>
               </div>
             )}
 

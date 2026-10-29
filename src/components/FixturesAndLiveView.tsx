@@ -252,7 +252,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     { id: 'live', label: 'Live Now' },
     { id: 'scheduled', label: 'Upcoming' },
     { id: 'past', label: 'Past Date' },
-    { id: 'submitted', label: 'Submitted Scorecards' },
+    { id: 'submitted', label: 'Awaiting Approval' },
     { id: 'approved', label: 'Approved Results' },
   ];
 
@@ -495,7 +495,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 ) : myNextMatch.status === 'submitted' ? (
                   <>
                     <Clock className="w-2.5 h-2.5" />
-                    Submitted
+                    Awaiting Approval
                   </>
                 ) : nextTimeframe === 'today' ? (
                   <>
@@ -635,7 +635,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     {' '}in <strong>{selectedDivision}</strong>
                   </span>
                 )}
-                {statusFilter !== 'all' && <span> ({statusFilter})</span>}.
+                {statusFilter !== 'all' && (
+                  <span>
+                    {' '}({statusTabs.find((t) => t.id === statusFilter)?.label || statusFilter})
+                  </span>
+                )}.
               </p>
               <button
                 type="button"
@@ -757,7 +761,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     ) : fix.status === 'submitted' ? (
                       <>
                         <Clock className="w-2.5 h-2.5" />
-                        Submitted
+                        Awaiting Approval
                       </>
                     ) : timeframe === 'today' ? (
                       <>

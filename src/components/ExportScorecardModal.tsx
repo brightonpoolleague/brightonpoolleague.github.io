@@ -364,7 +364,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                       {fixture.status === 'approved'
                         ? 'Official Result'
                         : fixture.status === 'submitted'
-                        ? 'Submitted'
+                        ? 'Awaiting Approval'
                         : 'Frames'}
                     </div>
                   </div>

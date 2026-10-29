@@ -2225,7 +2225,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           count: number;
         }[] = [
           { id: 'all', label: 'All', count: fixtures.length },
-          { id: 'submitted', label: 'Submitted', count: submittedCount },
+          { id: 'submitted', label: 'Awaiting Approval', count: submittedCount },
           { id: 'live', label: 'Live', count: liveCount },
           { id: 'scheduled', label: 'Scheduled', count: scheduledCount },
           { id: 'approved', label: 'Approved', count: approvedCount },
@@ -2433,7 +2433,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   : 'bg-slate-800 text-slate-400'
                               }`}
                             >
-                              {fix.status}
+                              {fix.status === 'submitted' ? 'Awaiting Approval' : fix.status}
                             </span>
                           </div>
                           <div className="font-bold text-white text-sm sm:text-base break-words">
