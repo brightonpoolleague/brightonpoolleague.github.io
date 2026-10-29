@@ -8,6 +8,7 @@ import {
   Clock,
   EyeOff,
   FileSpreadsheet,
+  Loader2,
   Lock,
   Pencil,
   RefreshCw,
@@ -645,7 +646,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       nextLineups.subsUnlockRequested[setKey]![side] = false;
     }
 
-    setShowLineupEditor(false, setNumber);
     await saveFixture(
       {
         ...fixture,
@@ -1102,7 +1102,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       myUnlockReq ? (
                         <div className="flex items-center justify-between w-full gap-2">
                           <span className="text-[11px] text-amber-300 flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             Waiting for {otherTeam.name} captain to allow changes...
                           </span>
                           <button
@@ -1137,7 +1137,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     mySubsUnlockReq ? (
                       <div className="flex items-center justify-between w-full gap-2">
                         <span className="text-[11px] text-amber-300 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           Waiting for {otherTeam.name} captain to allow changes...
                         </span>
                         <button
@@ -1238,7 +1238,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-400 animate-spin" />
+                      <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
                       <span className="text-xs font-bold text-white">
                         Waiting for {otherTeam.name} captain to approve substitutions
                       </span>
