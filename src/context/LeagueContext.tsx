@@ -281,12 +281,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       };
     });
   });
-  const [session, setSession] = useState<UserSession>(() =>
-    loadFromStorage(STORAGE_KEYS.SESSION, {
+  const [session, setSession] = useState<UserSession>(() => {
+    const raw = loadFromStorage<UserSession>(STORAGE_KEYS.SESSION, {
       role: 'viewer',
       name: 'General Spectator',
-    })
-  );
+    });
+    if (raw.role === 'captain' && raw.name && raw.name.endsWith(' Captain')) {
+      return { ...raw, name: raw.name.replace(/ Captain$/i, '') };
+    }
+    return raw;
+  });
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
@@ -867,7 +871,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           ? 'League Admin'
           : role === 'captain'
           ? team
-            ? `${team.name} Captain`
+            ? team.name
             : 'Team Captain'
           : 'General Spectator');
       const next: UserSession = { role, teamId, name, pin };

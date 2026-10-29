@@ -183,7 +183,7 @@ const MainShell: React.FC = () => {
                   {session.role === 'admin' ? 'Admin' : 'Captain'}
                 </span>
                 <span className="max-w-[180px] md:max-w-[280px] truncate text-white">
-                  {session.name}
+                  {session.name.replace(/ Captain$/i, '')}
                 </span>
               </div>
 
@@ -220,7 +220,7 @@ const MainShell: React.FC = () => {
               </span>
               <span className="text-slate-400 text-[11px] shrink-0">Signed in:</span>
               <span className="font-extrabold text-white text-xs truncate">
-                {session.name}
+                {session.name.replace(/ Captain$/i, '')}
               </span>
             </div>
           </div>

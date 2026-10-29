@@ -1293,44 +1293,25 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         <div className="bg-slate-950/95 border-b border-slate-800/80 px-3 sm:px-6 py-1.5 flex items-center justify-between gap-2 text-xs shrink-0 select-none">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shrink-0 border bg-emerald-500/20 text-emerald-300 border-emerald-500/40">
+              {session.role === 'admin' ? 'Admin' : 'Captain'}
+            </span>
             <span className="text-slate-400 text-[11px] hidden sm:inline">
-              Logged in as:
+              Logged in:
             </span>
-            <span className="font-bold text-white text-xs truncate">
-              {session.name}
+            <span className="font-extrabold text-white text-xs truncate">
+              {session.name.replace(/ Captain$/i, '')}
             </span>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shrink-0 border ${
-                session.role === 'admin'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                  : mySide === 'home'
-                  ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                  : mySide === 'away'
-                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-            >
-              {session.role === 'admin'
-                ? 'League Admin'
-                : mySide === 'home'
-                ? 'Home Captain'
-                : mySide === 'away'
-                ? 'Away Captain'
-                : 'Neutral Captain'}
-            </span>
-          </div>
-
-          <div className="text-[11px] shrink-0 font-medium">
-            {canManageLeague ? (
-              <span className="text-emerald-400 font-semibold hidden sm:inline">
-                Full Admin Editing Access
+            {mySide && (
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 border ${
+                  mySide === 'home'
+                    ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                    : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                }`}
+              >
+                {mySide === 'home' ? 'Home' : 'Away'}
               </span>
-            ) : mySide ? (
-              <span className="text-emerald-400 hidden sm:inline">
-                {mySide === 'home' ? 'Home' : 'Away'} Lineup &amp; Scoring Access
-              </span>
-            ) : (
-              <span className="text-slate-500 hidden sm:inline">Viewing Only</span>
             )}
           </div>
         </div>
