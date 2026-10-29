@@ -2119,21 +2119,58 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     !isSignedByAny &&
                     fixture.status !== 'submitted' &&
                     fixture.status !== 'approved' &&
-                    (activeSet === 1 || bothSet1Locked) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowLineupEditor(true);
-                          setIsChangingLagWinner(false);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
-                      >
-                        <Users className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>
-                          {activeSet === 1 ? 'Select Lineup' : 'Make Subs'}
-                        </span>
-                      </button>
-                    )}
+                    (activeSet === 1 || bothSet1Locked) &&
+                    (() => {
+                      const isMySet1Locked =
+                        mySide === 'home'
+                          ? Boolean(fixture.homeSet1Locked)
+                          : mySide === 'away'
+                          ? Boolean(fixture.awaySet1Locked)
+                          : Boolean(bothSet1Locked);
+
+                      const mySubsCount =
+                        activeSet > 1
+                          ? mySide
+                            ? getSubstitutionsMade(
+                                fixture.lineups,
+                                activeSet as 2 | 3,
+                                mySide
+                              ).length
+                            : getSubstitutionsMade(
+                                fixture.lineups,
+                                activeSet as 2 | 3,
+                                'home'
+                              ).length +
+                              getSubstitutionsMade(
+                                fixture.lineups,
+                                activeSet as 2 | 3,
+                                'away'
+                              ).length
+                          : 0;
+
+                      const actionButtonLabel =
+                        activeSet === 1
+                          ? isMySet1Locked
+                            ? 'Change Lineup'
+                            : 'Select Lineup'
+                          : mySubsCount > 0
+                          ? 'Change Subs'
+                          : 'Make Subs';
+
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLineupEditor(true);
+                            setIsChangingLagWinner(false);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
+                        >
+                          <Users className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{actionButtonLabel}</span>
+                        </button>
+                      );
+                    })()}
                 </div>
               )}
 
