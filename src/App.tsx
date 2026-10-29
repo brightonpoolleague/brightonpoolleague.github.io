@@ -192,8 +192,8 @@ const MainShell: React.FC = () => {
 
         {/* Active Session Bar (shown underneath on both web & mobile to keep main nav & brand uncompressed) */}
         {isLoggedIn && (
-          <div className="bg-slate-950/95 border-t border-slate-800/80 px-3.5 sm:px-6 py-2 shadow-inner">
-            <div className="max-w-6xl mx-auto flex items-center gap-2 min-w-0 text-xs">
+          <div className="bg-slate-950/95 border-t border-slate-800/80 shadow-inner">
+            <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2 flex items-center gap-2 min-w-0 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
               <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
                 {session.role === 'admin' ? 'League Admin' : 'Captain'}
