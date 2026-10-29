@@ -1524,15 +1524,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           )}
 
-          {!editable ? (
+          {!editable && isLoggedIn && (fixture.status === 'submitted' || fixture.status === 'approved') ? (
             <div className="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-300">
               <span>
-                Viewing live scorecard in <strong>Read-Only Mode</strong>.
                 {fixture.status === 'approved'
-                  ? ' This match has been officially approved by the League Admin.'
-                  : fixture.status === 'submitted'
-                  ? ' This match has been submitted. Changes can only be made by league admins.'
-                  : ' Log in as Team Captain or League Admin to enter scores.'}
+                  ? 'This match has been officially approved by the League Admin.'
+                  : 'This match has been submitted. Changes can only be made by league admins.'}
               </span>
             </div>
           ) : isMatchLockedBySignature && fixture.status !== 'submitted' && fixture.status !== 'approved' ? (
