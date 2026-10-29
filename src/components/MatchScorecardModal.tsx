@@ -1385,28 +1385,30 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {showSignOff && (
         <div className="bg-slate-900/95 border-b border-slate-800 px-3 sm:px-6 py-2.5 shrink-0 shadow-md">
           <div className="max-w-4xl mx-auto space-y-2">
-            {/* Review Scorecard / Make Changes Toggle Button */}
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() =>
-                  setViewMode(viewMode === 'mobile' ? 'paper' : 'mobile')
-                }
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition shadow-sm"
-              >
-                {viewMode === 'mobile' ? (
-                  <>
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Review Scorecard</span>
-                  </>
-                ) : (
-                  <>
-                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Make Changes</span>
-                  </>
-                )}
-              </button>
-            </div>
+            {/* Review Scorecard / Make Changes Toggle Button (only before submission) */}
+            {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewMode(viewMode === 'mobile' ? 'paper' : 'mobile')
+                  }
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition shadow-sm"
+                >
+                  {viewMode === 'mobile' ? (
+                    <>
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Review Scorecard</span>
+                    </>
+                  ) : (
+                    <>
+                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Make Changes</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Dynamic Changes Locked Message */}
             {changesLockedMessage && (
