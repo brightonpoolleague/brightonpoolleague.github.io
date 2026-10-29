@@ -2,8 +2,8 @@
 
 | Competition                       | Winners 🏆            | Runners-up          |
 |-----------------------------------|-----------------------|---------------------|
-| Summer 2026 Cup                   | LA Mavericks          | —                   |
-| Summer 2026 Plate                 | LA Z                  | —                   |
+| Summer 2026 Cup                   | LA Mavericks          | Classtle            |
+| Summer 2026 Plate                 | LA Z                  | Castle BHA          |
 | Winter 2025/26 Premier League Cup | Romans Lagers         | Classtle            |
 | Winter 2025/26 Division 1 Cup     | Aldrington Returnz    | LA Mavericks        |
 | Winter 2025/26 Division 2 Cup     | Give Us A Cue         | Castle IncrediBalls |

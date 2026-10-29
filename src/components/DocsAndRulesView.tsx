@@ -1061,8 +1061,8 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Competition', 'Winners 🏆', 'Runners-up'],
                   [
-                    ['Summer 2026 Cup', 'LA Mavericks', '—'],
-                    ['Summer 2026 Plate', 'LA Z', '—'],
+                    ['Summer 2026 Cup', 'LA Mavericks', 'Classtle'],
+                    ['Summer 2026 Plate', 'LA Z', 'Castle BHA'],
                     ['Winter 2025/26 Premier League Cup', 'Romans Lagers', 'Classtle'],
                     ['Winter 2025/26 Division 1 Cup', 'Aldrington Returnz', 'LA Mavericks'],
                     ['Winter 2025/26 Division 2 Cup', 'Give Us A Cue', 'Castle IncrediBalls'],
@@ -1169,7 +1169,7 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Season', 'Winners 🏆', 'Runners-up'],
                   [
-                    ['Summer 2026', 'Ben Middleton & Mikey Booker', 'Teige Dillion & Ellis Wilson'],
+                    ['Summer 2026', 'Ben Middleton & Mikey Booker', 'Teige Dillon & Ellis Wilson'],
                     ['Winter 2025/26', 'Ben Middleton & Mikey Booker', 'Pete Hazell & Connor Anderson'],
                     ['Summer 2025', 'Chris Kingham & Jon Sanders', 'Ben Middleton & Mikey Booker'],
                     ['Winter 2024/25', 'Mark Hedayat & Rich Hamill', 'Pete Hazell & Connor Anderson'],
@@ -1198,7 +1198,7 @@ export const DocsAndRulesView: React.FC = () => {
                   ['Season', 'Winners 🏆', 'Runners-up'],
                   [
                     ['Summer 2026', 'Stacey Champ-Hancock & Ben Middleton', 'Julie Hitchen & Paul Hitchen'],
-                    ['Winter 2025/26', 'Stacey Hancock & Ben Middleton', 'Linda Edwards & Curtis Lambert'],
+                    ['Winter 2025/26', 'Stacey Champ-Hancock & Ben Middleton', 'Linda Edwards & Curtis Lambert'],
                     ['Summer 2025', 'Julie Hitchen & Paul Hitchen', 'Pinky McNeil & Paul McNeil'],
                   ]
                 )}
