@@ -167,37 +167,17 @@ const MainShell: React.FC = () => {
             })}
           </nav>
 
-          {/* Login / Active Role + Logout Controls */}
+          {/* Login / Logout Controls */}
           {isLoggedIn ? (
-            <div className="flex items-center gap-1.5 shrink-0 relative z-10">
-              {/* Desktop Status Chip */}
-              <div
-                className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border select-none ${
-                  session.role === 'admin'
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                    : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
-                  {session.role === 'admin' ? 'Admin' : 'Captain'}
-                </span>
-                <span className="max-w-[180px] md:max-w-[280px] truncate text-white">
-                  {session.name.replace(/ Captain$/i, '')}
-                </span>
-              </div>
-
-              {/* Log Out Button */}
-              <button
-                type="button"
-                onClick={() => setRoleSession('viewer')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-300 hover:text-white text-xs font-bold transition touch-manipulation cursor-pointer select-none active:scale-95 shadow-sm"
-                title="Log out"
-              >
-                <LogOut className="w-3.5 h-3.5 text-slate-400" />
-                <span>Log Out</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setRoleSession('viewer')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-300 hover:text-white text-xs font-bold transition touch-manipulation cursor-pointer select-none active:scale-95 shadow-sm shrink-0"
+              title="Log out"
+            >
+              <LogOut className="w-3.5 h-3.5 text-slate-400" />
+              <span>Log Out</span>
+            </button>
           ) : (
             <button
               type="button"
@@ -210,16 +190,16 @@ const MainShell: React.FC = () => {
           )}
         </div>
 
-        {/* Mobile Active Session Bar (displays full name across mobile screen without cutting off) */}
+        {/* Active Session Bar (shown underneath on both web & mobile to keep main nav & brand uncompressed) */}
         {isLoggedIn && (
-          <div className="sm:hidden bg-slate-950/95 border-t border-slate-800/80 px-3.5 py-2 flex items-center justify-between gap-2 text-xs shadow-inner">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="bg-slate-950/95 border-t border-slate-800/80 px-3.5 sm:px-6 py-2 shadow-inner">
+            <div className="max-w-6xl mx-auto flex items-center gap-2 min-w-0 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
               <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
                 {session.role === 'admin' ? 'League Admin' : 'Captain'}
               </span>
               <span className="text-slate-400 text-[11px] shrink-0">Logged in:</span>
-              <span className="font-extrabold text-white text-xs truncate">
+              <span className="font-extrabold text-white text-xs sm:text-sm truncate">
                 {session.name.replace(/ Captain$/i, '')}
               </span>
             </div>
