@@ -159,7 +159,7 @@ const MainShell: React.FC = () => {
                   <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
                   {item.badge !== undefined && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-black">
+                    <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-black leading-none">
                       {item.badge}
                     </span>
                   )}

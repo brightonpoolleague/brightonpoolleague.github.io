@@ -114,8 +114,8 @@ export const TeamsAndVenuesView: React.FC = () => {
     <div className="space-y-5">
       {/* Header & Stats Banner */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
               <Building2 className="w-3.5 h-3.5" />
               {seasonName} Season
@@ -129,12 +129,12 @@ export const TeamsAndVenuesView: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold whitespace-nowrap shadow-sm">
               <Users className="w-3.5 h-3.5 text-emerald-400" />
               <strong>{teams.length}</strong> Teams
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold whitespace-nowrap shadow-sm">
               <MapPin className="w-3.5 h-3.5 text-emerald-400" />
               <strong>{totalVenuesCount}</strong> Venues
             </span>
@@ -146,13 +146,22 @@ export const TeamsAndVenuesView: React.FC = () => {
           <button
             type="button"
             onClick={() => setSelectedDivision('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
               selectedDivision === 'ALL'
                 ? 'bg-emerald-600 text-white'
                 : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            All Divisions ({teams.length})
+            <span>All Divisions</span>
+            <span
+              className={`min-w-[1.25rem] h-4 inline-flex items-center justify-center px-1 rounded-full text-[10px] font-bold leading-none ${
+                selectedDivision === 'ALL'
+                  ? 'bg-emerald-800 text-emerald-100'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {teams.length}
+            </span>
           </button>
           {divisions.map((div) => {
             const count = teams.filter((t) => t.division === div).length;
@@ -169,7 +178,7 @@ export const TeamsAndVenuesView: React.FC = () => {
               >
                 <span>{div}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  className={`min-w-[1.25rem] h-4 inline-flex items-center justify-center px-1 rounded-full text-[10px] font-bold leading-none ${
                     selectedDivision === div
                       ? 'bg-emerald-800 text-emerald-100'
                       : 'bg-slate-800 text-slate-400'
@@ -375,7 +384,7 @@ export const TeamsAndVenuesView: React.FC = () => {
                       >
                         <span>{player.name}</span>
                         {isCap && (
-                          <span className="text-[10px] bg-amber-500/30 text-amber-300 px-1 py-0.2 rounded font-black">
+                      <span className="text-[10px] bg-amber-500/30 text-amber-300 px-1.5 py-0.5 rounded font-black leading-none">
                             CAPTAIN
                           </span>
                         )}
@@ -416,21 +425,21 @@ export const TeamsAndVenuesView: React.FC = () => {
                 className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 transition hover:border-slate-700 shadow-sm"
               >
                 {/* Venue Header */}
-                <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-800/80 pb-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-2.5 border-b border-slate-800/80 pb-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                      <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 min-w-0">
                         <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="truncate">{venueGroup.venue}</span>
                       </h3>
                       {hasMultipleTeams && (
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0 whitespace-nowrap">
                           {venueGroup.teams.length} Home Teams
                         </span>
                       )}
                     </div>
                     {venueGroup.address && (
-                      <p className="text-xs text-slate-400 mt-0.5 pl-6">
+                      <p className="text-xs text-slate-400 mt-1 pl-6">
                         {venueGroup.address}
                       </p>
                     )}
@@ -470,7 +479,7 @@ export const TeamsAndVenuesView: React.FC = () => {
                                 {team.division}
                               </span>
                               {isMyTeam && (
-                                <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 leading-none">
                                   Your Team
                                 </span>
                               )}
@@ -570,7 +579,7 @@ export const TeamsAndVenuesView: React.FC = () => {
                         {team.division}
                       </span>
                       {isMyTeam && (
-                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 leading-none">
                           Your Team
                         </span>
                       )}
