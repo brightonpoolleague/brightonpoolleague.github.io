@@ -2550,11 +2550,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               Not required (Decided at 8)
                             </span>
                           )}
-                          {isByeFrame && (
-                            <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">
-                              Auto BYE Rule
-                            </span>
-                          )}
                           {frame.dish && (
                             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-[10px]">
                               ★ DISH
