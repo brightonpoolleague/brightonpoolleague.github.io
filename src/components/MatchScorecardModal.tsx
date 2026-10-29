@@ -1302,17 +1302,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <span className="font-extrabold text-white text-xs truncate">
               {session.name.replace(/ Captain$/i, '')}
             </span>
-            {mySide && (
-              <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 border ${
-                  mySide === 'home'
-                    ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                    : 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                }`}
-              >
-                {mySide === 'home' ? 'Home' : 'Away'}
-              </span>
-            )}
           </div>
         </div>
       )}
