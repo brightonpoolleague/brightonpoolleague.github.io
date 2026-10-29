@@ -3,7 +3,6 @@ import {
   Check,
   ChevronDown,
   KeyRound,
-  LogOut,
   Search,
   Shield,
   ShieldCheck,
@@ -108,8 +107,6 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     }
   }, [isTeamDropdownOpen]);
 
-  const isLoggedIn = session.role === 'captain' || session.role === 'admin';
-
   const handleCaptainLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeamId) return;
@@ -168,26 +165,6 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
             <X className="w-4 h-4" />
           </button>
         </div>
-
-        {isLoggedIn && (
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
-            <div className="text-xs">
-              <span className="text-slate-400">Signed in as: </span>
-              <strong className="text-white">{session.name}</strong>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setRoleSession('viewer');
-                onClose();
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-bold transition"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Log Out
-            </button>
-          </div>
-        )}
 
         {/* 2-Tab Switcher: Team Captain | League Admin */}
         <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">

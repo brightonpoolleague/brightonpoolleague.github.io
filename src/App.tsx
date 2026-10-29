@@ -9,7 +9,6 @@ import {
   Radio,
   Shield,
   Trophy,
-  UserCheck,
 } from 'lucide-react';
 import { LeagueProvider, useLeague } from './context/LeagueContext';
 import { FixturesAndLiveView } from './components/FixturesAndLiveView';
@@ -171,29 +170,32 @@ const MainShell: React.FC = () => {
           {/* Login / Active Role + Logout Controls */}
           {isLoggedIn ? (
             <div className="flex items-center gap-1.5 shrink-0 relative z-10">
-              <button
-                type="button"
-                onClick={() => setShowRoleModal(true)}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl text-xs font-bold border transition touch-manipulation cursor-pointer select-none active:scale-95 ${
+              {/* Desktop Status Chip */}
+              <div
+                className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border select-none ${
                   session.role === 'admin'
-                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 active:bg-emerald-500/25'
-                    : 'bg-amber-500/15 border-amber-500/40 text-amber-300 active:bg-amber-500/25'
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                    : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
                 }`}
-                title="Switch account"
               >
-                <UserCheck className="w-3.5 h-3.5 shrink-0" />
-                <span className="max-w-[110px] sm:max-w-[150px] truncate">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                  {session.role === 'admin' ? 'Admin' : 'Captain'}
+                </span>
+                <span className="max-w-[180px] md:max-w-[280px] truncate text-white">
                   {session.name}
                 </span>
-              </button>
+              </div>
+
+              {/* Log Out Button */}
               <button
                 type="button"
                 onClick={() => setRoleSession('viewer')}
-                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition touch-manipulation cursor-pointer select-none active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[38px] sm:min-h-[34px] rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-300 hover:text-white text-xs font-bold transition touch-manipulation cursor-pointer select-none active:scale-95 shadow-sm"
                 title="Log out"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Log Out</span>
+                <LogOut className="w-3.5 h-3.5 text-slate-400" />
+                <span>Log Out</span>
               </button>
             </div>
           ) : (
@@ -207,6 +209,22 @@ const MainShell: React.FC = () => {
             </button>
           )}
         </div>
+
+        {/* Mobile Active Session Bar (displays full name across mobile screen without cutting off) */}
+        {isLoggedIn && (
+          <div className="sm:hidden bg-slate-950/95 border-t border-slate-800/80 px-3.5 py-2 flex items-center justify-between gap-2 text-xs shadow-inner">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                {session.role === 'admin' ? 'League Admin' : 'Captain'}
+              </span>
+              <span className="text-slate-400 text-[11px] shrink-0">Signed in:</span>
+              <span className="font-extrabold text-white text-xs truncate">
+                {session.name}
+              </span>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Persistent Offline / Weak Signal Banner */}

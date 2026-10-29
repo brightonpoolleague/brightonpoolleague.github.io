@@ -1288,6 +1288,54 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         </div>
       </div>
 
+      {/* Logged-In User Session Bar */}
+      {isLoggedIn && (
+        <div className="bg-slate-950/95 border-b border-slate-800/80 px-3 sm:px-6 py-1.5 flex items-center justify-between gap-2 text-xs shrink-0 select-none">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <span className="text-slate-400 text-[11px] hidden sm:inline">
+              Logged in as:
+            </span>
+            <span className="font-bold text-white text-xs truncate">
+              {session.name}
+            </span>
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shrink-0 border ${
+                session.role === 'admin'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  : mySide === 'home'
+                  ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                  : mySide === 'away'
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                  : 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}
+            >
+              {session.role === 'admin'
+                ? 'League Admin'
+                : mySide === 'home'
+                ? 'Home Captain'
+                : mySide === 'away'
+                ? 'Away Captain'
+                : 'Neutral Captain'}
+            </span>
+          </div>
+
+          <div className="text-[11px] shrink-0 font-medium">
+            {canManageLeague ? (
+              <span className="text-emerald-400 font-semibold hidden sm:inline">
+                Full Admin Editing Access
+              </span>
+            ) : mySide ? (
+              <span className="text-emerald-400 hidden sm:inline">
+                {mySide === 'home' ? 'Home' : 'Away'} Lineup &amp; Scoring Access
+              </span>
+            ) : (
+              <span className="text-slate-500 hidden sm:inline">Viewing Only</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Live Scoreboard Banner */}
       <div className="bg-gradient-to-b from-emerald-950/60 to-slate-900 border-b border-slate-800 px-4 py-3 shrink-0 touch-none select-none">
         <div className="max-w-4xl mx-auto">
