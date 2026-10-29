@@ -1076,9 +1076,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const setFrames = frames.filter((f) => f.setNumber === activeSet);
 
   const showSignOff =
-    isMatchComplete ||
-    fixture.status === 'submitted' ||
-    fixture.status === 'approved';
+    isLoggedIn &&
+    (isMatchComplete ||
+      fixture.status === 'submitted' ||
+      fixture.status === 'approved');
 
   const renderSignOffCard = () => (
     <div className="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3.5">
@@ -1532,7 +1533,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   : 'This match has been submitted. Changes can only be made by league admins.'}
               </span>
             </div>
-          ) : isMatchLockedBySignature && fixture.status !== 'submitted' && fixture.status !== 'approved' ? (
+          ) : isLoggedIn && isMatchLockedBySignature && fixture.status !== 'submitted' && fixture.status !== 'approved' ? (
             <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs text-amber-200">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-amber-400 shrink-0" />
