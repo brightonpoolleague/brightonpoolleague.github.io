@@ -6,8 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Eye,
-  EyeOff,
   History,
   MapPin,
   PlayCircle,
@@ -68,21 +66,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('ALL');
-  const [showMyNextMatch, setShowMyNextMatch] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const stored = localStorage.getItem('bpl_show_my_next_match');
-    return stored !== 'false';
-  });
-
-  const toggleMyNextMatch = () => {
-    setShowMyNextMatch((prev) => {
-      const next = !prev;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bpl_show_my_next_match', String(next));
-      }
-      return next;
-    });
-  };
 
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -447,133 +430,118 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         </div>
       </div>
 
-      {/* Team Captain Spotlight: My Next Match */}
-      {isCaptain && myTeam && myNextMatch && (() => {
+      {/* Team Captain Spotlight: My Next Match (only shown when 'My Matches' filter is active) */}
+      {isCaptain && myTeam && myNextMatch && statusFilter === 'mine' && (() => {
         const nextScore = calculateMatchScore(myNextMatch);
         const home = teamsById[myNextMatch.homeTeamId];
         const away = teamsById[myNextMatch.awayTeamId];
-
-        if (!showMyNextMatch) {
-          return (
-            <div
-              onClick={toggleMyNextMatch}
-              className="cursor-pointer bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-xs transition shadow-md group"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold text-xs border border-emerald-500/30">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  MY NEXT MATCH
-                </span>
-                <span className="text-slate-300 truncate font-semibold">
-                  <span className="text-white font-bold">{home?.name}</span>
-                  <span className="text-slate-500 mx-1.5 font-normal">vs</span>
-                  <span className="text-white font-bold">{away?.name}</span>
-                </span>
-                <span className="text-slate-600 hidden sm:inline">•</span>
-                <span className="text-slate-400 hidden sm:inline">
-                  {myNextMatch.division} • {formatMatchDate(myNextMatch.matchDate)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-emerald-400 group-hover:text-emerald-300 text-xs font-bold shrink-0">
-                <Eye className="w-3.5 h-3.5" />
-                <span>Show Match</span>
-              </div>
-            </div>
-          );
-        }
+        if (!home || !away) return null;
+        const nextTimeframe = getMatchTimeframe(myNextMatch.matchDate, myNextMatch.status);
 
         return (
-          <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-5 shadow-xl space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  MY NEXT MATCH
+          <div className="bg-slate-900 border-2 border-emerald-500/70 shadow-lg shadow-emerald-950/30 rounded-2xl p-3 sm:p-4 flex flex-col justify-between gap-3 transition">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black uppercase tracking-wider shrink-0">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  Next Match
                 </span>
-                <span className="text-slate-400 font-semibold flex items-center gap-1">
-                  {isKnockoutFixture(myNextMatch) ? (
-                    <span className="text-amber-400 font-bold flex items-center gap-1">
-                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                      {myNextMatch.competitionName ||
-                        myNextMatch.cupName ||
-                        (myNextMatch.division
-                          ? `${myNextMatch.division} Knockout`
-                          : 'Knockout')}
-                      {myNextMatch.round || myNextMatch.cupRound
-                        ? ` (${myNextMatch.round || myNextMatch.cupRound})`
-                        : ''}
-                    </span>
-                  ) : (
-                    myNextMatch.division
-                  )}
-                </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-slate-300 font-medium">
+                {isKnockoutFixture(myNextMatch) ? (
+                  <span className="font-bold text-amber-400 flex items-center gap-1 truncate">
+                    <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    {myNextMatch.competitionName ||
+                      myNextMatch.cupName ||
+                      (myNextMatch.division
+                        ? `${myNextMatch.division} Knockout`
+                        : 'Knockout')}
+                    {myNextMatch.round || myNextMatch.cupRound
+                      ? ` (${myNextMatch.round || myNextMatch.cupRound})`
+                      : ''}
+                  </span>
+                ) : (
+                  <span className="font-bold text-emerald-400 shrink-0">
+                    {myNextMatch.division}
+                  </span>
+                )}
+                <span className="text-slate-600 shrink-0">•</span>
+                <span className="text-slate-400 truncate">
                   {formatMatchDate(myNextMatch.matchDate)}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${
-                    myNextMatch.status === 'live'
-                      ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
-                      : myNextMatch.status === 'submitted'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                      : myNextMatch.status === 'approved'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-slate-800 text-slate-300 border border-slate-700'
-                  }`}
-                >
-                  {myNextMatch.status === 'live'
-                    ? isKnockoutFixture(myNextMatch)
-                      ? 'LIVE NOW (First to 8)'
-                      : `LIVE NOW (${nextScore.completedFrames}/15)`
-                    : myNextMatch.status === 'scheduled'
-                    ? isKnockoutFixture(myNextMatch)
-                      ? 'Upcoming Knockout'
-                      : 'Upcoming Match'
+              <span
+                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0 ${
+                  myNextMatch.status === 'live'
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
                     : myNextMatch.status === 'submitted'
-                    ? 'Submitted • Awaiting Approval'
-                    : 'Approved Result'}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={toggleMyNextMatch}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold border border-slate-700/80 transition shadow-sm"
-                  title="Hide My Next Match spotlight"
-                >
-                  <EyeOff className="w-3.5 h-3.5" />
-                  <span>Hide</span>
-                </button>
-              </div>
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : myNextMatch.status === 'approved'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : nextTimeframe === 'today'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
+                    : nextTimeframe === 'upcoming'
+                    ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                    : 'bg-slate-800 text-slate-400 border border-slate-700'
+                }`}
+              >
+                {myNextMatch.status === 'live' ? (
+                  <>
+                    <Radio className="w-2.5 h-2.5" />
+                    {isKnockoutFixture(myNextMatch)
+                      ? myNextMatch.knockoutFormat === 'play_all_15'
+                        ? `LIVE (${nextScore.completedFrames}/15)`
+                        : 'LIVE (First to 8)'
+                      : `LIVE (${nextScore.completedFrames}/15)`}
+                  </>
+                ) : myNextMatch.status === 'approved' ? (
+                  <>
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    Approved
+                  </>
+                ) : myNextMatch.status === 'submitted' ? (
+                  <>
+                    <Clock className="w-2.5 h-2.5" />
+                    Submitted
+                  </>
+                ) : nextTimeframe === 'today' ? (
+                  <>
+                    <Calendar className="w-2.5 h-2.5" />
+                    Match Today
+                  </>
+                ) : nextTimeframe === 'upcoming' ? (
+                  <>
+                    <Clock className="w-2.5 h-2.5" />
+                    Upcoming
+                  </>
+                ) : (
+                  <>
+                    <History className="w-2.5 h-2.5" />
+                    Past Date
+                  </>
+                )}
+              </span>
             </div>
 
             <div
               onClick={() => onSelectFixture(myNextMatch)}
-              className="cursor-pointer bg-slate-950/90 border border-slate-800 rounded-xl p-3 sm:p-4 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 hover:border-emerald-500/50 transition shadow-inner"
+              className="cursor-pointer bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 hover:border-slate-700 transition"
             >
               <div className="text-left min-w-0 pr-1 sm:pr-2">
                 <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
-                  {home?.name}
+                  {home.name}
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {home?.id === myTeam.id && (
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shrink-0">
-                      Your Team
-                    </span>
-                  )}
-                  <span className="text-[11px] text-slate-400">
-                    Home {nextScore.completedFrames > 0 && `• ${nextScore.homePoints} pts`}
-                  </span>
+                <div className="text-[11px] text-slate-400 mt-1">
+                  {isKnockoutFixture(myNextMatch)
+                    ? nextScore.isDecided && nextScore.matchWinner === 'home'
+                      ? '🏆 Winner'
+                      : 'Home'
+                    : `Home • ${nextScore.homePoints} pts`}
                 </div>
               </div>
 
               <div className="flex flex-col items-center justify-center px-1 shrink-0">
                 {nextScore.completedFrames > 0 || myNextMatch.status !== 'scheduled' ? (
-                  <div className="flex items-center gap-1 sm:gap-1.5 font-black text-base sm:text-2xl text-white tabular-nums">
+                  <div className="flex items-center gap-1 sm:gap-1.5 font-black text-base sm:text-lg text-white tabular-nums">
                     <span
                       className={
                         nextScore.homeFrames > nextScore.awayFrames
@@ -595,7 +563,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     </span>
                   </div>
                 ) : (
-                  <span className="text-xs font-bold text-emerald-400 px-1.5 sm:px-2 py-1 rounded bg-slate-900 border border-slate-800 shrink-0">
+                  <span className="text-xs font-bold text-slate-400 px-1.5 sm:px-2 py-1 rounded bg-slate-900 border border-slate-800 shrink-0">
                     20:00
                   </span>
                 )}
@@ -603,40 +571,38 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
               <div className="text-right min-w-0 pl-1 sm:pl-2">
                 <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
-                  {away?.name}
+                  {away.name}
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-1.5 mt-1">
-                  <span className="text-[11px] text-slate-400">
-                    Away {nextScore.completedFrames > 0 && `• ${nextScore.awayPoints} pts`}
-                  </span>
-                  {away?.id === myTeam.id && (
-                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shrink-0">
-                      Your Team
-                    </span>
-                  )}
+                <div className="text-[11px] text-slate-400 mt-1">
+                  {isKnockoutFixture(myNextMatch)
+                    ? nextScore.isDecided && nextScore.matchWinner === 'away'
+                      ? '🏆 Winner'
+                      : 'Away'
+                    : `Away • ${nextScore.awayPoints} pts`}
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
-              <div className="flex items-center gap-1.5 text-xs text-slate-300 truncate">
-                <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <div className="flex items-center gap-1.5 text-xs text-slate-400 truncate">
+                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                 <span className="truncate">
-                  {home?.venue}
-                  {home?.tableNumber ? ` (${home.tableNumber})` : ''}
-                  {home?.address ? ` • ${home.address}` : ''}
+                  {home.venue}
+                  {home.tableNumber ? ` (${home.tableNumber})` : ''}
                 </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => onSelectFixture(myNextMatch)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
-              >
-                <PlayCircle className="w-4 h-4" />
-                Scorecard
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onSelectFixture(myNextMatch)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  <PlayCircle className="w-3.5 h-3.5" />
+                  Scorecard
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         );

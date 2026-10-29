@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   Building2,
   ExternalLink,
-  Eye,
-  EyeOff,
   Layers,
   MapPin,
   Search,
@@ -23,22 +21,6 @@ export const TeamsAndVenuesView: React.FC = () => {
   const mySquad = myTeam
     ? players.filter((p) => p.teamId === myTeam.id && p.active)
     : [];
-
-  const [showMyTeamVenue, setShowMyTeamVenue] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const stored = localStorage.getItem('bpl_show_my_team_venue');
-    return stored !== 'false';
-  });
-
-  const toggleMyTeamVenue = () => {
-    setShowMyTeamVenue((prev) => {
-      const next = !prev;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bpl_show_my_team_venue', String(next));
-      }
-      return next;
-    });
-  };
 
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -239,42 +221,9 @@ export const TeamsAndVenuesView: React.FC = () => {
           `${myTeam.venue}, ${myTeam.address || 'Brighton'}`
         )}`;
 
-        if (!showMyTeamVenue) {
-          return (
-            <div
-              onClick={toggleMyTeamVenue}
-              className="cursor-pointer bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-xs transition shadow-md group"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold text-xs border border-emerald-500/30 shrink-0">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                  MY TEAM &amp; VENUE
-                </span>
-                <span className="text-slate-300 truncate font-semibold">
-                  <span className="text-white font-bold">{myTeam.name}</span>
-                  <span className="text-slate-500 mx-1.5 font-normal">•</span>
-                  <span className="text-slate-300">{myTeam.venue}</span>
-                  {myTeam.tableNumber && (
-                    <span className="text-amber-300 ml-1.5 font-bold">({myTeam.tableNumber})</span>
-                  )}
-                </span>
-                <span className="text-slate-600 hidden sm:inline">•</span>
-                <span className="text-slate-400 hidden sm:inline">
-                  {myTeam.division} • {mySquad.length} Players
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-emerald-400 group-hover:text-emerald-300 text-xs font-bold shrink-0">
-                <Eye className="w-3.5 h-3.5" />
-                <span>Show Details</span>
-              </div>
-            </div>
-          );
-        }
-
         return (
           <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-5 shadow-xl space-y-3.5">
-            {/* Top Row: Tag, Division, Table, and Hide button */}
+            {/* Top Row: Tag, Division, Table */}
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40">
@@ -294,16 +243,6 @@ export const TeamsAndVenuesView: React.FC = () => {
                   </>
                 )}
               </div>
-
-              <button
-                type="button"
-                onClick={toggleMyTeamVenue}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold border border-slate-700/80 transition shadow-sm"
-                title="Hide My Team & Venue spotlight"
-              >
-                <EyeOff className="w-3.5 h-3.5" />
-                <span>Hide</span>
-              </button>
             </div>
 
             {/* Middle: Team & Venue info grid */}
