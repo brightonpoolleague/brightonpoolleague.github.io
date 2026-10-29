@@ -695,65 +695,73 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <h4 className="font-bold text-white text-sm">{team.name}</h4>
           </div>
           {setNumber === 1 && sideEditable ? (
-            <button
-              type="button"
-              disabled={!isSet1Locked && !set1Complete}
-              onClick={() => handleToggleLockSet1(side)}
-              title={
-                !isSet1Locked && !set1Complete
-                  ? 'Select a player (or BYE) in all 5 slots before confirming Set 1'
-                  : bothSet1Locked && !canManageLeague
-                  ? otherUnlockReq
-                    ? 'Click to agree to changes and allow both lineups to be edited'
-                    : myUnlockReq
-                    ? 'Cancel change request'
-                    : 'Request permission from the other captain to edit your lineup'
-                  : isSet1Locked
-                  ? 'Click to edit your lineup before the match begins'
-                  : 'Confirm your team running order'
-              }
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                bothSet1Locked && !canManageLeague
-                  ? otherUnlockReq
-                    ? 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 shadow'
-                    : myUnlockReq
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                  : isSet1Locked
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                  : set1Complete
-                  ? 'bg-emerald-600 text-white font-bold hover:bg-emerald-500 shadow'
-                  : 'bg-slate-800 text-slate-400 border border-slate-700'
-              }`}
-            >
-              {bothSet1Locked && !canManageLeague ? (
-                otherUnlockReq ? (
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {isSet1Locked && (
+                <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Lineup Confirmed</span>
+                </div>
+              )}
+              <button
+                type="button"
+                disabled={!isSet1Locked && !set1Complete}
+                onClick={() => handleToggleLockSet1(side)}
+                title={
+                  !isSet1Locked && !set1Complete
+                    ? 'Select a player (or BYE) in all 5 slots before confirming Set 1'
+                    : bothSet1Locked && !canManageLeague
+                    ? otherUnlockReq
+                      ? 'Click to agree to changes and allow both lineups to be edited'
+                      : myUnlockReq
+                      ? 'Cancel change request'
+                      : 'Request permission from the other captain to edit your lineup'
+                    : isSet1Locked
+                    ? 'Click to edit your lineup before the match begins'
+                    : 'Confirm your team running order'
+                }
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                  bothSet1Locked && !canManageLeague
+                    ? otherUnlockReq
+                      ? 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 shadow'
+                      : myUnlockReq
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm'
+                    : isSet1Locked
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm'
+                    : set1Complete
+                    ? 'bg-emerald-600 text-white font-bold hover:bg-emerald-500 shadow'
+                    : 'bg-slate-800 text-slate-400 border border-slate-700'
+                }`}
+              >
+                {bothSet1Locked && !canManageLeague ? (
+                  otherUnlockReq ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Allow Lineup Changes (2/2)
+                    </>
+                  ) : myUnlockReq ? (
+                    <>
+                      <Clock className="w-3.5 h-3.5" /> Change Requested (1/2)
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-3 h-3 text-slate-400" /> Request Change
+                    </>
+                  )
+                ) : isSet1Locked ? (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Allow Lineup Changes (2/2)
+                    <Pencil className="w-3 h-3 text-slate-400" /> Change
                   </>
-                ) : myUnlockReq ? (
+                ) : set1Complete ? (
                   <>
-                    <Clock className="w-3.5 h-3.5" /> Change Requested (1/2)
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Confirm Lineup
                   </>
                 ) : (
                   <>
-                    <Pencil className="w-3.5 h-3.5" /> Confirmed • Request Changes
+                    <Clock className="w-3.5 h-3.5" /> Select All 5 ({set1FilledCount}/5)
                   </>
-                )
-              ) : isSet1Locked ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Confirmed • Edit Lineup
-                </>
-              ) : set1Complete ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Confirm Lineup
-                </>
-              ) : (
-                <>
-                  <Clock className="w-3.5 h-3.5" /> Select All 5 ({set1FilledCount}/5)
-                </>
-              )}
-            </button>
+                )}
+              </button>
+            </div>
           ) : setNumber === 1 ? (
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
@@ -770,7 +778,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </>
               ) : isSet1Locked ? (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Confirmed
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Lineup Confirmed
                 </>
               ) : (
                 <>
@@ -1695,7 +1703,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
                           {activeSet === 1 ? (
                             <>
-                              <EyeOff className="w-4 h-4 text-emerald-400" />
+                              <Users className="w-4 h-4 text-emerald-400" />
                               Set 1 Lineup
                             </>
                           ) : (
