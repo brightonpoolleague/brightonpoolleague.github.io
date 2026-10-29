@@ -99,10 +99,12 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     };
   }, [isTeamDropdownOpen]);
 
-  // Focus search input whenever dropdown opens
+  // Focus search input whenever dropdown opens (desktop only to avoid keyboard jump on mobile)
   useEffect(() => {
     if (isTeamDropdownOpen) {
-      setTimeout(() => searchInputRef.current?.focus(), 50);
+      if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) {
+        setTimeout(() => searchInputRef.current?.focus(), 50);
+      }
     }
   }, [isTeamDropdownOpen]);
 
@@ -263,7 +265,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   </button>
 
                   {isTeamDropdownOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-60 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden flex flex-col max-h-56 animate-in fade-in duration-100">
                       <div className="p-2 border-b border-slate-800 bg-slate-950/80 sticky top-0 z-10">
                         <div className="relative">
                           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -273,7 +275,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                             value={teamSearchQuery}
                             onChange={(e) => setTeamSearchQuery(e.target.value)}
                             placeholder="Search team name or division..."
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-7 py-2 text-base sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                           />
                           {teamSearchQuery && (
                             <button
@@ -341,7 +343,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                       setCaptainError('');
                     }}
                     placeholder="8-digit Team PIN"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-base sm:text-xs text-white"
                   />
                   <button
                     type="submit"
@@ -404,7 +406,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   setAdminError('');
                 }}
                 placeholder="Enter Admin PIN"
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-base sm:text-xs text-white"
               />
               <button
                 type="submit"
