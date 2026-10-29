@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Camera,
@@ -77,6 +77,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleSwitchSet = (targetSet: 1 | 2 | 3) => {
     setActiveSet(targetSet);
+    setSubOutSlotBySide({ home: '', away: '' });
+    setSubInPlayerBySide({ home: '', away: '' });
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -118,8 +120,30 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       document.body.style.touchAction = originalTouchAction;
     };
   }, []);
-  const [showLineupEditor, setShowLineupEditor] = useState<boolean>(
-    !fixture.homeSet1Locked || !fixture.awaySet1Locked
+  const [showLineupEditorBySet, setShowLineupEditorBySet] = useState<
+    Record<1 | 2 | 3, boolean>
+  >({
+    1: !fixture.homeSet1Locked || !fixture.awaySet1Locked,
+    2: false,
+    3: false,
+  });
+  const showLineupEditor = showLineupEditorBySet[activeSet];
+  const setShowLineupEditor = useCallback(
+    (
+      value: boolean | ((prev: boolean) => boolean),
+      targetSet?: 1 | 2 | 3
+    ) => {
+      setShowLineupEditorBySet((prev) => {
+        const setKey = targetSet ?? activeSet;
+        const currentVal = prev[setKey];
+        const nextVal = typeof value === 'function' ? value(currentVal) : value;
+        return {
+          ...prev,
+          [setKey]: nextVal,
+        };
+      });
+    },
+    [activeSet]
   );
   const [isChangingLagWinner, setIsChangingLagWinner] = useState(false);
   const [subOutSlotBySide, setSubOutSlotBySide] = useState<{
@@ -302,7 +326,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       fixture.lineups.unlockRequested?.away
     );
     if (hasUnlockRequest) {
-      setShowLineupEditor(true);
+      setShowLineupEditorBySet((prev) => ({ ...prev, 1: true }));
       setActiveSet(1);
     }
   }, [
@@ -313,7 +337,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   // Auto-close lineup editor if a captain signs
   useEffect(() => {
     if (isSignedByAny) {
-      setShowLineupEditor(false);
+      setShowLineupEditorBySet({ 1: false, 2: false, 3: false });
     }
   }, [isSignedByAny]);
 
@@ -413,7 +437,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     fillMissing('home');
     fillMissing('away');
 
-    setShowLineupEditor(false);
+    setShowLineupEditor(false, 1);
     const updatedLineups = syncDefaultSubsequentSets(nextLineups);
     await saveFixture(
       {
@@ -542,7 +566,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       const nextLocked = !fixture.homeSet1Locked;
       if (nextLocked && !isSet1LineupComplete('home')) return;
       if (nextLocked) {
-        setShowLineupEditor(false);
+        setShowLineupEditor(false, 1);
       }
       await saveFixture(
         {
@@ -559,7 +583,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       const nextLocked = !fixture.awaySet1Locked;
       if (nextLocked && !isSet1LineupComplete('away')) return;
       if (nextLocked) {
-        setShowLineupEditor(false);
+        setShowLineupEditor(false, 1);
       }
       await saveFixture(
         {
@@ -1652,7 +1676,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       type="button"
                       onClick={() => {
                         setIsChangingLagWinner(true);
-                        setShowLineupEditor(false);
+                        setShowLineupEditor(false, 1);
                       }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-800 shadow-sm"
                     >
