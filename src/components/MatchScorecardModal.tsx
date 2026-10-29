@@ -549,13 +549,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       const s3Locked = Boolean(fixture.lineups.subsLocked?.set3?.[side]);
       const s3Pending = Boolean(fixture.lineups.subsPendingApproval?.set3?.[side]);
       if (!s3Locked && !s3Pending) {
-        if (
-          nextLineups.set3[side][slotIndex] === null ||
-          nextLineups.set3[side][slotIndex] === fixture.lineups.set2[side][slotIndex] ||
-          nextLineups.set3[side][slotIndex] === fixture.lineups.set1[side][slotIndex]
-        ) {
-          nextLineups.set3[side][slotIndex] = value;
-        }
+        nextLineups.set3[side][slotIndex] = value;
       }
     }
 

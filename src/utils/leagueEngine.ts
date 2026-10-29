@@ -138,20 +138,11 @@ export function ensureValidLineups(rawLineups: unknown): MatchLineups {
     subsPendingApproval: typed.subsPendingApproval ?? { set2: {}, set3: {} },
   };
 
-  // If Set 3 has not had subs locked or pending approval, its starting lineup continues from Set 2 (Section 5d)
+  // If Set 3 slot is null, it continues from Set 2 (or Set 1)
   (['home', 'away'] as const).forEach((side) => {
-    const s3Locked = Boolean(base.subsLocked?.set3?.[side]);
-    const s3Pending = Boolean(base.subsPendingApproval?.set3?.[side]);
-    if (!s3Locked && !s3Pending) {
-      for (let i = 0; i < 5; i++) {
-        if (
-          base.set3[side][i] === null ||
-          base.set3[side][i] === base.set1[side][i]
-        ) {
-          if (base.set2[side][i] !== null) {
-            base.set3[side][i] = base.set2[side][i];
-          }
-        }
+    for (let i = 0; i < 5; i++) {
+      if (base.set3[side][i] === null) {
+        base.set3[side][i] = base.set2[side][i] ?? base.set1[side][i];
       }
     }
   });
@@ -333,18 +324,8 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
       if (next.set2[side][i] === null && next.set1[side][i] !== null) {
         next.set2[side][i] = next.set1[side][i];
       }
-    }
-
-    const s3Locked = Boolean(next.subsLocked?.set3?.[side]);
-    const s3Pending = Boolean(next.subsPendingApproval?.set3?.[side]);
-    for (let i = 0; i < 5; i++) {
-      if (
-        (!s3Locked && !s3Pending && next.set3[side][i] === next.set1[side][i]) ||
-        next.set3[side][i] === null
-      ) {
-        if (next.set2[side][i] !== null) {
-          next.set3[side][i] = next.set2[side][i];
-        }
+      if (next.set3[side][i] === null && next.set2[side][i] !== null) {
+        next.set3[side][i] = next.set2[side][i];
       }
     }
   });
