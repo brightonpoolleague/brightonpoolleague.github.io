@@ -241,6 +241,60 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       ? awayTeam.name
       : 'Opponent';
 
+  const changesLockedMessage = useMemo(() => {
+    if (
+      !isSignedByAny ||
+      fixture.status === 'submitted' ||
+      fixture.status === 'approved'
+    ) {
+      return null;
+    }
+
+    if (isSignedByBoth) {
+      return 'Changes locked (both captains must unsign to make changes)';
+    }
+
+    // Exactly 1 captain has signed
+    const homeSigned = Boolean(fixture.homeCaptainSigned);
+    const awaySigned = Boolean(fixture.awayCaptainSigned);
+
+    if (mySide === 'home') {
+      if (homeSigned) {
+        // I have signed, waiting for away
+        return `Changes locked, waiting for ${awayTeam.name} to sign (you must unsign to make changes)`;
+      } else {
+        // Away signed, waiting for me
+        return `Changes locked, waiting for you to sign (${awayTeam.name} captain must unsign to make changes)`;
+      }
+    }
+
+    if (mySide === 'away') {
+      if (awaySigned) {
+        // I have signed, waiting for home
+        return `Changes locked, waiting for ${homeTeam.name} to sign (you must unsign to make changes)`;
+      } else {
+        // Home signed, waiting for me
+        return `Changes locked, waiting for you to sign (${homeTeam.name} captain must unsign to make changes)`;
+      }
+    }
+
+    // Admin or neutral viewing
+    if (homeSigned) {
+      return `Changes locked, waiting for ${awayTeam.name} to sign (${homeTeam.name} captain must unsign to make changes)`;
+    } else {
+      return `Changes locked, waiting for ${homeTeam.name} to sign (${awayTeam.name} captain must unsign to make changes)`;
+    }
+  }, [
+    isSignedByAny,
+    isSignedByBoth,
+    fixture.status,
+    fixture.homeCaptainSigned,
+    fixture.awayCaptainSigned,
+    mySide,
+    homeTeam.name,
+    awayTeam.name,
+  ]);
+
   // Automatically open the lineup editor and switch to Set 1 if either captain requests changes
   useEffect(() => {
     const hasUnlockRequest = Boolean(
@@ -1331,30 +1385,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {showSignOff && (
         <div className="bg-slate-900/95 border-b border-slate-800 px-3 sm:px-6 py-2.5 shrink-0 shadow-md">
           <div className="max-w-4xl mx-auto space-y-2">
-            {/* Shorter, simpler status indicator */}
-            {isSignedByAny && !isSignedByBoth && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5">
-                <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>
-                  Changes locked, waiting for {fixture.homeCaptainSigned ? awayTeam.name : homeTeam.name} captain to sign
-                </span>
-              </div>
-            )}
-
-            {fixture.status === 'submitted' && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Match submitted, awaiting league admin approval</span>
-              </div>
-            )}
-
-            {fixture.status === 'approved' && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Officially Approved by League Admin</span>
-              </div>
-            )}
-
             {/* Review Scorecard / Make Changes Toggle Button */}
             <div className="flex justify-center">
               <button
@@ -1377,6 +1407,28 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 )}
               </button>
             </div>
+
+            {/* Dynamic Changes Locked Message */}
+            {changesLockedMessage && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5 text-center">
+                <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>{changesLockedMessage}</span>
+              </div>
+            )}
+
+            {fixture.status === 'submitted' && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5 text-center">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Match submitted, awaiting league admin approval</span>
+              </div>
+            )}
+
+            {fixture.status === 'approved' && (
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5 text-center">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Officially Approved by League Admin</span>
+              </div>
+            )}
 
             {/* Captain Signatures Row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
