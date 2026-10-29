@@ -12,10 +12,18 @@ import { computePlayerStats } from '../utils/leagueEngine';
 import { ExportTableModal } from './ExportTableModal';
 
 export const PlayerStatsView: React.FC = () => {
-  const { seasonName, divisions, teams, players, fixtures } = useLeague();
-  const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(
-    () => divisions[0] || 'Premier League'
-  );
+  const { seasonName, divisions, teams, players, fixtures, session } = useLeague();
+
+  const isCaptain = session.role === 'captain' && Boolean(session.teamId);
+  const myTeam = isCaptain ? teams.find((t) => t.id === session.teamId) : null;
+  const myTeamDivision = myTeam?.division;
+
+  const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(() => {
+    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+      return myTeamDivision;
+    }
+    return divisions[0] || 'Premier League';
+  });
   const [activeBoard, setActiveBoard] = useState<'averages' | 'dishes'>(
     'averages'
   );
@@ -60,12 +68,30 @@ export const PlayerStatsView: React.FC = () => {
       window.removeEventListener('bpl_include_live_unapproved_change', handleSync);
     };
   }, []);
+
+  // Auto-switch to captain's division when visiting or switching captain teams
+  useEffect(() => {
+    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+      setSelectedDivision(myTeamDivision);
+    }
+  }, [session.teamId, myTeamDivision, divisions]);
+
+  useEffect(() => {
+    if (divisions.length > 0 && selectedDivision !== 'ALL' && !divisions.includes(selectedDivision)) {
+      setSelectedDivision(divisions[0]);
+    }
+  }, [divisions, selectedDivision]);
+
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Player averages are strictly per division (never across All Divisions)
+  const defaultDiv = myTeamDivision && divisions.includes(myTeamDivision)
+    ? myTeamDivision
+    : divisions[0] || 'Premier League';
+
   const effectiveDivision =
     activeBoard === 'averages' && selectedDivision === 'ALL'
-      ? divisions[0] || 'Premier League'
+      ? defaultDiv
       : selectedDivision;
 
   const { averagesTable, dishTable } = computePlayerStats(
@@ -153,7 +179,7 @@ export const PlayerStatsView: React.FC = () => {
               onClick={() => {
                 setActiveBoard('averages');
                 if (selectedDivision === 'ALL') {
-                  setSelectedDivision(divisions[0] || 'Premier League');
+                  setSelectedDivision(defaultDiv);
                 }
               }}
               className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition ${
