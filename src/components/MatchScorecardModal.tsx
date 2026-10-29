@@ -1296,7 +1296,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shrink-0 border bg-emerald-500/20 text-emerald-300 border-emerald-500/40">
               {session.role === 'admin' ? 'Admin' : 'Captain'}
             </span>
-            <span className="text-slate-400 text-[11px] hidden sm:inline">
+            <span className="text-slate-400 text-[11px] shrink-0">
               Logged in:
             </span>
             <span className="font-extrabold text-white text-xs truncate">
