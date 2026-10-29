@@ -133,6 +133,8 @@ export function ensureValidLineups(rawLineups: unknown): MatchLineups {
           : empty.set3.away,
     },
     unlockRequested: typed.unlockRequested ?? { home: false, away: false },
+    subsLocked: typed.subsLocked ?? { set2: {}, set3: {} },
+    subsUnlockRequested: typed.subsUnlockRequested ?? { set2: {}, set3: {} },
   };
 }
 
@@ -279,6 +281,22 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
     ...(lineups.unlockRequested
       ? { unlockRequested: { ...lineups.unlockRequested } }
       : {}),
+    ...(lineups.subsLocked
+      ? {
+          subsLocked: {
+            set2: { ...lineups.subsLocked.set2 },
+            set3: { ...lineups.subsLocked.set3 },
+          },
+        }
+      : {}),
+    ...(lineups.subsUnlockRequested
+      ? {
+          subsUnlockRequested: {
+            set2: { ...lineups.subsUnlockRequested.set2 },
+            set3: { ...lineups.subsUnlockRequested.set3 },
+          },
+        }
+      : {}),
   };
 
   (['home', 'away'] as const).forEach((side) => {
@@ -293,6 +311,87 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
   });
 
   return next;
+}
+
+export interface SubSummary {
+  slot: number; // 1..5
+  inPlayerId: SlotPlayerId;
+  outPlayerId: SlotPlayerId;
+}
+
+/**
+ * Checks if a player in a specific set, side, and slot index was substituted
+ * in from the previous set (or differs from Set 1 starting lineup).
+ */
+export function isSlotSubstituted(
+  lineups: MatchLineups,
+  setNumber: 1 | 2 | 3,
+  side: 'home' | 'away',
+  slotIdx: number
+): boolean {
+  if (setNumber === 1) return false;
+  const current = lineups[`set${setNumber}` as 'set2' | 'set3']?.[side]?.[slotIdx];
+  if (!current || current === 'BYE') return false;
+  const set1 = lineups.set1?.[side]?.[slotIdx];
+  if (current !== set1) return true;
+  if (setNumber === 3) {
+    const set2 = lineups.set2?.[side]?.[slotIdx];
+    if (current !== set2) return true;
+  }
+  return false;
+}
+
+/**
+ * Returns all substitutions made for a specific set (2 or 3) compared to the previous set.
+ */
+export function getSubstitutionsMade(
+  lineups: MatchLineups,
+  setNumber: 2 | 3,
+  side: 'home' | 'away'
+): SubSummary[] {
+  const currentSlots = lineups[`set${setNumber}` as 'set2' | 'set3']?.[side] || [];
+  const prevSlots =
+    setNumber === 2 ? lineups.set1?.[side] || [] : lineups.set2?.[side] || [];
+  const subs: SubSummary[] = [];
+
+  for (let i = 0; i < 5; i++) {
+    const curr = currentSlots[i];
+    const prev = prevSlots[i];
+    if (curr && prev && curr !== prev) {
+      subs.push({
+        slot: i + 1,
+        inPlayerId: curr,
+        outPlayerId: prev,
+      });
+    }
+  }
+  return subs;
+}
+
+/**
+ * Checks if a team has confirmed and locked their substitutions for Set 2 or Set 3.
+ */
+export function isSubsLocked(
+  lineups: MatchLineups,
+  setNumber: 1 | 2 | 3,
+  side: 'home' | 'away'
+): boolean {
+  if (setNumber === 1) return false;
+  const setKey = `set${setNumber}` as 'set2' | 'set3';
+  return Boolean(lineups.subsLocked?.[setKey]?.[side]);
+}
+
+/**
+ * Checks if a team has an outstanding request to unlock/change their substitutions for Set 2 or Set 3.
+ */
+export function isSubsUnlockRequested(
+  lineups: MatchLineups,
+  setNumber: 1 | 2 | 3,
+  side: 'home' | 'away'
+): boolean {
+  if (setNumber === 1) return false;
+  const setKey = `set${setNumber}` as 'set2' | 'set3';
+  return Boolean(lineups.subsUnlockRequested?.[setKey]?.[side]);
 }
 
 export function isKnockoutFixture(fixture: Fixture): boolean {

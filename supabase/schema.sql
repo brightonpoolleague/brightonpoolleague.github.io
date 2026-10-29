@@ -419,6 +419,14 @@ declare
   v_away_signed boolean;
   v_home_unlock_req boolean;
   v_away_unlock_req boolean;
+  v_home_s2_locked boolean;
+  v_away_s2_locked boolean;
+  v_home_s3_locked boolean;
+  v_away_s3_locked boolean;
+  v_home_s2_unlock_req boolean;
+  v_away_s2_unlock_req boolean;
+  v_home_s3_unlock_req boolean;
+  v_away_s3_unlock_req boolean;
   v_next_status text;
 begin
   -- Verify Team PIN for the claimed team
@@ -514,6 +522,30 @@ begin
       end if;
     end if;
 
+    -- Merge Set 2 and Set 3 subs lock states and unlock requests
+    v_home_s2_locked := coalesce((p_lineups->'subsLocked'->'set2'->>'home')::boolean, (v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false);
+    v_home_s3_locked := coalesce((p_lineups->'subsLocked'->'set3'->>'home')::boolean, (v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false);
+    v_home_s2_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set2'->>'home')::boolean, false);
+    v_home_s3_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set3'->>'home')::boolean, false);
+
+    if coalesce((v_fixture.lineups->'subsUnlockRequested'->'set2'->>'away')::boolean, false) and
+       not coalesce((p_lineups->'subsLocked'->'set2'->>'away')::boolean, true) then
+      v_away_s2_locked := false;
+      v_away_s2_unlock_req := false;
+    else
+      v_away_s2_locked := coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false);
+      v_away_s2_unlock_req := coalesce((v_fixture.lineups->'subsUnlockRequested'->'set2'->>'away')::boolean, false);
+    end if;
+
+    if coalesce((v_fixture.lineups->'subsUnlockRequested'->'set3'->>'away')::boolean, false) and
+       not coalesce((p_lineups->'subsLocked'->'set3'->>'away')::boolean, true) then
+      v_away_s3_locked := false;
+      v_away_s3_unlock_req := false;
+    else
+      v_away_s3_locked := coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false);
+      v_away_s3_unlock_req := coalesce((v_fixture.lineups->'subsUnlockRequested'->'set3'->>'away')::boolean, false);
+    end if;
+
     v_merged_lineups := jsonb_build_object(
       'set1', jsonb_build_object(
         'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home') else p_lineups->'set1'->'home' end,
@@ -527,7 +559,15 @@ begin
         'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home') else p_lineups->'set3'->'home' end,
         'away', coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away')
       ),
-      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req)
+      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req),
+      'subsLocked', jsonb_build_object(
+        'set2', jsonb_build_object('home', v_home_s2_locked, 'away', v_away_s2_locked),
+        'set3', jsonb_build_object('home', v_home_s3_locked, 'away', v_away_s3_locked)
+      ),
+      'subsUnlockRequested', jsonb_build_object(
+        'set2', jsonb_build_object('home', v_home_s2_unlock_req, 'away', v_away_s2_unlock_req),
+        'set3', jsonb_build_object('home', v_home_s3_unlock_req, 'away', v_away_s3_unlock_req)
+      )
     );
     v_away_signed := v_fixture.away_captain_signed;
   elsif p_team_id = v_fixture.away_team_id then
@@ -553,6 +593,30 @@ begin
       end if;
     end if;
 
+    -- Merge Set 2 and Set 3 subs lock states and unlock requests
+    v_away_s2_locked := coalesce((p_lineups->'subsLocked'->'set2'->>'away')::boolean, (v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false);
+    v_away_s3_locked := coalesce((p_lineups->'subsLocked'->'set3'->>'away')::boolean, (v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false);
+    v_away_s2_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set2'->>'away')::boolean, false);
+    v_away_s3_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set3'->>'away')::boolean, false);
+
+    if coalesce((v_fixture.lineups->'subsUnlockRequested'->'set2'->>'home')::boolean, false) and
+       not coalesce((p_lineups->'subsLocked'->'set2'->>'home')::boolean, true) then
+      v_home_s2_locked := false;
+      v_home_s2_unlock_req := false;
+    else
+      v_home_s2_locked := coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false);
+      v_home_s2_unlock_req := coalesce((v_fixture.lineups->'subsUnlockRequested'->'set2'->>'home')::boolean, false);
+    end if;
+
+    if coalesce((v_fixture.lineups->'subsUnlockRequested'->'set3'->>'home')::boolean, false) and
+       not coalesce((p_lineups->'subsLocked'->'set3'->>'home')::boolean, true) then
+      v_home_s3_locked := false;
+      v_home_s3_unlock_req := false;
+    else
+      v_home_s3_locked := coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false);
+      v_home_s3_unlock_req := coalesce((v_fixture.lineups->'subsUnlockRequested'->'set3'->>'home')::boolean, false);
+    end if;
+
     v_merged_lineups := jsonb_build_object(
       'set1', jsonb_build_object(
         'home', coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home'),
@@ -566,7 +630,15 @@ begin
         'home', coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home'),
         'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away') else p_lineups->'set3'->'away' end
       ),
-      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req)
+      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req),
+      'subsLocked', jsonb_build_object(
+        'set2', jsonb_build_object('home', v_home_s2_locked, 'away', v_away_s2_locked),
+        'set3', jsonb_build_object('home', v_home_s3_locked, 'away', v_away_s3_locked)
+      ),
+      'subsUnlockRequested', jsonb_build_object(
+        'set2', jsonb_build_object('home', v_home_s2_unlock_req, 'away', v_away_s2_unlock_req),
+        'set3', jsonb_build_object('home', v_home_s3_unlock_req, 'away', v_away_s3_unlock_req)
+      )
     );
     v_home_signed := v_fixture.home_captain_signed;
   end if;

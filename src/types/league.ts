@@ -64,6 +64,14 @@ export interface MatchLineups {
     home?: boolean;
     away?: boolean;
   };
+  subsLocked?: {
+    set2?: { home?: boolean; away?: boolean };
+    set3?: { home?: boolean; away?: boolean };
+  };
+  subsUnlockRequested?: {
+    set2?: { home?: boolean; away?: boolean };
+    set3?: { home?: boolean; away?: boolean };
+  };
 }
 
 export type FrameWinner = 'home' | 'away' | null;

@@ -34,7 +34,11 @@ import {
   getFramePlayers,
   getScorecardApprovalWarnings,
   getSetKey,
+  getSubstitutionsMade,
   isKnockoutFixture,
+  isSlotSubstituted,
+  isSubsLocked,
+  isSubsUnlockRequested,
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
@@ -264,6 +268,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       : otherSide === 'away'
       ? awayTeam.name
       : 'Opponent';
+  const myTeamName =
+    mySide === 'home'
+      ? homeTeam.name
+      : mySide === 'away'
+      ? awayTeam.name
+      : 'Your Team';
 
   const changesLockedMessage = useMemo(() => {
     if (
@@ -478,6 +488,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     value: SlotPlayerId
   ) => {
     if (!editable || !canEditSide(side)) return;
+    if (
+      setNumber > 1 &&
+      isSubsLocked(fixture.lineups, setNumber, side) &&
+      !canManageLeague
+    ) {
+      return;
+    }
     const setKey = getSetKey(setNumber);
     const nextLineups = structuredClone(fixture.lineups);
     nextLineups[setKey][side][slotIndex] = value;
@@ -597,6 +614,129 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         'away'
       );
     }
+  };
+
+  const handleConfirmSubs = async (
+    setNumber: 2 | 3,
+    side: 'home' | 'away'
+  ) => {
+    if (!editable || !canEditSide(side)) return;
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (!nextLineups.subsLocked) {
+      nextLineups.subsLocked = { set2: {}, set3: {} };
+    }
+    if (!nextLineups.subsLocked[setKey]) {
+      nextLineups.subsLocked[setKey] = {};
+    }
+    nextLineups.subsLocked[setKey]![side] = true;
+
+    if (nextLineups.subsUnlockRequested?.[setKey]) {
+      nextLineups.subsUnlockRequested[setKey]![side] = false;
+    }
+
+    setShowLineupEditor(false, setNumber);
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      side
+    );
+  };
+
+  const handleRequestSubsUnlock = async (
+    setNumber: 2 | 3,
+    side: 'home' | 'away'
+  ) => {
+    if (!editable || !canEditSide(side)) return;
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (!nextLineups.subsUnlockRequested) {
+      nextLineups.subsUnlockRequested = { set2: {}, set3: {} };
+    }
+    if (!nextLineups.subsUnlockRequested[setKey]) {
+      nextLineups.subsUnlockRequested[setKey] = {};
+    }
+    nextLineups.subsUnlockRequested[setKey]![side] = true;
+
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      side
+    );
+  };
+
+  const handleCancelSubsUnlockRequest = async (
+    setNumber: 2 | 3,
+    side: 'home' | 'away'
+  ) => {
+    if (!editable || !canEditSide(side)) return;
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (nextLineups.subsUnlockRequested?.[setKey]) {
+      nextLineups.subsUnlockRequested[setKey]![side] = false;
+    }
+
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      side
+    );
+  };
+
+  const handleAllowSubsUnlock = async (
+    setNumber: 2 | 3,
+    sideToUnlock: 'home' | 'away'
+  ) => {
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (!nextLineups.subsLocked) {
+      nextLineups.subsLocked = { set2: {}, set3: {} };
+    }
+    if (!nextLineups.subsLocked[setKey]) {
+      nextLineups.subsLocked[setKey] = {};
+    }
+    nextLineups.subsLocked[setKey]![sideToUnlock] = false;
+
+    if (nextLineups.subsUnlockRequested?.[setKey]) {
+      nextLineups.subsUnlockRequested[setKey]![sideToUnlock] = false;
+    }
+
+    setShowLineupEditor(true, setNumber);
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      mySide || sideToUnlock
+    );
+  };
+
+  const handleAdminUnlockSubs = async (
+    setNumber: 2 | 3,
+    side: 'home' | 'away'
+  ) => {
+    if (!canManageLeague) return;
+    const setKey = `set${setNumber}` as 'set2' | 'set3';
+    const nextLineups = structuredClone(fixture.lineups);
+    if (nextLineups.subsLocked?.[setKey]) {
+      nextLineups.subsLocked[setKey]![side] = false;
+    }
+    if (nextLineups.subsUnlockRequested?.[setKey]) {
+      nextLineups.subsUnlockRequested[setKey]![side] = false;
+    }
+    await saveFixture(
+      {
+        ...fixture,
+        lineups: nextLineups,
+      },
+      side
+    );
   };
 
   const handleFrameWinner = async (
@@ -734,6 +874,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     const otherUnlockReq = Boolean(
       fixture.lineups.unlockRequested?.[otherSide]
     );
+
+    const isSubsConfirmedAndLocked =
+      setNumber > 1 && isSubsLocked(fixture.lineups, setNumber, side);
+    const mySubsUnlockReq =
+      setNumber > 1 && isSubsUnlockRequested(fixture.lineups, setNumber, side);
+    const subsMade =
+      setNumber > 1
+        ? getSubstitutionsMade(fixture.lineups, setNumber as 2 | 3, side)
+        : [];
 
     const prevSetSlots =
       setNumber === 2
@@ -942,135 +1091,228 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           /* Set 2 & Set 3 Guided Substitution Experience */
           <div className="space-y-3">
             {sideEditable && (
-              <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
-                <div className="text-xs font-bold text-emerald-400">
-                  Make a Set {setNumber} Substitution
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div className="min-w-0">
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                      Who do you want to take out?
-                    </label>
-                    <select
-                      value={selectedSubOutSlot}
-                      onChange={(e) => {
-                        const val =
-                          e.target.value === '' ? '' : Number(e.target.value);
-                        setSubOutSlotBySide((prev) => ({
-                          ...prev,
-                          [side]: val,
-                        }));
-                        setSubInPlayerBySide((prev) => ({
-                          ...prev,
-                          [side]: '',
-                        }));
-                      }}
-                      className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 truncate"
-                    >
-                      <option value="">-- Select player to take out --</option>
-                      {[0, 1, 2, 3, 4].map((idx) => {
-                        const slotNum = idx + 1;
-                        const currId = currentSlots[idx];
-                        const prevId = prevSetSlots ? prevSetSlots[idx] : null;
-                        const wasSubbed =
-                          prevId && currId && prevId !== currId;
-                        return (
-                          <option key={slotNum} value={idx}>
-                            {getPlayerName(currId)} (Pos #{slotNum}
-                            {wasSubbed
-                              ? ` • subbed for ${getPlayerName(prevId)}`
-                              : ''}
-                            )
-                          </option>
-                        );
-                      })}
-                    </select>
+              isSubsConfirmedAndLocked ? (
+                <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-white">
+                        Set {setNumber} Substitutions Confirmed &amp; Locked
+                      </span>
+                    </div>
+                    {canManageLeague && (
+                      <button
+                        type="button"
+                        onClick={() => handleAdminUnlockSubs(setNumber as 2 | 3, side)}
+                        className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold border border-amber-500/30"
+                      >
+                        Admin: Unlock
+                      </button>
+                    )}
                   </div>
-
-                  <div className="min-w-0">
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                      Who do you want to put in?
-                    </label>
-                    <select
-                      disabled={subOutSlotIdx === null}
-                      value={selectedSubInPlayer}
-                      onChange={(e) =>
-                        setSubInPlayerBySide((prev) => ({
-                          ...prev,
-                          [side]: e.target.value,
-                        }))
-                      }
-                      className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 truncate"
-                    >
-                      <option value="">
-                        {subOutSlotIdx === null
-                          ? '-- Choose who to take out first --'
-                          : '-- Select replacement player --'}
-                      </option>
-                      {subInCandidates.map(({ player, disabledReason }) => {
-                        const isOriginalPrevPlayer =
-                          subOutSlotIdx !== null &&
-                          prevSetSlots?.[subOutSlotIdx] === player.id;
-                        return (
-                          <option
-                            key={player.id}
-                            value={player.id}
-                            disabled={Boolean(disabledReason)}
-                          >
-                            {player.name}
-                            {isOriginalPrevPlayer
-                              ? ` (Restore Set ${setNumber - 1} player)`
-                              : disabledReason
-                              ? ` (${disabledReason})`
-                              : ''}
-                          </option>
-                        );
-                      })}
-                      {canSubInBye && (
-                        <option value="BYE">No Player (BYE)</option>
-                      )}
-                    </select>
+                  <p className="text-[11px] text-slate-300">
+                    {subsMade.length > 0 ? (
+                      <>
+                        <strong className="text-emerald-300">
+                          {subsMade.length} substitution{subsMade.length > 1 ? 's' : ''} confirmed:
+                        </strong>{' '}
+                        {subsMade
+                          .map(
+                            (s) =>
+                              `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
+                          )
+                          .join(', ')}
+                        .
+                      </>
+                    ) : (
+                      <>Confirmed with no substitutions made (lineup unchanged from Set {setNumber - 1}).</>
+                    )}
+                  </p>
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    {mySubsUnlockReq ? (
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <span className="text-[11px] text-amber-300 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 animate-spin" />
+                          Waiting for {otherTeam.name} captain to allow changes...
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCancelSubsUnlockRequest(setNumber as 2 | 3, side)}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700"
+                        >
+                          Cancel Request
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleRequestSubsUnlock(setNumber as 2 | 3, side)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5"
+                      >
+                        <Unlock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Request to Change Subs</span>
+                      </button>
+                    )}
                   </div>
                 </div>
+              ) : (
+                <div className="bg-slate-950/90 border border-slate-800 rounded-xl p-3 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-bold text-emerald-400">
+                      Make a Set {setNumber} Substitution
+                    </div>
+                    <span className="text-[11px] text-slate-400">
+                      {subsMade.length > 0
+                        ? `${subsMade.length} sub${subsMade.length > 1 ? 's' : ''} staged`
+                        : 'No subs staged yet'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="min-w-0">
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                        Who do you want to take out?
+                      </label>
+                      <select
+                        value={selectedSubOutSlot}
+                        onChange={(e) => {
+                          const val =
+                            e.target.value === '' ? '' : Number(e.target.value);
+                          setSubOutSlotBySide((prev) => ({
+                            ...prev,
+                            [side]: val,
+                          }));
+                          setSubInPlayerBySide((prev) => ({
+                            ...prev,
+                            [side]: '',
+                          }));
+                        }}
+                        className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 truncate"
+                      >
+                        <option value="">-- Select player to take out --</option>
+                        {[0, 1, 2, 3, 4].map((idx) => {
+                          const slotNum = idx + 1;
+                          const currId = currentSlots[idx];
+                          const prevId = prevSetSlots ? prevSetSlots[idx] : null;
+                          const wasSubbed =
+                            prevId && currId && prevId !== currId;
+                          return (
+                            <option key={slotNum} value={idx}>
+                              {getPlayerName(currId)} (Pos #{slotNum}
+                              {wasSubbed
+                                ? ` • subbed for ${getPlayerName(prevId)}`
+                                : ''}
+                              )
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
 
-                {subOutSlotIdx !== null && selectedSubInPlayer !== '' && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-800/80">
-                    <span className="text-[11px] text-slate-300">
-                      Placing{' '}
-                      <strong className="text-emerald-400">
-                        {getPlayerName(selectedSubInPlayer as SlotPlayerId)}
-                      </strong>{' '}
-                      into{' '}
-                      <strong className="text-white">
-                        Position #{subOutSlotIdx + 1}
-                      </strong>{' '}
-                      (for {getPlayerName(currentSlots[subOutSlotIdx])})
+                    <div className="min-w-0">
+                      <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                        Who do you want to put in?
+                      </label>
+                      <select
+                        disabled={subOutSlotIdx === null}
+                        value={selectedSubInPlayer}
+                        onChange={(e) =>
+                          setSubInPlayerBySide((prev) => ({
+                            ...prev,
+                            [side]: e.target.value,
+                          }))
+                        }
+                        className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 truncate"
+                      >
+                        <option value="">
+                          {subOutSlotIdx === null
+                            ? '-- Choose who to take out first --'
+                            : '-- Select replacement player --'}
+                        </option>
+                        {subInCandidates.map(({ player, disabledReason }) => {
+                          const isOriginalPrevPlayer =
+                            subOutSlotIdx !== null &&
+                            prevSetSlots?.[subOutSlotIdx] === player.id;
+                          return (
+                            <option
+                              key={player.id}
+                              value={player.id}
+                              disabled={Boolean(disabledReason)}
+                            >
+                              {player.name}
+                              {isOriginalPrevPlayer
+                                ? ` (Restore Set ${setNumber - 1} player)`
+                                : disabledReason
+                                ? ` (${disabledReason})`
+                                : ''}
+                            </option>
+                          );
+                        })}
+                        {canSubInBye && (
+                          <option value="BYE">No Player (BYE)</option>
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {subOutSlotIdx !== null && selectedSubInPlayer !== '' && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-800/80">
+                      <span className="text-[11px] text-slate-300">
+                        Placing{' '}
+                        <strong className="text-emerald-400">
+                          {getPlayerName(selectedSubInPlayer as SlotPlayerId)}
+                        </strong>{' '}
+                        into{' '}
+                        <strong className="text-white">
+                          Position #{subOutSlotIdx + 1}
+                        </strong>{' '}
+                        (for {getPlayerName(currentSlots[subOutSlotIdx])})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleSlotChange(
+                            setNumber,
+                            side,
+                            subOutSlotIdx,
+                            selectedSubInPlayer as SlotPlayerId
+                          );
+                          setSubOutSlotBySide((prev) => ({
+                            ...prev,
+                            [side]: '',
+                          }));
+                          setSubInPlayerBySide((prev) => ({
+                            ...prev,
+                            [side]: '',
+                          }));
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+                      >
+                        Make Substitution
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-slate-400">
+                      {subsMade.length > 0
+                        ? `${subsMade.length} substitution${subsMade.length > 1 ? 's' : ''} staged`
+                        : 'No substitutions made (lineup unchanged)'}
                     </span>
                     <button
                       type="button"
-                      onClick={async () => {
-                        await handleSlotChange(
-                          setNumber,
-                          side,
-                          subOutSlotIdx,
-                          selectedSubInPlayer as SlotPlayerId
-                        );
-                        setSubOutSlotBySide((prev) => ({
-                          ...prev,
-                          [side]: '',
-                        }));
-                        setSubInPlayerBySide((prev) => ({
-                          ...prev,
-                          [side]: '',
-                        }));
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+                      onClick={() => handleConfirmSubs(setNumber as 2 | 3, side)}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
                     >
-                      Make Substitution
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>
+                        {subsMade.length > 0
+                          ? `Confirm ${subsMade.length} Sub${subsMade.length > 1 ? 's' : ''} & Lock`
+                          : 'Confirm Lineup (No Subs) & Lock'}
+                      </span>
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              )
             )}
 
             {/* Current Set 2 / Set 3 Running Order Summary */}
@@ -1120,7 +1362,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                             SUB
                           </span>
-                          {sideEditable && (
+                          {sideEditable && !isSubsConfirmedAndLocked && (
                             <button
                               type="button"
                               onClick={() =>
@@ -1698,8 +1940,21 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
                       >
-                        <Users className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{activeSet === 1 ? 'Select Lineup' : 'Make Subs'}</span>
+                        {activeSet > 1 &&
+                        mySide &&
+                        isSubsLocked(fixture.lineups, activeSet, mySide) ? (
+                          <>
+                            <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Set {activeSet} Subs Locked</span>
+                          </>
+                        ) : (
+                          <>
+                            <Users className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>
+                              {activeSet === 1 ? 'Select Lineup' : 'Make Subs'}
+                            </span>
+                          </>
+                        )}
                       </button>
                     )}
                 </div>
@@ -1865,14 +2120,33 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             )}
 
                             {activeSet > 1 && (
-                              <div className="flex items-center justify-end pt-2 border-t border-slate-800/60">
+                              <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 gap-2">
                                 <button
                                   type="button"
                                   onClick={() => setShowLineupEditor(false)}
                                   className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700/60 transition shadow-sm"
                                 >
-                                  Done Making Subs
+                                  Close Box
                                 </button>
+                                {mySide &&
+                                  !isSubsLocked(
+                                    fixture.lineups,
+                                    activeSet,
+                                    mySide
+                                  ) && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleConfirmSubs(activeSet as 2 | 3, mySide)
+                                      }
+                                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5"
+                                    >
+                                      <Lock className="w-3.5 h-3.5" />
+                                      <span>
+                                        Confirm Set {activeSet} Lineup &amp; Lock
+                                      </span>
+                                    </button>
+                                  )}
                               </div>
                             )}
                           </>
@@ -1928,6 +2202,147 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   )}
                 </div>
               )}
+
+              {/* Set 2 / Set 3 Subs Unlock Request Banner (Opposing Team Requesting) */}
+              {activeSet > 1 &&
+                bothSet1Locked &&
+                otherSide &&
+                isSubsUnlockRequested(fixture.lineups, activeSet, otherSide) && (
+                  <div className="bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-lg animate-in fade-in duration-200">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
+                      <div>
+                        <strong className="text-white block text-sm font-bold">
+                          {otherTeamName} captain requested to change their Set {activeSet} substitutions
+                        </strong>
+                        <span className="text-slate-300 text-xs">
+                          Substitutions are locked once confirmed. Click &ldquo;Allow Substitution Changes&rdquo; to unlock their substitutions for editing.
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleAllowSubsUnlock(activeSet as 2 | 3, otherSide)}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                        <span>Allow Substitution Changes</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              {/* Set 2 / Set 3 Opposing Team Substitution Notification Message */}
+              {activeSet > 1 &&
+                bothSet1Locked &&
+                otherSide &&
+                isSubsLocked(fixture.lineups, activeSet, otherSide) &&
+                (() => {
+                  const otherSubs = getSubstitutionsMade(
+                    fixture.lineups,
+                    activeSet as 2 | 3,
+                    otherSide
+                  );
+                  return (
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center gap-2.5 text-xs text-slate-200">
+                      {otherSubs.length > 0 ? (
+                        <>
+                          <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <strong className="text-emerald-300 font-bold">
+                              {otherTeamName} made Set {activeSet} substitution
+                              {otherSubs.length > 1 ? 's' : ''}:
+                            </strong>{' '}
+                            <span className="text-white">
+                              {otherSubs
+                                .map(
+                                  (s) =>
+                                    `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(
+                                      s.outPlayerId
+                                    )} (Pos #${s.slot})`
+                                )
+                                .join(', ')}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="min-w-0 flex-1 text-slate-300">
+                            <strong className="text-white">{otherTeamName}</strong>{' '}
+                            confirmed Set {activeSet} lineup (No substitutions)
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+              {/* Set 2 / Set 3 My Team Subs Confirmed Banner (when editor closed) */}
+              {activeSet > 1 &&
+                bothSet1Locked &&
+                mySide &&
+                isSubsLocked(fixture.lineups, activeSet, mySide) &&
+                !showLineupEditor &&
+                (() => {
+                  const mySubs = getSubstitutionsMade(
+                    fixture.lineups,
+                    activeSet as 2 | 3,
+                    mySide
+                  );
+                  return (
+                    <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-2.5 px-3 flex items-center justify-between gap-2 text-xs text-slate-300">
+                      <div className="flex items-center gap-2 min-w-0 truncate">
+                        <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="truncate">
+                          <strong className="text-white">
+                            {myTeamName} Set {activeSet} subs locked:
+                          </strong>{' '}
+                          {mySubs.length > 0
+                            ? mySubs
+                                .map(
+                                  (s) =>
+                                    `${getPlayerName(s.inPlayerId)} (Pos #${s.slot})`
+                                )
+                                .join(', ')
+                            : 'No substitutions'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowLineupEditor(true)}
+                        className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 shrink-0"
+                      >
+                        View / Manage
+                      </button>
+                    </div>
+                  );
+                })()}
+
+              {/* Set 2 / Set 3 My Team Reminder Banner (when NOT locked yet and editor closed) */}
+              {activeSet > 1 &&
+                bothSet1Locked &&
+                mySide &&
+                !isSubsLocked(fixture.lineups, activeSet, mySide) &&
+                !showLineupEditor && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs text-amber-200">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Users className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>
+                        Making substitutions for Set {activeSet}? Click &ldquo;Make
+                        Subs&rdquo; to substitute players or confirm your lineup.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowLineupEditor(true)}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap shadow transition"
+                    >
+                      Make Subs
+                    </button>
+                  </div>
+                )}
 
               <div className="space-y-2.5">
                 {setFrames.map((frame) => {
@@ -1996,6 +2411,20 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
                               {frame.homeSlot}
                             </span>
+                            {isSlotSubstituted(
+                              lineups,
+                              frame.setNumber,
+                              'home',
+                              frame.homeSlot - 1
+                            ) &&
+                              !hideHome && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0"
+                                  title="Substitute in this set"
+                                >
+                                  SUB
+                                </span>
+                              )}
                             {breaker === 'home' && (
                               <span
                                 className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0"
@@ -2044,6 +2473,20 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
                               {frame.awaySlot}
                             </span>
+                            {isSlotSubstituted(
+                              lineups,
+                              frame.setNumber,
+                              'away',
+                              frame.awaySlot - 1
+                            ) &&
+                              !hideAway && (
+                                <span
+                                  className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0"
+                                  title="Substitute in this set"
+                                >
+                                  SUB
+                                </span>
+                              )}
                             {breaker === 'away' && (
                               <span
                                 className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0"
@@ -2257,6 +2700,17 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span title={getPlayerName(homePlayerId, hideHome)}>
                               {getPlayerName(homePlayerId, hideHome)}
                             </span>
+                            {isSlotSubstituted(
+                              lineups,
+                              frame.setNumber,
+                              'home',
+                              frame.homeSlot - 1
+                            ) &&
+                              !hideHome && (
+                                <span className="ml-1.5 text-[9px] font-black px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  SUB
+                                </span>
+                              )}
                           </td>
                           <td className="py-1.5 sm:py-2 px-0.5 text-center">
                             <button
@@ -2306,6 +2760,17 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span title={getPlayerName(awayPlayerId, hideAway)}>
                               {getPlayerName(awayPlayerId, hideAway)}
                             </span>
+                            {isSlotSubstituted(
+                              lineups,
+                              frame.setNumber,
+                              'away',
+                              frame.awaySlot - 1
+                            ) &&
+                              !hideAway && (
+                                <span className="ml-1.5 text-[9px] font-black px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  SUB
+                                </span>
+                              )}
                           </td>
                           <td className="py-1.5 sm:py-2 px-0.5 text-center font-mono text-slate-400">
                             {frame.awaySlot}
