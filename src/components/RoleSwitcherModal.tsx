@@ -366,7 +366,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
                   setAdminPinInput(e.target.value);
                   setAdminError('');
                 }}
-                placeholder="Enter Admin PIN"
+                placeholder="Enter League Admin PIN"
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 py-2 text-xs text-white"
               />
               <button
