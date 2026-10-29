@@ -881,7 +881,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         <input
                           type="text"
                           value={team.captainPin && !team.captainPin.includes('•') ? team.captainPin : ''}
-                          placeholder="8-digit PIN"
+                          placeholder="6-digit PIN"
                           onChange={(e) =>
                             updateTeamPin(team.id, e.target.value)
                           }
@@ -893,7 +893,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           onClick={() =>
                             setConfirmDialog({
                               title: `Regenerate Captain PIN?`,
-                              message: `Generate a new random 8-digit Captain PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
+                              message: `Generate a new random 6-digit Captain PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
                               confirmLabel: 'Generate New PIN',
                               variant: 'warning',
                               onConfirm: () =>
@@ -901,7 +901,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             })
                           }
                           className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
-                          title="Generate new random 8-digit PIN"
+                          title="Generate new random 6-digit PIN"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>

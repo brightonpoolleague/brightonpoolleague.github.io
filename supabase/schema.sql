@@ -8,12 +8,12 @@ create extension if not exists "pgcrypto";
 -- 1. Private League Settings (stores Master League Admin PIN - NO public read/write access!)
 create table if not exists public.league_settings (
   id text primary key default 'default',
-  admin_pin text not null default '00000000',
+  admin_pin text not null default '000000',
   updated_at timestamptz not null default now()
 );
 
 insert into public.league_settings (id, admin_pin)
-values ('default', '00000000')
+values ('default', '000000')
 on conflict (id) do nothing;
 
 -- 2. Seasons (add new seasons & custom divisions anytime in the future within this same database)

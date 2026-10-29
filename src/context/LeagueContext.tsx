@@ -52,7 +52,7 @@ const STORAGE_KEYS = {
 };
 
 export function generateRandomPin(): string {
-  return String(Math.floor(10000000 + Math.random() * 90000000));
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 function mapSeasonRow(r: Record<string, unknown>): Season {

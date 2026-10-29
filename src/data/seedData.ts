@@ -2,7 +2,7 @@ import { DEFAULT_DIVISIONS, Fixture, Player, Season, Team } from '../types/leagu
 
 export const DEFAULT_SEASON_ID = 'winter-2026-27';
 export const DEFAULT_SEASON_NAME = 'Winter 2026/27';
-export const DEFAULT_ADMIN_PIN = '00000000';
+export const DEFAULT_ADMIN_PIN = '000000';
 
 export const INITIAL_SEASONS: Season[] = [
   {
