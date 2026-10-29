@@ -634,11 +634,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow"
               >
                 <PlayCircle className="w-4 h-4" />
-                {myNextMatch.status === 'live'
-                  ? 'Continue Scoring Live'
-                  : myNextMatch.status === 'scheduled'
-                  ? 'Enter Lineup / Start Match'
-                  : 'Open Scorecard'}
+                Scorecard
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
