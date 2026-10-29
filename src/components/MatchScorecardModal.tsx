@@ -1912,9 +1912,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             {breaker === 'home' && (
                               <span
                                 className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0"
-                                title="Breaks in this frame (X)"
+                                title="Breaks in this frame"
                               >
-                                X BREAK
+                                BREAK
                               </span>
                             )}
                             <span className="font-bold text-sm truncate">
@@ -1960,9 +1960,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             {breaker === 'away' && (
                               <span
                                 className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0"
-                                title="Breaks in this frame (X)"
+                                title="Breaks in this frame"
                               >
-                                X BREAK
+                                BREAK
                               </span>
                             )}
                             <span className="font-bold text-sm truncate">
