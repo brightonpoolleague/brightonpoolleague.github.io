@@ -115,7 +115,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
       onClose();
     } else {
       setCaptainError(
-        res.error || 'Incorrect Team Captain PIN. Check with League Admin.'
+        res.error || 'Incorrect Team PIN. Check with League Admin.'
       );
       setIsSubmitting(false);
     }
@@ -351,8 +351,8 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
             className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3"
           >
             <p className="text-xs text-slate-400">
-              Enter the Master League Admin PIN to manage teams, players, Team
-              Captain PINs, fixtures, and approve scorecards.
+              Enter the League Admin PIN to manage teams, players, Team PINs,
+              fixtures, and approve scorecards.
             </p>
 
             <div className="flex items-center gap-2">

@@ -397,7 +397,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         supabase.from('fixtures').select('*').order('match_date'),
       ]);
 
-      // If logged in as Admin, fetch protected team PINs via server-side RPC (requires Master Admin PIN)
+      // If logged in as Admin, fetch protected team PINs via server-side RPC (requires League Admin PIN)
       const pinMap: Record<string, string> = {};
       if (session.role === 'admin' && adminPin) {
         const pinsRes = await supabase.rpc('get_all_team_pins', {
@@ -904,7 +904,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         return {
           success: false,
-          error: 'Incorrect Team Captain PIN. Check with League Admin.',
+          error: 'Incorrect Team PIN. Check with League Admin.',
         };
       }
 
@@ -920,7 +920,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return {
         success: false,
-        error: 'Incorrect Team Captain PIN. Check with League Admin.',
+        error: 'Incorrect Team PIN. Check with League Admin.',
       };
     },
     [allTeams, adminPin, setRoleSession]

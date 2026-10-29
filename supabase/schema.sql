@@ -5,7 +5,7 @@
 
 create extension if not exists "pgcrypto";
 
--- 1. Private League Settings (stores Master League Admin PIN - NO public read/write access!)
+-- 1. Private League Settings (stores League Admin PIN - NO public read/write access!)
 create table if not exists public.league_settings (
   id text primary key default 'default',
   admin_pin text not null default '000000',
@@ -55,7 +55,7 @@ alter table public.teams add column if not exists table_number text not null def
 -- Drop any legacy fixed division check constraint so Admins can add new divisions freely
 alter table public.teams drop constraint if exists teams_division_check;
 
--- 4. Private Team Captain PINs (NO public read/write access so PINs are never exposed in DevTools!)
+-- 4. Private Team PINs (NO public read/write access so PINs are never exposed in DevTools!)
 create table if not exists public.team_pins (
   team_id text primary key references public.teams(id) on delete cascade,
   captain_pin text not null default '11111111',
@@ -184,8 +184,8 @@ create policy "Allow public read-only access to players" on public.players for s
 create policy "Allow public read-only access to fixtures" on public.fixtures for select using (true);
 
 -- Notice: league_settings, team_pins, and pin_attempt_log have NO public policies.
--- Captain PINs are strictly protected and only returned via get_all_team_pins(p_admin_pin)
--- when a valid League Admin Master PIN is provided.
+-- Team PINs are strictly protected and only returned via get_all_team_pins(p_admin_pin)
+-- when a valid League Admin PIN is provided.
 drop policy if exists "Allow public read-only access to team_pins" on public.team_pins;
 
 -- ============================================================================
@@ -194,7 +194,7 @@ drop policy if exists "Allow public read-only access to team_pins" on public.tea
 --   • Public Viewer: Read-only
 --   • Team Captain: Can ONLY update scorecard fields of their OWN team's
 --                   unapproved fixtures (cannot edit other matches or approve)
---   • League Admin: Full control when valid Master Admin PIN is supplied
+--   • League Admin: Full control when valid League Admin PIN is supplied
 -- ============================================================================
 
 -- ============================================================================
@@ -287,7 +287,7 @@ begin
 end;
 $$;
 
--- 1. Verify Master League Admin PIN (with rate-limiting)
+-- 1. Verify League Admin PIN (with rate-limiting)
 create or replace function public.verify_admin_pin(p_pin text)
 returns boolean
 language plpgsql
@@ -315,7 +315,7 @@ begin
 end;
 $$;
 
--- 2. Verify Team Captain PIN or Master Admin PIN (with rate-limiting per team & IP)
+-- 2. Verify Team PIN or League Admin PIN (with rate-limiting per team & IP)
 create or replace function public.verify_captain_pin(p_team_id text, p_pin text)
 returns boolean
 language plpgsql
@@ -348,7 +348,7 @@ begin
 end;
 $$;
 
--- 3. Fetch all Team PINs (ONLY returns rows if caller supplies the valid Master Admin PIN)
+-- 3. Fetch all Team PINs (ONLY returns rows if caller supplies the valid League Admin PIN)
 create or replace function public.get_all_team_pins(p_admin_pin text)
 returns table(team_id text, captain_pin text)
 language sql
@@ -360,7 +360,7 @@ as $$
   where public.verify_admin_pin(p_admin_pin);
 $$;
 
--- 4. Set or Update a Team's Captain PIN (requires valid Master Admin PIN)
+-- 4. Set or Update a Team PIN (requires valid League Admin PIN)
 create or replace function public.set_team_pin(p_admin_pin text, p_team_id text, p_new_pin text)
 returns boolean
 language plpgsql
@@ -382,8 +382,8 @@ begin
 end;
 $$;
 
--- 5. Master League Admin PIN Management
--- Note: The Master Admin PIN cannot be updated via website RPCs. It is managed strictly
+-- 5. League Admin PIN Management
+-- Note: The League Admin PIN cannot be updated via website RPCs. It is managed strictly
 -- in the Supabase Dashboard by the database owner to prevent any unauthorized takeover.
 drop function if exists public.set_admin_pin(text, text);
 
@@ -421,9 +421,9 @@ declare
   v_away_unlock_req boolean;
   v_next_status text;
 begin
-  -- Verify Captain PIN for the claimed team
+  -- Verify Team PIN for the claimed team
   if not public.verify_captain_pin(p_team_id, p_pin) then
-    raise exception 'Unauthorized: Invalid Captain PIN for this team';
+    raise exception 'Unauthorized: Invalid Team PIN for this team';
   end if;
 
   -- Lock the target fixture row to serialize simultaneous requests from Home & Away phones
@@ -602,7 +602,7 @@ begin
 end;
 $$;
 
--- 7. Admin Scorecard Save / Approve / Reopen (Requires Master Admin PIN)
+-- 7. Admin Scorecard Save / Approve / Reopen (Requires League Admin PIN)
 create or replace function public.admin_save_fixture(
   p_admin_pin text,
   p_fixture_id text,
@@ -683,7 +683,7 @@ begin
 end;
 $$;
 
--- 9. Admin Upsert Team (+ optional Captain PIN & Table Number)
+-- 9. Admin Upsert Team (+ optional Team PIN & Table Number)
 create or replace function public.admin_upsert_team(
   p_admin_pin text,
   p_id text,

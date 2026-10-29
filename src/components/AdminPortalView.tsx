@@ -193,7 +193,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     return null;
   }
 
-  const handleCopyCaptainPin = (teamId: string, pin: string) => {
+  const handleCopyTeamPin = (teamId: string, pin: string) => {
     navigator.clipboard?.writeText(pin);
     setCopiedTeamId(teamId);
     setTimeout(() => setCopiedTeamId(null), 2500);
@@ -648,7 +648,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         </div>
       </div>
 
-      {/* TAB 1: TEAMS, PLAYERS & CAPTAIN PINs */}
+      {/* TAB 1: TEAMS, PLAYERS & TEAM PINs */}
       {activeTab === 'teams' && (
         <div className="space-y-3.5 min-w-0">
           <div className="w-full overflow-x-auto pb-1">
@@ -875,7 +875,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
                       <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Captain PIN:</span>
+                        <span>Team PIN:</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <input
@@ -886,14 +886,14 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             updateTeamPin(team.id, e.target.value)
                           }
                           className="w-24 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
-                          title="Edit Captain PIN directly"
+                          title="Edit Team PIN directly"
                         />
                         <button
                           type="button"
                           onClick={() =>
                             setConfirmDialog({
-                              title: `Regenerate Captain PIN?`,
-                              message: `Generate a new random 6-digit Captain PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
+                              title: `Regenerate Team PIN?`,
+                              message: `Generate a new random 6-digit Team PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
                               confirmLabel: 'Generate New PIN',
                               variant: 'warning',
                               onConfirm: () =>
@@ -908,7 +908,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         <button
                           type="button"
                           onClick={() =>
-                            handleCopyCaptainPin(team.id, team.captainPin)
+                            handleCopyTeamPin(team.id, team.captainPin)
                           }
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold"
                           title="Copy PIN"
