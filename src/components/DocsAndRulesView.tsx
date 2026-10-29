@@ -5,6 +5,7 @@ import { useLeague } from '../context/LeagueContext';
 type HonourSubTab =
   | 'league'
   | 'knockout'
+  | 'captains-cup'
   | 'singles'
   | 'ladies-singles'
   | 'doubles'
@@ -960,6 +961,7 @@ export const DocsAndRulesView: React.FC = () => {
                 [
                   { id: 'league', label: 'League' },
                   { id: 'knockout', label: 'Knockout Cups' },
+                  { id: 'captains-cup', label: 'Captains Cup' },
                   { id: 'singles', label: 'Singles' },
                   { id: 'ladies-singles', label: 'Ladies Singles' },
                   { id: 'doubles', label: 'Doubles' },
@@ -996,6 +998,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winners 🏆', 'Runners-up'],
                     [
+                      ['Summer 2026', 'LA Z', 'Castle Unpredictables'],
                       ['Winter 2025/26', 'LA Z', 'Romans Lagers'],
                       ['Summer 2025', 'LA Z', 'Castle Lagers'],
                       ['Winter 2024/25', 'Harbour Club Lagers', 'Castle Z Blood'],
@@ -1017,6 +1020,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winners 🏆', 'Runners-up'],
                     [
+                      ['Summer 2026', 'LA Pool Club', 'Breaking Bad'],
                       ['Winter 2025/26', 'LA Mavericks', 'LA Pool Club'],
                       ['Summer 2025', 'Mileoakey Cokey', 'LA Pool Club'],
                       ['Winter 2024/25', 'Castle Unpredictables', 'Goldstone BHA'],
@@ -1038,6 +1042,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winners 🏆', 'Runners-up'],
                     [
+                      ['Summer 2026', 'LA Rack and Rollers', 'Give Us a Break'],
                       ['Winter 2025/26', 'Castle IncrediBalls', 'LA Breakers'],
                       ['Winter 2017/18', 'Mile Oak X', 'Hove Park Tavern RLC'],
                       ['Winter 2016/17', 'Mile Oak Old Boys', 'Mile Oak M'],
@@ -1056,6 +1061,8 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Competition', 'Winners 🏆', 'Runners-up'],
                   [
+                    ['Summer 2026 Cup', 'LA Mavericks', '—'],
+                    ['Summer 2026 Plate', 'LA Z', '—'],
                     ['Winter 2025/26 Premier League Cup', 'Romans Lagers', 'Classtle'],
                     ['Winter 2025/26 Division 1 Cup', 'Aldrington Returnz', 'LA Mavericks'],
                     ['Winter 2025/26 Division 2 Cup', 'Give Us A Cue', 'Castle IncrediBalls'],
@@ -1079,6 +1086,18 @@ export const DocsAndRulesView: React.FC = () => {
               </div>
             )}
 
+            {honourTab === 'captains-cup' && (
+              <div className="space-y-3">
+                <h2 className="text-lg font-black text-white">
+                  Captains Cup Roll of Honour
+                </h2>
+                {renderTable(
+                  ['Season', 'Winner 🏆', 'Runner-up'],
+                  [['Summer 2026', 'Shane Humphrey', 'Josh Manderson']]
+                )}
+              </div>
+            )}
+
             {honourTab === 'singles' && (
               <div className="space-y-3">
                 <h2 className="text-lg font-black text-white">
@@ -1087,6 +1106,7 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Season', 'Winner 🏆', 'Runner-up'],
                   [
+                    ['Summer 2026', 'Connor Anderson', 'Pete Hazell'],
                     ['Winter 2025/26', 'Chris Kingham', 'Greg Lewis'],
                     ['Summer 2025', 'Pete Hazell', 'Jake Paas'],
                     ['Winter 2024/25', 'Ben Middleton', 'Jake Paas'],
@@ -1131,6 +1151,7 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Season', 'Winner 🏆', 'Runner-up'],
                   [
+                    ['Summer 2026', 'Cliona Saunders-Cooney', 'Laura Boyle'],
                     ['Winter 2025/26', 'Laura Boyle', 'Kelsie Hyland-Rochester'],
                     ['Summer 2025', 'Julie Hitchen', 'Laura Boyle'],
                     ['Winter 2024/25', 'Mikala Gurd', 'Laura Boyle'],
@@ -1148,6 +1169,7 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Season', 'Winners 🏆', 'Runners-up'],
                   [
+                    ['Summer 2026', 'Ben Middleton & Mikey Booker', 'Teige Dillion & Ellis Wilson'],
                     ['Winter 2025/26', 'Ben Middleton & Mikey Booker', 'Pete Hazell & Connor Anderson'],
                     ['Summer 2025', 'Chris Kingham & Jon Sanders', 'Ben Middleton & Mikey Booker'],
                     ['Winter 2024/25', 'Mark Hedayat & Rich Hamill', 'Pete Hazell & Connor Anderson'],
@@ -1175,6 +1197,7 @@ export const DocsAndRulesView: React.FC = () => {
                 {renderTable(
                   ['Season', 'Winners 🏆', 'Runners-up'],
                   [
+                    ['Summer 2026', 'Stacey Champ-Hancock & Ben Middleton', 'Julie Hitchen & Paul Hitchen'],
                     ['Winter 2025/26', 'Stacey Hancock & Ben Middleton', 'Linda Edwards & Curtis Lambert'],
                     ['Summer 2025', 'Julie Hitchen & Paul Hitchen', 'Pinky McNeil & Paul McNeil'],
                   ]
@@ -1194,6 +1217,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winner 🏆'],
                     [
+                      ['Summer 2026', 'Chris Kingham'],
                       ['Winter 2025/26', 'Jon Sanders'],
                       ['Summer 2025', 'Greg Lewis'],
                       ['Winter 2024/25', 'Jon Sanders'],
@@ -1217,6 +1241,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winner 🏆'],
                     [
+                      ['Summer 2026', 'Curtis Lambert'],
                       ['Winter 2025/26', 'Dan Stoner'],
                       ['Summer 2025', 'Craig Williams'],
                       ['Winter 2024/25', 'Terry Haworth'],
@@ -1238,6 +1263,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winner 🏆'],
                     [
+                      ['Summer 2026', 'Dawid Konior'],
                       ['Winter 2025/26', 'Ash Kianifard'],
                       ['Winter 2017/18', 'Chris Else'],
                       ['Winter 2016/17', 'Rob Boulton'],
@@ -1259,7 +1285,10 @@ export const DocsAndRulesView: React.FC = () => {
                   </h3>
                   {renderTable(
                     ['Season', 'Winner 🏆'],
-                    [['Winter 2025/26', 'Laura Boyle']]
+                    [
+                      ['Summer 2026', 'Laura Boyle'],
+                      ['Winter 2025/26', 'Laura Boyle'],
+                    ]
                   )}
                 </div>
                 <div className="space-y-2">
@@ -1268,7 +1297,10 @@ export const DocsAndRulesView: React.FC = () => {
                   </h3>
                   {renderTable(
                     ['Season', 'Winner 🏆'],
-                    [['Winter 2025/26', 'Cliona Saunders-Cooney']]
+                    [
+                      ['Summer 2026', 'Cliona Saunders-Cooney'],
+                      ['Winter 2025/26', 'Cliona Saunders-Cooney'],
+                    ]
                   )}
                 </div>
                 <div className="space-y-2">
@@ -1277,7 +1309,10 @@ export const DocsAndRulesView: React.FC = () => {
                   </h3>
                   {renderTable(
                     ['Season', 'Winner 🏆'],
-                    [['Winter 2025/26', 'Linda Edwards']]
+                    [
+                      ['Summer 2026', 'Sasha Smith'],
+                      ['Winter 2025/26', 'Linda Edwards'],
+                    ]
                   )}
                 </div>
               </div>
@@ -1295,6 +1330,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winner 🏆', 'Dishes'],
                     [
+                      ['Summer 2026', 'Mikey Booker', '—'],
                       ['Winter 2025/26', 'Jon Sanders', 11],
                       ['Summer 2025', 'Pete Hazell', 12],
                       ['Winter 2024/25', 'Mikey Booker', 8],
@@ -1308,6 +1344,7 @@ export const DocsAndRulesView: React.FC = () => {
                   {renderTable(
                     ['Season', 'Winner 🏆', 'Dishes'],
                     [
+                      ['Summer 2026', 'Curtis Lambert', '—'],
                       ['Winter 2025/26', 'Will Ashman', 8],
                       ['Summer 2025', 'Dan Stoner', 6],
                       ['Winter 2024/25', 'Terry Haworth', 4],
@@ -1320,7 +1357,10 @@ export const DocsAndRulesView: React.FC = () => {
                   </h3>
                   {renderTable(
                     ['Season', 'Winner 🏆', 'Dishes'],
-                    [['Winter 2025/26', 'Avi Razvan', 3]]
+                    [
+                      ['Summer 2026', 'Dawid Konior', '—'],
+                      ['Winter 2025/26', 'Avi Razvan', 3],
+                    ]
                   )}
                 </div>
               </div>

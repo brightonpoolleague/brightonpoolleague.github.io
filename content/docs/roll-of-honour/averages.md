@@ -4,6 +4,7 @@
 
 | Season         | Winner 🏆      |
 |----------------|----------------|
+| Summer 2026    | Chris Kingham  |
 | Winter 2025/26 | Jon Sanders    |
 | Summer 2025    | Greg Lewis     |
 | Winter 2024/25 | Jon Sanders    |
@@ -21,6 +22,7 @@
 
 | Season         | Winner 🏆      |
 |----------------|----------------|
+| Summer 2026    | Curtis Lambert |
 | Winter 2025/26 | Dan Stoner     |
 | Summer 2025    | Craig Williams |
 | Winter 2024/25 | Terry Haworth  |
@@ -36,8 +38,8 @@
 
 | Season         | Winner 🏆       |
 |----------------|-----------------|
+| Summer 2026    | Dawid Konior    |
 | Winter 2025/26 | Ash Kianifard   |
 | Winter 2017/18 | Chris Else      |
 | Winter 2016/17 | Rob Boulton     |
 | Winter 2015/16 | Marcia Williams |
-
