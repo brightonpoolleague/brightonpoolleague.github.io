@@ -882,24 +882,40 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           type="text"
                           value={team.captainPin && !team.captainPin.includes('•') ? team.captainPin : ''}
                           placeholder="6-digit PIN"
-                          onChange={(e) =>
-                            updateTeamPin(team.id, e.target.value)
-                          }
+                          onChange={async (e) => {
+                            const res = await updateTeamPin(team.id, e.target.value);
+                            if (res && !res.success && res.error) {
+                              setConfirmDialog({
+                                title: 'Duplicate Team PIN',
+                                message: res.error,
+                                confirmLabel: 'OK',
+                                variant: 'warning',
+                                onConfirm: () => {},
+                              });
+                            }
+                          }}
                           className="w-24 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
                           title="Edit Team PIN directly"
                         />
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            const existingPins = teams
+                              .filter((t) => t.id !== team.id)
+                              .map((t) => t.captainPin);
+                            if (adminPin) existingPins.push(adminPin);
+                            const newRandomPin = generateRandomPin(existingPins);
+
                             setConfirmDialog({
                               title: `Regenerate Team PIN?`,
                               message: `Generate a new random 6-digit Team PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
                               confirmLabel: 'Generate New PIN',
                               variant: 'warning',
-                              onConfirm: () =>
-                                updateTeamPin(team.id, generateRandomPin()),
-                            })
-                          }
+                              onConfirm: async () => {
+                                await updateTeamPin(team.id, newRandomPin);
+                              },
+                            });
+                          }}
                           className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
                           title="Generate new random 6-digit PIN"
                         >

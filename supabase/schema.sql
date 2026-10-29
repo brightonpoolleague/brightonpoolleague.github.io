@@ -348,6 +348,37 @@ begin
 end;
 $$;
 
+-- 2b. Captain Login with PIN (identifies team purely from unique 6-digit PIN)
+create or replace function public.login_captain_with_pin(p_pin text)
+returns table(team_id text, team_name text)
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_ip text;
+  v_team_id text;
+  v_team_name text;
+begin
+  v_ip := public.check_pin_rate_limit('captain_login');
+
+  select tp.team_id, t.name
+  into v_team_id, v_team_name
+  from public.team_pins tp
+  join public.teams t on t.id = tp.team_id
+  where trim(tp.captain_pin) = trim(coalesce(p_pin, ''))
+  limit 1;
+
+  if v_team_id is not null then
+    perform public.clear_pin_rate_limit(v_ip, 'captain_login');
+    return query select v_team_id, v_team_name;
+  else
+    perform public.record_failed_pin_attempt(v_ip, 'captain_login');
+    return;
+  end if;
+end;
+$$;
+
 -- 3. Fetch all Team PINs (ONLY returns rows if caller supplies the valid League Admin PIN)
 create or replace function public.get_all_team_pins(p_admin_pin text)
 returns table(team_id text, captain_pin text)
@@ -360,7 +391,7 @@ as $$
   where public.verify_admin_pin(p_admin_pin);
 $$;
 
--- 4. Set or Update a Team PIN (requires valid League Admin PIN)
+-- 4. Set or Update a Team PIN (requires valid League Admin PIN and enforces uniqueness)
 create or replace function public.set_team_pin(p_admin_pin text, p_team_id text, p_new_pin text)
 returns boolean
 language plpgsql
@@ -370,6 +401,14 @@ as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
     raise exception 'Unauthorized: Invalid League Admin PIN';
+  end if;
+
+  -- Enforce uniqueness across team PINs
+  if exists (
+    select 1 from public.team_pins
+    where team_id <> p_team_id and trim(captain_pin) = trim(p_new_pin)
+  ) then
+    raise exception 'PIN "%" is already in use by another team. Team PINs must be unique.', p_new_pin;
   end if;
 
   insert into public.team_pins (team_id, captain_pin, updated_at)

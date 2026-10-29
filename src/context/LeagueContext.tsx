@@ -51,8 +51,17 @@ const STORAGE_KEYS = {
   SESSION: 'bpl_session_v2',
 };
 
-export function generateRandomPin(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+export function generateRandomPin(existingPins: string[] = []): string {
+  const existingSet = new Set(
+    existingPins.map((p) => p.trim()).filter((p) => p && !p.includes('•'))
+  );
+  let pin = '';
+  let attempts = 0;
+  do {
+    pin = String(Math.floor(100000 + Math.random() * 900000));
+    attempts++;
+  } while (existingSet.has(pin) && attempts < 1000);
+  return pin;
 }
 
 function mapSeasonRow(r: Record<string, unknown>): Season {
@@ -167,13 +176,16 @@ interface LeagueContextValue {
     pin?: string
   ) => void;
   loginAsCaptainWithPin: (
-    teamId: string,
-    pin: string
-  ) => Promise<{ success: boolean; error?: string }>;
+    pin: string,
+    teamId?: string
+  ) => Promise<{ success: boolean; team?: Team; error?: string }>;
   loginAsAdminWithPin: (
     pin: string
   ) => Promise<{ success: boolean; error?: string }>;
-  updateTeamPin: (teamId: string, newPin: string) => Promise<void>;
+  updateTeamPin: (
+    teamId: string,
+    newPin: string
+  ) => Promise<{ success: boolean; error?: string }>;
   addTeam: (
     data: Omit<Team, 'id' | 'seasonId' | 'captainPin'> & {
       captainPin?: string;
@@ -885,39 +897,109 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loginAsCaptainWithPin = useCallback(
     async (
-      teamId: string,
-      pin: string
-    ): Promise<{ success: boolean; error?: string }> => {
+      pin: string,
+      optionalTeamId?: string
+    ): Promise<{ success: boolean; team?: Team; error?: string }> => {
       const cleanPin = pin.trim();
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        const { data, error } = await supabase.rpc('verify_captain_pin', {
-          p_team_id: teamId,
-          p_pin: cleanPin,
-        });
-        if (error) {
-          return { success: false, error: error.message };
-        }
-        if (data === true) {
-          setRoleSession('captain', teamId, undefined, cleanPin);
-          return { success: true };
-        }
+      if (!cleanPin) {
+        return { success: false, error: 'Please enter your 6-digit Team PIN.' };
+      }
+
+      // Check if user accidentally entered the League Admin PIN in the captain box
+      if (
+        (adminPin && cleanPin === adminPin.trim()) ||
+        cleanPin === DEFAULT_ADMIN_PIN ||
+        cleanPin === '00000000'
+      ) {
         return {
           success: false,
-          error: 'Incorrect Team PIN. Check with League Admin.',
+          error: 'This is the League Admin PIN. Please switch to the League Admin tab above to log in.',
+        };
+      }
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        // Direct lookup by unique PIN via dedicated RPC
+        const { data, error } = await supabase.rpc('login_captain_with_pin', {
+          p_pin: cleanPin,
+        });
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const matchedTeamId = String(data[0].team_id);
+          const matchedTeam = allTeams.find((t) => t.id === matchedTeamId);
+          setRoleSession(
+            'captain',
+            matchedTeamId,
+            matchedTeam?.name ?? data[0].team_name,
+            cleanPin
+          );
+          return { success: true, team: matchedTeam };
+        }
+
+        // Backward compatibility if optional teamId was supplied:
+        if (optionalTeamId) {
+          const { data: vData, error: vError } = await supabase.rpc('verify_captain_pin', {
+            p_team_id: optionalTeamId,
+            p_pin: cleanPin,
+          });
+          if (vData === true) {
+            const team = allTeams.find((t) => t.id === optionalTeamId);
+            setRoleSession('captain', optionalTeamId, team?.name, cleanPin);
+            return { success: true, team };
+          }
+          if (vError) return { success: false, error: vError.message };
+        } else if (
+          error &&
+          (error.code === '42883' || error.message?.includes('does not exist'))
+        ) {
+          // Fallback if login_captain_with_pin RPC hasn't been added to remote DB yet
+          const localMatch = allTeams.find(
+            (t) =>
+              t.captainPin &&
+              !t.captainPin.includes('•') &&
+              t.captainPin.trim() === cleanPin
+          );
+          if (localMatch) {
+            setRoleSession('captain', localMatch.id, localMatch.name, cleanPin);
+            return { success: true, team: localMatch };
+          }
+
+          // Verify against registered teams
+          for (const t of allTeams) {
+            const vRes = await supabase.rpc('verify_captain_pin', {
+              p_team_id: t.id,
+              p_pin: cleanPin,
+            });
+            if (!vRes.error && vRes.data === true) {
+              setRoleSession('captain', t.id, t.name, cleanPin);
+              return { success: true, team: t };
+            }
+          }
+        }
+
+        return {
+          success: false,
+          error:
+            error?.message && !error.message.includes('does not exist')
+              ? error.message
+              : 'Incorrect Team PIN. Check with League Admin.',
         };
       }
 
       // Offline / local fallback
-      const team = allTeams.find((t) => t.id === teamId);
-      if (!team) return { success: false, error: 'Team not found.' };
-      if (
-        team.captainPin.trim() === cleanPin ||
-        adminPin.trim() === cleanPin
-      ) {
-        setRoleSession('captain', teamId, undefined, cleanPin);
-        return { success: true };
+      const team = optionalTeamId
+        ? allTeams.find(
+            (t) => t.id === optionalTeamId && t.captainPin.trim() === cleanPin
+          )
+        : allTeams.find(
+            (t) => t.captainPin && t.captainPin.trim() === cleanPin
+          );
+
+      if (team) {
+        setRoleSession('captain', team.id, team.name, cleanPin);
+        return { success: true, team };
       }
+
       return {
         success: false,
         error: 'Incorrect Team PIN. Check with League Admin.',
@@ -980,9 +1062,40 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const updateTeamPin = useCallback(
-    async (teamId: string, newPin: string): Promise<void> => {
+    async (
+      teamId: string,
+      newPin: string
+    ): Promise<{ success: boolean; error?: string }> => {
       const clean = newPin.trim();
-      if (!clean) return;
+      if (!clean) return { success: false, error: 'PIN cannot be empty.' };
+
+      // Enforce unique PINs: cannot match admin PIN
+      if (
+        (adminPin && clean === adminPin.trim()) ||
+        clean === DEFAULT_ADMIN_PIN ||
+        clean === '00000000'
+      ) {
+        return {
+          success: false,
+          error: 'This PIN matches the League Admin PIN. Team PINs must be unique.',
+        };
+      }
+
+      // Enforce unique PINs across teams
+      const duplicate = allTeams.find(
+        (t) =>
+          t.id !== teamId &&
+          t.captainPin &&
+          !t.captainPin.includes('•') &&
+          t.captainPin.trim() === clean
+      );
+      if (duplicate) {
+        return {
+          success: false,
+          error: `PIN "${clean}" is already in use by "${duplicate.name}". Each team must have a unique PIN.`,
+        };
+      }
+
       const nextTeams = allTeams.map((t) =>
         t.id === teamId ? { ...t, captainPin: clean } : t
       );
@@ -991,12 +1104,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('set_team_pin', {
+        const { error } = await supabase.rpc('set_team_pin', {
           p_admin_pin: adminPin,
           p_team_id: teamId,
           p_new_pin: clean,
         });
+        if (error) {
+          return { success: false, error: error.message };
+        }
       }
+
+      return { success: true };
     },
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
@@ -1195,7 +1313,15 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         captainPin?: string;
       }
     ): Promise<Team> => {
-      const generatedPin = data.captainPin?.trim() || generateRandomPin();
+      const existingPins = allTeams
+        .map((t) => t.captainPin)
+        .filter((p) => Boolean(p) && !p.includes('•'));
+      if (adminPin) existingPins.push(adminPin);
+
+      let generatedPin = data.captainPin?.trim();
+      if (!generatedPin || existingPins.includes(generatedPin)) {
+        generatedPin = generateRandomPin(existingPins);
+      }
       const newTeam: Team = {
         ...data,
         id: `team-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
