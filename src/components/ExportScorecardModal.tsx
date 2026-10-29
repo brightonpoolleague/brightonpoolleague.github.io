@@ -52,6 +52,20 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
   const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'share' | null>(null);
   const [fitScale, setFitScale] = useState<number>(1);
   const [cardHeight, setCardHeight] = useState<number>(850);
+  const [canNativeShare, setCanNativeShare] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
+      try {
+        const dummyFile = new File([''], 'test.png', { type: 'image/png' });
+        setCanNativeShare(navigator.canShare({ files: [dummyFile] }));
+      } catch {
+        setCanNativeShare(false);
+      }
+    } else {
+      setCanNativeShare(false);
+    }
+  }, []);
 
   const frames = ensureValidFrames(fixture.frames);
   const lineups = ensureValidLineups(fixture.lineups);
@@ -191,21 +205,6 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
       setIsSharing(false);
     }
   };
-
-  const [canNativeShare, setCanNativeShare] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
-      try {
-        const dummyFile = new File([''], 'test.png', { type: 'image/png' });
-        setCanNativeShare(navigator.canShare({ files: [dummyFile] }));
-      } catch {
-        setCanNativeShare(false);
-      }
-    } else {
-      setCanNativeShare(false);
-    }
-  }, []);
 
   return (
     <div

@@ -55,6 +55,20 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
   const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'share' | null>(null);
   const [fitScale, setFitScale] = useState<number>(1);
   const [cardHeight, setCardHeight] = useState<number>(750);
+  const [canNativeShare, setCanNativeShare] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
+      try {
+        const dummyFile = new File([''], 'test.png', { type: 'image/png' });
+        setCanNativeShare(navigator.canShare({ files: [dummyFile] }));
+      } catch {
+        setCanNativeShare(false);
+      }
+    } else {
+      setCanNativeShare(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -190,21 +204,6 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
       setIsSharing(false);
     }
   };
-
-  const [canNativeShare, setCanNativeShare] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
-      try {
-        const dummyFile = new File([''], 'test.png', { type: 'image/png' });
-        setCanNativeShare(navigator.canShare({ files: [dummyFile] }));
-      } catch {
-        setCanNativeShare(false);
-      }
-    } else {
-      setCanNativeShare(false);
-    }
-  }, []);
 
   const generatedDateStr = new Date().toLocaleDateString('en-GB', {
     day: 'numeric',
