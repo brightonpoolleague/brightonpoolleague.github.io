@@ -18,7 +18,46 @@ export const LeagueTableView: React.FC = () => {
     }
     return divisions[0] || 'Premier League';
   });
-  const [includeLive, setIncludeLive] = useState<boolean>(false);
+  const [includeLive, setIncludeLive] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('bpl_include_live_unapproved') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleIncludeLive = () => {
+    setIncludeLive((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bpl_include_live_unapproved', String(next));
+          window.dispatchEvent(new CustomEvent('bpl_include_live_unapproved_change'));
+        } catch {
+          // ignore
+        }
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const stored = localStorage.getItem('bpl_include_live_unapproved');
+        setIncludeLive(stored === 'true');
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('bpl_include_live_unapproved_change', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('bpl_include_live_unapproved_change', handleSync);
+    };
+  }, []);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
 
   const myTeamRowRef = useRef<HTMLTableRowElement | null>(null);
@@ -87,7 +126,7 @@ export const LeagueTableView: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setIncludeLive((prev) => !prev)}
+              onClick={toggleIncludeLive}
               aria-pressed={includeLive}
               className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
                 includeLive

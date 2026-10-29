@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BarChart3,
   Camera,
@@ -20,7 +20,46 @@ export const PlayerStatsView: React.FC = () => {
     'averages'
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const [includeLive, setIncludeLive] = useState(false);
+  const [includeLive, setIncludeLive] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('bpl_include_live_unapproved') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleIncludeLive = () => {
+    setIncludeLive((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bpl_include_live_unapproved', String(next));
+          window.dispatchEvent(new CustomEvent('bpl_include_live_unapproved_change'));
+        } catch {
+          // ignore
+        }
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const stored = localStorage.getItem('bpl_include_live_unapproved');
+        setIncludeLive(stored === 'true');
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('bpl_include_live_unapproved_change', handleSync);
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('bpl_include_live_unapproved_change', handleSync);
+    };
+  }, []);
   const [showExportModal, setShowExportModal] = useState(false);
 
   // Player averages are strictly per division (never across All Divisions)
@@ -81,7 +120,7 @@ export const PlayerStatsView: React.FC = () => {
 
             <button
               type="button"
-              onClick={() => setIncludeLive((prev) => !prev)}
+              onClick={toggleIncludeLive}
               aria-pressed={includeLive}
               className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
                 includeLive
