@@ -7,6 +7,7 @@ import {
   Check,
   Camera,
   CheckCircle2,
+  EyeOff,
   Trophy,
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
@@ -78,10 +79,10 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
 
   const bothSet1Locked = fixture.homeSet1Locked && fixture.awaySet1Locked;
   const getPlayerName = (id: SlotPlayerId) => {
-    if (!id) return '–';
-    if (!bothSet1Locked) return 'Hidden';
-    if (id === 'BYE') return 'BYE';
-    return players.find((p) => p.id === id)?.name || 'Unknown';
+    if (!id) return '';
+    if (!bothSet1Locked) return '';
+    if (id === 'BYE') return 'No Player (BYE)';
+    return players.find((p) => p.id === id)?.name || '';
   };
 
   useEffect(() => {
@@ -438,7 +439,13 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                               {frame.homeSlot}
                             </td>
                             <td className="py-1.5 px-3 font-medium text-white truncate max-w-[150px]">
-                              <span>{getPlayerName(homePlayerId)}</span>
+                              {!bothSet1Locked ? (
+                                <span title="Hidden" className="inline-flex items-center align-middle">
+                                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                                </span>
+                              ) : (
+                                <span>{getPlayerName(homePlayerId)}</span>
+                              )}
                             </td>
                             <td className="py-1.5 px-2 text-center">
                               <span
@@ -475,7 +482,13 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                               </span>
                             </td>
                             <td className="py-1.5 px-3 font-medium text-white truncate max-w-[150px]">
-                              <span>{getPlayerName(awayPlayerId)}</span>
+                              {!bothSet1Locked ? (
+                                <span title="Hidden" className="inline-flex items-center align-middle">
+                                  <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                                </span>
+                              ) : (
+                                <span>{getPlayerName(awayPlayerId)}</span>
+                              )}
                             </td>
                             <td className="py-1.5 px-2 text-center font-mono text-slate-400">
                               {frame.awaySlot}

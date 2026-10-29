@@ -405,10 +405,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const score = calculateMatchScore({ ...fixture, frames, lineups });
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
-    if (hidden) return 'Hidden';
-    if (!playerId) return 'Unassigned';
+    if (hidden) return '';
+    if (!playerId) return '';
     if (playerId === 'BYE') return 'No Player (BYE)';
-    return players.find((p) => p.id === playerId)?.name ?? 'Unknown Player';
+    return players.find((p) => p.id === playerId)?.name ?? '';
   };
 
   // Blind Set 1 ("Folded Paper") visibility logic:
@@ -2601,7 +2601,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               </span>
                             )}
                             <span className="font-bold text-sm truncate">
-                              {getPlayerName(homePlayerId, hideHome)}
+                              {hideHome ? (
+                                <span title="Hidden" className="inline-flex items-center">
+                                  <EyeOff className="w-4 h-4 text-slate-500" />
+                                </span>
+                              ) : (
+                                getPlayerName(homePlayerId)
+                              )}
                             </span>
                           </div>
                           <span
@@ -2663,7 +2669,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                               </span>
                             )}
                             <span className="font-bold text-sm truncate">
-                              {getPlayerName(awayPlayerId, hideAway)}
+                              {hideAway ? (
+                                <span title="Hidden" className="inline-flex items-center">
+                                  <EyeOff className="w-4 h-4 text-slate-500" />
+                                </span>
+                              ) : (
+                                getPlayerName(awayPlayerId)
+                              )}
                             </span>
                           </div>
                           <span
@@ -2688,8 +2700,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       {frame.winner && !isByeFrame && (() => {
                         const winnerName =
                           frame.winner === 'home'
-                            ? getPlayerName(homePlayerId, hideHome)
-                            : getPlayerName(awayPlayerId, hideAway);
+                            ? getPlayerName(homePlayerId)
+                            : getPlayerName(awayPlayerId);
                         const isUsable =
                           editable && !isMatchLockedBySignature && bothSet1Locked;
 
@@ -2864,9 +2876,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             {frame.homeSlot}
                           </td>
                           <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-medium text-white truncate">
-                            <span title={getPlayerName(homePlayerId, hideHome)}>
-                              {getPlayerName(homePlayerId, hideHome)}
-                            </span>
+                            {hideHome ? (
+                              <span title="Hidden" className="inline-flex items-center align-middle">
+                                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                              </span>
+                            ) : (
+                              <span title={getPlayerName(homePlayerId)}>
+                                {getPlayerName(homePlayerId)}
+                              </span>
+                            )}
                           </td>
                           <td className="py-1.5 sm:py-2 px-0.5 text-center">
                             <button
@@ -2913,9 +2931,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             </button>
                           </td>
                           <td className="py-1.5 sm:py-2 px-1 sm:px-2 font-medium text-white truncate">
-                            <span title={getPlayerName(awayPlayerId, hideAway)}>
-                              {getPlayerName(awayPlayerId, hideAway)}
-                            </span>
+                            {hideAway ? (
+                              <span title="Hidden" className="inline-flex items-center align-middle">
+                                <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                              </span>
+                            ) : (
+                              <span title={getPlayerName(awayPlayerId)}>
+                                {getPlayerName(awayPlayerId)}
+                              </span>
+                            )}
                           </td>
                           <td className="py-1.5 sm:py-2 px-0.5 text-center font-mono text-slate-400">
                             {frame.awaySlot}
