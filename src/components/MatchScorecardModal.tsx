@@ -251,7 +251,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
 
     if (isSignedByBoth) {
-      return 'Changes locked (both captains must unsign to make changes)';
+      return 'Match locked (to make changes, both captains must unsign)';
     }
 
     // Exactly 1 captain has signed
@@ -261,28 +261,28 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (mySide === 'home') {
       if (homeSigned) {
         // I have signed, waiting for away
-        return `Changes locked, waiting for ${awayTeam.name} to sign (you must unsign to make changes)`;
+        return `Match locked, waiting for ${awayTeam.name} to sign (to make changes, you must unsign)`;
       } else {
         // Away signed, waiting for me
-        return `Changes locked, waiting for you to sign (${awayTeam.name} captain must unsign to make changes)`;
+        return `Match locked, waiting for you to sign (to make changes, ${awayTeam.name} captain must unsign)`;
       }
     }
 
     if (mySide === 'away') {
       if (awaySigned) {
         // I have signed, waiting for home
-        return `Changes locked, waiting for ${homeTeam.name} to sign (you must unsign to make changes)`;
+        return `Match locked, waiting for ${homeTeam.name} to sign (to make changes, you must unsign)`;
       } else {
         // Home signed, waiting for me
-        return `Changes locked, waiting for you to sign (${homeTeam.name} captain must unsign to make changes)`;
+        return `Match locked, waiting for you to sign (to make changes, ${homeTeam.name} captain must unsign)`;
       }
     }
 
     // Admin or neutral viewing
     if (homeSigned) {
-      return `Changes locked, waiting for ${awayTeam.name} to sign (${homeTeam.name} captain must unsign to make changes)`;
+      return `Match locked, waiting for ${awayTeam.name} to sign (to make changes, ${homeTeam.name} captain must unsign)`;
     } else {
-      return `Changes locked, waiting for ${homeTeam.name} to sign (${awayTeam.name} captain must unsign to make changes)`;
+      return `Match locked, waiting for ${homeTeam.name} to sign (to make changes, ${awayTeam.name} captain must unsign)`;
     }
   }, [
     isSignedByAny,
