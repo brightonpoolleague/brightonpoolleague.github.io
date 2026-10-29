@@ -1910,7 +1910,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
               {/* Action buttons below Set Tabs (Change Lag Winner on Set 1 & Select Lineup / Make Subs) */}
               {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner) ||
-                (!showLineupEditor && (canSignHome || canSignAway) && !isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved' && (activeSet === 1 || bothSet1Locked))) && (
+                (!showLineupEditor &&
+                  (canSignHome || canSignAway) &&
+                  !isSignedByAny &&
+                  fixture.status !== 'submitted' &&
+                  fixture.status !== 'approved' &&
+                  (activeSet === 1 ||
+                    (bothSet1Locked &&
+                      (canManageLeague ||
+                        (mySide &&
+                          isSubsLocked(fixture.lineups, activeSet, mySide))))))) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
                   {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner && (
                     <button
@@ -1931,7 +1940,11 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     !isSignedByAny &&
                     fixture.status !== 'submitted' &&
                     fixture.status !== 'approved' &&
-                    (activeSet === 1 || bothSet1Locked) && (
+                    (activeSet === 1 ||
+                      (bothSet1Locked &&
+                        (canManageLeague ||
+                          (mySide &&
+                            isSubsLocked(fixture.lineups, activeSet, mySide))))) && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1940,19 +1953,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition shadow-sm bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
                       >
-                        {activeSet > 1 &&
-                        mySide &&
-                        isSubsLocked(fixture.lineups, activeSet, mySide) ? (
+                        {activeSet > 1 ? (
                           <>
                             <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Set {activeSet} Subs Locked</span>
+                            <span>Make Subs</span>
                           </>
                         ) : (
                           <>
                             <Users className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>
-                              {activeSet === 1 ? 'Select Lineup' : 'Make Subs'}
-                            </span>
+                            <span>Select Lineup</span>
                           </>
                         )}
                       </button>
@@ -2279,68 +2288,35 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   );
                 })()}
 
-              {/* Set 2 / Set 3 My Team Subs Confirmed Banner (when editor closed) */}
-              {activeSet > 1 &&
-                bothSet1Locked &&
-                mySide &&
-                isSubsLocked(fixture.lineups, activeSet, mySide) &&
-                !showLineupEditor &&
-                (() => {
-                  const mySubs = getSubstitutionsMade(
-                    fixture.lineups,
-                    activeSet as 2 | 3,
-                    mySide
-                  );
-                  return (
-                    <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-2.5 px-3 flex items-center justify-between gap-2 text-xs text-slate-300">
-                      <div className="flex items-center gap-2 min-w-0 truncate">
-                        <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span className="truncate">
-                          <strong className="text-white">
-                            {myTeamName} Set {activeSet} subs locked:
-                          </strong>{' '}
-                          {mySubs.length > 0
-                            ? mySubs
-                                .map(
-                                  (s) =>
-                                    `${getPlayerName(s.inPlayerId)} (Pos #${s.slot})`
-                                )
-                                .join(', ')
-                            : 'No substitutions'}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowLineupEditor(true)}
-                        className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 shrink-0"
-                      >
-                        View / Manage
-                      </button>
-                    </div>
-                  );
-                })()}
-
-              {/* Set 2 / Set 3 My Team Reminder Banner (when NOT locked yet and editor closed) */}
+              {/* Set 2 / Set 3 Prompt: Making substitutions? [Yes] [No] (when NOT locked yet and editor closed) */}
               {activeSet > 1 &&
                 bothSet1Locked &&
                 mySide &&
                 !isSubsLocked(fixture.lineups, activeSet, mySide) &&
                 !showLineupEditor && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs text-amber-200">
-                    <div className="flex items-center gap-2 min-w-0">
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 sm:px-4 sm:py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <Users className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>
-                        Making substitutions for Set {activeSet}? Click &ldquo;Make
-                        Subs&rdquo; to substitute players or confirm your lineup.
-                      </span>
+                      <strong className="text-white text-xs sm:text-sm font-bold">
+                        Making substitutions for Set {activeSet}?
+                      </strong>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowLineupEditor(true)}
-                      className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap shadow transition"
-                    >
-                      Make Subs
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowLineupEditor(true)}
+                        className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmSubs(activeSet as 2 | 3, mySide)}
+                        className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border border-slate-700 transition"
+                      >
+                        No
+                      </button>
+                    </div>
                   </div>
                 )}
 
