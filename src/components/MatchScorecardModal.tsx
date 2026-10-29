@@ -354,6 +354,27 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
   }, [isSignedByAny]);
 
+  // When substitutions are approved and locked for my side in Set 2 or Set 3, close the make subs box
+  const prevSubsLockedRef = useRef(fixture.lineups.subsLocked);
+  useEffect(() => {
+    if (!mySide) return;
+    ([2, 3] as const).forEach((setNum) => {
+      const setKey = `set${setNum}` as 'set2' | 'set3';
+      const prevLocked = Boolean(prevSubsLockedRef.current?.[setKey]?.[mySide]);
+      const currLocked = Boolean(fixture.lineups.subsLocked?.[setKey]?.[mySide]);
+      if (!prevLocked && currLocked) {
+        setShowLineupEditorBySet((prev) => ({ ...prev, [setNum]: false }));
+      }
+    });
+    prevSubsLockedRef.current = fixture.lineups.subsLocked;
+  }, [
+    mySide,
+    fixture.lineups.subsLocked?.set2?.home,
+    fixture.lineups.subsLocked?.set2?.away,
+    fixture.lineups.subsLocked?.set3?.home,
+    fixture.lineups.subsLocked?.set3?.away,
+  ]);
+
   // Race condition protection: if the Finish & Submit dialog is open but a captain unsigns, cancel dialog immediately
   useEffect(() => {
     if (
@@ -703,6 +724,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
     nextLineups.subsPendingApproval[setKey]![sideToApprove] = false;
 
+    setShowLineupEditorBySet((prev) => ({ ...prev, [setNumber]: false }));
     await saveFixture(
       {
         ...fixture,
@@ -1086,7 +1108,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       {subsMade
                         .map(
                           (s) =>
-                            `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
+                            `${getPlayerName(s.inPlayerId)} in for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
                         )
                         .join(', ')}
                       .
@@ -1592,7 +1614,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 otherSubs
                   .map(
                     (s) =>
-                      `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
+                      `${getPlayerName(s.inPlayerId)} in for ${getPlayerName(s.outPlayerId)} (Pos #${s.slot})`
                   )
                   .join(', ')
               ) : (
@@ -2339,51 +2361,43 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {/* Set 2 / Set 3 Subs Unlock Request Banner (when Make Subs box is COLLAPSED) */}
               {activeSet > 1 && !showLineupEditor && renderSubsUnlockRequestBanner()}
 
-              {/* Set 2 / Set 3 Opposing Team Substitution Notification Message */}
+              {/* Set 2 / Set 3 Approved Substitutions Notification Message */}
               {activeSet > 1 &&
                 bothSet1Locked &&
-                otherSide &&
-                isSubsLocked(fixture.lineups, activeSet, otherSide) &&
-                (() => {
-                  const otherSubs = getSubstitutionsMade(
+                (['home', 'away'] as const).map((side) => {
+                  if (!isSubsLocked(fixture.lineups, activeSet, side)) return null;
+                  const subs = getSubstitutionsMade(
                     fixture.lineups,
                     activeSet as 2 | 3,
-                    otherSide
+                    side
                   );
+                  if (subs.length === 0) return null;
+                  const teamName = side === 'home' ? homeTeam.name : awayTeam.name;
                   return (
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center gap-2.5 text-xs text-slate-200">
-                      {otherSubs.length > 0 ? (
-                        <>
-                          <Users className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <strong className="text-emerald-300 font-bold">
-                              {otherTeamName} made Set {activeSet} substitution
-                              {otherSubs.length > 1 ? 's' : ''}:
-                            </strong>{' '}
-                            <span className="text-white">
-                              {otherSubs
-                                .map(
-                                  (s) =>
-                                    `${getPlayerName(s.inPlayerId)} on for ${getPlayerName(
-                                      s.outPlayerId
-                                    )} (Pos #${s.slot})`
-                                )
-                                .join(', ')}
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <div className="min-w-0 flex-1 text-slate-300">
-                            <strong className="text-white">{otherTeamName}</strong>{' '}
-                            confirmed Set {activeSet} lineup (No substitutions)
-                          </div>
-                        </>
-                      )}
+                    <div
+                      key={side}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center gap-2.5 text-xs text-slate-200"
+                    >
+                      <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <strong className="text-emerald-300 font-bold">
+                          {teamName} made Set {activeSet} substitution
+                          {subs.length > 1 ? 's' : ''}:
+                        </strong>{' '}
+                        <span className="text-white">
+                          {subs
+                            .map(
+                              (s) =>
+                                `${getPlayerName(s.inPlayerId)} in for ${getPlayerName(
+                                  s.outPlayerId
+                                )} (Pos #${s.slot})`
+                            )
+                            .join(', ')}
+                        </span>
+                      </div>
                     </div>
                   );
-                })()}
+                })}
 
               <div className="space-y-2.5">
                 {setFrames.map((frame) => {
