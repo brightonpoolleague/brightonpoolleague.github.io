@@ -183,19 +183,39 @@ export function getFramePlayers(
  * Applies Section 9 BYE rules automatically:
  * - Any player facing a BYE is automatically awarded the win.
  * - In the event of a BYE vs BYE, the team winning the lag is awarded the win.
+ *
+ * Section 9 rules are ONLY applied once both captains have confirmed Set 1 lineups (bothSet1Locked).
+ * Prior to both lineups being confirmed, all frames remain unscored (winner = null).
  */
 export function applyByeRulesToFrames(
   lineups: MatchLineups,
   frames: FrameData[],
-  lagWinner: 'home' | 'away' | null
+  lagWinner: 'home' | 'away' | null,
+  bothSet1Locked = true
 ): FrameData[] {
+  if (!bothSet1Locked) {
+    return frames.map((frame) => {
+      const { homePlayerId, awayPlayerId } = getFramePlayers(lineups, frame);
+      if (homePlayerId === 'BYE' || awayPlayerId === 'BYE') {
+        return {
+          ...frame,
+          winner: null,
+          dish: false,
+          reverseDish: false,
+        };
+      }
+      return frame;
+    });
+  }
+
   return frames.map((frame) => {
     const { homePlayerId, awayPlayerId } = getFramePlayers(lineups, frame);
     if (homePlayerId === 'BYE' && awayPlayerId === 'BYE') {
       return {
         ...frame,
-        winner: lagWinner ?? frame.winner,
+        winner: lagWinner ?? null,
         dish: false,
+        reverseDish: false,
       };
     }
     if (homePlayerId && homePlayerId !== 'BYE' && awayPlayerId === 'BYE') {
@@ -203,6 +223,7 @@ export function applyByeRulesToFrames(
         ...frame,
         winner: 'home',
         dish: false,
+        reverseDish: false,
       };
     }
     if (awayPlayerId && awayPlayerId !== 'BYE' && homePlayerId === 'BYE') {
@@ -210,6 +231,7 @@ export function applyByeRulesToFrames(
         ...frame,
         winner: 'away',
         dish: false,
+        reverseDish: false,
       };
     }
     return frame;

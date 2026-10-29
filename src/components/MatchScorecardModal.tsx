@@ -530,21 +530,40 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
     const setKey = getSetKey(setNumber);
     const nextLineups = structuredClone(fixture.lineups);
-    nextLineups[setKey][side][slotIndex] = value;
+
+    // Rule 9: BYE is only allowed in positions 4 and 5 (cascading from position 5 downwards).
+    // Positions 1-3 can NEVER be a BYE.
+    if (value === 'BYE') {
+      if (slotIndex < 3) return; // Disallow BYE in positions 1, 2, 3
+      nextLineups[setKey][side][slotIndex] = 'BYE';
+      if (slotIndex === 3) {
+        // Position 4 can only be BYE if Position 5 is also BYE (team of 3)
+        nextLineups[setKey][side][4] = 'BYE';
+      }
+    } else {
+      nextLineups[setKey][side][slotIndex] = value;
+      // If a real player is assigned to Position 5, Position 4 cannot remain a BYE
+      if (slotIndex === 4 && nextLineups[setKey][side][3] === 'BYE' && value !== null) {
+        nextLineups[setKey][side][3] = null;
+      }
+    }
 
     // If editing Set 1 or Set 2, also cascade to subsequent sets if they were still matching or null
     if (setNumber === 1) {
-      if (
-        nextLineups.set2[side][slotIndex] === null ||
-        nextLineups.set2[side][slotIndex] === fixture.lineups.set1[side][slotIndex]
-      ) {
-        nextLineups.set2[side][slotIndex] = value;
-      }
-      if (
-        nextLineups.set3[side][slotIndex] === null ||
-        nextLineups.set3[side][slotIndex] === fixture.lineups.set1[side][slotIndex]
-      ) {
-        nextLineups.set3[side][slotIndex] = value;
+      for (let i = 0; i < 5; i++) {
+        const val = nextLineups.set1[side][i];
+        if (
+          nextLineups.set2[side][i] === null ||
+          nextLineups.set2[side][i] === fixture.lineups.set1[side][i]
+        ) {
+          nextLineups.set2[side][i] = val;
+        }
+        if (
+          nextLineups.set3[side][i] === null ||
+          nextLineups.set3[side][i] === fixture.lineups.set1[side][i]
+        ) {
+          nextLineups.set3[side][i] = val;
+        }
       }
     } else if (setNumber === 2) {
       const s3Locked = Boolean(fixture.lineups.subsLocked?.set3?.[side]);
@@ -1029,7 +1048,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     const canSubInBye =
       setNumber > 1 &&
       subOutSlotIdx !== null &&
-      currentSlots[subOutSlotIdx] !== 'BYE';
+      currentSlots[subOutSlotIdx] !== 'BYE' &&
+      subOutSlotIdx >= 3;
 
     const isLocked =
       setNumber === 1 ? isSet1Locked : isSubsConfirmedAndLocked;
@@ -1233,6 +1253,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         slotIdx
                       );
 
+                      // Rule 9: BYE is only allowed in positions 4 and 5 (cascading from 5 downwards).
+                      const canSlotBeBye = slotIdx >= 3;
+
                       return (
                         <div key={slotNum} className="flex items-center gap-2 min-w-0">
                           <span className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 shrink-0">
@@ -1253,7 +1276,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <option value="">
                               -- Select Position {slotNum} Player --
                             </option>
-                            <option value="BYE">No Player (BYE)</option>
+                            {canSlotBeBye && (
+                              <option value="BYE">
+                                {slotIdx === 4
+                                  ? 'No Player (BYE)'
+                                  : 'No Player (BYE) — 3 players only'}
+                              </option>
+                            )}
                             {eligible.map(({ player, disabledReason }) => (
                               <option
                                 key={player.id}

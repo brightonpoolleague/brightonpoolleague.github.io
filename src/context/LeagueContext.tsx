@@ -1849,18 +1849,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const syncedLineups = syncDefaultSubsequentSets(
         ensureValidLineups(rawUpdated.lineups)
       );
+      const bothSet1Locked = Boolean(
+        rawUpdated.homeSet1Locked && rawUpdated.awaySet1Locked
+      );
       const syncedFrames = applyByeRulesToFrames(
         syncedLineups,
         ensureValidFrames(rawUpdated.frames),
-        rawUpdated.lagWinner
+        rawUpdated.lagWinner,
+        bothSet1Locked
       );
 
       const completedCount = syncedFrames.filter(
         (f) => f.winner !== null
       ).length;
-      const bothSet1Locked = Boolean(
-        rawUpdated.homeSet1Locked && rawUpdated.awaySet1Locked
-      );
 
       let nextStatus = rawUpdated.status;
       if (nextStatus === 'scheduled' && (bothSet1Locked || completedCount > 0)) {
