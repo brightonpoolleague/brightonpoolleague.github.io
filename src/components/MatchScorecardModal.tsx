@@ -11,6 +11,7 @@ import {
   Loader2,
   Lock,
   Pencil,
+  PenLine,
   RefreshCw,
   RotateCcw,
   ShieldCheck,
@@ -288,7 +289,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
 
     if (isSignedByBoth) {
-      return 'Match locked (to make changes, both captains must unsign)';
+      return 'To make changes, both captains must unsign';
     }
 
     // Exactly 1 captain has signed
@@ -298,28 +299,28 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     if (mySide === 'home') {
       if (homeSigned) {
         // I have signed, waiting for away
-        return `Match locked, waiting for ${awayTeam.name} to sign (to make changes, you must unsign)`;
+        return `Waiting for ${awayTeam.name} to sign (to make changes, you must unsign)`;
       } else {
         // Away signed, waiting for me
-        return `Match locked, waiting for you to sign (to make changes, ${awayTeam.name} captain must unsign)`;
+        return `Waiting for you to sign (to make changes, ${awayTeam.name} captain must unsign)`;
       }
     }
 
     if (mySide === 'away') {
       if (awaySigned) {
         // I have signed, waiting for home
-        return `Match locked, waiting for ${homeTeam.name} to sign (to make changes, you must unsign)`;
+        return `Waiting for ${homeTeam.name} to sign (to make changes, you must unsign)`;
       } else {
         // Home signed, waiting for me
-        return `Match locked, waiting for you to sign (to make changes, ${homeTeam.name} captain must unsign)`;
+        return `Waiting for you to sign (to make changes, ${homeTeam.name} captain must unsign)`;
       }
     }
 
     // Admin or neutral viewing
     if (homeSigned) {
-      return `Match locked, waiting for ${awayTeam.name} to sign (to make changes, ${homeTeam.name} captain must unsign)`;
+      return `Waiting for ${awayTeam.name} to sign (to make changes, ${homeTeam.name} captain must unsign)`;
     } else {
-      return `Match locked, waiting for ${homeTeam.name} to sign (to make changes, ${awayTeam.name} captain must unsign)`;
+      return `Waiting for ${homeTeam.name} to sign (to make changes, ${awayTeam.name} captain must unsign)`;
     }
   }, [
     isSignedByAny,
@@ -1877,6 +1878,30 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {showSignOff && (
         <div className="bg-slate-900/95 border-b border-slate-800 px-3 sm:px-6 py-2.5 shrink-0 shadow-md">
           <div className="max-w-4xl mx-auto space-y-2">
+            {/* Prominent Match Completion Prompt (appears when all 15 frames are complete, before submission) */}
+            {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-amber-500/20 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center justify-center gap-3 text-center shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  <PenLine className="w-4 h-4 text-emerald-300" />
+                </div>
+                <div className="space-y-0.5 text-left sm:text-center">
+                  <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5 justify-start sm:justify-center">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>
+                      {isSignedByBoth
+                        ? 'Scorecard Signed — Ready to Submit'
+                        : 'Please Sign & Submit the Scorecard'}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300">
+                    {isSignedByBoth
+                      ? 'Both captains have signed. Click Finish Match below to submit the official result.'
+                      : 'Both captains must sign below to confirm the result before finishing the match.'}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Review Scorecard / Make Changes Toggle Button (only before submission) */}
             {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
               <div className="flex justify-center">
