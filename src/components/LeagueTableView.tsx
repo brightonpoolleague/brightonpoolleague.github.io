@@ -79,10 +79,10 @@ export const LeagueTableView: React.FC = () => {
               type="button"
               onClick={() => setShowExportModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
-              title="Export Image of League Table"
+              title="Export League Table"
             >
               <Camera className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Export Image</span>
+              <span>Export</span>
             </button>
 
             <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
@@ -403,6 +403,7 @@ export const LeagueTableView: React.FC = () => {
       <ExportTableModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
+        modalTitle="Export League Table"
         title="League Table"
         divisionName={selectedDivision}
         seasonName={seasonName}

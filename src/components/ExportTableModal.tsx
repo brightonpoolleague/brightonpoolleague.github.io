@@ -27,6 +27,7 @@ interface ExportTableModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  modalTitle?: string;
   divisionName?: string;
   seasonName: string;
   badgeText?: string;
@@ -39,6 +40,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
   isOpen,
   onClose,
   title,
+  modalTitle,
   divisionName,
   seasonName,
   badgeText,
@@ -48,7 +50,8 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<'png' | 'share' | null>(null);
   const [fitScale, setFitScale] = useState<number>(1);
   const [cardHeight, setCardHeight] = useState<number>(750);
@@ -116,8 +119,8 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
   };
 
   const handleDownload = async () => {
-    if (!cardRef.current || isGenerating) return;
-    setIsGenerating(true);
+    if (!cardRef.current || isDownloading || isSharing) return;
+    setIsDownloading(true);
     try {
       const options = {
         pixelRatio: 2,
@@ -141,13 +144,13 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     } catch (err) {
       console.error('Failed to generate image:', err);
     } finally {
-      setIsGenerating(false);
+      setIsDownloading(false);
     }
   };
 
   const handleShare = async () => {
-    if (!cardRef.current || isGenerating) return;
-    setIsGenerating(true);
+    if (!cardRef.current || isSharing || isDownloading) return;
+    setIsSharing(true);
     try {
       const blob = await toBlob(cardRef.current, {
         pixelRatio: 2,
@@ -176,21 +179,32 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         });
         setDownloadSuccess('share');
         setTimeout(() => setDownloadSuccess(null), 3000);
-      } else {
-        // Fallback to PNG download
-        await handleDownload();
       }
-    } catch (err) {
-      console.error('Share failed, falling back to download:', err);
-      await handleDownload();
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // User cancelled share dialog - do not treat as error or download
+        return;
+      }
+      console.error('Share failed:', err);
     } finally {
-      setIsGenerating(false);
+      setIsSharing(false);
     }
   };
 
-  const canNativeShare =
-    typeof navigator !== 'undefined' &&
-    typeof navigator.canShare === 'function';
+  const [canNativeShare, setCanNativeShare] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && typeof navigator.canShare === 'function') {
+      try {
+        const dummyFile = new File([''], 'test.png', { type: 'image/png' });
+        setCanNativeShare(navigator.canShare({ files: [dummyFile] }));
+      } catch {
+        setCanNativeShare(false);
+      }
+    } else {
+      setCanNativeShare(false);
+    }
+  }, []);
 
   const generatedDateStr = new Date().toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -215,7 +229,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
             </div>
             <div>
               <h3 className="font-black text-white text-sm sm:text-base leading-tight">
-                Export Image
+                {modalTitle || 'Export Image'}
               </h3>
               <p className="text-[11px] text-slate-400 hidden sm:block">
                 High-resolution ready to share on WhatsApp, Facebook, or print
@@ -238,34 +252,34 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
             <button
               type="button"
               onClick={handleShare}
-              disabled={isGenerating}
+              disabled={isSharing || isDownloading}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
             >
-              {isGenerating ? (
+              {isSharing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : downloadSuccess === 'share' ? (
                 <Check className="w-3.5 h-3.5 text-emerald-200" />
               ) : (
                 <Share2 className="w-3.5 h-3.5" />
               )}
-              <span>{downloadSuccess === 'share' ? 'Shared!' : 'Share'}</span>
+              <span>{downloadSuccess === 'share' ? 'Shared!' : isSharing ? 'Sharing...' : 'Share'}</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={handleDownload}
-            disabled={isGenerating}
+            disabled={isSharing || isDownloading}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
           >
-            {isGenerating ? (
+            {isDownloading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : downloadSuccess === 'png' ? (
               <Check className="w-3.5 h-3.5 text-emerald-400" />
             ) : (
               <Download className="w-3.5 h-3.5 text-emerald-400" />
             )}
-            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : 'Download PNG'}</span>
+            <span>{downloadSuccess === 'png' ? 'Saved!' : isDownloading ? 'Generating...' : 'Download PNG'}</span>
           </button>
         </div>
 

@@ -2136,11 +2136,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   type="button"
                   onClick={() => setShowExportModal(true)}
                   className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] sm:text-xs font-bold border border-slate-700 transition shrink-0 shadow-sm"
-                  title="Export Result Scorecard as Image"
+                  title="Export Scorecard"
                 >
                   <Camera className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Export Image</span>
-                  <span className="sm:hidden">Export</span>
+                  <span>Export</span>
                 </button>
               </div>
 
