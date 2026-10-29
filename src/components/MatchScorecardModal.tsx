@@ -1696,7 +1696,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                           {activeSet === 1 ? (
                             <>
                               <EyeOff className="w-4 h-4 text-emerald-400" />
-                              Select your lineup
+                              Set 1 Lineup
                             </>
                           ) : (
                             <>
