@@ -2845,17 +2845,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span title={getPlayerName(homePlayerId, hideHome)}>
                               {getPlayerName(homePlayerId, hideHome)}
                             </span>
-                            {isSlotSubstituted(
-                              lineups,
-                              frame.setNumber,
-                              'home',
-                              frame.homeSlot - 1
-                            ) &&
-                              !hideHome && (
-                                <span className="ml-1.5 text-[9px] font-black px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  SUB
-                                </span>
-                              )}
                           </td>
                           <td className="py-1.5 sm:py-2 px-0.5 text-center">
                             <button
@@ -2905,17 +2894,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             <span title={getPlayerName(awayPlayerId, hideAway)}>
                               {getPlayerName(awayPlayerId, hideAway)}
                             </span>
-                            {isSlotSubstituted(
-                              lineups,
-                              frame.setNumber,
-                              'away',
-                              frame.awaySlot - 1
-                            ) &&
-                              !hideAway && (
-                                <span className="ml-1.5 text-[9px] font-black px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  SUB
-                                </span>
-                              )}
                           </td>
                           <td className="py-1.5 sm:py-2 px-0.5 text-center font-mono text-slate-400">
                             {frame.awaySlot}

@@ -24,7 +24,6 @@ import {
   getFrameBreaker,
   getFramePlayers,
   isKnockoutFixture,
-  isSlotSubstituted,
 } from '../utils/leagueEngine';
 
 interface ExportScorecardModalProps {
@@ -440,16 +439,6 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                             </td>
                             <td className="py-1.5 px-3 font-medium text-white truncate max-w-[150px]">
                               <span>{getPlayerName(homePlayerId)}</span>
-                              {isSlotSubstituted(
-                                fixture.lineups,
-                                frame.setNumber,
-                                'home',
-                                frame.homeSlot - 1
-                              ) && (
-                                <span className="ml-1 text-[8px] font-black px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  SUB
-                                </span>
-                              )}
                             </td>
                             <td className="py-1.5 px-2 text-center">
                               <span
@@ -487,16 +476,6 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
                             </td>
                             <td className="py-1.5 px-3 font-medium text-white truncate max-w-[150px]">
                               <span>{getPlayerName(awayPlayerId)}</span>
-                              {isSlotSubstituted(
-                                fixture.lineups,
-                                frame.setNumber,
-                                'away',
-                                frame.awaySlot - 1
-                              ) && (
-                                <span className="ml-1 text-[8px] font-black px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  SUB
-                                </span>
-                              )}
                             </td>
                             <td className="py-1.5 px-2 text-center font-mono text-slate-400">
                               {frame.awaySlot}
