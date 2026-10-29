@@ -133,26 +133,27 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     return `${y}-${m}-${day}`;
   }, []);
 
-  // "My Next Match" is strictly date-based:
-  // 1. Earliest fixture on or after today that is not yet completed/approved (whether scheduled or live today)
-  // 2. Earliest fixture on or after today (if all upcoming are approved)
-  // 3. Earliest unapproved fixture from earlier in the season (e.g. postponed or pending submission)
-  // 4. Fallback to the season's latest fixture
+  // "My Next Match":
+  // The earliest upcoming fixture that is scheduled or currently live (never submitted or approved).
   const myNextMatch = useMemo(() => {
     if (myMatches.length === 0) return null;
 
-    const upcomingUnapproved = myMatches.find(
-      (f) => f.matchDate >= todayStr && f.status !== 'approved'
+    // 1. Earliest scheduled or live match on or after today
+    const upcoming = myMatches.find(
+      (f) =>
+        f.matchDate >= todayStr &&
+        (f.status === 'scheduled' || f.status === 'live')
     );
-    if (upcomingUnapproved) return upcomingUnapproved;
+    if (upcoming) return upcoming;
 
-    const upcomingAny = myMatches.find((f) => f.matchDate >= todayStr);
-    if (upcomingAny) return upcomingAny;
+    // 2. Earliest unplayed / postponed scheduled or live match from earlier dates
+    const unplayedPast = myMatches.find(
+      (f) => f.status === 'scheduled' || f.status === 'live'
+    );
+    if (unplayedPast) return unplayedPast;
 
-    const pastUnapproved = myMatches.find((f) => f.status !== 'approved');
-    if (pastUnapproved) return pastUnapproved;
-
-    return myMatches[myMatches.length - 1];
+    // 3. When all fixtures are submitted or approved, there is no next match
+    return null;
   }, [myMatches, todayStr]);
 
   const uniqueFixtureDates = useMemo(() => {
@@ -245,6 +246,20 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const pendingApprovalCount = fixtures.filter(
     (f) => f.status === 'submitted'
   ).length;
+
+  const showSpotlight = Boolean(
+    isCaptain &&
+      myTeam &&
+      myNextMatch &&
+      statusFilter === 'mine' &&
+      dateFilter === 'ALL' &&
+      !searchQuery.trim()
+  );
+
+  const listFixtures =
+    showSpotlight && myNextMatch
+      ? filtered.filter((f) => f.id !== myNextMatch.id)
+      : filtered;
 
   const statusTabs: { id: StatusFilter; label: string }[] = [
     ...(isCaptain ? [{ id: 'mine' as const, label: 'My Matches' }] : []),
@@ -431,7 +446,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
       </div>
 
       {/* Team Captain Spotlight: My Next Match (only shown when 'My Matches' filter is active) */}
-      {isCaptain && myTeam && myNextMatch && statusFilter === 'mine' && (() => {
+      {showSpotlight && myNextMatch && (() => {
         const nextScore = calculateMatchScore(myNextMatch);
         const home = teamsById[myNextMatch.homeTeamId];
         const away = teamsById[myNextMatch.awayTeamId];
@@ -469,10 +484,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0 ${
                   myNextMatch.status === 'live'
                     ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
-                    : myNextMatch.status === 'submitted'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                    : myNextMatch.status === 'approved'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                     : nextTimeframe === 'today'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
@@ -486,16 +497,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                         ? `LIVE (${nextScore.completedFrames}/15)`
                         : 'LIVE (First to 8)'
                       : `LIVE (${nextScore.completedFrames}/15)`}
-                  </>
-                ) : myNextMatch.status === 'approved' ? (
-                  <>
-                    <CheckCircle2 className="w-2.5 h-2.5" />
-                    Approved
-                  </>
-                ) : myNextMatch.status === 'submitted' ? (
-                  <>
-                    <Clock className="w-2.5 h-2.5" />
-                    Awaiting Approval
                   </>
                 ) : nextTimeframe === 'today' ? (
                   <>
@@ -677,8 +678,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               </button>
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          {filtered.map((fix) => {
+          {listFixtures.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {listFixtures.map((fix) => {
             const home = teamsById[fix.homeTeamId];
             const away = teamsById[fix.awayTeamId];
             if (!home || !away) return null;
@@ -883,6 +885,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             );
           })}
           </div>
+          )}
         </div>
       )}
 
