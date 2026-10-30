@@ -758,22 +758,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
                           {isEditing ? 'Cancel' : 'Edit Team'}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setConfirmDialog({
-                              title: `Delete ${team.name}?`,
-                              message: `Are you sure you want to delete "${team.name}"? This will also permanently delete its signed-on players and any fixtures involving this team.`,
-                              confirmLabel: 'Delete Team',
-                              variant: 'danger',
-                              onConfirm: () => deleteTeam(team.id),
-                            })
-                          }
-                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
-                          title="Delete Team"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
                     </div>
 
@@ -1196,22 +1180,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   ))}
                                 </select>
                               )}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setConfirmDialog({
-                                    title: `Delete Player: ${player.name}?`,
-                                    message: `Are you sure you want to permanently delete "${player.name}" from "${team.name}"? This will also remove all of their individual player statistics and dish records from the leaderboards.`,
-                                    confirmLabel: 'Delete Player',
-                                    variant: 'danger',
-                                    onConfirm: () => removePlayer(player.id),
-                                  })
-                                }
-                                className="text-slate-500 hover:text-red-400 transition p-0.5"
-                                title={`Delete ${player.name}`}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
                             </div>
                           )
                         )}
