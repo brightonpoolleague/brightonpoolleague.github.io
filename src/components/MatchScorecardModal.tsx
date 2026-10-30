@@ -167,7 +167,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     title: string;
     message: React.ReactNode;
     confirmLabel: string;
-    variant?: 'danger' | 'warning';
+    variant?: 'danger' | 'warning' | 'success';
     onConfirm: () => void;
   } | null>(null);
 
@@ -961,7 +961,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         </div>
       ),
       confirmLabel: 'Finish & Submit Match',
-      variant: 'warning',
+      variant: 'success',
       onConfirm: async () => {
         // Guard against race condition: ensure both captains are still signed at the moment of submission
         const latest = fixtures.find((f) => f.id === fixture.id) || fixture;
@@ -3098,12 +3098,18 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <div className="flex items-start gap-3.5">
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                  confirmDialog.variant === 'warning'
+                  confirmDialog.variant === 'success'
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                    : confirmDialog.variant === 'warning'
                     ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
                     : 'bg-red-500/15 border-red-500/30 text-red-400'
                 }`}
               >
-                <AlertTriangle className="w-5 h-5" />
+                {confirmDialog.variant === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5" />
+                )}
               </div>
               <div className="space-y-1 min-w-0 flex-1">
                 <h3 className="text-base font-bold text-white">
@@ -3130,7 +3136,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   setConfirmDialog(null);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold shadow transition ${
-                  confirmDialog.variant === 'warning'
+                  confirmDialog.variant === 'success'
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    : confirmDialog.variant === 'warning'
                     ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
                     : 'bg-red-600 hover:bg-red-500 text-white'
                 }`}
