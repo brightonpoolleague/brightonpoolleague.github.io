@@ -801,10 +801,23 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     </div>
 
                     {/* Venue Table Quick Editor */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Venue Table:</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      <div className="flex items-center justify-between sm:justify-start gap-2">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                          <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Venue Table:</span>
+                        </div>
+                        {editingTableTeamId !== team.id && (
+                          <span
+                            className={`text-xs font-bold ${
+                              team.tableNumber
+                                ? 'text-amber-300'
+                                : 'text-slate-400 italic'
+                            }`}
+                          >
+                            {team.tableNumber || 'None (Single Table)'}
+                          </span>
+                        )}
                       </div>
                       {editingTableTeamId === team.id ? (
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
@@ -846,23 +859,14 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xs font-bold ${
-                              team.tableNumber
-                                ? 'text-amber-300'
-                                : 'text-slate-400 italic'
-                            }`}
-                          >
-                            {team.tableNumber || 'None (Single Table)'}
-                          </span>
+                        <div className="flex items-center justify-end">
                           <button
                             type="button"
                             onClick={() => {
                               setEditingTableTeamId(team.id);
                               setQuickTableDraft(team.tableNumber || '');
                             }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
                             title="Edit Table"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -895,10 +899,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       );
                     })()}
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Team PIN:</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      <div className="flex items-center justify-between sm:justify-start gap-2">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Team PIN:</span>
+                        </div>
+                        {editingPinTeamId !== team.id && (
+                          <span className="text-xs font-mono font-bold text-amber-300">
+                            {team.captainPin || 'None'}
+                          </span>
+                        )}
                       </div>
 
                       {editingPinTeamId === team.id ? (
@@ -933,10 +944,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-amber-300">
-                            {team.captainPin || 'None'}
-                          </span>
+                        <div className="flex items-center justify-end gap-1.5 shrink-0">
                           <button
                             type="button"
                             onClick={() => {
@@ -947,7 +955,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   : ''
                               );
                             }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
                             title="Edit Team PIN"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -982,7 +990,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             onClick={() =>
                               handleCopyTeamPin(team.id, team.captainPin)
                             }
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
                             title="Copy PIN to clipboard"
                           >
                             <Copy className="w-3 h-3 text-slate-400" />
@@ -993,7 +1001,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             onClick={() =>
                               handleShareTeamPin(team.name, team.captainPin, team.id)
                             }
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
                             title="Share PIN via WhatsApp, Messages, etc."
                           >
                             <Share2 className="w-3 h-3 text-emerald-400" />
