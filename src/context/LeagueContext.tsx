@@ -192,10 +192,8 @@ interface LeagueContextValue {
     }
   ) => Promise<Team>;
   updateTeam: (team: Team) => Promise<void>;
-  deleteTeam: (teamId: string) => Promise<void>;
   addPlayer: (teamId: string, name: string) => Promise<Player>;
   updatePlayer: (player: Player) => Promise<void>;
-  removePlayer: (playerId: string) => Promise<void>;
   transferPlayer: (playerId: string, toTeamId: string) => Promise<void>;
   addFixture: (data: {
     division?: Division;
@@ -1383,29 +1381,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
-  const deleteTeam = useCallback(
-    async (teamId: string): Promise<void> => {
-      const nextTeams = allTeams.filter((t) => t.id !== teamId);
-      const nextPlayers = allPlayers.filter((p) => p.teamId !== teamId);
-      const nextFixtures = allFixtures.filter(
-        (f) => f.homeTeamId !== teamId && f.awayTeamId !== teamId
-      );
-      setAllTeams(nextTeams);
-      setAllPlayers(nextPlayers);
-      setAllFixtures(nextFixtures);
-      persistLocal(nextTeams, nextPlayers, nextFixtures);
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('admin_delete_team', {
-          p_admin_pin: adminPin,
-          p_team_id: teamId,
-        });
-      }
-    },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
-  );
-
   const addPlayer = useCallback(
     async (teamId: string, name: string): Promise<Player> => {
       const newPlayer: Player = {
@@ -1451,23 +1426,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_team_id: updatedPlayer.teamId,
           p_name: cleanName,
           p_active: updatedPlayer.active,
-        });
-      }
-    },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
-  );
-
-  const removePlayer = useCallback(
-    async (playerId: string): Promise<void> => {
-      const nextPlayers = allPlayers.filter((p) => p.id !== playerId);
-      setAllPlayers(nextPlayers);
-      persistLocal(allTeams, nextPlayers, allFixtures);
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('admin_delete_player', {
-          p_admin_pin: adminPin,
-          p_player_id: playerId,
         });
       }
     },
@@ -1992,10 +1950,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         updateTeamPin,
         addTeam,
         updateTeam,
-        deleteTeam,
         addPlayer,
         updatePlayer,
-        removePlayer,
         transferPlayer,
         addFixture,
         generateDivisionFixtures,
