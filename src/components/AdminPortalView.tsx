@@ -78,7 +78,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   >('teams');
 
   const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
-  const [sharedTeamId, setSharedTeamId] = useState<string | null>(null);
   const [newPlayerByTeam, setNewPlayerByTeam] = useState<
     Record<string, string>
   >({});
@@ -207,8 +206,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           title: `${teamName} Captain PIN`,
           text,
         });
-        setSharedTeamId(teamId);
-        setTimeout(() => setSharedTeamId(null), 2500);
         return;
       } catch (err) {
         // If user cancelled the share sheet (AbortError), don't do anything
@@ -878,12 +875,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       );
                     })()}
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Team PIN:</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      <div className="flex items-center justify-between sm:justify-start gap-2">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Team PIN:</span>
+                        </div>
                         <input
                           type="text"
                           value={team.captainPin && !team.captainPin.includes('•') ? team.captainPin : ''}
@@ -903,6 +900,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           className="w-24 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
                           title="Edit Team PIN directly"
                         />
+                      </div>
+
+                      <div className="flex items-center justify-end gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -932,7 +932,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           onClick={() =>
                             handleCopyTeamPin(team.id, team.captainPin)
                           }
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
                           title="Copy PIN to clipboard"
                         >
                           <Copy className="w-3 h-3 text-slate-400" />
@@ -943,11 +943,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           onClick={() =>
                             handleShareTeamPin(team.name, team.captainPin, team.id)
                           }
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
                           title="Share PIN via WhatsApp, Messages, etc."
                         >
                           <Share2 className="w-3 h-3 text-emerald-400" />
-                          {sharedTeamId === team.id ? 'Shared!' : 'Share'}
+                          Share
                         </button>
                       </div>
                     </div>
