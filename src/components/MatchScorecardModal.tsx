@@ -237,6 +237,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     Boolean(fixture.homeCaptainSigned || fixture.awayCaptainSigned);
   const isSignedByBoth =
     Boolean(fixture.homeCaptainSigned && fixture.awayCaptainSigned);
+  const prevSignedByBothRef = useRef<boolean>(isSignedByBoth);
   const isMatchLockedBySignature = !canManageLeague && isSignedByAny;
 
   const canSignHome =
@@ -992,6 +993,29 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       },
     });
   };
+
+  // Auto-prompt finish match modal for both captains as soon as the 2nd captain signs
+  useEffect(() => {
+    const wasSignedByBoth = prevSignedByBothRef.current;
+    prevSignedByBothRef.current = isSignedByBoth;
+
+    if (
+      !wasSignedByBoth &&
+      isSignedByBoth &&
+      fixture.status !== 'submitted' &&
+      fixture.status !== 'approved' &&
+      (canSignHome || canSignAway || canManageLeague)
+    ) {
+      handleFinishMatch();
+    }
+  }, [
+    isSignedByBoth,
+    fixture.status,
+    canSignHome,
+    canSignAway,
+    canManageLeague,
+    handleFinishMatch,
+  ]);
 
   const renderLineupSelector = (setNumber: 1 | 2 | 3, side: 'home' | 'away') => {
     const team = side === 'home' ? homeTeam : awayTeam;
