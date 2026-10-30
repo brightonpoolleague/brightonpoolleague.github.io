@@ -873,13 +873,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onSelectFixture(fix)}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                        isEditable && isMyTeamMatch && (fix.status === 'scheduled' || fix.status === 'live')
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                          : isEditable
-                          ? 'bg-emerald-600/90 hover:bg-emerald-500 text-white'
-                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                      }`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
                     >
                       <PlayCircle className="w-3.5 h-3.5" />
                       {isCaptain && isMyTeamMatch
