@@ -17,6 +17,7 @@ import {
   Save,
   Search,
   ShieldCheck,
+  Share2,
   Table as TableIcon,
   Trash2,
   Trophy,
@@ -77,6 +78,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   >('teams');
 
   const [copiedTeamId, setCopiedTeamId] = useState<string | null>(null);
+  const [sharedTeamId, setSharedTeamId] = useState<string | null>(null);
   const [newPlayerByTeam, setNewPlayerByTeam] = useState<
     Record<string, string>
   >({});
@@ -193,6 +195,28 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   const handleCopyTeamPin = (teamId: string, pin: string) => {
     navigator.clipboard?.writeText(pin);
+    setCopiedTeamId(teamId);
+    setTimeout(() => setCopiedTeamId(null), 2500);
+  };
+
+  const handleShareTeamPin = async (teamName: string, pin: string, teamId: string) => {
+    const text = `Brighton Pool League — ${teamName} Captain PIN: ${pin}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${teamName} Captain PIN`,
+          text,
+        });
+        setSharedTeamId(teamId);
+        setTimeout(() => setSharedTeamId(null), 2500);
+        return;
+      } catch (err) {
+        // If user cancelled the share sheet (AbortError), don't do anything
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+    // Fallback if Web Share API is not supported (e.g. desktop non-https / older browsers)
+    navigator.clipboard?.writeText(text);
     setCopiedTeamId(teamId);
     setTimeout(() => setCopiedTeamId(null), 2500);
   };
@@ -908,11 +932,22 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           onClick={() =>
                             handleCopyTeamPin(team.id, team.captainPin)
                           }
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold"
-                          title="Copy PIN"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
+                          title="Copy PIN to clipboard"
                         >
-                          <Copy className="w-3 h-3" />
-                          {copiedTeamId === team.id ? 'Copied!' : 'Copy PIN'}
+                          <Copy className="w-3 h-3 text-slate-400" />
+                          {copiedTeamId === team.id ? 'Copied!' : 'Copy'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleShareTeamPin(team.name, team.captainPin, team.id)
+                          }
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
+                          title="Share PIN via WhatsApp, Messages, etc."
+                        >
+                          <Share2 className="w-3 h-3 text-emerald-400" />
+                          {sharedTeamId === team.id ? 'Shared!' : 'Share'}
                         </button>
                       </div>
                     </div>
