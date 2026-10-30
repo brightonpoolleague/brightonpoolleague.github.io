@@ -111,6 +111,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [editingTableTeamId, setEditingTableTeamId] = useState<string | null>(null);
   const [quickTableDraft, setQuickTableDraft] = useState('');
 
+  // Quick PIN inline editing state
+  const [editingPinTeamId, setEditingPinTeamId] = useState<string | null>(null);
+  const [quickPinDraft, setQuickPinDraft] = useState('');
+
   // Player inline renaming state
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editingPlayerName, setEditingPlayerName] = useState('');
@@ -332,6 +336,22 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       tableNumber: cleanTable || undefined,
     });
     setEditingTableTeamId(null);
+  };
+
+  const handleSaveQuickPin = async (team: Team) => {
+    const cleanPin = quickPinDraft.trim();
+    const res = await updateTeamPin(team.id, cleanPin);
+    if (res && !res.success && res.error) {
+      setConfirmDialog({
+        title: 'Duplicate Team PIN',
+        message: res.error,
+        confirmLabel: 'OK',
+        variant: 'warning',
+        onConfirm: () => {},
+      });
+      return;
+    }
+    setEditingPinTeamId(null);
   };
 
   const handleSaveTeamEdit = async (team: Team) => {
@@ -875,81 +895,112 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       );
                     })()}
 
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
-                      <div className="flex items-center justify-between sm:justify-start gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Team PIN:</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Team PIN:</span>
+                      </div>
+
+                      {editingPinTeamId === team.id ? (
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
+                          <input
+                            type="text"
+                            value={quickPinDraft}
+                            onChange={(e) => setQuickPinDraft(e.target.value)}
+                            placeholder="6-digit PIN"
+                            className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-amber-300 font-mono font-bold w-full sm:w-32 text-center"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveQuickPin(team);
+                              if (e.key === 'Escape') setEditingPinTeamId(null);
+                            }}
+                          />
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveQuickPin(team)}
+                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingPinTeamId(null)}
+                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        <input
-                          type="text"
-                          value={team.captainPin && !team.captainPin.includes('•') ? team.captainPin : ''}
-                          placeholder="6-digit PIN"
-                          onChange={async (e) => {
-                            const res = await updateTeamPin(team.id, e.target.value);
-                            if (res && !res.success && res.error) {
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-amber-300">
+                            {team.captainPin || 'None'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingPinTeamId(team.id);
+                              setQuickPinDraft(
+                                team.captainPin && !team.captainPin.includes('•')
+                                  ? team.captainPin
+                                  : ''
+                              );
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                            title="Edit Team PIN"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit PIN</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const existingPins = teams
+                                .filter((t) => t.id !== team.id)
+                                .map((t) => t.captainPin);
+                              if (adminPin) existingPins.push(adminPin);
+                              const newRandomPin = generateRandomPin(existingPins);
+
                               setConfirmDialog({
-                                title: 'Duplicate Team PIN',
-                                message: res.error,
-                                confirmLabel: 'OK',
+                                title: `Regenerate Team PIN?`,
+                                message: `Generate a new random 6-digit Team PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
+                                confirmLabel: 'Generate New PIN',
                                 variant: 'warning',
-                                onConfirm: () => {},
+                                onConfirm: async () => {
+                                  await updateTeamPin(team.id, newRandomPin);
+                                },
                               });
+                            }}
+                            className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
+                            title="Generate new random 6-digit PIN"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleCopyTeamPin(team.id, team.captainPin)
                             }
-                          }}
-                          className="w-24 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs font-mono font-bold text-amber-300 text-center"
-                          title="Edit Team PIN directly"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-end gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const existingPins = teams
-                              .filter((t) => t.id !== team.id)
-                              .map((t) => t.captainPin);
-                            if (adminPin) existingPins.push(adminPin);
-                            const newRandomPin = generateRandomPin(existingPins);
-
-                            setConfirmDialog({
-                              title: `Regenerate Team PIN?`,
-                              message: `Generate a new random 6-digit Team PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
-                              confirmLabel: 'Generate New PIN',
-                              variant: 'warning',
-                              onConfirm: async () => {
-                                await updateTeamPin(team.id, newRandomPin);
-                              },
-                            });
-                          }}
-                          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
-                          title="Generate new random 6-digit PIN"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCopyTeamPin(team.id, team.captainPin)
-                          }
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
-                          title="Copy PIN to clipboard"
-                        >
-                          <Copy className="w-3 h-3 text-slate-400" />
-                          {copiedTeamId === team.id ? 'Copied!' : 'Copy'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleShareTeamPin(team.name, team.captainPin, team.id)
-                          }
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
-                          title="Share PIN via WhatsApp, Messages, etc."
-                        >
-                          <Share2 className="w-3 h-3 text-emerald-400" />
-                          Share
-                        </button>
-                      </div>
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
+                            title="Copy PIN to clipboard"
+                          >
+                            <Copy className="w-3 h-3 text-slate-400" />
+                            {copiedTeamId === team.id ? 'Copied!' : 'Copy'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleShareTeamPin(team.name, team.captainPin, team.id)
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-[11px] font-semibold transition border border-emerald-500/30"
+                            title="Share PIN via WhatsApp, Messages, etc."
+                          >
+                            <Share2 className="w-3 h-3 text-emerald-400" />
+                            Share
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Inline Team Details Editor */}
