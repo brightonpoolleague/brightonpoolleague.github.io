@@ -589,7 +589,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
                 >
                   <PlayCircle className="w-3.5 h-3.5" />
-                  {myNextMatch.status === 'live' ? 'Continue Match' : 'Start Match'}
+                  {myNextMatch.status === 'live'
+                    ? nextScore.isDecided
+                      ? 'Finish Match'
+                      : 'Continue Match'
+                    : 'Start Match'}
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -882,7 +886,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                         ? fix.status === 'scheduled'
                           ? 'Start Match'
                           : fix.status === 'live'
-                          ? 'Continue Match'
+                          ? score.isDecided
+                            ? 'Finish Match'
+                            : 'Continue Match'
                           : 'View Scorecard'
                         : 'View Scorecard'}
                       <ChevronRight className="w-3.5 h-3.5" />
