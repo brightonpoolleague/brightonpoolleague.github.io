@@ -802,22 +802,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
                     {/* Venue Table Quick Editor */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
-                      <div className="flex items-center justify-between sm:justify-start gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                          <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Venue Table:</span>
-                        </div>
-                        {editingTableTeamId !== team.id && (
-                          <span
-                            className={`text-xs font-bold ${
-                              team.tableNumber
-                                ? 'text-amber-300'
-                                : 'text-slate-400 italic'
-                            }`}
-                          >
-                            {team.tableNumber || 'None (Single Table)'}
-                          </span>
-                        )}
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                        <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Venue Table:</span>
                       </div>
                       {editingTableTeamId === team.id ? (
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
@@ -859,7 +846,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-end">
+                        <div className="flex items-center justify-end gap-2 shrink-0">
+                          <span
+                            className={`text-xs font-bold ${
+                              team.tableNumber
+                                ? 'text-amber-300'
+                                : 'text-slate-400 italic'
+                            }`}
+                          >
+                            {team.tableNumber || 'None (Single Table)'}
+                          </span>
                           <button
                             type="button"
                             onClick={() => {
