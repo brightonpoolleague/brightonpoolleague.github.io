@@ -1046,6 +1046,22 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <button
                               type="button"
                               onClick={() => {
+                                setEditingPinTeamId(team.id);
+                                setQuickPinDraft(
+                                  team.captainPin && !team.captainPin.includes('•')
+                                    ? team.captainPin
+                                    : ''
+                                );
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                              title="Edit Team PIN"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit PIN</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
                                 const existingPins = teams
                                   .filter((t) => t.id !== team.id)
                                   .map((t) => t.captainPin);
@@ -1067,22 +1083,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             >
                               <RefreshCw className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">Regenerate</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingPinTeamId(team.id);
-                                setQuickPinDraft(
-                                  team.captainPin && !team.captainPin.includes('•')
-                                    ? team.captainPin
-                                    : ''
-                                );
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
-                              title="Edit Team PIN"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                              <span>Edit PIN</span>
                             </button>
                           </div>
                         </div>
