@@ -231,4 +231,125 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
     await page.getByRole('button', { name: 'Teams & Venues' }).click();
     await expect(page.getByText('Brighton Marina Tavern')).toBeVisible();
   });
+
+  test('synchronizes live scorecard updates over WebSockets between two captains on separate browsers', async ({
+    browser,
+    request,
+  }) => {
+    // Spawn two independent browser contexts (simulating two captains on separate phones)
+    const homeContext = await browser.newContext();
+    const awayContext = await browser.newContext();
+    const homePage = await homeContext.newPage();
+    const awayPage = await awayContext.newPage();
+
+    try {
+      // 1. Home Captain ('111222' - King & Queen A) logs in on Browser 1
+      await homePage.goto('/');
+      await homePage.getByRole('button', { name: 'Login' }).click();
+      await homePage.getByPlaceholder('Enter 6-digit Team PIN').fill('111222');
+      await homePage.getByRole('button', { name: 'Log In' }).click();
+      await expect(homePage.getByText('King & Queen A').first()).toBeVisible();
+
+      // 2. Away Captain ('555666' - Caroline Cueists) logs in on Browser 2
+      await awayPage.goto('/');
+      await awayPage.getByRole('button', { name: 'Login' }).click();
+      await awayPage.getByPlaceholder('Enter 6-digit Team PIN').fill('555666');
+      await awayPage.getByRole('button', { name: 'Log In' }).click();
+      await expect(awayPage.getByText('Caroline Cueists').first()).toBeVisible();
+
+      // 3. Both captains open the scheduled match (King & Queen A vs Caroline Cueists) simultaneously
+      await homePage.getByRole('button', { name: 'Start Match' }).first().click();
+      await awayPage.getByRole('button', { name: 'Start Match' }).first().click();
+
+      // 4. Home Captain submits & locks their Set 1 lineup (side='home') via PostgreSQL RPC
+      const homeSaveRes = await request.post(
+        `${SUPABASE_URL}/rest/v1/rpc/captain_save_fixture`,
+        {
+          headers,
+          data: {
+            p_fixture_id: 'fix-scheduled-1',
+            p_team_id: 't-prem-1',
+            p_pin: '111222',
+            p_status: 'scheduled',
+            p_lag_winner: 'home',
+            p_home_set1_locked: true,
+            p_away_set1_locked: false,
+            p_lineups: {
+              set1: {
+                home: ['p-kq-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+              set2: {
+                home: ['p-kq-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+              set3: {
+                home: ['p-kq-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+            },
+            p_frames: [],
+            p_home_captain_signed: false,
+            p_away_captain_signed: false,
+            p_submitted_at: null,
+            p_edited_side: 'home',
+          },
+        }
+      );
+      expect(homeSaveRes.ok()).toBeTruthy();
+
+      // 5. Verify Away Captain's browser (Browser 2) receives the live WebSocket update WITHOUT page reload!
+      await expect(
+        awayPage.getByText(/lineup confirmed \(1\/2\)/i).first()
+      ).toBeVisible({ timeout: 10_000 });
+
+      // 6. Away Captain now submits & locks their Set 1 lineup (side='away')
+      const awaySaveRes = await request.post(
+        `${SUPABASE_URL}/rest/v1/rpc/captain_save_fixture`,
+        {
+          headers,
+          data: {
+            p_fixture_id: 'fix-scheduled-1',
+            p_team_id: 't-prem-3',
+            p_pin: '555666',
+            p_status: 'live',
+            p_lag_winner: 'home',
+            p_home_set1_locked: false, // Server-side merge preserves Home's lock!
+            p_away_set1_locked: true,
+            p_lineups: {
+              set1: {
+                home: [null, null, null, null, null],
+                away: ['p-cc-1', 'p-cc-2', 'p-cc-3', 'p-cc-4', 'p-cc-5'],
+              },
+              set2: {
+                home: [null, null, null, null, null],
+                away: ['p-cc-1', 'p-cc-2', 'p-cc-3', 'p-cc-4', 'p-cc-5'],
+              },
+              set3: {
+                home: [null, null, null, null, null],
+                away: ['p-cc-1', 'p-cc-2', 'p-cc-3', 'p-cc-4', 'p-cc-5'],
+              },
+            },
+            p_frames: [],
+            p_home_captain_signed: false,
+            p_away_captain_signed: false,
+            p_submitted_at: null,
+            p_edited_side: 'away',
+          },
+        }
+      );
+      expect(awaySaveRes.ok()).toBeTruthy();
+
+      // 7. Verify BOTH browsers receive the WebSocket update and reveal all Set 1 player names live!
+      await expect(homePage.getByText('Chloe Mercer').first()).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(awayPage.getByText('Sam Carter').first()).toBeVisible({
+        timeout: 10_000,
+      });
+    } finally {
+      await homeContext.close();
+      await awayContext.close();
+    }
+  });
 });
