@@ -406,6 +406,330 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       timeout: 2000,
     });
   });
+
+  test('schedules a Knockout Cup fixture, enforces First-to-8 early termination in Set 2, and deletes fixture in Admin Portal', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // 1. Log in as League Admin ('000000')
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'League Admin' }).click();
+    await page.getByPlaceholder('Enter League Admin PIN').fill('000000');
+    await page.getByRole('button', { name: 'Log In' }).click();
+
+    // 2. Switch to Fixtures tab and open Schedule Fixture form
+    await page.getByRole('button', { name: /^Fixtures/i }).first().click();
+    await page.getByRole('button', { name: 'Schedule Fixture' }).click();
+
+    // 3. Configure a First-to-8 Knockout Cup fixture
+    await page
+      .locator('select')
+      .filter({ hasText: 'League Match (15 frames)' })
+      .first()
+      .selectOption('knockout');
+    await page
+      .getByPlaceholder(/e\.g\. Division 1 Cup, Summer Cup/i)
+      .fill('E2E Winter Knockout Cup');
+    await page
+      .getByPlaceholder(/e\.g\. Quarter-Final, Semi-Final/i)
+      .fill('Quarter-Final');
+
+    const homeTeamSelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select Home Team --' })
+      .first();
+    const firstHomeId = await homeTeamSelect
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value');
+    await homeTeamSelect.selectOption(firstHomeId!);
+
+    const awayTeamSelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select Away Team --' })
+      .first();
+    const firstAwayId = await awayTeamSelect
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value');
+    await awayTeamSelect.selectOption(firstAwayId!);
+
+    await page.getByRole('button', { name: 'Confirm & Schedule' }).click();
+
+    // 4. Search for the newly created Knockout fixture and edit its round name
+    const adminFixtureSearch = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await adminFixtureSearch.fill('E2E Winter Knockout Cup');
+    await expect(
+      page.getByText(/E2E Winter Knockout Cup \(Quarter-Final\)/i).first()
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit Date' }).first().click();
+    await page
+      .getByPlaceholder(/e\.g\. Quarter-Final, Semi-Final/i)
+      .first()
+      .fill('Semi-Final');
+    await page.getByRole('button', { name: 'Save Fixture Changes' }).click();
+    await expect(
+      page.getByText(/E2E Winter Knockout Cup \(Semi-Final\)/i).first()
+    ).toBeVisible();
+
+    // 5. Open the Knockout Cup scorecard and confirm both Set 1 lineups
+    await page.getByRole('button', { name: 'Scorecard', exact: true }).first().click();
+    await expect(page.getByText(/First to 8/i).first()).toBeVisible();
+    await page
+      .getByRole('button', { name: /Admin: Confirm Both & Begin/i })
+      .click();
+
+    // 6. Score Frames 1–5 for Home in Set 1 (5–0)
+    for (let frameNum = 1; frameNum <= 5; frameNum++) {
+      const frameCard = page
+        .locator('div')
+        .filter({
+          hasText: `(Frame #${frameNum})`,
+          has: page.locator('button'),
+        })
+        .last();
+      await frameCard.locator('button').first().click();
+    }
+
+    // 7. Advance to Set 2 and score Frames 6, 7, and 8 for Home (reaching 8–0)
+    await page.getByRole('button', { name: /Next: Set 2/i }).click();
+    for (let frameNum = 6; frameNum <= 8; frameNum++) {
+      const frameCard = page
+        .locator('div')
+        .filter({
+          hasText: `(Frame #${frameNum})`,
+          has: page.locator('button'),
+        })
+        .last();
+      await frameCard.locator('button').first().click();
+    }
+
+    // 8. Verify match is immediately decided at 8–0 without playing Frames 9–15
+    await expect(page.getByText(/Match Decided:/i).first()).toBeVisible();
+    await expect(
+      page.getByText('Not required (Decided at 8)').first()
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Please Sign & Submit the Scorecard/i)
+    ).toBeVisible();
+
+    // 9. Close the scorecard modal and delete the temporary Knockout fixture
+    await page
+      .locator('div.bg-slate-900.border-b')
+      .locator('button')
+      .last()
+      .click();
+    await page.getByTitle('Delete Fixture').first().click();
+    await expect(
+      page.getByRole('heading', { name: 'Delete Fixture?' })
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Delete Fixture' }).last().click();
+    await expect(
+      page.getByText(/No fixtures match/i)
+    ).toBeVisible();
+  });
+
+  test('performs Set 2 player substitutions, opponent approval, unlock request handshake, and scorecard reopening', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // 1. Log in as League Admin ('000000')
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'League Admin' }).click();
+    await page.getByPlaceholder('Enter League Admin PIN').fill('000000');
+    await page.getByRole('button', { name: 'Log In' }).click();
+
+    // 2. Create a dedicated fixture on 2026-12-28 to test Set 2 substitutions and Reopen cleanly
+    await page.getByRole('button', { name: /^Fixtures/i }).first().click();
+    await page.getByRole('button', { name: 'Schedule Fixture' }).click();
+    const dateInput = page
+      .locator('input[type="date"]')
+      .last();
+    await dateInput.fill('2026-12-28');
+
+    // Select a division that has seeded teams in the active environment
+    const divSelect = page
+      .locator('select')
+      .filter({ hasText: 'Premier League' })
+      .last();
+    await divSelect.selectOption(isContainerized ? 'Premier League' : 'Division 1');
+
+    await page.getByRole('button', { name: 'Confirm & Schedule' }).click();
+
+    // 3. Test Approve -> Reopen lifecycle on this dedicated fixture in Scorecards tab
+    await page.getByRole('button', { name: /Scorecards/i }).first().click();
+    const scorecardSearch = page.getByPlaceholder(
+      /Search by team, division, status, date or player/i
+    );
+    await scorecardSearch.fill('2026-12-28');
+    await page.getByRole('button', { name: 'Approve', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Approve', exact: true }).last().click();
+
+    const reopenBtn = page.getByRole('button', { name: 'Reopen' }).first();
+    await expect(reopenBtn).toBeVisible();
+    await reopenBtn.click();
+    await expect(
+      page.getByRole('button', { name: 'Approve', exact: true }).first()
+    ).toBeVisible();
+
+    // 4. Open Scorecard from Scorecards tab, confirm both Set 1 lineups, and switch to Set 2
+    await page.getByRole('button', { name: 'Scorecard', exact: true }).first().click();
+    await page
+      .getByRole('button', { name: /Admin: Confirm Both & Begin/i })
+      .click();
+    await page.getByRole('button', { name: /Next: Set 2/i }).click();
+
+    // 5. Open Set 2 substitution editor and substitute Position #1 for the 6th squad player
+    await page.getByRole('button', { name: 'Make Subs' }).click();
+    const takeOutSelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select player to take out --' })
+      .first();
+    await takeOutSelect.selectOption('0');
+
+    const putInSelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select replacement player --' })
+      .first();
+    const replacementVal = await putInSelect
+      .locator('option:not([disabled]):not([value=""]):not([value="BYE"])')
+      .first()
+      .getAttribute('value');
+    await putInSelect.selectOption(replacementVal!);
+
+    await page.getByRole('button', { name: 'Make Substitution' }).first().click();
+    await expect(page.getByText(/Subbed in for/i).first()).toBeVisible();
+
+    // 6. Confirm the Set 2 substitution -> triggers opponent approval banner
+    await page.getByRole('button', { name: 'Confirm', exact: true }).first().click();
+    await expect(
+      page.getByRole('button', { name: 'Approve Substitutions' })
+    ).toBeVisible();
+
+    // 7. Approve the substitution and verify locked substitution notification
+    await page.getByRole('button', { name: 'Approve Substitutions' }).click();
+    await expect(
+      page.getByText(/made Set 2 substitution:/i).first()
+    ).toBeVisible();
+
+    // 8. Request to unlock Set 2 substitutions and approve the unlock request
+    await page.getByRole('button', { name: 'Change Subs' }).click();
+    await page
+      .getByRole('button', { name: 'Request to Change Subs' })
+      .first()
+      .click();
+    await expect(
+      page.getByRole('button', { name: 'Allow Substitution Changes' })
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: 'Allow Substitution Changes' })
+      .click();
+    await expect(
+      page.getByText('Make a Set 2 Substitution').first()
+    ).toBeVisible();
+
+    // 9. Clean up temporary fixture
+    await page
+      .locator('div.bg-slate-900.border-b')
+      .locator('button')
+      .last()
+      .click();
+    await page.getByRole('button', { name: /^Fixtures/i }).first().click();
+    const adminFixtureSearch = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await adminFixtureSearch.fill('2026-12-28');
+    await page.getByTitle('Delete Fixture').first().click();
+    await page.getByRole('button', { name: 'Delete Fixture' }).last().click();
+  });
+
+  test('opens PNG Export Modals and exercises Player Stats, Teams & Venues, and Roll of Honour views', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // 1. Open Export Modal on League Table view
+    await page.getByRole('button', { name: 'League Table' }).click();
+    await page.getByRole('button', { name: 'Export' }).click();
+    await expect(
+      page.getByRole('button', { name: /Download PNG/i })
+    ).toBeVisible();
+    // Close ExportTableModal via top-right X button
+    await page
+      .locator('div.fixed.inset-0')
+      .locator('button')
+      .first()
+      .click();
+
+    // 2. Navigate to Player Stats and switch between Player Averages and Dish Leaderboard
+    await page.getByRole('button', { name: 'Player Stats' }).click();
+    await expect(
+      page.getByRole('button', { name: 'All Divisions' })
+    ).toBeHidden();
+
+    await page.getByRole('button', { name: 'Dish Leaderboard' }).click();
+    const allDivisionsBtn = page.getByRole('button', { name: 'All Divisions' });
+    await expect(allDivisionsBtn).toBeVisible();
+    await allDivisionsBtn.click();
+    await expect(
+      page.getByRole('heading', { name: /All Divisions Dish Leaderboard/i })
+    ).toBeVisible();
+
+    // Search player stats
+    const statsSearch = page.getByPlaceholder('Search player or team...');
+    await statsSearch.fill('King & Queen');
+    await expect(page.getByText('King & Queen A').first()).toBeVisible();
+    await statsSearch.fill('');
+
+    // Open Export Modal on Dish Leaderboard
+    await page.getByRole('button', { name: 'Export' }).click();
+    await expect(
+      page.getByRole('button', { name: /Download PNG/i })
+    ).toBeVisible();
+    await page
+      .locator('div.fixed.inset-0')
+      .locator('button')
+      .first()
+      .click();
+
+    // 3. Navigate to Teams & Venues, toggle Group by Venue vs All Teams List, and search directory
+    await page.getByRole('button', { name: 'Teams & Venues' }).click();
+    await page.getByRole('button', { name: 'All Teams List' }).click();
+    const venueSearch = page.getByPlaceholder(
+      /Search by team, venue, table, captain or street/i
+    );
+    await venueSearch.fill('Marlborough');
+    await expect(page.getByText('King & Queen A').first()).toBeVisible();
+
+    // 4. Navigate to Rules & Info and browse Roll of Honour historical sub-tabs
+    await page.getByRole('button', { name: 'Rules & Info' }).click();
+    await page.getByRole('button', { name: 'League Rules' }).click();
+    await page.getByRole('button', { name: 'Champion of Champions' }).click();
+    await page.getByRole('button', { name: 'Competitions' }).click();
+    await page.getByRole('button', { name: 'Roll of Honour' }).click();
+    await page.getByRole('button', { name: 'Knockout Cup' }).click();
+    await expect(page.getByText(/Winner/i).first()).toBeVisible();
+
+    // 5. Open a Match Scorecard, switch to Result Scorecard paper view, and open ExportScorecardModal
+    await page.getByRole('button', { name: 'Live & Fixtures' }).click();
+    await page
+      .getByRole('button', { name: /View Scorecard|Start Match/i })
+      .first()
+      .click();
+    await page.getByRole('button', { name: /Result Scorecard/i }).click();
+    await page.getByRole('button', { name: 'Export' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Export Result Scorecard' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Download PNG/i })
+    ).toBeVisible();
+  });
 });
 
 test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
@@ -721,5 +1045,45 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
       await homeContext.close();
       await awayContext.close();
     }
+  });
+
+  test('enforces brute-force PIN rate limiting after 20 failed attempts within 15 minutes', async ({
+    request,
+  }) => {
+    const rateLimitHeaders = {
+      ...headers,
+      'x-forwarded-for': '10.254.254.99',
+    };
+
+    // 1. Send 20 failed PIN attempts for an isolated team action ('captain:t-prem-4')
+    for (let i = 0; i < 20; i++) {
+      const failRes = await request.post(
+        `${SUPABASE_URL}/rest/v1/rpc/verify_captain_pin`,
+        {
+          headers: rateLimitHeaders,
+          data: {
+            p_team_id: 't-prem-4',
+            p_pin: '000001',
+          },
+        }
+      );
+      expect(failRes.ok()).toBeTruthy();
+      expect(await failRes.json()).toBe(false);
+    }
+
+    // 2. On the 21st attempt, supply the VALID PIN ('777888' for 't-prem-4') and verify it is blocked by rate limiting
+    const lockedOutRes = await request.post(
+      `${SUPABASE_URL}/rest/v1/rpc/verify_captain_pin`,
+      {
+        headers: rateLimitHeaders,
+        data: {
+          p_team_id: 't-prem-4',
+          p_pin: '777888',
+        },
+      }
+    );
+    expect(lockedOutRes.status()).toBeGreaterThanOrEqual(400);
+    const errBody = await lockedOutRes.text();
+    expect(errBody).toContain('Too many failed PIN attempts');
   });
 });
