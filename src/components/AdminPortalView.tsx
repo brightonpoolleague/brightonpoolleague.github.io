@@ -2532,19 +2532,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           (f) => f.status === 'approved'
         ).length;
 
-        const filterTabs: {
-          id: 'all' | 'submitted' | 'live' | 'scheduled' | 'overdue' | 'approved';
-          label: string;
-          count: number;
-        }[] = [
-          { id: 'all', label: 'All', count: divisionFixtures.length },
-          { id: 'submitted', label: 'Awaiting Approval', count: submittedCount },
-          { id: 'live', label: 'Live', count: liveCount },
-          { id: 'scheduled', label: 'Scheduled', count: scheduledCount },
-          { id: 'overdue', label: 'Overdue', count: overdueCount },
-          { id: 'approved', label: 'Approved', count: approvedCount },
-        ];
-
         const statusOrder: Record<string, number> = {
           submitted: 0,
           live: 1,
@@ -2679,36 +2666,168 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
             {/* Status Filter Buttons (Outside card box) */}
             <div className="w-full overflow-x-auto pb-1">
-              <div className="inline-flex items-center gap-1.5 min-w-max">
-                {filterTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setApprovalFilter(tab.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
-                      approvalFilter === tab.id
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              <div className="inline-flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold min-w-max">
+                <button
+                  type="button"
+                  onClick={() => setApprovalFilter('all')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    approvalFilter === 'all'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>All</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === 'all'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
                     }`}
                   >
-                    <span>{tab.label}</span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        approvalFilter === tab.id
-                          ? 'bg-emerald-800 text-emerald-100'
-                          : tab.id === 'submitted' && tab.count > 0
-                          ? 'bg-amber-500/20 text-amber-300'
-                          : tab.id === 'live' && tab.count > 0
-                          ? 'bg-red-500/20 text-red-300'
-                          : tab.id === 'overdue' && tab.count > 0
-                          ? 'bg-rose-500/20 text-rose-300'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}
-                    >
-                      {tab.count}
-                    </span>
-                  </button>
-                ))}
+                    {divisionFixtures.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApprovalFilter('submitted')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    approvalFilter === 'submitted'
+                      ? 'bg-amber-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Clock
+                    className={`w-3 h-3 ${
+                      approvalFilter === 'submitted'
+                        ? 'text-white'
+                        : 'text-amber-400'
+                    }`}
+                  />
+                  <span>Awaiting Approval</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === 'submitted'
+                        ? 'bg-amber-800 text-amber-100'
+                        : submittedCount > 0
+                        ? 'bg-amber-500/20 text-amber-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {submittedCount}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApprovalFilter('live')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    approvalFilter === 'live'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Radio
+                    className={`w-3 h-3 ${
+                      approvalFilter === 'live'
+                        ? 'text-white'
+                        : 'text-red-400'
+                    }`}
+                  />
+                  <span>Live</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === 'live'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : liveCount > 0
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {liveCount}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApprovalFilter('scheduled')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    approvalFilter === 'scheduled'
+                      ? 'bg-sky-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Calendar
+                    className={`w-3 h-3 ${
+                      approvalFilter === 'scheduled'
+                        ? 'text-white'
+                        : 'text-sky-400'
+                    }`}
+                  />
+                  <span>Scheduled</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === 'scheduled'
+                        ? 'bg-sky-800 text-sky-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {scheduledCount}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApprovalFilter('overdue')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    approvalFilter === 'overdue'
+                      ? 'bg-slate-700 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <History
+                    className={`w-3 h-3 ${
+                      approvalFilter === 'overdue'
+                        ? 'text-white'
+                        : 'text-slate-400'
+                    }`}
+                  />
+                  <span>Overdue</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === 'overdue'
+                        ? 'bg-slate-800 text-slate-100'
+                        : overdueCount > 0
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {overdueCount}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApprovalFilter('approved')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    approvalFilter === 'approved'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CheckCircle2
+                    className={`w-3 h-3 ${
+                      approvalFilter === 'approved'
+                        ? 'text-white'
+                        : 'text-emerald-400'
+                    }`}
+                  />
+                  <span>Approved</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      approvalFilter === 'approved'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {approvedCount}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -2825,15 +2944,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   ) : (() => {
                     const stateLabel =
                       approvalFilter === 'submitted'
-                        ? 'awaiting approval'
+                        ? 'Awaiting Approval'
                         : approvalFilter === 'live'
-                        ? 'live'
+                        ? 'Live'
                         : approvalFilter === 'scheduled'
-                        ? 'upcoming scheduled'
+                        ? 'Scheduled'
                         : approvalFilter === 'overdue'
-                        ? 'overdue'
+                        ? 'Overdue'
                         : approvalFilter === 'approved'
-                        ? 'approved'
+                        ? 'Approved'
                         : null;
 
                     const divLabel =
@@ -2849,7 +2968,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     if (stateLabel && divLabel) {
                       return (
                         <p>
-                          No {stateLabel} scorecards in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                          No &lsquo;{stateLabel}&rsquo; scorecards in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
                         </p>
                       );
                     }
@@ -2857,7 +2976,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     if (stateLabel) {
                       return (
                         <p>
-                          No {stateLabel} scorecards{dateStr ? ` on ${dateStr}` : ''}.
+                          No &lsquo;{stateLabel}&rsquo; scorecards{dateStr ? ` on ${dateStr}` : ' across all divisions'}.
                         </p>
                       );
                     }
@@ -2874,7 +2993,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       return <p>No scorecards on {dateStr}.</p>;
                     }
 
-                    return <p>No matches recorded for {seasonName} yet.</p>;
+                    return <p>No scorecards found for {seasonName}.</p>;
                   })()}
                 </div>
               ) : (
