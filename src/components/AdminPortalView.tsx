@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   AlertTriangle,
   Calendar,
@@ -49,6 +49,10 @@ interface AdminPortalViewProps {
 export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   onSelectFixture,
 }) => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const {
     seasons,
     seasonId,

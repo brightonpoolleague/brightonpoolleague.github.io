@@ -278,7 +278,13 @@ const MainShell: React.FC = () => {
       {showRoleModal && (
         <RoleSwitcherModal
           onClose={() => setShowRoleModal(false)}
-          onAdminLoginSuccess={() => setActiveTab('admin')}
+          onAdminLoginSuccess={() => {
+            setActiveTab('admin');
+            window.scrollTo(0, 0);
+            requestAnimationFrame(() => {
+              window.scrollTo(0, 0);
+            });
+          }}
         />
       )}
     </div>
