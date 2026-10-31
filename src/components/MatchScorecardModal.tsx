@@ -1934,10 +1934,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {/* Main Scrollable Content */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] px-3 sm:px-6 py-4 touch-pan-y"
+        className={`flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none] px-3 sm:px-6 pt-4 touch-pan-y ${
+          showSignOff ? 'pb-3' : 'pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))]'
+        }`}
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="max-w-4xl mx-auto space-y-4 pb-12">
+        <div className="max-w-4xl mx-auto space-y-4">
           {(!isOnline || syncError) && (
             <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200">
               <div className="flex items-center gap-2">
