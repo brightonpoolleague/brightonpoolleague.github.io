@@ -1,0 +1,8 @@
+node_modules
+dist
+public
+.git
+.github
+.vite
+playwright-report
+test-results

@@ -23,6 +23,7 @@ Hosted live at: **[brightonpoolleague.github.io](https://brightonpoolleague.gith
 - **Frontend**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
 - **Backend & Database**: [Supabase](https://supabase.com/) (PostgreSQL with Row Level Security & Realtime subscriptions)
+- **Testing**: [Vitest](https://vitest.dev/), [React Testing Library](https://testing-library.com/), [Playwright](https://playwright.dev/) (Headless Chromium + Dockerized Supabase PostgreSQL & PostgREST)
 - **Deployment**: [GitHub Pages](https://pages.github.com/) via GitHub Actions (`.github/workflows/deploy.yml`)
 
 ---
@@ -72,8 +73,26 @@ Hosted live at: **[brightonpoolleague.github.io](https://brightonpoolleague.gith
 
 ---
 
+## Testing
+
+```bash
+# Run unit & component tests (Vitest)
+npm test
+
+# Run headless Chromium end-to-end tests (Playwright)
+npm run test:e2e
+
+# Run full containerized E2E suite (Docker + PostgreSQL + PostgREST + App + Chromium)
+docker compose -f docker-compose.test.yml up -d --build --wait
+CI_CONTAINERIZED=true npm run test:e2e
+docker compose -f docker-compose.test.yml down -v
+```
+
+---
+
 ## Automated Workflows
 
+- **`test.yml`**: Runs TypeScript typechecking, Vitest unit/component tests, and containerized Playwright E2E tests (spinning up Dockerized PostgreSQL, PostgREST, and the production app) on every Pull Request to `main`.
 - **`deploy.yml`**: Builds and deploys the Vite app to GitHub Pages on every push to `main`.
 - **`db-backup.yml`**: Automated weekly SQL dump backup of the Supabase PostgreSQL database scheduled for Tuesday mornings at 03:00 UTC.
 - **`keep-alive.yml`**: Daily Supabase ping to prevent database pause on the free tier.

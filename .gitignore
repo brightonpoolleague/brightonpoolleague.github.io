@@ -8,3 +8,5 @@ public
 .env
 .env.local
 supabase/seeds
+playwright-report
+test-results

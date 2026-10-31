@@ -20,7 +20,7 @@ export const LOCAL_TEST_TEAMS: Team[] = [
     venue: 'The King & Queen',
     address: '13–17 Marlborough Place, Brighton BN1 1UB',
     captainName: 'Dave Mercer',
-    captainPin: '11111111',
+    captainPin: '111222',
     tableNumber: 'Table 1',
   },
   {
