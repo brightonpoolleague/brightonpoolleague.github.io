@@ -18,6 +18,8 @@ import {
   MessageSquare,
   Scale,
   Shuffle,
+  Snowflake,
+  Sun,
   Sparkles,
   Trophy,
   Users,
@@ -52,33 +54,79 @@ export const DocsAndRulesView: React.FC = () => {
   >('all');
   const [honourViewMode, setHonourViewMode] = useState<'cards' | 'table'>('cards');
   const [honourSearch, setHonourSearch] = useState<string>('');
+  const [seasonFilter, setSeasonFilter] = useState<'all' | 'winter' | 'summer'>('all');
 
   const renderTable = (
     headers: string[],
     rows: (string | number)[][]
   ): React.ReactNode => {
+    const seasonLower = seasonFilter.toLowerCase();
+    const seasonMatchedRows =
+      seasonFilter === 'all'
+        ? rows
+        : rows.filter((r) => String(r[0]).toLowerCase().includes(seasonLower));
+
     const q = honourSearch.trim().toLowerCase();
     const filteredRows = q
-      ? rows.filter((r) => r.some((c) => String(c).toLowerCase().includes(q)))
-      : rows;
+      ? seasonMatchedRows.filter((r) => r.some((c) => String(c).toLowerCase().includes(q)))
+      : seasonMatchedRows;
+
+    const renderSeasonBadge = (seasonText: string | number) => {
+      const text = String(seasonText);
+      const isSummer = text.toLowerCase().includes('summer');
+      const isWinter = text.toLowerCase().includes('winter');
+      if (isSummer) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[11px]">
+            <Sun className="w-3 h-3 text-amber-400 shrink-0" />
+            <span>{text}</span>
+          </span>
+        );
+      }
+      if (isWinter) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-sky-300 font-bold text-[11px]">
+            <Snowflake className="w-3 h-3 text-sky-400 shrink-0" />
+            <span>{text}</span>
+          </span>
+        );
+      }
+      return <span className="font-semibold text-slate-300">{text}</span>;
+    };
 
     if (filteredRows.length === 0) {
       return (
         <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-6 text-center text-xs text-slate-400 space-y-2">
-          <div>No records found matching <span className="text-white font-semibold">"{honourSearch}"</span> in this category.</div>
-          <button
-            type="button"
-            onClick={() => setHonourSearch('')}
-            className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs cursor-pointer"
-          >
-            Clear search
-          </button>
+          <div>
+            No records found{seasonFilter !== 'all' ? ` for ${seasonFilter === 'winter' ? 'Winter' : 'Summer'} seasons` : ''}
+            {honourSearch ? <> matching <span className="text-white font-semibold">"{honourSearch}"</span></> : ''}.
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-1">
+            {seasonFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setSeasonFilter('all')}
+                className="text-amber-400 hover:text-amber-300 font-semibold underline text-xs cursor-pointer"
+              >
+                Show all seasons
+              </button>
+            )}
+            {honourSearch && (
+              <button
+                type="button"
+                onClick={() => setHonourSearch('')}
+                className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs cursor-pointer"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
         </div>
       );
     }
 
     if (honourViewMode === 'cards') {
-      const isFiltered = !!q;
+      const isFiltered = !!q || seasonFilter !== 'all';
       const spotlightRow = !isFiltered && filteredRows.length > 0 ? filteredRows[0] : null;
       const cardRows = !isFiltered && filteredRows.length > 0 ? filteredRows.slice(1) : filteredRows;
 
@@ -89,14 +137,12 @@ export const DocsAndRulesView: React.FC = () => {
             <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 p-4 sm:p-5 shadow-lg shadow-amber-500/5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-[11px] font-black uppercase tracking-wider text-amber-300">
                       <Trophy className="w-3 h-3" />
                       Reigning Champion
                     </span>
-                    <span className="text-xs font-semibold text-slate-400">
-                      {spotlightRow[0]}
-                    </span>
+                    {renderSeasonBadge(spotlightRow[0])}
                   </div>
                   <div className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
                     <span>{spotlightRow[1]}</span>
@@ -130,7 +176,7 @@ export const DocsAndRulesView: React.FC = () => {
                 className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3.5 space-y-2 transition-all"
               >
                 <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
-                  <span className="font-semibold text-slate-300">{r[0]}</span>
+                  {renderSeasonBadge(r[0])}
                   {idx === 0 && isFiltered && (
                     <span className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">Latest</span>
                   )}
@@ -193,7 +239,7 @@ export const DocsAndRulesView: React.FC = () => {
               <tr
                 key={idx}
                 className={`border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30 transition-colors ${
-                  idx === 0 && !q ? 'bg-amber-500/[0.04]' : ''
+                  idx === 0 && !q && seasonFilter === 'all' ? 'bg-amber-500/[0.04]' : ''
                 }`}
               >
                 {r.map((cell, cIdx) => (
@@ -201,13 +247,15 @@ export const DocsAndRulesView: React.FC = () => {
                     key={cIdx}
                     className={`py-2 px-3 ${
                       cIdx === 0
-                        ? 'text-slate-400 font-semibold whitespace-nowrap'
+                        ? 'whitespace-nowrap'
                         : cIdx === 1
                         ? 'text-white font-bold'
                         : 'text-slate-300'
                     }`}
                   >
-                    {cIdx === 1 ? (
+                    {cIdx === 0 ? (
+                      renderSeasonBadge(cell)
+                    ) : cIdx === 1 ? (
                       <span className="inline-flex items-center gap-1.5">
                         <span className="text-xs">🏆</span>
                         <span>{cell}</span>
@@ -1611,16 +1659,56 @@ export const DocsAndRulesView: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Toolbar: Search & View Mode Switcher */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                  <div className="relative">
+                {/* Toolbar: Season Filter, Search & View Mode Switcher */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
+                  {/* Season Filter (All / Winter / Summer) */}
+                  <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setSeasonFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        seasonFilter === 'all'
+                          ? 'bg-emerald-600 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSeasonFilter('winter')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        seasonFilter === 'winter'
+                          ? 'bg-sky-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Snowflake className="w-3.5 h-3.5" />
+                      <span>Winter</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSeasonFilter('summer')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        seasonFilter === 'summer'
+                          ? 'bg-amber-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Sun className="w-3.5 h-3.5" />
+                      <span>Summer</span>
+                    </button>
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative flex-1 sm:flex-initial">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     <input
                       type="text"
                       value={honourSearch}
                       onChange={(e) => setHonourSearch(e.target.value)}
                       placeholder="Search player, team, season..."
-                      className="w-full sm:w-56 pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                      className="w-full sm:w-52 pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
                     />
                     {honourSearch && (
                       <button
@@ -1633,6 +1721,7 @@ export const DocsAndRulesView: React.FC = () => {
                     )}
                   </div>
 
+                  {/* View Mode */}
                   <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl self-start sm:self-auto">
                     <button
                       type="button"
