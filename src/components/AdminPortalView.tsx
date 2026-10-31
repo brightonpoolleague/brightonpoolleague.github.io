@@ -95,6 +95,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [fixtureTimeframeFilter, setFixtureTimeframeFilter] = useState<
     'ALL' | 'live' | 'upcoming' | 'today' | 'past' | 'completed'
   >('ALL');
+  const [scorecardFilterDivision, setScorecardFilterDivision] = useState<
+    Division | 'ALL' | 'KNOCKOUT'
+  >('ALL');
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'overdue' | 'approved'
   >('all');
@@ -543,10 +546,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     const dateSet = new Set<string>();
     for (const f of fixtures) {
       if (!f.matchDate) continue;
+      if (scorecardFilterDivision === 'KNOCKOUT') {
+        if (!isKnockoutFixture(f)) continue;
+      } else if (scorecardFilterDivision !== 'ALL') {
+        if (f.division !== scorecardFilterDivision || isKnockoutFixture(f)) {
+          continue;
+        }
+      }
       dateSet.add(f.matchDate);
     }
     return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
-  }, [fixtures]);
+  }, [fixtures, scorecardFilterDivision]);
 
   const fixtureTimeframeCounts = useMemo(() => {
     let all = 0;
@@ -677,8 +687,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             }`}
           >
             <Users className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span className="text-center whitespace-nowrap">
-              Teams &amp; PINs<span className="hidden sm:inline"> ({teams.length})</span>
+            <span className="text-center whitespace-nowrap">Teams &amp; PINs</span>
+            <span
+              className={`hidden sm:inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'teams'
+                  ? 'bg-emerald-800 text-emerald-100'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {teams.length}
             </span>
           </button>
           <button
@@ -691,8 +708,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             }`}
           >
             <Calendar className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
-            <span className="text-center whitespace-nowrap">
-              Fixtures<span className="hidden sm:inline"> ({fixtures.length})</span>
+            <span className="text-center whitespace-nowrap">Fixtures</span>
+            <span
+              className={`hidden sm:inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'fixtures'
+                  ? 'bg-emerald-800 text-emerald-100'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {fixtures.length}
             </span>
           </button>
           <button
@@ -706,6 +730,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           >
             <CheckCircle2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
             <span className="text-center whitespace-nowrap">Scorecards</span>
+            <span
+              className={`hidden sm:inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === 'approvals'
+                  ? 'bg-emerald-800 text-emerald-100'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {fixtures.length}
+            </span>
           </button>
         </div>
       </div>
@@ -718,26 +751,44 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               <button
                 type="button"
                 onClick={() => setFilterDivision('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                   filterDivision === 'ALL'
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-emerald-600 text-white shadow-sm'
                     : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
                 }`}
               >
-                All ({teams.length})
+                <span>All</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    filterDivision === 'ALL'
+                      ? 'bg-emerald-800 text-emerald-100'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  {teams.length}
+                </span>
               </button>
               {divisions.map((div) => (
                 <button
                   key={div}
                   type="button"
                   onClick={() => setFilterDivision(div)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                     filterDivision === div
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-emerald-600 text-white shadow-sm'
                       : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
                   }`}
                 >
-                  {div} ({teams.filter((t) => t.division === div).length})
+                  <span>{div}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      filterDivision === div
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {teams.filter((t) => t.division === div).length}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1203,8 +1254,12 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     )}
 
                     <div className="space-y-2">
-                      <div className="text-xs font-semibold text-slate-300">
-                        Signed-On Players ({squad.length}):
+                      <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <span>Signed-On Players</span>
+                        <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">
+                          {squad.length}
+                        </span>
+                        <span>:</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {squad.map((player) =>
@@ -1358,13 +1413,22 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setFixtureFilterDivision('ALL')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                     fixtureFilterDivision === 'ALL'
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-emerald-600 text-white shadow-sm'
                       : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
                   }`}
                 >
-                  All ({fixtures.length})
+                  <span>All</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureFilterDivision === 'ALL'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtures.length}
+                  </span>
                 </button>
                 {divisions.map((div) => {
                   const count = fixtures.filter(
@@ -1375,28 +1439,44 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       key={div}
                       type="button"
                       onClick={() => setFixtureFilterDivision(div)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                         fixtureFilterDivision === div
-                          ? 'bg-emerald-600 text-white'
+                          ? 'bg-emerald-600 text-white shadow-sm'
                           : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
                       }`}
                     >
-                      {div} ({count})
+                      <span>{div}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          fixtureFilterDivision === div
+                            ? 'bg-emerald-800 text-emerald-100'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
                 <button
                   type="button"
                   onClick={() => setFixtureFilterDivision('KNOCKOUT')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1 transition ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1.5 transition ${
                     fixtureFilterDivision === 'KNOCKOUT'
                       ? 'bg-amber-500 text-slate-950 font-black'
                       : 'bg-slate-900 text-amber-400 border border-slate-800 hover:border-amber-500/50'
                   }`}
                 >
                   <Trophy className="w-3.5 h-3.5" />
-                  <span>
-                    Knockouts ({fixtures.filter((f) => isKnockoutFixture(f)).length})
+                  <span>Knockouts</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureFilterDivision === 'KNOCKOUT'
+                        ? 'bg-amber-900/30 text-slate-950 font-black'
+                        : 'bg-slate-800 text-amber-400'
+                    }`}
+                  >
+                    {fixtures.filter((f) => isKnockoutFixture(f)).length}
                   </span>
                 </button>
               </div>
@@ -1408,13 +1488,22 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setFixtureTimeframeFilter('ALL')}
-                  className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
                     fixtureTimeframeFilter === 'ALL'
                       ? 'bg-emerald-600 text-white font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  All ({fixtureTimeframeCounts.all})
+                  <span>All</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureTimeframeFilter === 'ALL'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtureTimeframeCounts.all}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -1432,7 +1521,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         : 'text-red-400'
                     }`}
                   />
-                  Live ({fixtureTimeframeCounts.live})
+                  <span>Live</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureTimeframeFilter === 'live'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : fixtureTimeframeCounts.live > 0
+                        ? 'bg-red-500/20 text-red-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtureTimeframeCounts.live}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -1444,7 +1544,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   }`}
                 >
                   <Clock className="w-3 h-3 text-sky-400" />
-                  Upcoming ({fixtureTimeframeCounts.upcoming})
+                  <span>Upcoming</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureTimeframeFilter === 'upcoming'
+                        ? 'bg-sky-800 text-sky-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtureTimeframeCounts.upcoming}
+                  </span>
                 </button>
                 {fixtureTimeframeCounts.today > 0 && (
                   <button
@@ -1457,7 +1566,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     }`}
                   >
                     <Calendar className="w-3 h-3 text-emerald-400" />
-                    Today ({fixtureTimeframeCounts.today})
+                    <span>Today</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        fixtureTimeframeFilter === 'today'
+                          ? 'bg-emerald-800 text-emerald-100'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                    >
+                      {fixtureTimeframeCounts.today}
+                    </span>
                   </button>
                 )}
                 <button
@@ -1470,7 +1588,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   }`}
                 >
                   <History className="w-3 h-3 text-slate-400" />
-                  Overdue ({fixtureTimeframeCounts.past})
+                  <span>Overdue</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureTimeframeFilter === 'past'
+                        ? 'bg-slate-800 text-slate-100'
+                        : fixtureTimeframeCounts.past > 0
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtureTimeframeCounts.past}
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -1488,7 +1617,16 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                         : 'text-emerald-400'
                     }`}
                   />
-                  Completed ({fixtureTimeframeCounts.completed})
+                  <span>Completed</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      fixtureTimeframeFilter === 'completed'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtureTimeframeCounts.completed}
+                  </span>
                 </button>
               </div>
             </div>
@@ -1877,8 +2015,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           )}
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-            <h3 className="text-sm font-bold text-white">
-              {seasonName} Fixtures ({filteredFixtures.length})
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>{seasonName} Fixtures</span>
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">
+                {filteredFixtures.length}
+              </span>
             </h3>
             {filteredFixtures.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
@@ -2360,6 +2501,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
       {/* TAB 3: SCORECARD APPROVALS */}
       {activeTab === 'approvals' && (() => {
+        const isFixtureInDivision = (f: Fixture) => {
+          if (scorecardFilterDivision === 'KNOCKOUT') {
+            return isKnockoutFixture(f);
+          }
+          if (scorecardFilterDivision !== 'ALL') {
+            return f.division === scorecardFilterDivision && !isKnockoutFixture(f);
+          }
+          return true;
+        };
+
+        const divisionFixtures = fixtures.filter(isFixtureInDivision);
+
         const isFixtureOverdue = (f: Fixture) => {
           return (
             f.status === 'scheduled' &&
@@ -2367,15 +2520,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           );
         };
 
-        const submittedCount = fixtures.filter(
+        const submittedCount = divisionFixtures.filter(
           (f) => f.status === 'submitted'
         ).length;
-        const liveCount = fixtures.filter((f) => f.status === 'live').length;
-        const scheduledCount = fixtures.filter(
+        const liveCount = divisionFixtures.filter((f) => f.status === 'live').length;
+        const scheduledCount = divisionFixtures.filter(
           (f) => f.status === 'scheduled'
         ).length;
-        const overdueCount = fixtures.filter(isFixtureOverdue).length;
-        const approvedCount = fixtures.filter(
+        const overdueCount = divisionFixtures.filter(isFixtureOverdue).length;
+        const approvedCount = divisionFixtures.filter(
           (f) => f.status === 'approved'
         ).length;
 
@@ -2384,7 +2537,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           label: string;
           count: number;
         }[] = [
-          { id: 'all', label: 'All', count: fixtures.length },
+          { id: 'all', label: 'All', count: divisionFixtures.length },
           { id: 'submitted', label: 'Awaiting Approval', count: submittedCount },
           { id: 'live', label: 'Live', count: liveCount },
           { id: 'scheduled', label: 'Scheduled', count: scheduledCount },
@@ -2401,6 +2554,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
         const filtered = fixtures
           .filter((f) => {
+            if (!isFixtureInDivision(f)) return false;
             if (approvalFilter === 'overdue') {
               if (!isFixtureOverdue(f)) return false;
             } else if (approvalFilter !== 'all' && f.status !== approvalFilter) {
@@ -2448,6 +2602,81 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
         return (
           <div className="space-y-3.5 min-w-0">
+            {/* Division & Knockout Filter */}
+            <div className="w-full overflow-x-auto pb-1">
+              <div className="inline-flex items-center gap-1.5 min-w-max">
+                <button
+                  type="button"
+                  onClick={() => setScorecardFilterDivision('ALL')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
+                    scorecardFilterDivision === 'ALL'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                  }`}
+                >
+                  <span>All</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      scorecardFilterDivision === 'ALL'
+                        ? 'bg-emerald-800 text-emerald-100'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {fixtures.length}
+                  </span>
+                </button>
+                {divisions.map((div) => {
+                  const count = fixtures.filter(
+                    (f) => f.division === div && !isKnockoutFixture(f)
+                  ).length;
+                  return (
+                    <button
+                      key={div}
+                      type="button"
+                      onClick={() => setScorecardFilterDivision(div)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
+                        scorecardFilterDivision === div
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
+                      }`}
+                    >
+                      <span>{div}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          scorecardFilterDivision === div
+                            ? 'bg-emerald-800 text-emerald-100'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setScorecardFilterDivision('KNOCKOUT')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1.5 transition ${
+                    scorecardFilterDivision === 'KNOCKOUT'
+                      ? 'bg-amber-500 text-slate-950 font-black'
+                      : 'bg-slate-900 text-amber-400 border border-slate-800 hover:border-amber-500/50'
+                  }`}
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>Knockouts</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      scorecardFilterDivision === 'KNOCKOUT'
+                        ? 'bg-amber-900/30 text-slate-950 font-black'
+                        : 'bg-slate-800 text-amber-400'
+                    }`}
+                  >
+                    {fixtures.filter((f) => isKnockoutFixture(f)).length}
+                  </span>
+                </button>
+              </div>
+            </div>
+
             {/* Status Filter Buttons (Outside card box) */}
             <div className="w-full overflow-x-auto pb-1">
               <div className="inline-flex items-center gap-1.5 min-w-max">
@@ -2575,8 +2804,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-bold text-white">
-                    Scorecards ({filtered.length})
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>Scorecards</span>
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">
+                      {filtered.length}
+                    </span>
                   </h3>
                   <p className="text-xs text-slate-400">
                     Review and approve scorecards
@@ -2590,35 +2822,60 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     <p>
                       No scorecards match &ldquo;<strong className="text-white">{scorecardSearchQuery.trim()}</strong>&rdquo;.
                     </p>
-                  ) : scorecardDateFilter !== 'ALL' ? (
-                    <p>
-                      {approvalFilter === 'submitted'
-                        ? `No scorecards awaiting approval on ${formatMatchDate(scorecardDateFilter)}.`
+                  ) : (() => {
+                    const stateLabel =
+                      approvalFilter === 'submitted'
+                        ? 'awaiting approval'
                         : approvalFilter === 'live'
-                        ? `No matches live on ${formatMatchDate(scorecardDateFilter)}.`
+                        ? 'live'
                         : approvalFilter === 'scheduled'
-                        ? `No upcoming scheduled matches on ${formatMatchDate(scorecardDateFilter)}.`
+                        ? 'upcoming scheduled'
                         : approvalFilter === 'overdue'
-                        ? `No overdue scorecards on ${formatMatchDate(scorecardDateFilter)}.`
+                        ? 'overdue'
                         : approvalFilter === 'approved'
-                        ? `No approved scorecards on ${formatMatchDate(scorecardDateFilter)}.`
-                        : `No scorecards on ${formatMatchDate(scorecardDateFilter)}.`}
-                    </p>
-                  ) : (
-                    <p>
-                      {approvalFilter === 'submitted'
-                        ? 'No scorecards currently awaiting approval.'
-                        : approvalFilter === 'live'
-                        ? 'No matches currently live.'
-                        : approvalFilter === 'scheduled'
-                        ? 'No upcoming scheduled matches.'
-                        : approvalFilter === 'overdue'
-                        ? 'No overdue scorecards.'
-                        : approvalFilter === 'approved'
-                        ? 'No approved scorecards yet.'
-                        : `No matches recorded for ${seasonName} yet.`}
-                    </p>
-                  )}
+                        ? 'approved'
+                        : null;
+
+                    const divLabel =
+                      scorecardFilterDivision === 'KNOCKOUT'
+                        ? 'Knockouts'
+                        : scorecardFilterDivision !== 'ALL'
+                        ? scorecardFilterDivision
+                        : null;
+
+                    const dateStr =
+                      scorecardDateFilter !== 'ALL' ? formatMatchDate(scorecardDateFilter) : null;
+
+                    if (stateLabel && divLabel) {
+                      return (
+                        <p>
+                          No {stateLabel} scorecards in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                        </p>
+                      );
+                    }
+
+                    if (stateLabel) {
+                      return (
+                        <p>
+                          No {stateLabel} scorecards{dateStr ? ` on ${dateStr}` : ''}.
+                        </p>
+                      );
+                    }
+
+                    if (divLabel) {
+                      return (
+                        <p>
+                          No scorecards in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                        </p>
+                      );
+                    }
+
+                    if (dateStr) {
+                      return <p>No scorecards on {dateStr}.</p>;
+                    }
+
+                    return <p>No matches recorded for {seasonName} yet.</p>;
+                  })()}
                 </div>
               ) : (
                 <div className="space-y-2.5">
