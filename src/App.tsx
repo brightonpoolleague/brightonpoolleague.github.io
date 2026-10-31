@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
   BookOpen,
@@ -38,6 +38,84 @@ const MainShell: React.FC = () => {
     null
   );
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+
+    const checkKeyboard = () => {
+      if (vv) {
+        // When the virtual keyboard appears, visualViewport height shrinks relative to innerHeight
+        const heightDiff = window.innerHeight - vv.height;
+        if (heightDiff > 100) {
+          setIsKeyboardOpen(true);
+          return;
+        }
+      }
+
+      // Check if an editable text element is currently focused
+      const activeEl = document.activeElement;
+      const isInputFocused =
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          (activeEl as HTMLElement).isContentEditable);
+
+      if (isInputFocused && activeEl instanceof HTMLInputElement) {
+        if (activeEl.type === 'checkbox' || activeEl.type === 'radio') {
+          setIsKeyboardOpen(false);
+          return;
+        }
+      }
+
+      if (vv) {
+        setIsKeyboardOpen(false);
+      } else {
+        setIsKeyboardOpen(Boolean(isInputFocused));
+      }
+    };
+
+    if (vv) {
+      vv.addEventListener('resize', checkKeyboard);
+      vv.addEventListener('scroll', checkKeyboard);
+    }
+
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        if (
+          target instanceof HTMLInputElement &&
+          (target.type === 'checkbox' || target.type === 'radio')
+        ) {
+          return;
+        }
+        setIsKeyboardOpen(true);
+      }
+    };
+
+    const onFocusOut = () => {
+      setTimeout(() => {
+        checkKeyboard();
+      }, 150);
+    };
+
+    window.addEventListener('focusin', onFocusIn);
+    window.addEventListener('focusout', onFocusOut);
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', checkKeyboard);
+        vv.removeEventListener('scroll', checkKeyboard);
+      }
+      window.removeEventListener('focusin', onFocusIn);
+      window.removeEventListener('focusout', onFocusOut);
+    };
+  }, []);
 
   const selectedFixture =
     fixtures.find((f) => f.id === selectedFixtureId) || null;
@@ -232,7 +310,12 @@ const MainShell: React.FC = () => {
       </main>
 
       {/* Mobile Bottom Tab Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full z-30 bg-slate-900 border-t border-slate-800 px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <nav
+        className={`md:hidden fixed bottom-0 left-0 right-0 w-full z-30 bg-slate-900 border-t border-slate-800 px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] ${
+          isKeyboardOpen ? 'hidden pointer-events-none' : ''
+        }`}
+        aria-hidden={isKeyboardOpen}
+      >
         {/* Solid Under-Nav Extension: fills dynamic gap when mobile browser toolbar collapses or bounces on scroll */}
         <div className="absolute top-full left-0 right-0 h-48 bg-slate-900 pointer-events-none" />
         <div
