@@ -98,6 +98,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'overdue' | 'approved'
   >('all');
+  const [scorecardDateFilter, setScorecardDateFilter] = useState('ALL');
   const [scorecardSearchQuery, setScorecardSearchQuery] = useState('');
 
   // Team inline editing state
@@ -537,6 +538,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     }
     return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
   }, [fixtures, fixtureFilterDivision]);
+
+  const uniqueScorecardDates = useMemo(() => {
+    const dateSet = new Set<string>();
+    for (const f of fixtures) {
+      if (!f.matchDate) continue;
+      dateSet.add(f.matchDate);
+    }
+    return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
+  }, [fixtures]);
 
   const fixtureTimeframeCounts = useMemo(() => {
     let all = 0;
@@ -2396,6 +2406,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             } else if (approvalFilter !== 'all' && f.status !== approvalFilter) {
               return false;
             }
+            if (scorecardDateFilter !== 'ALL' && f.matchDate !== scorecardDateFilter) {
+              return false;
+            }
             if (scorecardSearchQuery.trim()) {
               const q = scorecardSearchQuery.toLowerCase().trim();
               const home = teamsById[f.homeTeamId];
@@ -2470,37 +2483,103 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
             </div>
 
-            {/* Search Input (Outside card box) */}
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={scorecardSearchQuery}
-                onChange={(e) => setScorecardSearchQuery(e.target.value)}
-                placeholder="Search by team, division, status, date or player..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
-              />
-              {scorecardSearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setScorecardSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
-                  title="Clear search"
+            {/* Search & Date Filter Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-2.5 min-w-0">
+              {/* Search Input */}
+              <div className="relative flex-1 min-w-0">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={scorecardSearchQuery}
+                  onChange={(e) => setScorecardSearchQuery(e.target.value)}
+                  placeholder="Search by team, division, status, date or player..."
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition shadow-sm"
+                />
+                {scorecardSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setScorecardSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white transition"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Date Filter Dropdown & Native Picker */}
+              <div className="flex items-center gap-1.5 w-full sm:w-72 sm:flex-shrink-0 min-w-0">
+                <div className="relative flex-1 min-w-0">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <select
+                    value={scorecardDateFilter}
+                    onChange={(e) => setScorecardDateFilter(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-7 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition shadow-sm appearance-none cursor-pointer truncate"
+                  >
+                    <option value="ALL">All Dates</option>
+                    {scorecardDateFilter !== 'ALL' &&
+                      !uniqueScorecardDates.includes(scorecardDateFilter) && (
+                        <option value={scorecardDateFilter}>
+                          {formatMatchDate(scorecardDateFilter)}
+                        </option>
+                      )}
+                    {uniqueScorecardDates.map((date) => (
+                      <option key={date} value={date}>
+                        {formatMatchDate(date)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+
+                {/* Native Calendar Picker */}
+                <div
+                  className="relative flex-shrink-0 overflow-hidden rounded-xl"
+                  title="Pick specific date from calendar"
                 >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+                  <input
+                    type="date"
+                    value={scorecardDateFilter === 'ALL' ? '' : scorecardDateFilter}
+                    onChange={(e) => setScorecardDateFilter(e.target.value || 'ALL')}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full max-w-full"
+                  />
+                  <div
+                    className={`p-2 rounded-xl border text-xs transition flex items-center justify-center ${
+                      scorecardDateFilter !== 'ALL'
+                        ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400'
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {scorecardDateFilter !== 'ALL' && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setScorecardDateFilter('ALL');
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                    className="relative z-10 p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
+                    title="Reset date filter"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Scorecard Review Queue Container */}
+            {/* Scorecards Container */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-white">
-                    Scorecard Review Queue ({filtered.length})
+                    Scorecards ({filtered.length})
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Review match submissions, inspect scores, and approve official scorecards.
+                    Review and approve scorecards
                   </p>
                 </div>
               </div>
@@ -2510,6 +2589,20 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   {scorecardSearchQuery.trim() ? (
                     <p>
                       No scorecards match &ldquo;<strong className="text-white">{scorecardSearchQuery.trim()}</strong>&rdquo;.
+                    </p>
+                  ) : scorecardDateFilter !== 'ALL' ? (
+                    <p>
+                      {approvalFilter === 'submitted'
+                        ? `No scorecards awaiting approval on ${formatMatchDate(scorecardDateFilter)}.`
+                        : approvalFilter === 'live'
+                        ? `No matches live on ${formatMatchDate(scorecardDateFilter)}.`
+                        : approvalFilter === 'scheduled'
+                        ? `No upcoming scheduled matches on ${formatMatchDate(scorecardDateFilter)}.`
+                        : approvalFilter === 'overdue'
+                        ? `No overdue scorecards on ${formatMatchDate(scorecardDateFilter)}.`
+                        : approvalFilter === 'approved'
+                        ? `No approved scorecards on ${formatMatchDate(scorecardDateFilter)}.`
+                        : `No scorecards on ${formatMatchDate(scorecardDateFilter)}.`}
                     </p>
                   ) : (
                     <p>
