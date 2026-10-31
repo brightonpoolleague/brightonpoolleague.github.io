@@ -102,6 +102,310 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     // Verify Admin Portal sections exist
     await expect(page.getByText('King & Queen A').first()).toBeVisible();
   });
+
+  test('completes full scorecard lifecycle: Set 1 lineup lock, frame scoring, Dish toggle, dual captain sign-off, and match submission', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // Log in as League Admin ('000000') to drive both sides of the scorecard UI
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'League Admin' }).click();
+    await page.getByPlaceholder('Enter League Admin PIN').fill('000000');
+    await page.getByRole('button', { name: 'Log In' }).click();
+
+    // Navigate to Live & Fixtures, search for an unstarted 15-frame league match, and open its scorecard
+    await page.getByRole('button', { name: 'Live & Fixtures' }).click();
+    const searchBox = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await searchBox.fill(isContainerized ? 'Castle Sharks' : 'Hollingbury');
+    await page.getByRole('button', { name: isContainerized ? 'Upcoming' : 'Overdue', exact: true }).click();
+    await page
+      .getByRole('button', { name: /View Scorecard|Start Match/i })
+      .first()
+      .click();
+
+    // 1. Select Home Set 1 running order (Positions 1 to 5) via UI dropdowns and click Confirm
+    for (let pos = 1; pos <= 5; pos++) {
+      const selectEl = page
+        .locator('select')
+        .filter({ hasText: `-- Select Position ${pos} Player --` })
+        .first();
+      const firstAvailableVal = await selectEl
+        .locator('option:not([disabled]):not([value=""]):not([value="BYE"])')
+        .first()
+        .getAttribute('value');
+      await selectEl.selectOption(firstAvailableVal!);
+    }
+    await page.getByRole('button', { name: 'Confirm', exact: true }).first().click();
+
+    // Verify 1/2 confirmed state
+    await expect(
+      page.getByText(/lineup confirmed \(1\/2\)/i).first()
+    ).toBeVisible();
+
+    // 2. Confirm both lineups & begin match
+    await page
+      .getByRole('button', { name: /Admin: Confirm Both & Begin/i })
+      .click();
+
+    // 3. Score all 5 frames in Set 1 and toggle a Dish on Frame 1
+    for (let frameNum = 1; frameNum <= 5; frameNum++) {
+      const frameCard = page
+        .locator('div')
+        .filter({
+          hasText: `(Frame #${frameNum})`,
+          has: page.locator('button'),
+        })
+        .last();
+      await frameCard.locator('button').first().click();
+    }
+
+    // Toggle Dish / Reverse Dish on the first frame
+    const dishBtn = page
+      .getByRole('button', { name: /Dish \/ Reverse Dish/i })
+      .first();
+    await expect(dishBtn).toBeVisible();
+    await dishBtn.click();
+    await expect(page.getByText('★ Dish Recorded').first()).toBeVisible();
+
+    // 4. Advance to Set 2 and score Frames 6–10
+    await page.getByRole('button', { name: /Next: Set 2/i }).click();
+    for (let frameNum = 6; frameNum <= 10; frameNum++) {
+      const frameCard = page
+        .locator('div')
+        .filter({
+          hasText: `(Frame #${frameNum})`,
+          has: page.locator('button'),
+        })
+        .last();
+      await frameCard.locator('button').first().click();
+    }
+
+    // 5. Advance to Set 3 and score Frames 11–15
+    await page.getByRole('button', { name: /Next: Set 3/i }).click();
+    for (let frameNum = 11; frameNum <= 15; frameNum++) {
+      const frameCard = page
+        .locator('div')
+        .filter({
+          hasText: `(Frame #${frameNum})`,
+          has: page.locator('button'),
+        })
+        .last();
+      await frameCard.locator('button').first().click();
+    }
+
+    // 6. Verify completion prompt appears at bottom once all 15 frames are scored
+    await expect(
+      page.getByText(/Please Sign & Submit the Scorecard/i)
+    ).toBeVisible();
+
+    // 7. Sign as Home Captain, then test Unsign / Re-sign flow
+    const homeSignBtn = page
+      .locator('button')
+      .filter({ hasText: 'Home Captain' })
+      .first();
+    await homeSignBtn.click();
+    await expect(homeSignBtn).toContainText('✓ Signed');
+
+    // Unsign and sign again
+    await homeSignBtn.click();
+    await expect(homeSignBtn).toContainText('Sign');
+    await homeSignBtn.click();
+    await expect(homeSignBtn).toContainText('✓ Signed');
+
+    // 8. Sign as Away Captain -> triggers Finish & Submit Match Result modal
+    const awaySignBtn = page
+      .locator('button')
+      .filter({ hasText: 'Away Captain' })
+      .first();
+    await awaySignBtn.click();
+
+    await expect(
+      page.getByRole('heading', { name: 'Finish & Submit Match Result?' })
+    ).toBeVisible();
+
+    // Confirm match submission
+    await page
+      .getByRole('button', { name: 'Finish & Submit Match' })
+      .click();
+
+    // Verify submitted status badges
+    await expect(page.getByText('Match result submitted')).toBeVisible();
+    await expect(
+      page.getByText('Awaiting league admin approval')
+    ).toBeVisible();
+  });
+
+  test('manages Teams, PINs, Squad Players, and Scorecard Approvals in the League Admin Portal', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // Log in as League Admin ('000000')
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('button', { name: 'League Admin' }).click();
+    await page.getByPlaceholder('Enter League Admin PIN').fill('000000');
+    await page.getByRole('button', { name: 'Log In' }).click();
+
+    // 1. Teams & PINs Tab: Edit a Team's 6-digit PIN and restore it
+    await expect(page.getByText('King & Queen A').first()).toBeVisible();
+    await page.getByRole('button', { name: 'Edit PIN' }).first().click();
+    const pinInput = page.getByPlaceholder('6-digit PIN').first();
+    await expect(pinInput).toBeVisible();
+    await pinInput.fill('654321');
+    await page.getByRole('button', { name: 'Save', exact: true }).first().click();
+    await expect(page.getByText('654321').first()).toBeVisible();
+
+    // Restore original PIN ('111222') so subsequent tests remain idempotent
+    await page.getByRole('button', { name: 'Edit PIN' }).first().click();
+    await page.getByPlaceholder('6-digit PIN').first().fill('111222');
+    await page.getByRole('button', { name: 'Save', exact: true }).first().click();
+    await expect(page.getByText('111222').first()).toBeVisible();
+
+    // 2. Test Regenerate PIN confirmation modal (and cancel cleanly)
+    await page.getByRole('button', { name: 'Regenerate' }).first().click();
+    await expect(
+      page.getByRole('heading', { name: 'Regenerate Team PIN?' })
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // 3. Add a new signed-on player to the first team
+    const addPlayerInput = page
+      .getByPlaceholder(/Add player name/i)
+      .first();
+    await addPlayerInput.fill('Ronnie O-Test');
+    await page.getByRole('button', { name: 'Add Player' }).first().click();
+    await expect(page.getByText('Ronnie O-Test').first()).toBeVisible();
+
+    // 4. Switch to Scorecards sub-tab and test Incomplete Scorecard warning dialog
+    await page
+      .getByRole('button', { name: /Scorecards/i })
+      .first()
+      .click();
+    await page.getByRole('button', { name: /Scheduled/i }).first().click();
+    await page
+      .getByRole('button', { name: 'Approve', exact: true })
+      .first()
+      .click();
+
+    // Verify Incomplete Scorecard Warning Modal lists missing requirements
+    await expect(
+      page.getByRole('heading', { name: 'Approve Incomplete Scorecard?' })
+    ).toBeVisible();
+    await expect(
+      page.getByText(/This scorecard is not yet complete/i)
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click();
+
+    // 5. Filter by 'Awaiting Approval' and approve a completed submitted scorecard
+    await page
+      .getByRole('button', { name: /Awaiting Approval/i })
+      .first()
+      .click();
+    const approveSubmittedBtn = page
+      .getByRole('button', { name: 'Approve', exact: true })
+      .first();
+    if (await approveSubmittedBtn.isVisible()) {
+      await approveSubmittedBtn.click();
+      // Should approve immediately without warning modal since all 15 frames & both signatures exist
+      await expect(
+        page.getByRole('heading', { name: 'Approve Incomplete Scorecard?' })
+      ).toBeHidden();
+    }
+  });
+
+  test('filters fixtures by status/division/search and toggles Include Live & Unapproved standings', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    // 1. Test search input on Live & Fixtures view
+    const searchInput = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await searchInput.fill('King & Queen');
+    await expect(page.getByText('King & Queen A').first()).toBeVisible();
+
+    // 2. Search for non-existent team and verify empty search message
+    await searchInput.fill('NonExistentPoolTeamXYZ');
+    await expect(
+      page.getByText(/No fixtures match/i)
+    ).toBeVisible();
+
+    // Clear search
+    await page.getByTitle('Clear search').click();
+    await expect(searchInput).toHaveValue('');
+
+    // 3. Test formatted empty state when filtering by status + division with 0 matches
+    await page.getByRole('button', { name: 'Division 2', exact: true }).click();
+    await page.getByRole('button', { name: 'Live', exact: true }).click();
+    await expect(
+      page.getByText(/No ‘Live’ fixtures in ‘Division 2’/i)
+    ).toBeVisible();
+
+    // 4. Navigate to League Table and toggle 'Include Live & Unapproved'
+    await page.getByRole('button', { name: 'League Table' }).click();
+    const includeLiveBtn = page.getByRole('button', {
+      name: /Include Live & Unapproved/i,
+    });
+    await expect(includeLiveBtn).toBeVisible();
+    await expect(includeLiveBtn).toHaveAttribute('aria-pressed', 'false');
+
+    await includeLiveBtn.click();
+    await expect(includeLiveBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // Verify setting persists to Player Stats view as well
+    await page.getByRole('button', { name: 'Player Stats' }).click();
+    const statsIncludeLiveBtn = page.getByRole('button', {
+      name: /Include Live & Unapproved/i,
+    });
+    await expect(statsIncludeLiveBtn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('displays Offline Network Banner when connection drops and hides mobile bottom nav on input focus', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/');
+
+    // 1. Simulate browser going offline and verify NetworkStatusBanner appears
+    await context.setOffline(true);
+    const networkBanner = page.getByRole('complementary', {
+      name: 'Network Connection Status',
+    });
+    await expect(networkBanner).toBeVisible();
+    await expect(
+      networkBanner.getByText('Offline', { exact: true })
+    ).toBeVisible();
+    await expect(
+      networkBanner.getByText('You are currently offline.')
+    ).toBeVisible();
+
+    // 2. Restore connection and verify banner disappears automatically
+    await context.setOffline(false);
+    await expect(networkBanner).toBeHidden();
+
+    // 3. Switch to mobile viewport (iPhone 14 size: 390x844) and test bottom nav hiding on input focus
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileNav = page.locator('nav.md\\:hidden');
+    await expect(mobileNav).toBeVisible();
+    await expect(mobileNav).toHaveAttribute('aria-hidden', 'false');
+
+    // Focus the search input -> mobile bottom nav should hide so it doesn't cover the screen above the keyboard
+    const searchInput = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await searchInput.focus();
+    await expect(mobileNav).toHaveAttribute('aria-hidden', 'true');
+
+    // Blur the search input -> mobile bottom nav should restore after the 150ms focusout check
+    await searchInput.blur();
+    await expect(mobileNav).toHaveAttribute('aria-hidden', 'false', {
+      timeout: 2000,
+    });
+  });
 });
 
 test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {

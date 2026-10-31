@@ -185,5 +185,15 @@ values (
   't-prem-1',
   't-prem-3',
   'scheduled'
+),
+(
+  'fix-scheduled-2',
+  'winter-2026-27',
+  'Premier League',
+  '2026-11-02',
+  3,
+  't-prem-2',
+  't-prem-4',
+  'scheduled'
 )
 on conflict (id) do nothing;
