@@ -299,8 +299,8 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
     // 3c. Transfer 'Ronnie O-Renamed' to another team via the Transfer... dropdown
     const playerChip = page
-      .locator('div')
-      .filter({ hasText: /^Ronnie O-RenamedTransfer\.\.\./ })
+      .locator('div.inline-flex')
+      .filter({ has: page.getByText('Ronnie O-Renamed', { exact: true }) })
       .first();
     const transferSelect = playerChip.getByTitle(
       'Transfer player to another team'
