@@ -1692,7 +1692,7 @@ export const DocsAndRulesView: React.FC = () => {
               {(
                 [
                   { id: 'league', label: 'League', icon: Trophy },
-                  { id: 'knockout', label: 'Knockout Cups', icon: Award },
+                  { id: 'knockout', label: 'Knockout', icon: Award },
                   { id: 'captains-cup', label: 'Captains Cup', icon: Crown },
                   { id: 'singles', label: 'Singles', icon: Medal },
                   { id: 'ladies-singles', label: 'Ladies Singles', icon: Crown },

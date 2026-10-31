@@ -767,7 +767,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByText('Open Singles').first()).toBeVisible();
     await expect(page.getByText('Captains Cup').first()).toBeVisible();
     await page.getByRole('button', { name: 'Roll of Honour' }).click();
-    await page.getByRole('button', { name: 'Knockout Cup' }).click();
+    await page.getByRole('button', { name: 'Knockout' }).click();
     await expect(page.getByText(/Winner/i).first()).toBeVisible();
 
     // 5. Open a Match Scorecard, switch to Result Scorecard paper view, and open ExportScorecardModal
