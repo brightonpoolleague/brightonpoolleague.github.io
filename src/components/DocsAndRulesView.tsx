@@ -1642,8 +1642,8 @@ export const DocsAndRulesView: React.FC = () => {
                       type="text"
                       value={honourSearch}
                       onChange={(e) => setHonourSearch(e.target.value)}
-                      placeholder="Search player, team, season..."
-                      className="w-full sm:w-52 pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                      placeholder="Search player, team or season..."
+                      className="w-full sm:w-64 pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
                     />
                     {honourSearch && (
                       <button
