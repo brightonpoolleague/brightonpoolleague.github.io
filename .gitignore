@@ -10,3 +10,5 @@ public
 supabase/seeds
 playwright-report
 test-results
+vitest-results.json
+playwright-results.json

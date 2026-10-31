@@ -35,7 +35,38 @@ jobs:
         run: npm run typecheck
 
       - name: Run unit & component tests
-        run: npm run test:unit
+        run: npx vitest run --reporter=default --reporter=json --outputFile=vitest-results.json
+
+      - name: Publish Vitest Job Summary
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+            if (!summaryPath || !fs.existsSync("vitest-results.json")) process.exit(0);
+            const data = JSON.parse(fs.readFileSync("vitest-results.json", "utf8"));
+            const passed = data.numPassedTests || 0;
+            const failed = data.numFailedTests || 0;
+            const total = data.numTotalTests || 0;
+            const badge = failed === 0 ? "✅ PASSED" : "❌ FAILED";
+            const lines = [
+              `## ${badge} — Unit, Component & WebSocket Tests (${passed}/${total})`,
+              "",
+              "| Status | Suite | Test Case | Duration |",
+              "| :---: | :--- | :--- | :---: |"
+            ];
+            for (const suite of data.testResults || []) {
+              const suiteName = (suite.name || "").split("/src/").pop() || suite.name;
+              for (const t of suite.assertionResults || []) {
+                const icon = t.status === "passed" ? "✅" : t.status === "failed" ? "❌" : "⏭️";
+                const dur = typeof t.duration === "number" ? `${Math.round(t.duration)}ms` : "-";
+                const title = [ ...(t.ancestorTitles || []), t.title ].join(" › ").replace(/\|/g, "\\|");
+                lines.push(`| ${icon} | \`${suiteName}\` | ${title} | ${dur} |`);
+              }
+            }
+            lines.push("");
+            fs.appendFileSync(summaryPath, lines.join("\n"));
+          '
 
   containerized-e2e:
     name: Containerized E2E (Docker + Supabase DB + Chromium)
@@ -66,6 +97,48 @@ jobs:
           PLAYWRIGHT_BASE_URL: 'http://localhost:4173'
           SUPABASE_TEST_URL: 'http://localhost:54321'
         run: npm run test:e2e
+
+      - name: Publish Playwright E2E Job Summary
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+            if (!summaryPath || !fs.existsSync("playwright-results.json")) process.exit(0);
+            const data = JSON.parse(fs.readFileSync("playwright-results.json", "utf8"));
+            const rows = [];
+            let passed = 0;
+            let failed = 0;
+            function walkSuites(suites, parents = []) {
+              for (const s of suites || []) {
+                const nextParents = s.title ? [...parents, s.title] : parents;
+                for (const spec of s.specs || []) {
+                  const res = spec.tests?.[0]?.results?.[0];
+                  const status = res?.status || (spec.ok ? "passed" : "failed");
+                  if (status === "passed") passed++;
+                  else if (status !== "skipped") failed++;
+                  const icon = status === "passed" ? "✅" : status === "skipped" ? "⏭️" : "❌";
+                  const durMs = res?.duration || 0;
+                  const dur = durMs >= 1000 ? `${(durMs / 1000).toFixed(1)}s` : `${Math.round(durMs)}ms`;
+                  const suiteTitle = nextParents.slice(1).join(" › ") || "E2E";
+                  rows.push(`| ${icon} | ${suiteTitle.replace(/\|/g, "\\|")} | ${spec.title.replace(/\|/g, "\\|")} | ${dur} |`);
+                }
+                walkSuites(s.suites, nextParents);
+              }
+            }
+            walkSuites(data.suites);
+            const total = passed + failed;
+            const badge = failed === 0 ? "✅ PASSED" : "❌ FAILED";
+            const lines = [
+              `## ${badge} — Containerized E2E & Browser Suite (${passed}/${total})`,
+              "",
+              "| Status | Suite | Browser / DB Journey | Duration |",
+              "| :---: | :--- | :--- | :---: |",
+              ...rows,
+              ""
+            ];
+            fs.appendFileSync(summaryPath, lines.join("\n"));
+          '
 
       - name: Dump Docker logs on failure
         if: failure()
