@@ -32,7 +32,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByText('The King & Queen').first()).toBeVisible();
 
     // 5. Navigate to Rules & Info
-    await page.getByRole('button', { name: 'Rules & Info' }).click();
+    await page.getByRole('button', { name: 'Info' }).click();
     await expect(page.getByText(/League Rules|League Format/i).first()).toBeVisible();
 
     // 6. Return to Live & Fixtures and open a Match Scorecard Modal
@@ -760,7 +760,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByText('King & Queen A').first()).toBeVisible();
 
     // 4. Navigate to Rules & Info and browse Roll of Honour historical sub-tabs
-    await page.getByRole('button', { name: 'Rules & Info' }).click();
+    await page.getByRole('button', { name: 'Info' }).click();
     await page.getByRole('button', { name: 'League Rules' }).click();
     await page.getByRole('button', { name: 'Champion of Champions' }).click();
     await page.getByRole('button', { name: 'Competitions' }).click();

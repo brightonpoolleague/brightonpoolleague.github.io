@@ -7,6 +7,7 @@ import {
   Coins,
   Crown,
   FileText,
+  Info,
   MapPin,
   MessageSquare,
   Scale,
@@ -91,11 +92,11 @@ export const DocsAndRulesView: React.FC = () => {
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <BookOpen className="w-3.5 h-3.5" />
-            League Handbook &amp; History
+            <Info className="w-3.5 h-3.5" />
+            League Info &amp; History
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-            Rules, Format &amp; Roll of Honour
+            League Information, Rules &amp; Records
           </h1>
         </div>
 

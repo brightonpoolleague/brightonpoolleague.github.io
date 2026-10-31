@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
-  BookOpen,
+  Info,
   Calendar,
   KeyRound,
   LogOut,
@@ -157,9 +157,9 @@ const MainShell: React.FC = () => {
     },
     {
       id: 'rules',
-      label: 'Rules & Info',
-      shortLabel: 'Rules',
-      icon: BookOpen,
+      label: 'Info',
+      shortLabel: 'Info',
+      icon: Info,
     },
     ...(isAdmin
       ? [
