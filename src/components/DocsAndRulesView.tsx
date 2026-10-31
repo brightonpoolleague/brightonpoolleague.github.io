@@ -74,7 +74,6 @@ export const DocsAndRulesView: React.FC = () => {
     const isTeamOrPair =
       headers[1]?.toLowerCase().includes('winners') ||
       ['league', 'knockout', 'doubles', 'mixed-doubles'].includes(honourTab);
-    const reigningBadgeText = isTeamOrPair ? 'Reigning Champions' : 'Reigning Champion';
     const winnerLabel = isTeamOrPair ? 'Winners' : 'Winner';
     const runnerUpLabel = isTeamOrPair ? 'Runners-up' : 'Runner-up';
 
@@ -110,61 +109,16 @@ export const DocsAndRulesView: React.FC = () => {
     }
 
     if (honourViewMode === 'cards') {
-      const isFiltered = !!q || seasonFilter !== 'all';
-      const spotlightRow = !isFiltered && filteredRows.length > 0 ? filteredRows[0] : null;
-      const cardRows = !isFiltered && filteredRows.length > 0 ? filteredRows.slice(1) : filteredRows;
-
       return (
-        <div className="space-y-3">
-          {/* Reigning Champion Spotlight */}
-          {spotlightRow && (
-            <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 p-4 sm:p-5 shadow-lg shadow-amber-500/5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-[11px] font-black uppercase tracking-wider text-amber-300">
-                      <Trophy className="w-3 h-3" />
-                      {reigningBadgeText}
-                    </span>
-                    {renderSeasonBadge(spotlightRow[0])}
-                  </div>
-                  <div className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
-                    <span>{spotlightRow[1]}</span>
-                  </div>
-                </div>
-
-                {spotlightRow[2] !== undefined && (
-                  <div className="flex items-center gap-2 self-start sm:self-auto">
-                    {typeof spotlightRow[2] === 'number' ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-xs sm:text-sm">
-                        <Flame className="w-4 h-4 text-amber-400" />
-                        <span>{spotlightRow[2]} Dishes</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 text-xs">
-                        <span className="text-slate-400 font-medium">{runnerUpLabel}:</span>
-                        <strong className="text-slate-200">{spotlightRow[2]}</strong>
-                      </span>
-                    )}
-                  </div>
-                )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {filteredRows.map((r, idx) => (
+            <div
+              key={idx}
+              className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3.5 space-y-2 transition-all"
+            >
+              <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
+                {renderSeasonBadge(r[0])}
               </div>
-            </div>
-          )}
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {cardRows.map((r, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3.5 space-y-2 transition-all"
-              >
-                <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
-                  {renderSeasonBadge(r[0])}
-                  {idx === 0 && isFiltered && (
-                    <span className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">Latest</span>
-                  )}
-                </div>
 
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-start gap-2">
@@ -200,7 +154,6 @@ export const DocsAndRulesView: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
         </div>
       );
     }
@@ -222,9 +175,7 @@ export const DocsAndRulesView: React.FC = () => {
             {filteredRows.map((r, idx) => (
               <tr
                 key={idx}
-                className={`border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30 transition-colors ${
-                  idx === 0 && !q && seasonFilter === 'all' ? 'bg-amber-500/[0.04]' : ''
-                }`}
+                className="border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30 transition-colors"
               >
                 {r.map((cell, cIdx) => (
                   <td
