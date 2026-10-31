@@ -33,8 +33,8 @@ type HonourSubTab =
 export const DocsAndRulesView: React.FC = () => {
   const { seasonName } = useLeague();
   const [section, setSection] = useState<
-    'format' | 'rules' | 'cofc' | 'competitions' | 'honours'
-  >('format');
+    'competitions' | 'honours' | 'format' | 'rules' | 'cofc'
+  >('competitions');
   const [honourTab, setHonourTab] = useState<HonourSubTab>('league');
   const [compFilter, setCompFilter] = useState<
     | 'all'
@@ -103,11 +103,11 @@ export const DocsAndRulesView: React.FC = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {(
             [
+              { id: 'competitions', label: 'Competitions', icon: Trophy },
+              { id: 'honours', label: 'Roll of Honour', icon: Trophy },
               { id: 'format', label: 'League Format', icon: FileText },
               { id: 'rules', label: 'League Rules', icon: Scale },
               { id: 'cofc', label: 'Champion of Champions', icon: Crown },
-              { id: 'competitions', label: 'Competitions', icon: Trophy },
-              { id: 'honours', label: 'Roll of Honour', icon: Trophy },
             ] as const
           ).map((item) => {
             const Icon = item.icon;

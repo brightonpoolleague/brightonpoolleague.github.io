@@ -33,7 +33,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
     // 5. Navigate to Rules & Info
     await page.getByRole('button', { name: 'Info' }).click();
-    await expect(page.getByText(/League Rules|League Format/i).first()).toBeVisible();
+    await expect(page.getByText(/Open Singles|League Format/i).first()).toBeVisible();
 
     // 6. Return to Live & Fixtures and open a Match Scorecard Modal
     await page.getByRole('button', { name: 'Live & Fixtures' }).click();
