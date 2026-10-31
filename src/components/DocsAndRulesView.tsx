@@ -7,7 +7,13 @@ import {
   Coins,
   Crown,
   FileText,
+  Flame,
   Info,
+  LayoutGrid,
+  List,
+  Medal,
+  Search,
+  X,
   MapPin,
   MessageSquare,
   Scale,
@@ -44,48 +50,190 @@ export const DocsAndRulesView: React.FC = () => {
     | 'mixed-doubles'
     | 'captains-cup'
   >('all');
+  const [honourViewMode, setHonourViewMode] = useState<'cards' | 'table'>('cards');
+  const [honourSearch, setHonourSearch] = useState<string>('');
 
   const renderTable = (
     headers: string[],
     rows: (string | number)[][]
-  ): React.ReactNode => (
-    <div className="overflow-x-auto border border-slate-800 rounded-xl">
-      <table className="w-full text-xs sm:text-sm border-collapse">
-        <thead>
-          <tr className="bg-slate-950 text-slate-300 border-b border-slate-800 text-left">
-            {headers.map((h, i) => (
-              <th key={i} className="py-2.5 px-3 font-bold">
-                {h}
-              </th>
+  ): React.ReactNode => {
+    const q = honourSearch.trim().toLowerCase();
+    const filteredRows = q
+      ? rows.filter((r) => r.some((c) => String(c).toLowerCase().includes(q)))
+      : rows;
+
+    if (filteredRows.length === 0) {
+      return (
+        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-6 text-center text-xs text-slate-400 space-y-2">
+          <div>No records found matching <span className="text-white font-semibold">"{honourSearch}"</span> in this category.</div>
+          <button
+            type="button"
+            onClick={() => setHonourSearch('')}
+            className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs cursor-pointer"
+          >
+            Clear search
+          </button>
+        </div>
+      );
+    }
+
+    if (honourViewMode === 'cards') {
+      const isFiltered = !!q;
+      const spotlightRow = !isFiltered && filteredRows.length > 0 ? filteredRows[0] : null;
+      const cardRows = !isFiltered && filteredRows.length > 0 ? filteredRows.slice(1) : filteredRows;
+
+      return (
+        <div className="space-y-3">
+          {/* Reigning Champion Spotlight */}
+          {spotlightRow && (
+            <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-950 p-4 sm:p-5 shadow-lg shadow-amber-500/5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-[11px] font-black uppercase tracking-wider text-amber-300">
+                      <Trophy className="w-3 h-3" />
+                      Reigning Champion
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">
+                      {spotlightRow[0]}
+                    </span>
+                  </div>
+                  <div className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                    <span>{spotlightRow[1]}</span>
+                  </div>
+                </div>
+
+                {spotlightRow[2] !== undefined && (
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    {typeof spotlightRow[2] === 'number' ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-xs sm:text-sm">
+                        <Flame className="w-4 h-4 text-amber-400" />
+                        <span>{spotlightRow[2]} Dishes</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 text-xs">
+                        <span className="text-slate-400 font-medium">Runner-up:</span>
+                        <strong className="text-slate-200">{spotlightRow[2]}</strong>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {cardRows.map((r, idx) => (
+              <div
+                key={idx}
+                className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3.5 space-y-2 transition-all"
+              >
+                <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
+                  <span className="font-semibold text-slate-300">{r[0]}</span>
+                  {idx === 0 && isFiltered && (
+                    <span className="text-amber-400 font-bold text-[10px] uppercase tracking-wider">Latest</span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xs shrink-0 mt-0.5">
+                      🏆
+                    </span>
+                    <div className="leading-tight">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Winner</div>
+                      <div className="font-bold text-white text-xs sm:text-sm">{r[1]}</div>
+                    </div>
+                  </div>
+
+                  {r[2] !== undefined && (
+                    <div className="flex items-start gap-2 pt-1 border-t border-slate-800/40">
+                      {typeof r[2] === 'number' ? (
+                        <div className="flex items-center gap-1.5 text-amber-300 text-xs font-semibold ml-7">
+                          <Flame className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{r[2]} Dishes</span>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 text-xs shrink-0 mt-0.5">
+                            🥈
+                          </span>
+                          <div className="leading-tight">
+                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Runner-up</div>
+                            <div className="text-slate-300 text-xs">{r[2]}</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, idx) => (
-            <tr
-              key={idx}
-              className="border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30"
-            >
-              {r.map((cell, cIdx) => (
-                <td
-                  key={cIdx}
-                  className={`py-2 px-3 ${
-                    cIdx === 0
-                      ? 'text-slate-400 font-medium whitespace-nowrap'
-                      : cIdx === 1
-                      ? 'text-white font-semibold'
-                      : 'text-slate-300'
-                  }`}
-                >
-                  {cell}
-                </td>
+          </div>
+        </div>
+      );
+    }
+
+    // Leaderboard Table View
+    return (
+      <div className="overflow-x-auto border border-slate-800 rounded-xl">
+        <table className="w-full text-xs sm:text-sm border-collapse">
+          <thead>
+            <tr className="bg-slate-950 text-slate-300 border-b border-slate-800 text-left">
+              {headers.map((h, i) => (
+                <th key={i} className="py-2.5 px-3 font-bold text-[11px] uppercase tracking-wider text-slate-400">
+                  {h}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+          </thead>
+          <tbody>
+            {filteredRows.map((r, idx) => (
+              <tr
+                key={idx}
+                className={`border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30 transition-colors ${
+                  idx === 0 && !q ? 'bg-amber-500/[0.04]' : ''
+                }`}
+              >
+                {r.map((cell, cIdx) => (
+                  <td
+                    key={cIdx}
+                    className={`py-2 px-3 ${
+                      cIdx === 0
+                        ? 'text-slate-400 font-semibold whitespace-nowrap'
+                        : cIdx === 1
+                        ? 'text-white font-bold'
+                        : 'text-slate-300'
+                    }`}
+                  >
+                    {cIdx === 1 ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-xs">🏆</span>
+                        <span>{cell}</span>
+                      </span>
+                    ) : cIdx === 2 && typeof cell === 'string' ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-xs">🥈</span>
+                        <span>{cell}</span>
+                      </span>
+                    ) : cIdx === 2 && typeof cell === 'number' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-xs">
+                        <Flame className="w-3 h-3 text-amber-400" />
+                        <span>{cell} dishes</span>
+                      </span>
+                    ) : (
+                      cell
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -1445,35 +1593,109 @@ export const DocsAndRulesView: React.FC = () => {
         {/* 5. ROLL OF HONOUR (content/docs/roll-of-honour/*.md)             */}
         {/* ================================================================ */}
         {section === 'honours' && (
-          <div className="space-y-5">
+          <div className="space-y-6">
+            {/* Header showcase banner */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                    <Trophy className="w-3.5 h-3.5" />
+                    <span>Hall of Fame</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    Roll of Honour
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
+                    Brighton &amp; Hove Pool League championship records, division winners, cup triumphs, and individual honours spanning more than 40 years.
+                  </p>
+                </div>
+
+                {/* Toolbar: Search & View Mode Switcher */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={honourSearch}
+                      onChange={(e) => setHonourSearch(e.target.value)}
+                      placeholder="Search player, team, season..."
+                      className="w-full sm:w-56 pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                    />
+                    {honourSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setHonourSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setHonourViewMode('cards')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        honourViewMode === 'cards'
+                          ? 'bg-amber-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Cards</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHonourViewMode('table')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        honourViewMode === 'table'
+                          ? 'bg-amber-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>Table</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Category pills */}
             <div className="flex flex-wrap gap-1.5 border-b border-slate-800 pb-3">
               {(
                 [
-                  { id: 'league', label: 'League' },
-                  { id: 'knockout', label: 'Knockout Cups' },
-                  { id: 'captains-cup', label: 'Captains Cup' },
-                  { id: 'singles', label: 'Singles' },
-                  { id: 'ladies-singles', label: 'Ladies Singles' },
-                  { id: 'doubles', label: 'Doubles' },
-                  { id: 'mixed-doubles', label: 'Mixed Doubles' },
-                  { id: 'averages', label: 'Averages' },
-                  { id: 'ladies-averages', label: 'Ladies Averages' },
-                  { id: 'top-dish', label: 'Top Dish' },
+                  { id: 'league', label: 'League', icon: Trophy },
+                  { id: 'knockout', label: 'Knockout Cups', icon: Award },
+                  { id: 'captains-cup', label: 'Captains Cup', icon: Crown },
+                  { id: 'singles', label: 'Singles', icon: Medal },
+                  { id: 'ladies-singles', label: 'Ladies Singles', icon: Crown },
+                  { id: 'doubles', label: 'Doubles', icon: Users },
+                  { id: 'mixed-doubles', label: 'Mixed Doubles', icon: Users },
+                  { id: 'averages', label: 'Averages', icon: Flame },
+                  { id: 'ladies-averages', label: 'Ladies Averages', icon: Crown },
+                  { id: 'top-dish', label: 'Top Dish', icon: Sparkles },
                 ] as const
-              ).map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setHonourTab(t.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                    honourTab === t.id
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+              ).map((t) => {
+                const Icon = t.icon;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setHonourTab(t.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      honourTab === t.id
+                        ? 'bg-emerald-600 text-white shadow'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {honourTab === 'league' && (
