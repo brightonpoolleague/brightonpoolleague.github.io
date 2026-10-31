@@ -1829,14 +1829,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       let homeSigned = Boolean(rawUpdated.homeCaptainSigned);
       let awaySigned = Boolean(rawUpdated.awayCaptainSigned);
 
-      // Prevent stale submission from overwriting an unsigned state from the other captain
-      const existing = allFixtures.find((f) => f.id === rawUpdated.id);
-      if (existing) {
-        if (!existing.homeCaptainSigned) homeSigned = false;
-        if (!existing.awayCaptainSigned) awaySigned = false;
-      }
-
       if (nextStatus === 'submitted') {
+        // Prevent stale submission from overwriting an unsigned state from the other captain
+        const existing = allFixtures.find((f) => f.id === rawUpdated.id);
+        if (existing) {
+          if (!existing.homeCaptainSigned) homeSigned = false;
+          if (!existing.awayCaptainSigned) awaySigned = false;
+        }
+
         const supabase = getSupabaseClient();
         if (supabase) {
           try {
