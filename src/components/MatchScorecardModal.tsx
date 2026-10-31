@@ -384,32 +384,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     fixture.lineups.subsLocked?.set3?.away,
   ]);
 
-  // Race condition protection: if the Finish & Submit dialog is open but a captain unsigns, cancel dialog immediately
-  useEffect(() => {
-    if (
-      confirmDialog &&
-      confirmDialog.confirmLabel === 'Finish & Submit Match' &&
-      (!fixture.homeCaptainSigned || !fixture.awayCaptainSigned)
-    ) {
-      setConfirmDialog({
-        title: 'Submission Cancelled',
-        message: (
-          <div className="space-y-2 text-slate-300">
-            <p>
-              A captain unsigned the match while the submission prompt was open.
-            </p>
-            <p className="text-amber-300 text-xs font-semibold">
-              Both captains must be signed before the match can be submitted.
-            </p>
-          </div>
-        ),
-        confirmLabel: 'OK',
-        variant: 'warning',
-        onConfirm: () => {},
-      });
-    }
-  }, [fixture.homeCaptainSigned, fixture.awayCaptainSigned, confirmDialog]);
-
   const score = calculateMatchScore({ ...fixture, frames, lineups });
 
   const getPlayerName = (playerId: SlotPlayerId, hidden = false): string => {
@@ -973,22 +947,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         // Guard against race condition: ensure both captains are still signed at the moment of submission
         const latest = fixtures.find((f) => f.id === fixture.id) || fixture;
         if (!latest.homeCaptainSigned || !latest.awayCaptainSigned) {
-          setConfirmDialog({
-            title: 'Cannot Submit Match',
-            message: (
-              <div className="space-y-2 text-slate-300">
-                <p>
-                  Submission cancelled: One of the captains has unsigned the match.
-                </p>
-                <p className="text-amber-300 text-xs font-semibold">
-                  Both captains must have their signature recorded to submit the match.
-                </p>
-              </div>
-            ),
-            confirmLabel: 'OK',
-            variant: 'warning',
-            onConfirm: () => {},
-          });
           return;
         }
 
