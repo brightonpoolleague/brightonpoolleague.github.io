@@ -875,40 +875,26 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     </div>
 
                     {/* Venue Table Quick Editor */}
-                    <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                          <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Venue Table:</span>
-                        </div>
-                        {editingTableTeamId !== team.id ? (
-                          <span
-                            className={`text-xs font-bold shrink-0 ${
-                              team.tableNumber
-                                ? 'text-amber-300'
-                                : 'text-slate-400 italic'
-                            }`}
-                          >
-                            {team.tableNumber || 'None (Single Table)'}
-                          </span>
-                        ) : null}
-                      </div>
-
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
                       {editingTableTeamId === team.id ? (
-                        <div className="flex items-center justify-end gap-1.5 w-full pt-1 border-t border-slate-900">
-                          <input
-                            type="text"
-                            value={quickTableDraft}
-                            onChange={(e) => setQuickTableDraft(e.target.value)}
-                            placeholder="e.g. Table 1, Table TBC or blank"
-                            className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white w-full sm:w-48 font-semibold"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveQuickTable(team);
-                              if (e.key === 'Escape') setEditingTableTeamId(null);
-                            }}
-                          />
-                          <div className="flex items-center gap-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                            <TableIcon className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Venue Table:</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-1 max-w-xs justify-end ml-auto">
+                            <input
+                              type="text"
+                              value={quickTableDraft}
+                              onChange={(e) => setQuickTableDraft(e.target.value)}
+                              placeholder="e.g. Table 1, Table TBC or blank"
+                              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white w-full sm:w-44 font-semibold"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveQuickTable(team);
+                                if (e.key === 'Escape') setEditingTableTeamId(null);
+                              }}
+                            />
                             <button
                               type="button"
                               onClick={() => handleSaveQuickTable(team)}
@@ -920,28 +906,41 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   quickTableDraft
                                 ).hasConflict
                               }
-                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition"
+                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition shrink-0"
                             >
                               Save
                             </button>
                             <button
                               type="button"
                               onClick={() => setEditingTableTeamId(null)}
-                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs"
+                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs shrink-0"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-end pt-1 border-t border-slate-900">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs min-w-0">
+                            <TableIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="text-slate-400 shrink-0">Venue Table:</span>
+                            <span
+                              className={`font-bold truncate ${
+                                team.tableNumber
+                                  ? 'text-amber-300'
+                                  : 'text-slate-400 italic'
+                              }`}
+                            >
+                              {team.tableNumber || 'None (Single Table)'}
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
                               setEditingTableTeamId(team.id);
                               setQuickTableDraft(team.tableNumber || '');
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition shrink-0 ml-auto sm:ml-0"
                             title="Edit Table"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -975,17 +974,53 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                     })()}
 
                     {/* Team PIN Section */}
-                    <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                          <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Team PIN:</span>
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                      {editingPinTeamId === team.id ? (
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Team PIN:</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 ml-auto">
+                            <input
+                              type="text"
+                              value={quickPinDraft}
+                              onChange={(e) => setQuickPinDraft(e.target.value)}
+                              placeholder="6-digit PIN"
+                              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-amber-300 font-mono font-bold w-24 sm:w-28 text-center"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveQuickPin(team);
+                                if (e.key === 'Escape') setEditingPinTeamId(null);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveQuickPin(team)}
+                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shrink-0"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingPinTeamId(null)}
+                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        {editingPinTeamId !== team.id ? (
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-xs font-mono font-bold text-amber-300">
+                      ) : (
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs shrink-0">
+                            <KeyRound className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span className="text-slate-400">Team PIN:</span>
+                            <span className="font-mono font-bold text-amber-300">
                               {team.captainPin || 'None'}
                             </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end ml-auto">
                             <button
                               type="button"
                               onClick={() =>
@@ -995,7 +1030,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               title="Copy PIN to clipboard"
                             >
                               <Copy className="w-3 h-3 text-slate-400" />
-                              {copiedTeamId === team.id ? 'Copied!' : 'Copy'}
+                              <span>{copiedTeamId === team.id ? 'Copied!' : 'Copy'}</span>
                             </button>
                             <button
                               type="button"
@@ -1006,86 +1041,50 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               title="Share PIN via WhatsApp, Messages, etc."
                             >
                               <Share2 className="w-3 h-3 text-emerald-400" />
-                              Share
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {editingPinTeamId === team.id ? (
-                        <div className="flex items-center justify-end gap-1.5 w-full pt-1 border-t border-slate-900">
-                          <input
-                            type="text"
-                            value={quickPinDraft}
-                            onChange={(e) => setQuickPinDraft(e.target.value)}
-                            placeholder="6-digit PIN"
-                            className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-amber-300 font-mono font-bold w-28 sm:w-32 text-center"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveQuickPin(team);
-                              if (e.key === 'Escape') setEditingPinTeamId(null);
-                            }}
-                          />
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleSaveQuickPin(team)}
-                              className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
-                            >
-                              Save
+                              <span>Share</span>
                             </button>
                             <button
                               type="button"
-                              onClick={() => setEditingPinTeamId(null)}
-                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs"
+                              onClick={() => {
+                                const existingPins = teams
+                                  .filter((t) => t.id !== team.id)
+                                  .map((t) => t.captainPin);
+                                if (adminPin) existingPins.push(adminPin);
+                                const newRandomPin = generateRandomPin(existingPins);
+
+                                setConfirmDialog({
+                                  title: `Regenerate Team PIN?`,
+                                  message: `Generate a new random 6-digit Team PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
+                                  confirmLabel: 'Generate New PIN',
+                                  variant: 'warning',
+                                  onConfirm: async () => {
+                                    await updateTeamPin(team.id, newRandomPin);
+                                  },
+                                });
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white text-[11px] font-semibold transition"
+                              title="Generate new random 6-digit PIN"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Regenerate</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingPinTeamId(team.id);
+                                setQuickPinDraft(
+                                  team.captainPin && !team.captainPin.includes('•')
+                                    ? team.captainPin
+                                    : ''
+                                );
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
+                              title="Edit Team PIN"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit PIN</span>
                             </button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-slate-900">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const existingPins = teams
-                                .filter((t) => t.id !== team.id)
-                                .map((t) => t.captainPin);
-                              if (adminPin) existingPins.push(adminPin);
-                              const newRandomPin = generateRandomPin(existingPins);
-
-                              setConfirmDialog({
-                                title: `Regenerate Team PIN?`,
-                                message: `Generate a new random 6-digit Team PIN for "${team.name}"? Their previous PIN (${team.captainPin}) will stop working immediately.`,
-                                confirmLabel: 'Generate New PIN',
-                                variant: 'warning',
-                                onConfirm: async () => {
-                                  await updateTeamPin(team.id, newRandomPin);
-                                },
-                              });
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white text-[11px] font-semibold transition"
-                            title="Generate new random 6-digit PIN"
-                          >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            <span>Regenerate</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingPinTeamId(team.id);
-                              setQuickPinDraft(
-                                team.captainPin && !team.captainPin.includes('•')
-                                  ? team.captainPin
-                                  : ''
-                              );
-                            }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-[11px] font-semibold transition"
-                            title="Edit Team PIN"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit PIN</span>
-                          </button>
                         </div>
                       )}
                     </div>
