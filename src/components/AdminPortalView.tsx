@@ -1451,7 +1451,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   }`}
                 >
                   <History className="w-3 h-3 text-slate-400" />
-                  Past Date ({fixtureTimeframeCounts.past})
+                  Overdue ({fixtureTimeframeCounts.past})
                 </button>
               </div>
             </div>
@@ -1858,7 +1858,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       : fixtureTimeframeFilter === 'today'
                       ? 'Today'
                       : fixtureTimeframeFilter === 'past'
-                      ? 'Past'
+                      ? 'Overdue'
                       : null;
 
                   const divLabel =
@@ -1991,7 +1991,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700">
                                 <History className="w-2.5 h-2.5" />
-                                Past Date
+                                Overdue
                               </span>
                             )}
                           </div>

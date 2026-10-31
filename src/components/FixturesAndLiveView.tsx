@@ -264,7 +264,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     { id: 'all', label: 'All Matches' },
     { id: 'live', label: 'Live' },
     { id: 'scheduled', label: 'Upcoming' },
-    { id: 'past', label: 'Past Date' },
+    { id: 'past', label: 'Overdue' },
     { id: 'submitted', label: 'Awaiting Approval' },
     { id: 'approved', label: 'Approved' },
   ];
@@ -633,7 +633,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 : statusFilter === 'scheduled'
                 ? 'Upcoming'
                 : statusFilter === 'past'
-                ? 'Past'
+                ? 'Overdue'
                 : statusFilter === 'submitted'
                 ? 'Awaiting Approval'
                 : statusFilter === 'approved'
@@ -784,7 +784,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                     ) : (
                       <>
                         <History className="w-2.5 h-2.5" />
-                        Past Date
+                        Overdue
                       </>
                     )}
                   </span>
