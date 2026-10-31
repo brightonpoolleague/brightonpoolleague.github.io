@@ -7,10 +7,19 @@ import {
   Coins,
   Crown,
   FileText,
+  Flame,
+  Info,
+  LayoutGrid,
+  List,
+  Medal,
+  Search,
+  X,
   MapPin,
   MessageSquare,
   Scale,
   Shuffle,
+  Snowflake,
+  Sun,
   Sparkles,
   Trophy,
   Users,
@@ -32,8 +41,8 @@ type HonourSubTab =
 export const DocsAndRulesView: React.FC = () => {
   const { seasonName } = useLeague();
   const [section, setSection] = useState<
-    'format' | 'rules' | 'cofc' | 'competitions' | 'honours'
-  >('format');
+    'competitions' | 'honours' | 'format' | 'rules' | 'cofc'
+  >('competitions');
   const [honourTab, setHonourTab] = useState<HonourSubTab>('league');
   const [compFilter, setCompFilter] = useState<
     | 'all'
@@ -43,70 +52,193 @@ export const DocsAndRulesView: React.FC = () => {
     | 'mixed-doubles'
     | 'captains-cup'
   >('all');
+  const [honourViewMode, setHonourViewMode] = useState<'cards' | 'table'>('cards');
+  const [honourSearch, setHonourSearch] = useState<string>('');
+  const [seasonFilter, setSeasonFilter] = useState<'all' | 'winter' | 'summer'>('all');
 
   const renderTable = (
     headers: string[],
     rows: (string | number)[][]
-  ): React.ReactNode => (
-    <div className="overflow-x-auto border border-slate-800 rounded-xl">
-      <table className="w-full text-xs sm:text-sm border-collapse">
-        <thead>
-          <tr className="bg-slate-950 text-slate-300 border-b border-slate-800 text-left">
-            {headers.map((h, i) => (
-              <th key={i} className="py-2.5 px-3 font-bold">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, idx) => (
-            <tr
+  ): React.ReactNode => {
+    const seasonLower = seasonFilter.toLowerCase();
+    const seasonMatchedRows =
+      seasonFilter === 'all'
+        ? rows
+        : rows.filter((r) => String(r[0]).toLowerCase().includes(seasonLower));
+
+    const q = honourSearch.trim().toLowerCase();
+    const filteredRows = q
+      ? seasonMatchedRows.filter((r) => r.some((c) => String(c).toLowerCase().includes(q)))
+      : seasonMatchedRows;
+
+    const isTeamOrPair =
+      headers[1]?.toLowerCase().includes('winners') ||
+      ['league', 'knockout', 'doubles', 'mixed-doubles'].includes(honourTab);
+    const winnerLabel = isTeamOrPair ? 'Winners' : 'Winner';
+    const runnerUpLabel = isTeamOrPair ? 'Runners-up' : 'Runner-up';
+
+    const renderSeasonBadge = (seasonText: string | number) => {
+      const text = String(seasonText);
+      const isSummer = text.toLowerCase().includes('summer');
+      const isWinter = text.toLowerCase().includes('winter');
+      if (isSummer) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[11px]">
+            <Sun className="w-3 h-3 text-amber-400 shrink-0" />
+            <span>{text}</span>
+          </span>
+        );
+      }
+      if (isWinter) {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-sky-300 font-bold text-[11px]">
+            <Snowflake className="w-3 h-3 text-sky-400 shrink-0" />
+            <span>{text}</span>
+          </span>
+        );
+      }
+      return <span className="font-semibold text-slate-300">{text}</span>;
+    };
+
+    if (filteredRows.length === 0) {
+      return (
+        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-6 text-center text-xs text-slate-400">
+          No records match '{honourSearch}'.
+        </div>
+      );
+    }
+
+    if (honourViewMode === 'cards') {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {filteredRows.map((r, idx) => (
+            <div
               key={idx}
-              className="border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30"
+              className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3.5 space-y-2 transition-all"
             >
-              {r.map((cell, cIdx) => (
-                <td
-                  key={cIdx}
-                  className={`py-2 px-3 ${
-                    cIdx === 0
-                      ? 'text-slate-400 font-medium whitespace-nowrap'
-                      : cIdx === 1
-                      ? 'text-white font-semibold'
-                      : 'text-slate-300'
-                  }`}
-                >
-                  {cell}
-                </td>
+              <div className="flex items-center justify-between text-[11px] text-slate-400 border-b border-slate-800/60 pb-1.5 font-medium">
+                {renderSeasonBadge(r[0])}
+              </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-start gap-2">
+                    <span className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xs shrink-0 mt-0.5">
+                      🏆
+                    </span>
+                    <div className="leading-tight">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{winnerLabel}</div>
+                      <div className="font-bold text-white text-xs sm:text-sm">{r[1]}</div>
+                    </div>
+                  </div>
+
+                  {r[2] !== undefined && (
+                    <div className="flex items-start gap-2 pt-1 border-t border-slate-800/40">
+                      {typeof r[2] === 'number' ? (
+                        <div className="flex items-center gap-1.5 text-amber-300 text-xs font-semibold ml-7">
+                          <Flame className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{r[2]} Dishes</span>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 text-xs shrink-0 mt-0.5">
+                            🥈
+                          </span>
+                          <div className="leading-tight">
+                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{runnerUpLabel}</div>
+                            <div className="text-slate-300 text-xs">{r[2]}</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+        </div>
+      );
+    }
+
+    // Leaderboard Table View
+    return (
+      <div className="overflow-x-auto border border-slate-800 rounded-xl">
+        <table className="w-full text-xs sm:text-sm border-collapse">
+          <thead>
+            <tr className="bg-slate-950 text-slate-300 border-b border-slate-800 text-left">
+              {headers.map((h, i) => (
+                <th key={i} className="py-2.5 px-3 font-bold text-[11px] uppercase tracking-wider text-slate-400">
+                  {h}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+          </thead>
+          <tbody>
+            {filteredRows.map((r, idx) => (
+              <tr
+                key={idx}
+                className="border-b border-slate-800/70 last:border-b-0 hover:bg-slate-800/30 transition-colors"
+              >
+                {r.map((cell, cIdx) => (
+                  <td
+                    key={cIdx}
+                    className={`py-2 px-3 ${
+                      cIdx === 0
+                        ? 'whitespace-nowrap'
+                        : cIdx === 1
+                        ? 'text-white font-bold'
+                        : 'text-slate-300'
+                    }`}
+                  >
+                    {cIdx === 0 ? (
+                      renderSeasonBadge(cell)
+                    ) : cIdx === 1 ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-xs">🏆</span>
+                        <span>{cell}</span>
+                      </span>
+                    ) : cIdx === 2 && typeof cell === 'string' ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="text-xs">🥈</span>
+                        <span>{cell}</span>
+                      </span>
+                    ) : cIdx === 2 && typeof cell === 'number' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-xs">
+                        <Flame className="w-3 h-3 text-amber-400" />
+                        <span>{cell} dishes</span>
+                      </span>
+                    ) : (
+                      cell
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-5">
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <BookOpen className="w-3.5 h-3.5" />
-            League Handbook &amp; History
+            <Info className="w-3.5 h-3.5" />
+            League Info &amp; History
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-            Rules, Format &amp; Roll of Honour
+            League Information, Rules &amp; Records
           </h1>
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {(
             [
+              { id: 'competitions', label: 'Competitions', icon: Trophy },
+              { id: 'honours', label: 'Roll of Honour', icon: Trophy },
               { id: 'format', label: 'League Format', icon: FileText },
               { id: 'rules', label: 'League Rules', icon: Scale },
               { id: 'cofc', label: 'Champion of Champions', icon: Crown },
-              { id: 'competitions', label: 'Competitions', icon: Trophy },
-              { id: 'honours', label: 'Roll of Honour', icon: Trophy },
             ] as const
           ).map((item) => {
             const Icon = item.icon;
@@ -1049,7 +1181,7 @@ export const DocsAndRulesView: React.FC = () => {
                 { id: 'open-doubles', label: 'Open Doubles' },
                 { id: 'ladies-singles', label: 'Ladies Singles' },
                 { id: 'mixed-doubles', label: 'Mixed Doubles' },
-                { id: 'captains-cup', label: "Captains' Cup" },
+                { id: 'captains-cup', label: 'Captains Cup' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1333,7 +1465,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </div>
               )}
 
-              {/* 5. Captains' Cup */}
+              {/* 5. Captains Cup */}
               {(compFilter === 'all' || compFilter === 'captains-cup') && (
                 <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all lg:col-span-2">
                   <div className="space-y-4">
@@ -1346,7 +1478,7 @@ export const DocsAndRulesView: React.FC = () => {
                           <div className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
                             Handicapped Invitational
                           </div>
-                          <h4 className="text-xl sm:text-2xl font-black text-white">Captains' Cup</h4>
+                          <h4 className="text-xl sm:text-2xl font-black text-white">Captains Cup</h4>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1444,35 +1576,150 @@ export const DocsAndRulesView: React.FC = () => {
         {/* 5. ROLL OF HONOUR (content/docs/roll-of-honour/*.md)             */}
         {/* ================================================================ */}
         {section === 'honours' && (
-          <div className="space-y-5">
+          <div className="space-y-6">
+            {/* Header showcase banner */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 sm:p-6 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                    <Trophy className="w-3.5 h-3.5" />
+                    <span>Hall of Fame</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    Roll of Honour
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
+                    Brighton &amp; Hove Pool League records, division winners, cup triumphs and individual honours.
+                  </p>
+                </div>
+
+                {/* Toolbar: Season Filter, Search & View Mode Switcher */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
+                  {/* Season Filter (All / Winter / Summer) */}
+                  <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setSeasonFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        seasonFilter === 'all'
+                          ? 'bg-emerald-600 text-white shadow'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSeasonFilter('winter')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        seasonFilter === 'winter'
+                          ? 'bg-sky-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Snowflake className="w-3.5 h-3.5" />
+                      <span>Winter</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSeasonFilter('summer')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        seasonFilter === 'summer'
+                          ? 'bg-amber-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Sun className="w-3.5 h-3.5" />
+                      <span>Summer</span>
+                    </button>
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative flex-1 sm:flex-initial">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={honourSearch}
+                      onChange={(e) => setHonourSearch(e.target.value)}
+                      placeholder="Search player, team, season..."
+                      className="w-full sm:w-52 pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+                    />
+                    {honourSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setHonourSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* View Mode */}
+                  <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setHonourViewMode('cards')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        honourViewMode === 'cards'
+                          ? 'bg-amber-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Cards</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHonourViewMode('table')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        honourViewMode === 'table'
+                          ? 'bg-amber-500 text-slate-950 shadow font-extrabold'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>Table</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Category pills */}
             <div className="flex flex-wrap gap-1.5 border-b border-slate-800 pb-3">
               {(
                 [
-                  { id: 'league', label: 'League' },
-                  { id: 'knockout', label: 'Knockout Cups' },
-                  { id: 'captains-cup', label: 'Captains Cup' },
-                  { id: 'singles', label: 'Singles' },
-                  { id: 'ladies-singles', label: 'Ladies Singles' },
-                  { id: 'doubles', label: 'Doubles' },
-                  { id: 'mixed-doubles', label: 'Mixed Doubles' },
-                  { id: 'averages', label: 'Averages' },
-                  { id: 'ladies-averages', label: 'Ladies Averages' },
-                  { id: 'top-dish', label: 'Top Dish' },
+                  { id: 'league', label: 'League', icon: Trophy },
+                  { id: 'knockout', label: 'Knockout', icon: Award },
+                  { id: 'captains-cup', label: 'Captains Cup', icon: Crown },
+                  { id: 'singles', label: 'Singles', icon: Medal },
+                  { id: 'ladies-singles', label: 'Ladies Singles', icon: Crown },
+                  { id: 'doubles', label: 'Doubles', icon: Users },
+                  { id: 'mixed-doubles', label: 'Mixed Doubles', icon: Users },
+                  { id: 'averages', label: 'Averages', icon: Flame },
+                  { id: 'ladies-averages', label: 'Ladies Averages', icon: Crown },
+                  { id: 'top-dish', label: 'Top Dish', icon: Sparkles },
                 ] as const
-              ).map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setHonourTab(t.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                    honourTab === t.id
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+              ).map((t) => {
+                const Icon = t.icon;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setHonourTab(t.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      honourTab === t.id
+                        ? 'bg-emerald-600 text-white shadow'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {honourTab === 'league' && (

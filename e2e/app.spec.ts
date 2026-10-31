@@ -32,8 +32,8 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByText('The King & Queen').first()).toBeVisible();
 
     // 5. Navigate to Rules & Info
-    await page.getByRole('button', { name: 'Rules & Info' }).click();
-    await expect(page.getByText(/League Rules|League Format/i).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Info' }).click();
+    await expect(page.getByText(/Open Singles|League Format/i).first()).toBeVisible();
 
     // 6. Return to Live & Fixtures and open a Match Scorecard Modal
     await page.getByRole('button', { name: 'Live & Fixtures' }).click();
@@ -760,14 +760,14 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByText('King & Queen A').first()).toBeVisible();
 
     // 4. Navigate to Rules & Info and browse Roll of Honour historical sub-tabs
-    await page.getByRole('button', { name: 'Rules & Info' }).click();
+    await page.getByRole('button', { name: 'Info' }).click();
     await page.getByRole('button', { name: 'League Rules' }).click();
     await page.getByRole('button', { name: 'Champion of Champions' }).click();
     await page.getByRole('button', { name: 'Competitions' }).click();
     await expect(page.getByText('Open Singles').first()).toBeVisible();
-    await expect(page.getByText("Captains' Cup").first()).toBeVisible();
+    await expect(page.getByText('Captains Cup').first()).toBeVisible();
     await page.getByRole('button', { name: 'Roll of Honour' }).click();
-    await page.getByRole('button', { name: 'Knockout Cup' }).click();
+    await page.getByRole('button', { name: 'Knockout' }).click();
     await expect(page.getByText(/Winner/i).first()).toBeVisible();
 
     // 5. Open a Match Scorecard, switch to Result Scorecard paper view, and open ExportScorecardModal
