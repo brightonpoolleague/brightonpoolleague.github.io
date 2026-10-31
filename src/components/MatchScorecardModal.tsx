@@ -46,7 +46,6 @@ import {
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
-import { getSupabaseClient } from '../lib/supabase';
 import { ExportScorecardModal } from './ExportScorecardModal';
 
 interface MatchScorecardModalProps {
@@ -958,29 +957,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         if (!latest.homeCaptainSigned || !latest.awayCaptainSigned) {
           await refreshSingleFixture(fixture.id);
           return;
-        }
-
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          try {
-            const { data: remote } = await supabase
-              .from('fixtures')
-              .select('home_captain_signed, away_captain_signed, status')
-              .eq('id', fixture.id)
-              .single();
-            if (
-              remote &&
-              (remote.status === 'submitted' ||
-                remote.status === 'approved' ||
-                !remote.home_captain_signed ||
-                !remote.away_captain_signed)
-            ) {
-              await refreshSingleFixture(fixture.id);
-              return;
-            }
-          } catch {
-            // fallback to local check
-          }
         }
 
         await saveFixture({

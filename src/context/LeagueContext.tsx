@@ -357,6 +357,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     fixture: Fixture;
     editedSide?: 'home' | 'away' | 'frames';
   } | null>(null);
+  const inFlightFixtureSavesRef = useRef<Map<string, number>>(new Map());
+  const fixtureSaveQueueRef = useRef<Map<string, Promise<boolean>>>(new Map());
+  const lastLocalFixtureSaveAtRef = useRef<Map<string, number>>(new Map());
 
   const activeSeason =
     seasons.find((s) => s.id === selectedSeasonId) ||
@@ -709,6 +712,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               const updated = mapFixtureRow(
                 payload.new as Record<string, unknown>
               );
+              const inFlight =
+                inFlightFixtureSavesRef.current.get(updated.id) ?? 0;
+              const lastSavedAt =
+                lastLocalFixtureSaveAtRef.current.get(updated.id) ?? 0;
+              if (inFlight > 0 || Date.now() - lastSavedAt < 300) {
+                return;
+              }
               setAllFixtures((prev) => {
                 const exists = prev.some((f) => f.id === updated.id);
                 const next = exists
@@ -1897,6 +1907,12 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       rawUpdated: Fixture,
       editedSide?: 'home' | 'away' | 'frames'
     ): Promise<void> => {
+      const fixtureId = rawUpdated.id;
+      inFlightFixtureSavesRef.current.set(
+        fixtureId,
+        (inFlightFixtureSavesRef.current.get(fixtureId) ?? 0) + 1
+      );
+
       const syncedLineups = syncDefaultSubsequentSets(
         ensureValidLineups(rawUpdated.lineups)
       );
@@ -1925,26 +1941,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           if (!existing.homeCaptainSigned) homeSigned = false;
           if (!existing.awayCaptainSigned) awaySigned = false;
         }
-
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          try {
-            const { data: cloudRow } = await supabase
-              .from('fixtures')
-              .select('home_captain_signed, away_captain_signed')
-              .eq('id', rawUpdated.id)
-              .single();
-            if (cloudRow) {
-              if (!cloudRow.home_captain_signed || !cloudRow.away_captain_signed) {
-                homeSigned = Boolean(cloudRow.home_captain_signed);
-                awaySigned = Boolean(cloudRow.away_captain_signed);
-                nextStatus = 'live';
-              }
-            }
-          } catch {
-            // fallback
-          }
-        }
         if (!homeSigned || !awaySigned) {
           nextStatus = 'live';
         }
@@ -1958,7 +1954,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         nextStatus = 'scheduled';
       }
 
-      const updated: Fixture = {
+      const optimisticUpdated: Fixture = {
         ...rawUpdated,
         status: nextStatus,
         homeCaptainSigned: homeSigned,
@@ -1969,19 +1965,77 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       const nextFixtures = allFixtures.map((f) =>
-        f.id === updated.id ? updated : f
+        f.id === optimisticUpdated.id ? optimisticUpdated : f
       );
       setAllFixtures(nextFixtures);
       persistLocal(allTeams, allPlayers, nextFixtures);
 
-      const ok = await pushFixtureToSupabase(updated, editedSide);
-      if (!ok) {
-        setPendingFixtureSync({ fixture: updated, editedSide });
-        setSyncError('Weak connection detected.');
-      } else {
-        setPendingFixtureSync(null);
-        setSyncError(null);
-      }
+      const prevQueue =
+        fixtureSaveQueueRef.current.get(fixtureId) ?? Promise.resolve(true);
+
+      const queuedTask = prevQueue
+        .catch(() => true)
+        .then(async () => {
+          let toPush = optimisticUpdated;
+          if (toPush.status === 'submitted') {
+            const supabase = getSupabaseClient();
+            if (supabase) {
+              try {
+                const { data: cloudRow } = await supabase
+                  .from('fixtures')
+                  .select('home_captain_signed, away_captain_signed')
+                  .eq('id', fixtureId)
+                  .single();
+                if (
+                  cloudRow &&
+                  (!cloudRow.home_captain_signed ||
+                    !cloudRow.away_captain_signed)
+                ) {
+                  toPush = {
+                    ...toPush,
+                    homeCaptainSigned: Boolean(cloudRow.home_captain_signed),
+                    awayCaptainSigned: Boolean(cloudRow.away_captain_signed),
+                    status: 'live',
+                  };
+                  setAllFixtures((prev) => {
+                    const reverted = prev.map((f) =>
+                      f.id === fixtureId ? toPush : f
+                    );
+                    localStorage.setItem(
+                      STORAGE_KEYS.FIXTURES,
+                      JSON.stringify(reverted)
+                    );
+                    return reverted;
+                  });
+                }
+              } catch {
+                // fallback
+              }
+            }
+          }
+          const ok = await pushFixtureToSupabase(toPush, editedSide);
+          if (!ok) {
+            setPendingFixtureSync({ fixture: toPush, editedSide });
+            setSyncError('Weak connection detected.');
+          } else {
+            setPendingFixtureSync(null);
+            setSyncError(null);
+          }
+          return ok;
+        })
+        .finally(() => {
+          const remaining =
+            (inFlightFixtureSavesRef.current.get(fixtureId) ?? 1) - 1;
+          if (remaining <= 0) {
+            inFlightFixtureSavesRef.current.delete(fixtureId);
+          } else {
+            inFlightFixtureSavesRef.current.set(fixtureId, remaining);
+          }
+          lastLocalFixtureSaveAtRef.current.set(fixtureId, Date.now());
+        });
+
+      fixtureSaveQueueRef.current.set(fixtureId, queuedTask);
+      await queuedTask;
     },
     [allTeams, allPlayers, allFixtures, persistLocal, pushFixtureToSupabase]
   );

@@ -100,7 +100,9 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByRole('button', { name: 'Log Out' })).toBeVisible();
 
     // Verify Admin Portal sections exist
-    await expect(page.getByText('King & Queen A').first()).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'King & Queen A' })
+    ).toBeVisible();
   });
 
   test('completes full scorecard lifecycle: Set 1 lineup lock, frame scoring, Dish toggle, dual captain sign-off, and match submission', async ({
@@ -120,11 +122,15 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       /Search by team, venue, table, division or date/i
     );
     await searchBox.fill(isContainerized ? 'Castle Sharks' : 'Hollingbury');
-    await page.getByRole('button', { name: isContainerized ? 'Upcoming' : 'Overdue', exact: true }).click();
-    await page
-      .getByRole('button', { name: /View Scorecard|Start Match/i })
-      .first()
-      .click();
+    if (!isContainerized) {
+      await page.getByRole('button', { name: 'Overdue', exact: true }).click();
+    }
+    const scorecardBtns = page.getByRole('button', {
+      name: /View Scorecard|Start Match/i,
+    });
+    await (
+      isContainerized ? scorecardBtns.last() : scorecardBtns.first()
+    ).click();
 
     // 1. Select Home Set 1 running order (Positions 1 to 5) via UI dropdowns and click Confirm
     for (let pos = 1; pos <= 5; pos++) {
@@ -249,8 +255,15 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await page.getByPlaceholder('Enter League Admin PIN').fill('000000');
     await page.getByRole('button', { name: 'Log In' }).click();
 
-    // 1. Teams & PINs Tab: Edit a Team's 6-digit PIN and restore it
-    await expect(page.getByText('King & Queen A').first()).toBeVisible();
+    // 1. Teams & PINs Tab: Filter to 'King & Queen A', edit its 6-digit PIN, and restore it
+    await expect(
+      page.getByRole('heading', { name: 'King & Queen A' })
+    ).toBeVisible();
+    await page
+      .getByPlaceholder(
+        /Search by team, venue, table, captain, player or street/i
+      )
+      .fill('King & Queen A');
     await page.getByRole('button', { name: 'Edit PIN' }).first().click();
     const pinInput = page.getByPlaceholder('6-digit PIN').first();
     await expect(pinInput).toBeVisible();
