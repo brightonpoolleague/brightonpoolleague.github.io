@@ -102,7 +102,7 @@ export const TeamsAndVenuesView: React.FC = () => {
               Teams &amp; Venues
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-              Directory of all league teams, home venues, table assignments, and
+              Directory of all league teams, home venues, table assignments and
               team captains for the {seasonName} season.
             </p>
           </div>

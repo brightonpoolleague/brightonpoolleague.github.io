@@ -67,7 +67,7 @@ export function createEmptyLineups(): MatchLineups {
 
 /**
  * Ensures a fixture always has a valid array of exactly 15 frames.
- * If rawFrames is empty, undefined, or missing frames, initializes from createEmptyFrames()
+ * If rawFrames is empty, undefined or missing frames, initializes from createEmptyFrames()
  * while preserving any recorded frame winners and dish flags.
  */
 export function ensureValidFrames(rawFrames: unknown): FrameData[] {
@@ -93,7 +93,7 @@ export function ensureValidFrames(rawFrames: unknown): FrameData[] {
 }
 
 /**
- * Ensures a fixture always has valid lineups for set1, set2, and set3.
+ * Ensures a fixture always has valid lineups for set1, set2 and set3.
  */
 export function ensureValidLineups(rawLineups: unknown): MatchLineups {
   const empty = createEmptyLineups();
@@ -362,7 +362,7 @@ export interface SubSummary {
 }
 
 /**
- * Checks if a player in a specific set, side, and slot index was substituted
+ * Checks if a player in a specific set, side and slot index was substituted
  * in from the previous set (or differs from Set 1 starting lineup).
  */
 export function isSlotSubstituted(

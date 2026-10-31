@@ -370,7 +370,7 @@ export const DocsAndRulesView: React.FC = () => {
                 <li>
                   <strong>b.</strong> Captains are responsible for ensuring
                   matches start on time, maintaining the flow of play through
-                  each set, and finishing the match before{' '}
+                  each set and finishing the match before{' '}
                   <strong>11:00 PM</strong>.
                 </li>
                 <li>
@@ -1101,7 +1101,7 @@ export const DocsAndRulesView: React.FC = () => {
                     Individual & Pairs Tournaments
                   </h3>
                   <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
-                    Official format, rules, match arrangement windows, and handicap matrices for all Winter 2026/27 competitions. All finals culminate on Presentation Night.
+                    Official format, rules, match arrangement windows and handicap matrices for all Winter 2026/27 competitions. All finals culminate on Presentation Night.
                   </p>
                 </div>
                 <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col items-start sm:items-end justify-center min-w-[200px] shrink-0">

@@ -3117,7 +3117,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               setConfirmDialog({
                 title: 'Reset Local Test Data?',
                 message:
-                  'Reset your local browser storage back to the default 8 test teams, 48 players, and 12 test fixtures? Any local changes you made will be overwritten.',
+                  'Reset your local browser storage back to the default 8 test teams, 48 players and 12 test fixtures? Any local changes you made will be overwritten.',
                 confirmLabel: 'Reset Test Data',
                 variant: 'warning',
                 onConfirm: () => resetLocalTestData(),
