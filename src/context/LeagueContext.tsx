@@ -136,7 +136,12 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     homeSet1Locked: Boolean(r.home_set1_locked),
     awaySet1Locked: Boolean(r.away_set1_locked),
     lineups: ensureValidLineups(r.lineups),
-    frames: ensureValidFrames(r.frames),
+    frames: applyByeRulesToFrames(
+      ensureValidLineups(r.lineups),
+      ensureValidFrames(r.frames),
+      (r.lag_winner as 'home' | 'away' | null) ?? null,
+      Boolean(r.home_set1_locked) && Boolean(r.away_set1_locked)
+    ),
     homeCaptainSigned: Boolean(r.home_captain_signed),
     awayCaptainSigned: Boolean(r.away_captain_signed),
     submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,

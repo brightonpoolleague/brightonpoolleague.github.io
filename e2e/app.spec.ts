@@ -282,13 +282,39 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     ).toBeVisible();
     await page.getByRole('button', { name: 'Cancel' }).click();
 
-    // 3. Add a new signed-on player to the first team
+    // 3. Add a new signed-on player to the first team, rename inline, and transfer to another team
     const addPlayerInput = page
       .getByPlaceholder(/Add player name/i)
       .first();
     await addPlayerInput.fill('Ronnie O-Test');
     await page.getByRole('button', { name: 'Add Player' }).first().click();
     await expect(page.getByText('Ronnie O-Test').first()).toBeVisible();
+
+    // 3b. Rename 'Ronnie O-Test' inline to 'Ronnie O-Renamed'
+    await page.getByTitle('Rename Ronnie O-Test').first().click();
+    const renameInput = page.locator('input[value="Ronnie O-Test"]').first();
+    await renameInput.fill('Ronnie O-Renamed');
+    await page.getByTitle('Save name').first().click();
+    await expect(page.getByText('Ronnie O-Renamed').first()).toBeVisible();
+
+    // 3c. Transfer 'Ronnie O-Renamed' to another team via the Transfer... dropdown
+    const playerChip = page
+      .locator('div')
+      .filter({ hasText: /^Ronnie O-RenamedTransfer\.\.\./ })
+      .first();
+    const transferSelect = playerChip.getByTitle(
+      'Transfer player to another team'
+    );
+    const targetTeamOption = await transferSelect
+      .locator('option')
+      .nth(1)
+      .getAttribute('value');
+    await transferSelect.selectOption(targetTeamOption!);
+    await expect(
+      page.getByRole('heading', { name: /Transfer Player: Ronnie O-Renamed\?/i })
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Transfer Player' }).click();
+    await expect(page.getByText('Ronnie O-Renamed')).toBeHidden();
 
     // 4. Switch to Scorecards sub-tab and test Incomplete Scorecard warning dialog
     await page
@@ -588,11 +614,27 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       page.getByRole('button', { name: 'Approve', exact: true }).first()
     ).toBeVisible();
 
-    // 4. Open Scorecard from Scorecards tab, confirm both Set 1 lineups, and switch to Set 2
+    // 4. Open Scorecard from Scorecards tab, assign 'BYE' in Position 5 for Home, confirm both Set 1 lineups, and verify BYE auto-awards Frame #5 to Away
     await page.getByRole('button', { name: 'Scorecard', exact: true }).first().click();
+    const homePos5Select = page
+      .locator('select')
+      .filter({ hasText: '-- Select Position 5 Player --' })
+      .first();
+    await homePos5Select.selectOption('BYE');
+
     await page
       .getByRole('button', { name: /Admin: Confirm Both & Begin/i })
       .click();
+
+    // Verify BYE slot renders as 'No Player (BYE)' in Set 1 Frame #5 and auto-awards the frame win ('W') to the Away opponent
+    const frame5Card = page
+      .locator('div.bg-slate-900.border.border-slate-800.rounded-xl')
+      .filter({ hasText: 'Frame #5' })
+      .first();
+    await expect(frame5Card.getByText('No Player (BYE)')).toBeVisible();
+    await expect(frame5Card.locator('button').nth(0)).toContainText('L');
+    await expect(frame5Card.locator('button').nth(1)).toContainText('W');
+
     await page.getByRole('button', { name: /Next: Set 2/i }).click();
 
     // 5. Open Set 2 substitution editor and substitute Position #1 for the 6th squad player
@@ -986,6 +1028,46 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
       expect(forgedPlayerRes.status()).toBe(400);
       expect(await forgedPlayerRes.text()).toContain(
         'must belong to the Home team'
+      );
+
+      // 3c. Security Check: Verify Team A ('t-prem-1') CANNOT edit a scorecard belonging to Team B vs Team C ('fix-scheduled-2')
+      const crossTeamEditRes = await request.post(
+        `${SUPABASE_URL}/rest/v1/rpc/captain_save_fixture`,
+        {
+          headers,
+          data: {
+            p_fixture_id: 'fix-scheduled-2',
+            p_team_id: 't-prem-1',
+            p_pin: '111222',
+            p_status: 'scheduled',
+            p_lag_winner: 'home',
+            p_home_set1_locked: true,
+            p_away_set1_locked: false,
+            p_lineups: {
+              set1: {
+                home: ['p-kq-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+              set2: {
+                home: ['p-kq-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+              set3: {
+                home: ['p-kq-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+            },
+            p_frames: [],
+            p_home_captain_signed: false,
+            p_away_captain_signed: false,
+            p_submitted_at: null,
+            p_edited_side: 'home',
+          },
+        }
+      );
+      expect(crossTeamEditRes.status()).toBe(400);
+      expect(await crossTeamEditRes.text()).toContain(
+        "Team Captains can only update scorecards for their own team's fixtures"
       );
 
       // 4. Home Captain submits & locks their Set 1 lineup (side='home') via PostgreSQL RPC
