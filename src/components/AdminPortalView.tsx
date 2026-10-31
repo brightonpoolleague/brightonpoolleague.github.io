@@ -2588,7 +2588,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
         return (
           <div className="space-y-3.5 min-w-0">
-            {/* Division & Knockout Filter */}
+            {/* Filters */}
+            <div className="space-y-2.5 min-w-0">
+              {/* Division & Knockout Filter */}
             <div className="w-full overflow-x-auto pb-1">
               <div className="inline-flex items-center gap-1.5 min-w-max">
                 <button
@@ -2917,8 +2919,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Scorecards Container */}
+          {/* Scorecards Container */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
