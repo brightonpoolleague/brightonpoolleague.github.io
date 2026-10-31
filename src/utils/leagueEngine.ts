@@ -16,7 +16,7 @@ export const HOME_SLOT_ORDER: Record<1 | 2 | 3, [1, 2, 3, 4, 5]> = {
   3: [1, 2, 3, 4, 5],
 };
 
-// Matches static/sets.png and the physical scorecard:
+// Matches the official physical scorecard layout:
 // Set 1: 1, 2, 3, 4, 5
 // Set 2: 3, 4, 5, 2, 1
 // Set 3: 4, 1, 2, 5, 3
