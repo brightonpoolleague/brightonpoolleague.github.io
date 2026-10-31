@@ -1655,7 +1655,7 @@ export const DocsAndRulesView: React.FC = () => {
                     Roll of Honour
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
-                    Brighton &amp; Hove Pool League championship records, division winners, cup triumphs, and individual honours spanning more than 40 years.
+                    Brighton &amp; Hove Pool League championship records, division winners, cup triumphs, and individual honours.
                   </p>
                 </div>
 
