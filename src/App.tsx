@@ -99,7 +99,7 @@ const MainShell: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-950 text-slate-100 flex flex-col pb-20 md:pb-8">
+    <div className="min-h-screen min-h-[100dvh] w-full max-w-full overflow-x-clip bg-slate-950 text-slate-100 flex flex-col pb-24 md:pb-8">
       {/* Top Header */}
       <header className="sticky top-0 z-30 w-full bg-slate-900 border-b border-slate-800">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3">
@@ -232,7 +232,9 @@ const MainShell: React.FC = () => {
       </main>
 
       {/* Mobile Bottom Tab Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full z-30 bg-slate-900 border-t border-slate-800 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] after:absolute after:top-full after:left-0 after:right-0 after:h-24 after:bg-slate-900">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full z-30 bg-slate-900 border-t border-slate-800 px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {/* Solid Under-Nav Extension: fills dynamic gap when mobile browser toolbar collapses or bounces on scroll */}
+        <div className="absolute top-full left-0 right-0 h-48 bg-slate-900 pointer-events-none" />
         <div
           className="grid gap-1"
           style={{
