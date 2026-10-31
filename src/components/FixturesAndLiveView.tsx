@@ -626,13 +626,61 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             <p>
               No fixtures match &ldquo;<strong className="text-white">{searchQuery.trim()}</strong>&rdquo;.
             </p>
-          ) : dateFilter !== 'ALL' ? (
-            <p>
-              No fixtures match <strong>{formatMatchDate(dateFilter)}</strong>.
-            </p>
-          ) : (
-            <p>No fixtures match your selected division and status filters.</p>
-          )}
+          ) : (() => {
+            const stateLabel =
+              statusFilter === 'live'
+                ? 'Live'
+                : statusFilter === 'scheduled'
+                ? 'Upcoming'
+                : statusFilter === 'past'
+                ? 'Past'
+                : statusFilter === 'submitted'
+                ? 'Awaiting Approval'
+                : statusFilter === 'approved'
+                ? 'Approved'
+                : statusFilter === 'mine'
+                ? 'My Matches'
+                : null;
+
+            const divLabel =
+              selectedDivision === 'KNOCKOUT'
+                ? 'Knockouts'
+                : selectedDivision !== 'ALL'
+                ? selectedDivision
+                : null;
+
+            const dateStr = dateFilter !== 'ALL' ? formatMatchDate(dateFilter) : null;
+
+            if (stateLabel && divLabel) {
+              return (
+                <p>
+                  No &lsquo;{stateLabel}&rsquo; fixtures in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                </p>
+              );
+            }
+
+            if (stateLabel) {
+              return (
+                <p>
+                  No &lsquo;{stateLabel}&rsquo; fixtures{dateStr ? ` on ${dateStr}` : ' across all divisions'}.
+                </p>
+              );
+            }
+
+            if (divLabel) {
+              return (
+                <p>
+                  No fixtures in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                </p>
+              );
+            }
+
+            if (dateStr) {
+              return <p>No fixtures on {dateStr}.</p>;
+            }
+
+            return <p>No fixtures found for {seasonName}.</p>;
+          })()}
         </div>
       ) : (
         <div className="space-y-3">
