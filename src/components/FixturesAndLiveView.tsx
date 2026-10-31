@@ -411,14 +411,14 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
             {/* Native Calendar Picker */}
             <div
-              className="relative flex-shrink-0"
+              className="relative flex-shrink-0 overflow-hidden rounded-xl"
               title="Pick specific date from calendar"
             >
               <input
                 type="date"
                 value={dateFilter === 'ALL' ? '' : dateFilter}
                 onChange={(e) => setDateFilter(e.target.value || 'ALL')}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full max-w-full"
               />
               <div
                 className={`p-2 rounded-xl border text-xs transition flex items-center justify-center ${
@@ -434,8 +434,12 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             {dateFilter !== 'ALL' && (
               <button
                 type="button"
-                onClick={() => setDateFilter('ALL')}
-                className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDateFilter('ALL');
+                }}
+                onMouseDown={(e) => e.preventDefault()}
+                className="relative z-10 p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition flex-shrink-0"
                 title="Reset date filter"
               >
                 <X className="w-3.5 h-3.5" />
