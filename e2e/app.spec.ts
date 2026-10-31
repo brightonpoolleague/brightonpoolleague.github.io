@@ -434,7 +434,7 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
       true
     );
 
-    // 2. Private tables (team_pins, league_settings) return 0 rows due to RLS
+    // 2. Private tables (team_pins, league_settings, pin_attempt_log, fixture_private_lineups) return 0 rows due to RLS
     const pinsRes = await request.get(
       `${SUPABASE_URL}/rest/v1/team_pins?select=*`,
       { headers }
@@ -451,7 +451,31 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
     const leakedSettings = await settingsRes.json();
     expect(leakedSettings).toEqual([]);
 
-    // 3. Direct anonymous INSERT into public.teams is blocked by RLS
+    const privateLineupsRes = await request.get(
+      `${SUPABASE_URL}/rest/v1/fixture_private_lineups?select=*`,
+      { headers }
+    );
+    expect(privateLineupsRes.ok()).toBeTruthy();
+    expect(await privateLineupsRes.json()).toEqual([]);
+
+    const attemptLogRes = await request.get(
+      `${SUPABASE_URL}/rest/v1/pin_attempt_log?select=*`,
+      { headers }
+    );
+    expect(attemptLogRes.ok()).toBeTruthy();
+    expect(await attemptLogRes.json()).toEqual([]);
+
+    // 3. Internal rate-limit helper functions cannot be called directly by anon
+    const clearLimitRpc = await request.post(
+      `${SUPABASE_URL}/rest/v1/rpc/clear_pin_rate_limit`,
+      {
+        headers,
+        data: { p_ip: '127.0.0.1', p_action: 'admin' },
+      }
+    );
+    expect(clearLimitRpc.status()).toBeGreaterThanOrEqual(400);
+
+    // 4. Direct anonymous INSERT into public.teams is blocked by RLS
     const unauthInsert = await request.post(`${SUPABASE_URL}/rest/v1/teams`, {
       headers,
       data: {
@@ -463,6 +487,30 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
       },
     });
     expect(unauthInsert.status()).toBeGreaterThanOrEqual(400);
+
+    // 5. Submitted or approved fixtures cannot be modified by Captains via RPC
+    const editSubmittedRes = await request.post(
+      `${SUPABASE_URL}/rest/v1/rpc/captain_save_fixture`,
+      {
+        headers,
+        data: {
+          p_fixture_id: 'fix-submitted-1',
+          p_team_id: 't-prem-3',
+          p_pin: '555666',
+          p_status: 'live',
+          p_lag_winner: 'home',
+          p_home_set1_locked: true,
+          p_away_set1_locked: true,
+          p_lineups: {},
+          p_frames: [],
+          p_home_captain_signed: false,
+          p_away_captain_signed: false,
+          p_submitted_at: null,
+          p_edited_side: 'home',
+        },
+      }
+    );
+    expect(editSubmittedRes.status()).toBeGreaterThanOrEqual(400);
   });
 
   test('verifies server-side PIN RPCs and syncs real database changes to the browser UI', async ({
@@ -606,6 +654,24 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
       await expect(
         awayPage.getByText(/lineup confirmed \(1\/2\)/i).first()
       ).toBeVisible({ timeout: 10_000 });
+
+      // 5b. Blind Set 1 Secrecy Check: Verify that querying public.fixtures via REST/DevTools while 1/2 locked
+      // masks the Home Set 1 player IDs as [null,null,null,null,null] so the Away Captain cannot peek in DevTools!
+      const blindCheckRes = await request.get(
+        `${SUPABASE_URL}/rest/v1/fixtures?id=eq.fix-scheduled-1&select=lineups,home_set1_locked,away_set1_locked`,
+        { headers }
+      );
+      expect(blindCheckRes.ok()).toBeTruthy();
+      const [blindFixture] = await blindCheckRes.json();
+      expect(blindFixture.home_set1_locked).toBe(true);
+      expect(blindFixture.away_set1_locked).toBe(false);
+      expect(blindFixture.lineups.set1.home).toEqual([
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]);
 
       // 6. Away Captain now submits & locks their Set 1 lineup (side='away')
       const awaySaveRes = await request.post(

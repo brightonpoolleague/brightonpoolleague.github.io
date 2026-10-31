@@ -4,6 +4,12 @@ grant select, insert, update, delete on all tables in schema public to anon, aut
 grant usage, select on all sequences in schema public to anon, authenticated, service_role;
 grant execute on all functions in schema public to anon, authenticated, service_role;
 
+-- Re-enforce strict revocation of internal rate-limiting helpers from public/anon/authenticated
+revoke all on function public.get_request_client_ip() from public, anon, authenticated;
+revoke all on function public.check_pin_rate_limit(text) from public, anon, authenticated;
+revoke all on function public.record_failed_pin_attempt(text, text) from public, anon, authenticated;
+revoke all on function public.clear_pin_rate_limit(text, text) from public, anon, authenticated;
+
 -- Ensure known Admin PIN for E2E tests
 insert into public.league_settings (id, admin_pin)
 values ('default', '000000')

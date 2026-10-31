@@ -146,6 +146,53 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
   };
 }
 
+// Preserves locally-known Set 1 lineups on a captain's own browser while the server masks
+// public.fixtures.lineups.set1 with [null,null,null,null,null] prior to both sides locking Set 1.
+function mergeBlindSet1Lineups(
+  existing: Fixture | undefined,
+  incoming: Fixture
+): Fixture {
+  if (!existing) return incoming;
+  if (incoming.homeSet1Locked && incoming.awaySet1Locked) {
+    return incoming;
+  }
+  const incHomeS1 = incoming.lineups.set1.home;
+  const incAwayS1 = incoming.lineups.set1.away;
+  const exHomeS1 = existing.lineups.set1.home;
+  const exAwayS1 = existing.lineups.set1.away;
+
+  const keepHome =
+    incHomeS1.every((s) => s === null) && exHomeS1.some((s) => s !== null);
+  const keepAway =
+    incAwayS1.every((s) => s === null) && exAwayS1.some((s) => s !== null);
+
+  if (!keepHome && !keepAway) return incoming;
+
+  const mergedLineups = structuredClone(incoming.lineups);
+  if (keepHome) {
+    mergedLineups.set1.home = [...exHomeS1];
+    if (mergedLineups.set2.home.every((s) => s === null)) {
+      mergedLineups.set2.home = [...existing.lineups.set2.home];
+    }
+    if (mergedLineups.set3.home.every((s) => s === null)) {
+      mergedLineups.set3.home = [...existing.lineups.set3.home];
+    }
+  }
+  if (keepAway) {
+    mergedLineups.set1.away = [...exAwayS1];
+    if (mergedLineups.set2.away.every((s) => s === null)) {
+      mergedLineups.set2.away = [...existing.lineups.set2.away];
+    }
+    if (mergedLineups.set3.away.every((s) => s === null)) {
+      mergedLineups.set3.away = [...existing.lineups.set3.away];
+    }
+  }
+  return {
+    ...incoming,
+    lineups: mergedLineups,
+  };
+}
+
 interface LeagueContextValue {
   seasons: Season[];
   seasonId: string;
@@ -469,11 +516,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         const mappedFixtures: Fixture[] = fixturesRes.data.map((r) =>
           mapFixtureRow(r as Record<string, unknown>)
         );
-        setAllFixtures(mappedFixtures);
-        localStorage.setItem(
-          STORAGE_KEYS.FIXTURES,
-          JSON.stringify(mappedFixtures)
-        );
+        setAllFixtures((prev) => {
+          const prevById = new Map(prev.map((f) => [f.id, f]));
+          const next = mappedFixtures.map((updated) =>
+            mergeBlindSet1Lineups(prevById.get(updated.id), updated)
+          );
+          localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(next));
+          return next;
+        });
         advanceFixturesHighWater(fixturesRes.data as Record<string, unknown>[]);
         lastFullRefreshAtRef.current = Date.now();
       }
@@ -512,7 +562,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const changed = data.map((r) => mapFixtureRow(r as Record<string, unknown>));
       const changedById = new Map(changed.map((f) => [f.id, f]));
       setAllFixtures((prev) => {
-        const next = prev.map((f) => changedById.get(f.id) ?? f);
+        const next = prev.map((f) => {
+          const updated = changedById.get(f.id);
+          return updated ? mergeBlindSet1Lineups(f, updated) : f;
+        });
         const existingIds = new Set(prev.map((f) => f.id));
         for (const f of changed) {
           if (!existingIds.has(f.id)) next.push(f);
@@ -537,7 +590,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!error && data) {
         const updated = mapFixtureRow(data as Record<string, unknown>);
         setAllFixtures((prev) => {
-          const next = prev.map((f) => (f.id === updated.id ? updated : f));
+          const next = prev.map((f) =>
+            f.id === updated.id ? mergeBlindSet1Lineups(f, updated) : f
+          );
           localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(next));
           return next;
         });
@@ -657,7 +712,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               setAllFixtures((prev) => {
                 const exists = prev.some((f) => f.id === updated.id);
                 const next = exists
-                  ? prev.map((f) => (f.id === updated.id ? updated : f))
+                  ? prev.map((f) =>
+                      f.id === updated.id ? mergeBlindSet1Lineups(f, updated) : f
+                    )
                   : [...prev, updated];
                 localStorage.setItem(
                   STORAGE_KEYS.FIXTURES,
@@ -888,9 +945,18 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       setSession(next);
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(next));
+        if (role === 'viewer' && isCloudConnected) {
+          localStorage.removeItem(STORAGE_KEYS.ADMIN_PIN);
+          setAdminPin('');
+          setAllTeams((prev) => {
+            const scrubbed = prev.map((t) => ({ ...t, captainPin: '' }));
+            localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(scrubbed));
+            return scrubbed;
+          });
+        }
       }
     },
-    [allTeams]
+    [allTeams, isCloudConnected]
   );
 
   const loginAsCaptainWithPin = useCallback(
@@ -1090,13 +1156,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        const { error } = await supabase.rpc('set_team_pin', {
+        const { data, error } = await supabase.rpc('set_team_pin', {
           p_admin_pin: adminPin,
           p_team_id: teamId,
           p_new_pin: clean,
         });
         if (error) {
           return { success: false, error: error.message };
+        }
+        if (data === false) {
+          return {
+            success: false,
+            error: 'Unauthorized: Invalid League Admin PIN.',
+          };
         }
       }
 
@@ -1520,6 +1592,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_status: newFixture.status,
           p_lineups: newFixture.lineups,
           p_frames: newFixture.frames,
+          p_match_type: newFixture.matchType ?? 'league',
+          p_competition_name: newFixture.competitionName ?? null,
+          p_round: newFixture.round ?? null,
+          p_play_all_frames: Boolean(newFixture.playAllFrames),
+          p_knockout_format: newFixture.knockoutFormat ?? 'first_to_8',
+          p_cup_name: newFixture.cupName ?? null,
+          p_cup_round: newFixture.cupRound ?? null,
         });
       }
       return newFixture;
@@ -1668,6 +1747,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_status: stamped.status,
           p_lineups: stamped.lineups,
           p_frames: stamped.frames,
+          p_match_type: stamped.matchType ?? 'league',
+          p_competition_name: stamped.competitionName ?? null,
+          p_round: stamped.round ?? null,
+          p_play_all_frames: Boolean(stamped.playAllFrames),
+          p_knockout_format: stamped.knockoutFormat ?? 'first_to_8',
+          p_cup_name: stamped.cupName ?? null,
+          p_cup_round: stamped.cupRound ?? null,
         });
       }
     },
@@ -1684,7 +1770,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         if (session.role === 'admin') {
-          const { error } = await supabase.rpc('admin_save_fixture', {
+          const { data: adminOk, error } = await supabase.rpc('admin_save_fixture', {
             p_admin_pin: adminPin,
             p_fixture_id: updated.id,
             p_status: updated.status,
@@ -1698,7 +1784,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             p_submitted_at: updated.submittedAt ?? null,
             p_approved_at: updated.approvedAt ?? null,
           });
-          if (error) throw error;
+          if (error || adminOk === false) throw error || new Error('Unauthorized');
           return true;
         } else if (session.role === 'captain' && session.teamId) {
           let pushStatus = updated.status;
@@ -1720,22 +1806,25 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             p_submitted_at: updated.submittedAt ?? null,
           };
 
-          const { error } = await supabase.rpc('captain_save_fixture', {
+          const { data: capOk, error } = await supabase.rpc('captain_save_fixture', {
             ...baseArgs,
             p_edited_side: editedSide ?? null,
           });
 
-          if (error) {
+          if (error || capOk === false) {
+            if (capOk === false) throw new Error('Unauthorized');
             // Fallback if database schema hasn't been re-run with p_edited_side yet
-            if (error.code === 'PGRST202') {
+            if (error?.code === 'PGRST202') {
               const retryRes = await supabase.rpc(
                 'captain_save_fixture',
                 baseArgs
               );
-              if (retryRes.error) throw retryRes.error;
+              if (retryRes.error || retryRes.data === false) {
+                throw retryRes.error || new Error('Unauthorized');
+              }
               return true;
             }
-            throw error;
+            throw error || new Error('Failed to save fixture');
           }
           return true;
         }
