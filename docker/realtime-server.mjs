@@ -112,6 +112,30 @@ function handleClientMessage(client, rawText) {
 
   if (event === 'phx_join') {
     const pgChanges = payload?.config?.postgres_changes || [];
+
+    // Emulate Supabase Realtime publication & RLS enforcement:
+    // Only tables in `supabase_realtime` publication (TABLES) can be subscribed to.
+    // Attempting to subscribe to private tables (e.g. `team_pins`, `league_settings`)
+    // causes Supabase Realtime to reject the channel join with status: 'error'.
+    const unauthorized = pgChanges.find(
+      (c) => c.table && c.table !== '*' && !TABLES.includes(c.table)
+    );
+    if (unauthorized) {
+      sendPhxMessage(client.socket, [
+        join_ref,
+        ref,
+        topic,
+        'phx_reply',
+        {
+          status: 'error',
+          response: {
+            reason: `Table '${unauthorized.table}' is not in the supabase_realtime publication or is restricted by Row-Level Security. Subscription rejected.`,
+          },
+        },
+      ]);
+      return;
+    }
+
     const bindings = pgChanges.map((filter, idx) => ({
       ...filter,
       id: idx + 1,

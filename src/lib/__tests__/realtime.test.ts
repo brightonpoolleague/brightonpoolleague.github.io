@@ -75,4 +75,87 @@ describe('Supabase Realtime WebSocket Multi-Captain Sync', () => {
       await rt.close();
     }
   });
+
+  it('rejects Realtime subscription when an unauthorized private table (e.g. team_pins) is requested', async () => {
+    const port = 44330;
+    const rt = startRealtimeServer(port, false);
+
+    try {
+      const client = createClient(
+        `http://127.0.0.1:${port}`,
+        'test-anon-key',
+        {
+          auth: { persistSession: false },
+        }
+      );
+
+      const statusResult = await new Promise<string>((resolve) => {
+        client
+          .channel('test-unauthorized-pins')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'team_pins' },
+            () => {}
+          )
+          .subscribe((status) => {
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'SUBSCRIBED') {
+              resolve(status);
+            }
+          });
+      });
+
+      // Attempting to subscribe to private table 'team_pins' must NOT succeed
+      expect(statusResult).toBe('CHANNEL_ERROR');
+
+      await client.removeAllChannels();
+    } finally {
+      await rt.close();
+    }
+  });
+
+  it('allows full multi-table subscription matching production LeagueContext (fixtures, teams, players)', async () => {
+    const port = 44331;
+    const rt = startRealtimeServer(port, false);
+
+    try {
+      const client = createClient(
+        `http://127.0.0.1:${port}`,
+        'test-anon-key',
+        {
+          auth: { persistSession: false },
+        }
+      );
+
+      const statusResult = await new Promise<string>((resolve) => {
+        client
+          .channel('public:db-changes')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'fixtures' },
+            () => {}
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'teams' },
+            () => {}
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'players' },
+            () => {}
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR') {
+              resolve(status);
+            }
+          });
+      });
+
+      expect(statusResult).toBe('SUBSCRIBED');
+
+      await client.removeAllChannels();
+    } finally {
+      await rt.close();
+    }
+  });
 });
