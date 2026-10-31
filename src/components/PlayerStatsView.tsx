@@ -124,7 +124,7 @@ export const PlayerStatsView: React.FC = () => {
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
               {activeBoard === 'averages'
-                ? `${effectiveDivision} Player Averages`
+                ? `${effectiveDivision} Player Stats`
                 : `${effectiveDivision === 'ALL' ? 'All Divisions' : effectiveDivision} Dish Leaderboard`}
             </h1>
           </div>
@@ -137,7 +137,7 @@ export const PlayerStatsView: React.FC = () => {
               title={
                 activeBoard === 'dishes'
                   ? 'Export Dish Leaderboard'
-                  : 'Export Player Averages'
+                  : 'Export Player Stats'
               }
             >
               <Camera className="w-3.5 h-3.5 text-emerald-400" />
@@ -380,9 +380,9 @@ export const PlayerStatsView: React.FC = () => {
         modalTitle={
           activeBoard === 'dishes'
             ? 'Export Dish Leaderboard'
-            : 'Export Player Averages'
+            : 'Export Player Stats'
         }
-        title={activeBoard === 'dishes' ? 'Dish Leaderboard' : 'Player Averages'}
+        title={activeBoard === 'dishes' ? 'Dish Leaderboard' : 'Player Stats'}
         divisionName={
           activeBoard === 'dishes' && effectiveDivision === 'ALL'
             ? undefined
