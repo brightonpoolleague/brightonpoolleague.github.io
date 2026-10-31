@@ -1738,7 +1738,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       }}
     >
       {/* Top Bar */}
-      <div className="bg-slate-900 border-b border-slate-800 px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 touch-none select-none">
+      <div className="bg-slate-900 border-b border-slate-800 px-3 sm:px-6 py-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] flex items-center justify-between gap-2 shrink-0 touch-none select-none">
         <div className="flex items-center gap-2.5 min-w-0">
           <img
             src={`${import.meta.env.BASE_URL}logo.png`}
@@ -2895,7 +2895,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
       {/* Fixed Bottom Captain Sign-Off & Finish Match Section (appears once match is complete for logged-in captains/admin) */}
       {showSignOff && (
-        <div className="bg-slate-900/95 border-t border-slate-800 shadow-2xl px-3 sm:px-6 py-2.5 shrink-0 shadow-md">
+        <div className="bg-slate-900/95 border-t border-slate-800 shadow-2xl px-3 sm:px-6 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] shrink-0 shadow-md">
           <div className="max-w-4xl mx-auto space-y-2">
             {/* Prominent Match Completion Prompt (appears when all 15 frames are complete, before submission) */}
             {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
