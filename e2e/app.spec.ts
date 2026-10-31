@@ -765,7 +765,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await page.getByRole('button', { name: 'Champion of Champions' }).click();
     await page.getByRole('button', { name: 'Competitions' }).click();
     await expect(page.getByText('Open Singles').first()).toBeVisible();
-    await expect(page.getByText("Captains' Cup").first()).toBeVisible();
+    await expect(page.getByText('Captains Cup').first()).toBeVisible();
     await page.getByRole('button', { name: 'Roll of Honour' }).click();
     await page.getByRole('button', { name: 'Knockout Cup' }).click();
     await expect(page.getByText(/Winner/i).first()).toBeVisible();

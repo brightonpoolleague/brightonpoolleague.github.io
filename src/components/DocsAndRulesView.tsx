@@ -1049,7 +1049,7 @@ export const DocsAndRulesView: React.FC = () => {
                 { id: 'open-doubles', label: 'Open Doubles' },
                 { id: 'ladies-singles', label: 'Ladies Singles' },
                 { id: 'mixed-doubles', label: 'Mixed Doubles' },
-                { id: 'captains-cup', label: "Captains' Cup" },
+                { id: 'captains-cup', label: 'Captains Cup' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1333,7 +1333,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </div>
               )}
 
-              {/* 5. Captains' Cup */}
+              {/* 5. Captains Cup */}
               {(compFilter === 'all' || compFilter === 'captains-cup') && (
                 <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all lg:col-span-2">
                   <div className="space-y-4">
@@ -1346,7 +1346,7 @@ export const DocsAndRulesView: React.FC = () => {
                           <div className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
                             Handicapped Invitational
                           </div>
-                          <h4 className="text-xl sm:text-2xl font-black text-white">Captains' Cup</h4>
+                          <h4 className="text-xl sm:text-2xl font-black text-white">Captains Cup</h4>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
