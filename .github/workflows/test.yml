@@ -1,6 +1,8 @@
 name: Test Suite & Containerized E2E
 
 on:
+  push:
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -10,7 +12,7 @@ permissions:
 
 concurrency:
   group: test-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   unit-tests:
