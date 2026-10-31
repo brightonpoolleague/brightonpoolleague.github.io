@@ -71,6 +71,13 @@ export const DocsAndRulesView: React.FC = () => {
       ? seasonMatchedRows.filter((r) => r.some((c) => String(c).toLowerCase().includes(q)))
       : seasonMatchedRows;
 
+    const isTeamOrPair =
+      headers[1]?.toLowerCase().includes('winners') ||
+      ['league', 'knockout', 'doubles', 'mixed-doubles'].includes(honourTab);
+    const reigningBadgeText = isTeamOrPair ? 'Reigning Champions' : 'Reigning Champion';
+    const winnerLabel = isTeamOrPair ? 'Winners' : 'Winner';
+    const runnerUpLabel = isTeamOrPair ? 'Runners-up' : 'Runner-up';
+
     const renderSeasonBadge = (seasonText: string | number) => {
       const text = String(seasonText);
       const isSummer = text.toLowerCase().includes('summer');
@@ -96,31 +103,8 @@ export const DocsAndRulesView: React.FC = () => {
 
     if (filteredRows.length === 0) {
       return (
-        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-6 text-center text-xs text-slate-400 space-y-2">
-          <div>
-            No records found{seasonFilter !== 'all' ? ` for ${seasonFilter === 'winter' ? 'Winter' : 'Summer'} seasons` : ''}
-            {honourSearch ? <> matching <span className="text-white font-semibold">"{honourSearch}"</span></> : ''}.
-          </div>
-          <div className="flex items-center justify-center gap-3 pt-1">
-            {seasonFilter !== 'all' && (
-              <button
-                type="button"
-                onClick={() => setSeasonFilter('all')}
-                className="text-amber-400 hover:text-amber-300 font-semibold underline text-xs cursor-pointer"
-              >
-                Show all seasons
-              </button>
-            )}
-            {honourSearch && (
-              <button
-                type="button"
-                onClick={() => setHonourSearch('')}
-                className="text-emerald-400 hover:text-emerald-300 font-semibold underline text-xs cursor-pointer"
-              >
-                Clear search
-              </button>
-            )}
-          </div>
+        <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-6 text-center text-xs text-slate-400">
+          No records match '{honourSearch}'.
         </div>
       );
     }
@@ -140,7 +124,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-[11px] font-black uppercase tracking-wider text-amber-300">
                       <Trophy className="w-3 h-3" />
-                      Reigning Champion
+                      {reigningBadgeText}
                     </span>
                     {renderSeasonBadge(spotlightRow[0])}
                   </div>
@@ -158,7 +142,7 @@ export const DocsAndRulesView: React.FC = () => {
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 text-xs">
-                        <span className="text-slate-400 font-medium">Runner-up:</span>
+                        <span className="text-slate-400 font-medium">{runnerUpLabel}:</span>
                         <strong className="text-slate-200">{spotlightRow[2]}</strong>
                       </span>
                     )}
@@ -188,7 +172,7 @@ export const DocsAndRulesView: React.FC = () => {
                       🏆
                     </span>
                     <div className="leading-tight">
-                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Winner</div>
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{winnerLabel}</div>
                       <div className="font-bold text-white text-xs sm:text-sm">{r[1]}</div>
                     </div>
                   </div>
@@ -206,7 +190,7 @@ export const DocsAndRulesView: React.FC = () => {
                             🥈
                           </span>
                           <div className="leading-tight">
-                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Runner-up</div>
+                            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{runnerUpLabel}</div>
                             <div className="text-slate-300 text-xs">{r[2]}</div>
                           </div>
                         </>
@@ -1655,7 +1639,7 @@ export const DocsAndRulesView: React.FC = () => {
                     Roll of Honour
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
-                    Brighton &amp; Hove Pool League championship records, division winners, cup triumphs and individual honours.
+                    Brighton &amp; Hove Pool League records, division winners, cup triumphs and individual honours.
                   </p>
                 </div>
 
