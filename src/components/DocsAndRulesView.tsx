@@ -966,10 +966,10 @@ export const DocsAndRulesView: React.FC = () => {
                     <span>Season {seasonName || 'Winter 2026/27'} Competitions</span>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    League Cups & Tournaments
+                    Individual & Pairs Tournaments
                   </h3>
                   <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
-                    Official format, rules, match arrangement windows, and handicap matrices for all Winter 2026/27 cup competitions. All finals culminate on Presentation Night.
+                    Official format, rules, match arrangement windows, and handicap matrices for all Winter 2026/27 competitions. All finals culminate on Presentation Night.
                   </p>
                 </div>
                 <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col items-start sm:items-end justify-center min-w-[200px] shrink-0">
@@ -1016,6 +1016,28 @@ export const DocsAndRulesView: React.FC = () => {
                     <div className="text-xs text-slate-400">Prize money and trophies awarded to winners and runners-up.</div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* How to Enter Callout */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>How to Enter</span>
+                    <span className="text-[11px] font-semibold text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">Entries Open</span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-slate-300 mt-0.5">
+                    To enter any of these competitions, please contact <strong className="text-amber-400 font-semibold">Cliona Saunders-Cooney</strong>.
+                  </div>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-semibold text-slate-300 shrink-0 self-start sm:self-auto">
+                <Coins className="w-3.5 h-3.5 text-emerald-400" />
+                <span>£10 Entry per event</span>
               </div>
             </div>
 
