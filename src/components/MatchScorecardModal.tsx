@@ -970,7 +970,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               .single();
             if (
               remote &&
-              (!remote.home_captain_signed || !remote.away_captain_signed)
+              (remote.status === 'submitted' ||
+                remote.status === 'approved' ||
+                !remote.home_captain_signed ||
+                !remote.away_captain_signed)
             ) {
               await refreshSingleFixture(fixture.id);
               return;
@@ -1009,7 +1012,25 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     canSignHome,
     canSignAway,
     canManageLeague,
-    handleFinishMatch,
+  ]);
+
+  // Auto-dismiss finish match modal if status becomes submitted/approved or either captain un-signs
+  useEffect(() => {
+    if (confirmDialog?.title === 'Finish & Submit Match Result?') {
+      if (
+        fixture.status === 'submitted' ||
+        fixture.status === 'approved' ||
+        !fixture.homeCaptainSigned ||
+        !fixture.awayCaptainSigned
+      ) {
+        setConfirmDialog(null);
+      }
+    }
+  }, [
+    confirmDialog?.title,
+    fixture.status,
+    fixture.homeCaptainSigned,
+    fixture.awayCaptainSigned,
   ]);
 
   const renderLineupSelector = (setNumber: 1 | 2 | 3, side: 'home' | 'away') => {
@@ -3123,8 +3144,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  confirmDialog.onConfirm();
+                  const onConfirm = confirmDialog.onConfirm;
                   setConfirmDialog(null);
+                  onConfirm();
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold shadow transition ${
                   confirmDialog.variant === 'success'
