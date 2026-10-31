@@ -1,10 +1,8 @@
 .idea
 .DS_Store
-public
-resources
-.hugo_build.lock
 node_modules
 dist
+public
 *.tsbuildinfo
 .env
 .env.local

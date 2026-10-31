@@ -1,13 +1,80 @@
-# Brighton Pool League
+# City of Brighton & Hove Pool League
 
-Static website for the Brighton Pool League.
+Official web application and live scoring platform for the City of Brighton & Hove Pool League.
 
-## Pre-requisites
+Hosted live at: **[brightonpoolleague.github.io](https://brightonpoolleague.github.io/)**
 
-- Install [asdf version manager](https://asdf-vm.com/guide/getting-started.html)
-- Install `hugo` via asdf by running `asdf install`
-- Install `make` via your system package manager (e.g. `brew install make` on macOS)
+---
 
-To run the site locally, use the command:
+## Features
 
-`make run-docs-site`
+- **Live Scoring & Digital Scorecards**: Real-time match scoring with multi-frame tracking, player selection, lag winners, break dishes, reverse dishes, and team captain approvals via 6-digit PIN verification.
+- **League Tables & Divisions**: Live calculated standings across Premier League, Division 1, Division 2, and Division 3 with frame differential, bonus points, and tiebreakers.
+- **Player Stats & Roll of Honour**: Comprehensive player statistics including frames played/won, win percentages, most dishes (Top Dish), and historical Roll of Honour archives.
+- **Fixtures & Results**: Filterable match calendar by division and date, with downloadable PDF/PNG scorecards and shareable match summaries.
+- **Venues & Teams**: Directory of venues with map directions, contact numbers, match table quantities, and assigned team lists.
+- **Admin Portal**: League administration controls for fixtures, score adjustments, team PIN regeneration, venue management, and season initialization.
+- **Offline PWA Support**: Progressive Web App with service worker caching for reliable venue use on mobile devices even with poor cellular reception.
+
+---
+
+## Tech Stack
+
+- **Frontend**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
+- **Backend & Database**: [Supabase](https://supabase.com/) (PostgreSQL with Row Level Security & Realtime subscriptions)
+- **Deployment**: [GitHub Pages](https://pages.github.com/) via GitHub Actions (`.github/workflows/deploy.yml`)
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v20+ or v22 LTS recommended)
+- npm (v10+)
+
+### Setup & Run Locally
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/brightonpoolleague/brightonpoolleague.github.io.git
+   cd brightonpoolleague.github.io
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables (optional for local fallback mode):
+   Create a `.env.local` file with your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+   ```
+   *(If omitted, the app runs in demo/offline mode using built-in seed data).*
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Build for production:
+   ```bash
+   npm run build
+   ```
+
+6. Preview the production build:
+   ```bash
+   npm run preview
+   ```
+
+---
+
+## Automated Workflows
+
+- **`deploy.yml`**: Builds and deploys the Vite app to GitHub Pages on every push to `main`.
+- **`db-backup.yml`**: Automated weekly SQL dump backup of the Supabase PostgreSQL database scheduled for Tuesday mornings at 03:00 UTC.
+- **`keep-alive.yml`**: Daily Supabase ping to prevent database pause on the free tier.
+- **`supabase-sync.yml`**: Automatically applies schema changes from `supabase/schema.sql` to Supabase.
