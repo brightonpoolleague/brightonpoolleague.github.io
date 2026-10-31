@@ -1,5 +1,20 @@
 import React, { useState } from 'react';
-import { BookOpen, Crown, FileText, Scale, Trophy } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  Calendar,
+  Clock,
+  Coins,
+  Crown,
+  FileText,
+  MapPin,
+  MessageSquare,
+  Scale,
+  Shuffle,
+  Sparkles,
+  Trophy,
+  Users,
+} from 'lucide-react';
 import { useLeague } from '../context/LeagueContext';
 
 type HonourSubTab =
@@ -20,6 +35,14 @@ export const DocsAndRulesView: React.FC = () => {
     'format' | 'rules' | 'cofc' | 'competitions' | 'honours'
   >('format');
   const [honourTab, setHonourTab] = useState<HonourSubTab>('league');
+  const [compFilter, setCompFilter] = useState<
+    | 'all'
+    | 'open-singles'
+    | 'open-doubles'
+    | 'ladies-singles'
+    | 'mixed-doubles'
+    | 'captains-cup'
+  >('all');
 
   const renderTable = (
     headers: string[],
@@ -932,21 +955,465 @@ export const DocsAndRulesView: React.FC = () => {
         {/* 4. COMPETITIONS (content/docs/competitions/*.md)                 */}
         {/* ================================================================ */}
         {section === 'competitions' && (
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
-              <Trophy className="w-7 h-7" />
+          <div className="space-y-6">
+            {/* Header intro & overview */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                    <Trophy className="w-3.5 h-3.5" />
+                    <span>Season {seasonName || 'Winter 2026/27'} Competitions</span>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    League Cups & Tournaments
+                  </h3>
+                  <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                    Official format, rules, match arrangement windows, and handicap matrices for all Winter 2026/27 cup competitions. All finals culminate on Presentation Night.
+                  </p>
+                </div>
+                <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col items-start sm:items-end justify-center min-w-[200px] shrink-0">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                    <Calendar className="w-4 h-4 text-amber-400" />
+                    <span>Grand Finals Night</span>
+                  </div>
+                  <div className="text-base sm:text-lg font-bold text-white mt-1">
+                    Monday, 5th April 2027
+                  </div>
+                  <div className="text-xs text-amber-400/90 font-medium mt-0.5">
+                    Presentation & Trophy Night
+                  </div>
+                </div>
+              </div>
+
+              {/* General Rules Highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <BookOpen className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">International Rules</div>
+                    <div className="text-xs text-slate-400">Standard International 8-Ball rules apply across all competitions.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <MapPin className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Brighton Venues</div>
+                    <div className="text-xs text-slate-400">Drawn home player/pair must host at an approved Brighton league venue.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Shuffle className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Random Draw</div>
+                    <div className="text-xs text-slate-400">Each round is drawn completely at random with no seeding.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Award className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Trophies & Prizes</div>
+                    <div className="text-xs text-slate-400">Prize money and trophies awarded to winners and runners-up.</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <h3 className="text-lg sm:text-xl font-black text-white">
-                {seasonName || 'Winter 2026/27'} Competitions Not Published Yet
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-                Details, formats, and entry dates for this season's Singles, Doubles, and Cup competitions have not been published yet.
-              </p>
+
+            {/* Filter pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {[
+                { id: 'all', label: 'All Competitions' },
+                { id: 'open-singles', label: 'Open Singles' },
+                { id: 'open-doubles', label: 'Open Doubles' },
+                { id: 'ladies-singles', label: 'Ladies Singles' },
+                { id: 'mixed-doubles', label: 'Mixed Doubles' },
+                { id: 'captains-cup', label: "Captains' Cup" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setCompFilter(tab.id as typeof compFilter)}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                    compFilter === tab.id
+                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold'
+                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span>Announcements will be made once competition entries open</span>
+
+            {/* Competitions Cards Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 1. Open Singles */}
+              {(compFilter === 'all' || compFilter === 'open-singles') && (
+                <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                          <Trophy className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                            Individual Championship
+                          </div>
+                          <h4 className="text-xl font-black text-white">Open Singles</h4>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <Coins className="w-3.5 h-3.5" />
+                          £10 Entry
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-1">per player</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-300">
+                      The flagship individual knockout championship open to all registered league players across every division.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Match Format</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">Race to 5</div>
+                        <div className="text-[11px] text-slate-400">All the way through</div>
+                      </div>
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Round Window</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">3 Weeks</div>
+                        <div className="text-[11px] text-slate-400">To arrange & play</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                      <div className="text-xs font-semibold text-slate-300">Key Rules & Details:</div>
+                      <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                        <li><span className="text-slate-200">International Rules</span> played across every match.</li>
+                        <li><span className="text-slate-200">Random draw</span> conducted before each round (no seeding).</li>
+                        <li><span className="text-slate-200">Home advantage</span>: first drawn player chooses and hosts at a registered Brighton league venue.</li>
+                        <li><span className="text-slate-200">Grand Finals</span> to be contested on Presentation Night (Monday, 5th April 2027).</li>
+                        <li><span className="text-slate-200">Honours</span>: Winner & runner-up receive trophies and prize money.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Open Doubles */}
+              {(compFilter === 'all' || compFilter === 'open-doubles') && (
+                <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+                          <Users className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-sky-400 uppercase tracking-wider">
+                            Pairs Championship
+                          </div>
+                          <h4 className="text-xl font-black text-white">Open Doubles</h4>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <Coins className="w-3.5 h-3.5" />
+                          £10 Entry
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-1">per pair</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-300">
+                      Open pairs Scotch Doubles tournament contested by any two registered league players regardless of division or gender.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Match Format</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">Race to 5</div>
+                        <div className="text-[11px] text-slate-400">Scotch alternate shots</div>
+                      </div>
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Round Window</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">3–4 Weeks</div>
+                        <div className="text-[11px] text-slate-400">Dependent on entries</div>
+                      </div>
+                    </div>
+
+                    {/* Scotch Rule Highlight */}
+                    <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 text-xs text-sky-200 flex items-start gap-2.5">
+                      <MessageSquare className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-white">Scotch Format & Coaching Rule: </span>
+                        Partners take alternate shots throughout each visit. Talking / tactical discussion is permitted <em>only before the first shot</em> of a pair's visit. No consultation once that first shot is struck.
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                      <div className="text-xs font-semibold text-slate-300">Key Rules & Details:</div>
+                      <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                        <li><span className="text-slate-200">International Rules</span> apply throughout.</li>
+                        <li><span className="text-slate-200">Random draw</span> each round with no seeding.</li>
+                        <li><span className="text-slate-200">Home pair</span> must arrange and host match at a Brighton league venue.</li>
+                        <li><span className="text-slate-200">Grand Finals</span> on Presentation Night (5th April 2027).</li>
+                        <li><span className="text-slate-200">Trophies & prize money</span> for winners and runners-up.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Ladies Singles */}
+              {(compFilter === 'all' || compFilter === 'ladies-singles') && (
+                <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+                          <Crown className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-pink-400 uppercase tracking-wider">
+                            Ladies Championship
+                          </div>
+                          <h4 className="text-xl font-black text-white">Ladies Singles</h4>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <Coins className="w-3.5 h-3.5" />
+                          £10 Entry
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-1">per player</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-300">
+                      The premier women's knockout tournament open to all registered female league players across all divisions.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                          <span>Match Format</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">Race to 5</div>
+                        <div className="text-[11px] text-slate-400">All the way through</div>
+                      </div>
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Round Window</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">4 Weeks</div>
+                        <div className="text-[11px] text-slate-400">To arrange & play</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                      <div className="text-xs font-semibold text-slate-300">Key Rules & Details:</div>
+                      <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                        <li><span className="text-slate-200">International Rules</span> played across every match.</li>
+                        <li><span className="text-slate-200">Random draw</span> conducted before each round.</li>
+                        <li><span className="text-slate-200">Generous 4-week match window</span> to ensure smooth scheduling.</li>
+                        <li><span className="text-slate-200">Home player</span> must host at an approved Brighton league venue.</li>
+                        <li><span className="text-slate-200">Grand Finals</span> on Presentation Night (5th April 2027) with trophies and prize money.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Mixed Doubles */}
+              {(compFilter === 'all' || compFilter === 'mixed-doubles') && (
+                <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                          <Users className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-purple-400 uppercase tracking-wider">
+                            Mixed Pairs
+                          </div>
+                          <h4 className="text-xl font-black text-white">Mixed Doubles</h4>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <Coins className="w-3.5 h-3.5" />
+                          £10 Entry
+                        </span>
+                        <span className="text-[11px] text-slate-400 mt-1">per pair</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-300">
+                      Scotch doubles competition contested by mixed-gender pairings (one female & one male player).
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                          <span>Match Format</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">Race to 5</div>
+                        <div className="text-[11px] text-slate-400">Scotch alternate shots</div>
+                      </div>
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Round Window</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">3–4 Weeks</div>
+                        <div className="text-[11px] text-slate-400">Dependent on entries</div>
+                      </div>
+                    </div>
+
+                    {/* Scotch Rule Highlight */}
+                    <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 text-xs text-purple-200 flex items-start gap-2.5">
+                      <MessageSquare className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold text-white">Scotch Format & Coaching Rule: </span>
+                        Partners take alternate shots throughout each visit. Talking / discussion is allowed <em>only before the first shot</em> of a pair's visit. No consultation once the first shot is taken.
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                      <div className="text-xs font-semibold text-slate-300">Key Rules & Details:</div>
+                      <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                        <li><span className="text-slate-200">International Rules</span> apply throughout.</li>
+                        <li><span className="text-slate-200">Pairing requirement</span>: One male and one female registered player per team.</li>
+                        <li><span className="text-slate-200">Random draw</span> each round with no seeding.</li>
+                        <li><span className="text-slate-200">Home pair</span> must host at a Brighton league venue.</li>
+                        <li><span className="text-slate-200">Grand Finals</span> on Presentation Night (5th April 2027) with trophies & prize money.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. Captains' Cup */}
+              {(compFilter === 'all' || compFilter === 'captains-cup') && (
+                <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-slate-700/80 transition-all lg:col-span-2">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                          <Crown className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                            Handicapped Invitational
+                          </div>
+                          <h4 className="text-xl sm:text-2xl font-black text-white">Captains' Cup</h4>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                            <Coins className="w-3.5 h-3.5" />
+                            £10 Entry
+                          </span>
+                          <span className="text-[11px] text-slate-400 mt-1">per captain</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-300 max-w-3xl">
+                      Exclusive competition contested by registered team captains across all four tiers of the Brighton Pool League, featuring a divisional handicap system to balance competition across the divisions.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Base Format</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">Race to 5</div>
+                        <div className="text-[11px] text-slate-400">With divisional handicap start</div>
+                      </div>
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-sky-400" />
+                          <span>Round Window</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">4 Weeks</div>
+                        <div className="text-[11px] text-slate-400">To arrange & play</div>
+                      </div>
+                      <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
+                        <div className="text-slate-400 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Grand Finals</span>
+                        </div>
+                        <div className="text-white font-bold mt-1 text-sm">5th April 2027</div>
+                        <div className="text-[11px] text-slate-400">Presentation Night</div>
+                      </div>
+                    </div>
+
+                    {/* Handicap Matrix Table */}
+                    <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
+                        <Scale className="w-4 h-4" />
+                        <span>Divisional Handicap System (Race to 5)</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        <div className="bg-slate-900/90 border border-rose-500/30 rounded-lg p-3">
+                          <div className="text-rose-400 font-bold text-xs uppercase">Premier Division</div>
+                          <div className="text-lg font-black text-white mt-0.5">-1 Start</div>
+                          <div className="text-[11px] text-slate-400 mt-1">Must win 6 frames to reach 5</div>
+                        </div>
+                        <div className="bg-slate-900/90 border border-sky-500/30 rounded-lg p-3">
+                          <div className="text-sky-400 font-bold text-xs uppercase">Division 1</div>
+                          <div className="text-lg font-black text-white mt-0.5">Scratch (0)</div>
+                          <div className="text-[11px] text-slate-400 mt-1">Must win 5 frames to reach 5</div>
+                        </div>
+                        <div className="bg-slate-900/90 border border-emerald-500/30 rounded-lg p-3">
+                          <div className="text-emerald-400 font-bold text-xs uppercase">Division 2</div>
+                          <div className="text-lg font-black text-white mt-0.5">+1 Start</div>
+                          <div className="text-[11px] text-slate-400 mt-1">Must win 4 frames to reach 5</div>
+                        </div>
+                        <div className="bg-slate-900/90 border border-amber-500/30 rounded-lg p-3">
+                          <div className="text-amber-400 font-bold text-xs uppercase">Division 3</div>
+                          <div className="text-lg font-black text-white mt-0.5">+2 Start</div>
+                          <div className="text-[11px] text-slate-400 mt-1">Must win 3 frames to reach 5</div>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-slate-400 leading-relaxed bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/60">
+                        <strong className="text-slate-300">How it works in practice:</strong> The match score begins at each player's starting handicap mark. The first captain whose cumulative frame count reaches 5 wins the match. For example, if a Premier captain plays a Division 3 captain, the match scoreboard begins at <span className="text-white font-mono">-1 vs 2</span>.
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                      <div className="text-xs font-semibold text-slate-300">Key Rules & Details:</div>
+                      <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
+                        <li><span className="text-slate-200">International Rules</span> apply throughout all rounds.</li>
+                        <li><span className="text-slate-200">Random draw</span> each round with no divisional seeding or protection.</li>
+                        <li><span className="text-slate-200">Home captain</span> must arrange and host at a registered Brighton league venue.</li>
+                        <li><span className="text-slate-200">Grand Finals</span> on Presentation Night (Monday, 5th April 2027) with trophies & prize money.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
