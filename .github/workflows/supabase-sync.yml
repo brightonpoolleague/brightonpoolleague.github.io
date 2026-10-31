@@ -1,11 +1,10 @@
 name: Sync Supabase Schema
 
 on:
-  push:
-    branches: ["main", "feat/live-scoring-app"]
-    paths:
-      - "supabase/schema.sql"
-      - ".github/workflows/supabase-sync.yml"
+  workflow_run:
+    workflows: ["Test Suite & Containerized E2E"]
+    types: [completed]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -15,11 +14,28 @@ jobs:
   sync-schema:
     name: Apply supabase/schema.sql to Supabase
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 2
+
+      - name: Check if schema.sql changed
+        id: check_changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          elif git diff --name-only HEAD~1 HEAD | grep -qE '^(supabase/schema\.sql|\.github/workflows/supabase-sync\.yml)$'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes to supabase/schema.sql in this push — skipping sync."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Apply schema.sql via Supabase Management API
+        if: steps.check_changes.outputs.changed == 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: sttjprycpauamxkiwqit

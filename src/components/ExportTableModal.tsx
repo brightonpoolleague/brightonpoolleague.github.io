@@ -364,7 +364,6 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                     </thead>
                     <tbody>
                       {rows.map((row, idx) => {
-                        const isTop3 = row.rank <= 3;
                         return (
                           <tr
                             key={idx}

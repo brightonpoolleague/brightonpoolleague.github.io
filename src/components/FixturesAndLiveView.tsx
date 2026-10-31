@@ -28,7 +28,6 @@ import {
 
 interface FixturesAndLiveViewProps {
   onSelectFixture: (fixture: Fixture) => void;
-  onGoToAdmin?: () => void;
 }
 
 type StatusFilter =
@@ -42,7 +41,6 @@ type StatusFilter =
 
 export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   onSelectFixture,
-  onGoToAdmin,
 }) => {
   const {
     seasonName,
@@ -50,7 +48,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     teams,
     fixtures,
     session,
-    canEditFixture,
     canManageLeague,
     approveFixture,
   } = useLeague();
@@ -692,7 +689,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             if (!home || !away) return null;
 
             const score = calculateMatchScore(fix);
-            const isEditable = canEditFixture(fix);
             const isMyTeamMatch =
               session.teamId === fix.homeTeamId ||
               session.teamId === fix.awayTeamId;

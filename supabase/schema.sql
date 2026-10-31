@@ -62,6 +62,9 @@ create table if not exists public.team_pins (
   updated_at timestamptz not null default now()
 );
 
+-- Enforce unique Team PINs across all teams at the database level
+create unique index if not exists idx_team_pins_unique_pin on public.team_pins (trim(captain_pin));
+
 -- 5. Players (signed on to a team; a player is just their name)
 create table if not exists public.players (
   id text primary key,
@@ -127,6 +130,14 @@ create table if not exists public.pin_attempt_log (
 
 create index if not exists idx_pin_attempt_log on public.pin_attempt_log(identifier, action, attempted_at);
 
+-- 8. Private Unrevealed Set 1 Lineups (Keeps Set 1 running orders strictly secret in DevTools/Network until BOTH captains lock Set 1!)
+create table if not exists public.fixture_private_lineups (
+  fixture_id text primary key references public.fixtures(id) on delete cascade,
+  home_set1 jsonb not null default '[null,null,null,null,null]'::jsonb,
+  away_set1 jsonb not null default '[null,null,null,null,null]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 -- Enable Realtime on public tables (safe if already added)
 do $$
 begin
@@ -161,6 +172,7 @@ $$;
 alter table public.league_settings enable row level security;
 alter table public.team_pins enable row level security;
 alter table public.pin_attempt_log enable row level security;
+alter table public.fixture_private_lineups enable row level security;
 alter table public.seasons enable row level security;
 alter table public.teams enable row level security;
 alter table public.players enable row level security;
@@ -168,7 +180,7 @@ alter table public.fixtures enable row level security;
 
 -- Public tables are STRICTLY READ-ONLY (SELECT) for anonymous users.
 -- All writes (INSERT / UPDATE / DELETE) MUST go through the PIN-verified RPC functions below!
--- Notice: league_settings, team_pins, and pin_attempt_log have NO public policies at all.
+-- Notice: league_settings, team_pins, pin_attempt_log, and fixture_private_lineups have NO public policies at all.
 drop policy if exists "Allow public access to seasons" on public.seasons;
 drop policy if exists "Allow public access to teams" on public.teams;
 drop policy if exists "Allow public access to players" on public.players;
@@ -183,7 +195,7 @@ create policy "Allow public read-only access to teams" on public.teams for selec
 create policy "Allow public read-only access to players" on public.players for select using (true);
 create policy "Allow public read-only access to fixtures" on public.fixtures for select using (true);
 
--- Notice: league_settings, team_pins, and pin_attempt_log have NO public policies.
+-- Notice: league_settings, team_pins, pin_attempt_log, and fixture_private_lineups have NO public policies.
 -- Team PINs are strictly protected and only returned via get_all_team_pins(p_admin_pin)
 -- when a valid League Admin PIN is provided.
 drop policy if exists "Allow public read-only access to team_pins" on public.team_pins;
@@ -193,14 +205,15 @@ drop policy if exists "Allow public read-only access to team_pins" on public.tea
 -- Mirrors UI permissions 1-to-1 inside PostgreSQL:
 --   • Public Viewer: Read-only
 --   • Team Captain: Can ONLY update scorecard fields of their OWN team's
---                   unapproved fixtures (cannot edit other matches or approve)
+--                   unapproved/unsubmitted fixtures (cannot edit other matches or approve)
 --   • League Admin: Full control when valid League Admin PIN is supplied
 -- ============================================================================
 
 -- ============================================================================
 -- RATE LIMITING HELPERS & PIN VERIFICATION (BRUTE-FORCE SCRIPT PROTECTION)
--- Enforces a very generous rate limit (max 100 failed attempts per 15 minutes per IP).
+-- Enforces a rate limit (max 20 failed attempts per 15 minutes per IP).
 -- Adds an artificial 500ms delay on failed attempts to defeat fast dictionary attacks.
+-- Internal helpers have PUBLIC/anon execute permissions revoked so attackers cannot reset counters.
 -- ============================================================================
 
 -- Extract client IP from Cloudflare or reverse proxy headers in Supabase
@@ -208,6 +221,7 @@ create or replace function public.get_request_client_ip()
 returns text
 language plpgsql
 stable
+set search_path = public, pg_temp
 as $$
 declare
   v_headers json;
@@ -251,9 +265,9 @@ begin
     and action = p_action
     and attempted_at > now() - interval '15 minutes';
 
-  -- Generous threshold: 100 failed attempts per 15 minutes
-  if v_recent_failures >= 100 then
-    raise exception 'Too many failed PIN attempts. Please wait 5 minutes before trying again.';
+  -- Threshold: 20 failed attempts per 15 minutes
+  if v_recent_failures >= 20 then
+    raise exception 'Too many failed PIN attempts. Please wait 15 minutes before trying again.';
   end if;
 
   return v_ip;
@@ -286,6 +300,12 @@ begin
   where identifier = p_ip and action = p_action;
 end;
 $$;
+
+-- Strictly revoke direct execution of internal rate-limiting helpers from public/anon/authenticated
+revoke all on function public.get_request_client_ip() from public, anon, authenticated;
+revoke all on function public.check_pin_rate_limit(text) from public, anon, authenticated;
+revoke all on function public.record_failed_pin_attempt(text, text) from public, anon, authenticated;
+revoke all on function public.clear_pin_rate_limit(text, text) from public, anon, authenticated;
 
 -- 1. Verify League Admin PIN (with rate-limiting)
 create or replace function public.verify_admin_pin(p_pin text)
@@ -379,6 +399,50 @@ begin
 end;
 $$;
 
+-- 2c. Fetch own team's unrevealed Set 1 lineup (when Set 1 is not yet locked by both captains)
+create or replace function public.get_my_private_set1_lineup(
+  p_fixture_id text,
+  p_team_id text,
+  p_pin text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_fixture public.fixtures%rowtype;
+  v_private public.fixture_private_lineups%rowtype;
+begin
+  if not public.verify_captain_pin(p_team_id, p_pin) then
+    return '[null,null,null,null,null]'::jsonb;
+  end if;
+
+  select * into v_fixture from public.fixtures where id = p_fixture_id;
+  if not found then
+    return '[null,null,null,null,null]'::jsonb;
+  end if;
+
+  select * into v_private from public.fixture_private_lineups where fixture_id = p_fixture_id;
+  if not found then
+    if p_team_id = v_fixture.home_team_id then
+      return coalesce(v_fixture.lineups->'set1'->'home', '[null,null,null,null,null]'::jsonb);
+    elsif p_team_id = v_fixture.away_team_id then
+      return coalesce(v_fixture.lineups->'set1'->'away', '[null,null,null,null,null]'::jsonb);
+    end if;
+    return '[null,null,null,null,null]'::jsonb;
+  end if;
+
+  if p_team_id = v_fixture.home_team_id then
+    return v_private.home_set1;
+  elsif p_team_id = v_fixture.away_team_id then
+    return v_private.away_set1;
+  end if;
+
+  return '[null,null,null,null,null]'::jsonb;
+end;
+$$;
+
 -- 3. Fetch all Team PINs (ONLY returns rows if caller supplies the valid League Admin PIN)
 create or replace function public.get_all_team_pins(p_admin_pin text)
 returns table(team_id text, captain_pin text)
@@ -392,6 +456,7 @@ as $$
 $$;
 
 -- 4. Set or Update a Team PIN (requires valid League Admin PIN and enforces uniqueness)
+-- Note: Returns false instead of raising on invalid Admin PIN so pin_attempt_log commits!
 create or replace function public.set_team_pin(p_admin_pin text, p_team_id text, p_new_pin text)
 returns boolean
 language plpgsql
@@ -400,7 +465,15 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
+    return false;
+  end if;
+
+  -- Prevent Team PIN from colliding with League Admin PIN
+  if exists (
+    select 1 from public.league_settings
+    where id = 'default' and trim(admin_pin) = trim(coalesce(p_new_pin, ''))
+  ) then
+    raise exception 'This PIN matches the League Admin PIN. Team PINs must be unique.';
   end if;
 
   -- Enforce uniqueness across team PINs
@@ -426,9 +499,11 @@ $$;
 -- in the Supabase Dashboard by the database owner to prevent any unauthorized takeover.
 drop function if exists public.set_admin_pin(text, text);
 
--- 6. Captain Scorecard Save (Strictly restricted to the Captain's own team & unapproved matches)
+-- 6. Captain Scorecard Save (Strictly restricted to the Captain's own team & unapproved/unsubmitted matches)
 -- Uses row-level locking (FOR UPDATE) and side-aware JSON merging so two captains on separate
 -- phones can enter Set 1 lineups or scores simultaneously without overwriting each other.
+-- Keeps Set 1 lineups in private storage (fixture_private_lineups) and masks public.fixtures.lineups
+-- with [null,null,null,null,null] until BOTH captains have locked Set 1!
 create or replace function public.captain_save_fixture(
   p_fixture_id text,
   p_team_id text,
@@ -451,6 +526,16 @@ set search_path = public, pg_temp
 as $$
 declare
   v_fixture public.fixtures%rowtype;
+  v_private public.fixture_private_lineups%rowtype;
+  v_null_slots jsonb := '[null,null,null,null,null]'::jsonb;
+  v_real_home_s1 jsonb;
+  v_real_away_s1 jsonb;
+  v_public_home_s1 jsonb;
+  v_public_away_s1 jsonb;
+  v_public_home_s2 jsonb;
+  v_public_away_s2 jsonb;
+  v_public_home_s3 jsonb;
+  v_public_away_s3 jsonb;
   v_merged_lineups jsonb;
   v_home_locked boolean;
   v_away_locked boolean;
@@ -471,10 +556,12 @@ declare
   v_home_s3_pending boolean;
   v_away_s3_pending boolean;
   v_next_status text;
+  v_next_frames jsonb;
+  v_next_lag text;
 begin
-  -- Verify Team PIN for the claimed team
+  -- Verify Team PIN for the claimed team (returns false instead of raising so pin_attempt_log commits!)
   if not public.verify_captain_pin(p_team_id, p_pin) then
-    raise exception 'Unauthorized: Invalid Team PIN for this team';
+    return false;
   end if;
 
   -- Lock the target fixture row to serialize simultaneous requests from Home & Away phones
@@ -492,9 +579,9 @@ begin
     raise exception 'Forbidden: Team Captains can only update scorecards for their own team''s fixtures';
   end if;
 
-  -- Ensure the fixture has not already been approved/locked by the League Admin
-  if v_fixture.status = 'approved' then
-    raise exception 'Forbidden: Approved fixtures are locked and can only be edited by the League Admin';
+  -- Ensure the fixture has not already been submitted or approved
+  if v_fixture.status in ('submitted', 'approved') then
+    raise exception 'Forbidden: Submitted or approved fixtures are locked and can only be edited by the League Admin';
   end if;
 
   -- Ensure a Captain cannot set status to 'approved'
@@ -502,35 +589,37 @@ begin
     raise exception 'Forbidden: Team Captains cannot mark a fixture as approved';
   end if;
 
+  -- Fetch or initialize private Set 1 lineup storage for this fixture
+  select * into v_private
+  from public.fixture_private_lineups
+  where fixture_id = p_fixture_id
+  for update;
+
+  if not found then
+    v_real_home_s1 := coalesce(v_fixture.lineups->'set1'->'home', v_null_slots);
+    v_real_away_s1 := coalesce(v_fixture.lineups->'set1'->'away', v_null_slots);
+  else
+    v_real_home_s1 := coalesce(v_private.home_set1, v_fixture.lineups->'set1'->'home', v_null_slots);
+    v_real_away_s1 := coalesce(v_private.away_set1, v_fixture.lineups->'set1'->'away', v_null_slots);
+  end if;
+
   -- Side-aware merge to prevent two phones from overwriting each other's lineups/locks/signatures
   if p_edited_side = 'home' then
-    v_merged_lineups := jsonb_build_object(
-      'set1', jsonb_build_object('home', p_lineups->'set1'->'home', 'away', coalesce(v_fixture.lineups->'set1'->'away', p_lineups->'set1'->'away')),
-      'set2', jsonb_build_object('home', p_lineups->'set2'->'home', 'away', coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away')),
-      'set3', jsonb_build_object('home', p_lineups->'set3'->'home', 'away', coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away'))
-    );
     v_home_locked := p_home_set1_locked;
     v_away_locked := v_fixture.away_set1_locked;
     v_home_signed := p_home_captain_signed;
     v_away_signed := v_fixture.away_captain_signed;
   elsif p_edited_side = 'away' then
-    v_merged_lineups := jsonb_build_object(
-      'set1', jsonb_build_object('home', coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home'), 'away', p_lineups->'set1'->'away'),
-      'set2', jsonb_build_object('home', coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home'), 'away', p_lineups->'set2'->'away'),
-      'set3', jsonb_build_object('home', coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home'), 'away', p_lineups->'set3'->'away')
-    );
     v_home_locked := v_fixture.home_set1_locked;
     v_away_locked := p_away_set1_locked;
     v_home_signed := v_fixture.home_captain_signed;
     v_away_signed := p_away_captain_signed;
   elsif p_edited_side = 'frames' then
-    v_merged_lineups := coalesce(v_fixture.lineups, p_lineups);
     v_home_locked := v_fixture.home_set1_locked;
     v_away_locked := v_fixture.away_set1_locked;
     v_home_signed := v_fixture.home_captain_signed;
     v_away_signed := v_fixture.away_captain_signed;
   else
-    v_merged_lineups := p_lineups;
     v_home_locked := p_home_set1_locked;
     v_away_locked := p_away_set1_locked;
     v_home_signed := p_home_captain_signed;
@@ -543,8 +632,11 @@ begin
   -- Enforce that a captain can ONLY modify lineups, Set 1 lock, and signature for their own team,
   -- and that once both captains have locked Set 1, unlocking requires BOTH captains to unlock.
   if p_team_id = v_fixture.home_team_id then
-    if p_edited_side <> 'frames' then
+    if p_edited_side <> 'frames' and not (v_fixture.home_captain_signed or v_fixture.away_captain_signed) then
       v_home_unlock_req := coalesce((p_lineups->'unlockRequested'->>'home')::boolean, false);
+      if not (v_fixture.home_set1_locked and v_fixture.away_set1_locked) then
+        v_real_home_s1 := coalesce(p_lineups->'set1'->'home', v_real_home_s1);
+      end if;
     end if;
 
     if v_fixture.home_set1_locked and v_fixture.away_set1_locked then
@@ -566,8 +658,11 @@ begin
     end if;
 
     -- Merge Set 2 and Set 3 subs lock states and unlock requests
-    v_home_s2_locked := coalesce((p_lineups->'subsLocked'->'set2'->>'home')::boolean, (v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false);
-    v_home_s3_locked := coalesce((p_lineups->'subsLocked'->'set3'->>'home')::boolean, (v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false);
+    -- Once locked, a captain cannot unilaterally unlock their own Set 2 / Set 3 substitutions
+    v_home_s2_locked := coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set2'->>'home')::boolean, false);
+    v_home_s3_locked := coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set3'->>'home')::boolean, false);
     v_home_s2_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set2'->>'home')::boolean, false);
     v_home_s3_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set3'->>'home')::boolean, false);
     v_home_s2_pending := coalesce((p_lineups->'subsPendingApproval'->'set2'->>'home')::boolean, false);
@@ -603,37 +698,64 @@ begin
       v_away_s3_pending := coalesce((v_fixture.lineups->'subsPendingApproval'->'set3'->>'away')::boolean, false);
     end if;
 
-    v_merged_lineups := jsonb_build_object(
-      'set1', jsonb_build_object(
-        'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home') else p_lineups->'set1'->'home' end,
-        'away', coalesce(v_fixture.lineups->'set1'->'away', p_lineups->'set1'->'away')
-      ),
-      'set2', jsonb_build_object(
-        'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home') else p_lineups->'set2'->'home' end,
-        'away', coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away')
-      ),
-      'set3', jsonb_build_object(
-        'home', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home') else p_lineups->'set3'->'home' end,
-        'away', coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away')
-      ),
-      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req),
-      'subsLocked', jsonb_build_object(
-        'set2', jsonb_build_object('home', v_home_s2_locked, 'away', v_away_s2_locked),
-        'set3', jsonb_build_object('home', v_home_s3_locked, 'away', v_away_s3_locked)
-      ),
-      'subsUnlockRequested', jsonb_build_object(
-        'set2', jsonb_build_object('home', v_home_s2_unlock_req, 'away', v_away_s2_unlock_req),
-        'set3', jsonb_build_object('home', v_home_s3_unlock_req, 'away', v_away_s3_unlock_req)
-      ),
-      'subsPendingApproval', jsonb_build_object(
-        'set2', jsonb_build_object('home', v_home_s2_pending, 'away', v_away_s2_pending),
-        'set3', jsonb_build_object('home', v_home_s3_pending, 'away', v_away_s3_pending)
-      )
-    );
+    v_public_home_s2 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false)
+      then coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home')
+      else p_lineups->'set2'->'home'
+    end;
+    v_public_away_s2 := coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away');
+    v_public_home_s3 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false)
+      then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home')
+      else p_lineups->'set3'->'home'
+    end;
+    v_public_away_s3 := coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away');
     v_away_signed := v_fixture.away_captain_signed;
-  elsif p_team_id = v_fixture.away_team_id then
+
+    -- Validate that all non-null, non-BYE player IDs in Home lineups belong to the Home team's active squad
     if p_edited_side <> 'frames' then
+      if jsonb_typeof(coalesce(v_real_home_s1, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_home_s2, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_home_s3, '[]'::jsonb)) <> 'array' then
+        raise exception 'Invalid lineup format: lineup slots must be JSON arrays';
+      end if;
+
+      if exists (
+        select 1
+        from jsonb_array_elements(
+          coalesce(v_real_home_s1, '[]'::jsonb) ||
+          coalesce(v_public_home_s2, '[]'::jsonb) ||
+          coalesce(v_public_home_s3, '[]'::jsonb)
+        ) as slot_val
+        where jsonb_typeof(slot_val) <> 'null'
+          and (
+            jsonb_typeof(slot_val) <> 'string'
+            or (
+              (slot_val #>> '{}') <> 'BYE'
+              and not exists (
+                select 1 from public.players pl
+                where pl.id = (slot_val #>> '{}')
+                  and pl.team_id = v_fixture.home_team_id
+                  and pl.active = true
+              )
+            )
+          )
+      ) then
+        raise exception 'Forbidden: All selected players in the Home lineup must belong to the Home team''s active squad';
+      end if;
+    end if;
+  elsif p_team_id = v_fixture.away_team_id then
+    if p_edited_side <> 'frames' and not (v_fixture.home_captain_signed or v_fixture.away_captain_signed) then
       v_away_unlock_req := coalesce((p_lineups->'unlockRequested'->>'away')::boolean, false);
+      if not (v_fixture.home_set1_locked and v_fixture.away_set1_locked) then
+        v_real_away_s1 := coalesce(p_lineups->'set1'->'away', v_real_away_s1);
+      end if;
     end if;
 
     if v_fixture.home_set1_locked and v_fixture.away_set1_locked then
@@ -655,8 +777,11 @@ begin
     end if;
 
     -- Merge Set 2 and Set 3 subs lock states and unlock requests
-    v_away_s2_locked := coalesce((p_lineups->'subsLocked'->'set2'->>'away')::boolean, (v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false);
-    v_away_s3_locked := coalesce((p_lineups->'subsLocked'->'set3'->>'away')::boolean, (v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false);
+    -- Once locked, a captain cannot unilaterally unlock their own Set 2 / Set 3 substitutions
+    v_away_s2_locked := coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set2'->>'away')::boolean, false);
+    v_away_s3_locked := coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set3'->>'away')::boolean, false);
     v_away_s2_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set2'->>'away')::boolean, false);
     v_away_s3_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set3'->>'away')::boolean, false);
     v_away_s2_pending := coalesce((p_lineups->'subsPendingApproval'->'set2'->>'away')::boolean, false);
@@ -692,34 +817,120 @@ begin
       v_home_s3_pending := coalesce((v_fixture.lineups->'subsPendingApproval'->'set3'->>'home')::boolean, false);
     end if;
 
-    v_merged_lineups := jsonb_build_object(
-      'set1', jsonb_build_object(
-        'home', coalesce(v_fixture.lineups->'set1'->'home', p_lineups->'set1'->'home'),
-        'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set1'->'away', p_lineups->'set1'->'away') else p_lineups->'set1'->'away' end
-      ),
-      'set2', jsonb_build_object(
-        'home', coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home'),
-        'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away') else p_lineups->'set2'->'away' end
-      ),
-      'set3', jsonb_build_object(
-        'home', coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home'),
-        'away', case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away') else p_lineups->'set3'->'away' end
-      ),
-      'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req),
-      'subsLocked', jsonb_build_object(
-        'set2', jsonb_build_object('home', v_home_s2_locked, 'away', v_away_s2_locked),
-        'set3', jsonb_build_object('home', v_home_s3_locked, 'away', v_away_s3_locked)
-      ),
-      'subsUnlockRequested', jsonb_build_object(
-        'set2', jsonb_build_object('home', v_home_s2_unlock_req, 'away', v_away_s2_unlock_req),
-        'set3', jsonb_build_object('home', v_home_s3_unlock_req, 'away', v_away_s3_unlock_req)
-      ),
-      'subsPendingApproval', jsonb_build_object(
-        'set2', jsonb_build_object('home', v_home_s2_pending, 'away', v_away_s2_pending),
-        'set3', jsonb_build_object('home', v_home_s3_pending, 'away', v_away_s3_pending)
-      )
-    );
+    v_public_home_s2 := coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home');
+    v_public_away_s2 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false)
+      then coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away')
+      else p_lineups->'set2'->'away'
+    end;
+    v_public_home_s3 := coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home');
+    v_public_away_s3 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false)
+      then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away')
+      else p_lineups->'set3'->'away'
+    end;
     v_home_signed := v_fixture.home_captain_signed;
+
+    -- Validate that all non-null, non-BYE player IDs in Away lineups belong to the Away team's active squad
+    if p_edited_side <> 'frames' then
+      if jsonb_typeof(coalesce(v_real_away_s1, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_away_s2, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_away_s3, '[]'::jsonb)) <> 'array' then
+        raise exception 'Invalid lineup format: lineup slots must be JSON arrays';
+      end if;
+
+      if exists (
+        select 1
+        from jsonb_array_elements(
+          coalesce(v_real_away_s1, '[]'::jsonb) ||
+          coalesce(v_public_away_s2, '[]'::jsonb) ||
+          coalesce(v_public_away_s3, '[]'::jsonb)
+        ) as slot_val
+        where jsonb_typeof(slot_val) <> 'null'
+          and (
+            jsonb_typeof(slot_val) <> 'string'
+            or (
+              (slot_val #>> '{}') <> 'BYE'
+              and not exists (
+                select 1 from public.players pl
+                where pl.id = (slot_val #>> '{}')
+                  and pl.team_id = v_fixture.away_team_id
+                  and pl.active = true
+              )
+            )
+          )
+      ) then
+        raise exception 'Forbidden: All selected players in the Away lineup must belong to the Away team''s active squad';
+      end if;
+    end if;
+  end if;
+
+  -- Persist real Set 1 lineups in private table (never readable by anon/DevTools)
+  insert into public.fixture_private_lineups (fixture_id, home_set1, away_set1, updated_at)
+  values (p_fixture_id, v_real_home_s1, v_real_away_s1, now())
+  on conflict (fixture_id) do update
+    set home_set1 = excluded.home_set1,
+        away_set1 = excluded.away_set1,
+        updated_at = now();
+
+  -- Blind Set 1 Secrecy: Only expose Set 1 player IDs in public.fixtures once BOTH captains have locked Set 1!
+  if v_home_locked and v_away_locked then
+    v_public_home_s1 := v_real_home_s1;
+    v_public_away_s1 := v_real_away_s1;
+    -- Cascade revealed Set 1 slots to Set 2 / Set 3 if Set 2 / Set 3 were still masked
+    if v_public_home_s2 = v_null_slots then
+      v_public_home_s2 := v_real_home_s1;
+    end if;
+    if v_public_away_s2 = v_null_slots then
+      v_public_away_s2 := v_real_away_s1;
+    end if;
+    if v_public_home_s3 = v_null_slots then
+      v_public_home_s3 := v_real_home_s1;
+    end if;
+    if v_public_away_s3 = v_null_slots then
+      v_public_away_s3 := v_real_away_s1;
+    end if;
+  else
+    v_public_home_s1 := v_null_slots;
+    v_public_away_s1 := v_null_slots;
+    v_public_home_s2 := v_null_slots;
+    v_public_away_s2 := v_null_slots;
+    v_public_home_s3 := v_null_slots;
+    v_public_away_s3 := v_null_slots;
+  end if;
+
+  v_merged_lineups := jsonb_build_object(
+    'set1', jsonb_build_object('home', v_public_home_s1, 'away', v_public_away_s1),
+    'set2', jsonb_build_object('home', v_public_home_s2, 'away', v_public_away_s2),
+    'set3', jsonb_build_object('home', v_public_home_s3, 'away', v_public_away_s3),
+    'unlockRequested', jsonb_build_object('home', v_home_unlock_req, 'away', v_away_unlock_req),
+    'subsLocked', jsonb_build_object(
+      'set2', jsonb_build_object('home', v_home_s2_locked, 'away', v_away_s2_locked),
+      'set3', jsonb_build_object('home', v_home_s3_locked, 'away', v_away_s3_locked)
+    ),
+    'subsUnlockRequested', jsonb_build_object(
+      'set2', jsonb_build_object('home', v_home_s2_unlock_req, 'away', v_away_s2_unlock_req),
+      'set3', jsonb_build_object('home', v_home_s3_unlock_req, 'away', v_away_s3_unlock_req)
+    ),
+    'subsPendingApproval', jsonb_build_object(
+      'set2', jsonb_build_object('home', v_home_s2_pending, 'away', v_away_s2_pending),
+      'set3', jsonb_build_object('home', v_home_s3_pending, 'away', v_away_s3_pending)
+    )
+  );
+
+  -- Prevent frame/lag edits while either captain's signature is active
+  if v_fixture.home_captain_signed or v_fixture.away_captain_signed then
+    v_next_frames := v_fixture.frames;
+    v_next_lag := v_fixture.lag_winner;
+  else
+    v_next_frames := p_frames;
+    v_next_lag := p_lag_winner;
   end if;
 
   -- Determine match status: only live once both Set 1 lineups are locked (or frames have been scored/submitted)
@@ -730,7 +941,7 @@ begin
     v_next_status := 'live';
   elsif not (v_home_locked and v_away_locked) and v_next_status = 'live' then
     if not exists (
-      select 1 from jsonb_array_elements(coalesce(p_frames, v_fixture.frames, '[]'::jsonb)) f
+      select 1 from jsonb_array_elements(coalesce(v_next_frames, v_fixture.frames, '[]'::jsonb)) f
       where (f->>'winner') is not null
     ) then
       v_next_status := 'scheduled';
@@ -740,14 +951,14 @@ begin
   -- Perform scoped update of scorecard fields only
   update public.fixtures
   set status = v_next_status,
-      lag_winner = p_lag_winner,
+      lag_winner = v_next_lag,
       home_set1_locked = v_home_locked,
       away_set1_locked = v_away_locked,
       lineups = v_merged_lineups,
-      frames = p_frames,
+      frames = v_next_frames,
       home_captain_signed = v_home_signed,
       away_captain_signed = v_away_signed,
-      submitted_at = p_submitted_at,
+      submitted_at = case when v_next_status = 'submitted' then coalesce(p_submitted_at, now()) else null end,
       updated_at = now()
   where id = p_fixture_id;
 
@@ -777,8 +988,21 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
+    return false;
   end if;
+
+  -- Keep private Set 1 lineups synced when Admin edits lineups
+  insert into public.fixture_private_lineups (fixture_id, home_set1, away_set1, updated_at)
+  values (
+    p_fixture_id,
+    coalesce(p_lineups->'set1'->'home', '[null,null,null,null,null]'::jsonb),
+    coalesce(p_lineups->'set1'->'away', '[null,null,null,null,null]'::jsonb),
+    now()
+  )
+  on conflict (fixture_id) do update
+    set home_set1 = excluded.home_set1,
+        away_set1 = excluded.away_set1,
+        updated_at = now();
 
   update public.fixtures
   set status = p_status,
@@ -798,43 +1022,8 @@ begin
 end;
 $$;
 
--- 8. Admin Upsert Season (with dynamic divisions per season)
-create or replace function public.admin_upsert_season(
-  p_admin_pin text,
-  p_id text,
-  p_name text,
-  p_is_active boolean,
-  p_divisions jsonb default '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
-  end if;
-
-  if p_is_active then
-    update public.seasons set is_active = false where id <> p_id;
-  end if;
-
-  insert into public.seasons (id, name, is_active, divisions)
-  values (
-    p_id,
-    trim(p_name),
-    p_is_active,
-    coalesce(p_divisions, '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb)
-  )
-  on conflict (id) do update
-    set name = excluded.name,
-        is_active = excluded.is_active,
-        divisions = coalesce(p_divisions, public.seasons.divisions);
-
-  return true;
-end;
-$$;
+-- 8. Drop legacy Season / Team / Player deletion RPCs (no longer used by the web portal)
+drop function if exists public.admin_upsert_season(text, text, text, boolean, jsonb);
 
 -- 9. Admin Upsert Team (+ optional Team PIN & Table Number)
 create or replace function public.admin_upsert_team(
@@ -856,7 +1045,23 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
+    return false;
+  end if;
+
+  if p_captain_pin is not null and length(trim(p_captain_pin)) > 0 then
+    if exists (
+      select 1 from public.league_settings
+      where id = 'default' and trim(admin_pin) = trim(p_captain_pin)
+    ) then
+      raise exception 'This PIN matches the League Admin PIN. Team PINs must be unique.';
+    end if;
+
+    if exists (
+      select 1 from public.team_pins
+      where team_id <> p_id and trim(captain_pin) = trim(p_captain_pin)
+    ) then
+      raise exception 'PIN "%" is already in use by another team. Team PINs must be unique.', p_captain_pin;
+    end if;
   end if;
 
   insert into public.teams (id, season_id, division, name, venue, address, captain_name, table_number)
@@ -881,27 +1086,9 @@ begin
 end;
 $$;
 
--- 10. Admin Delete Team
-create or replace function public.admin_delete_team(
-  p_admin_pin text,
-  p_team_id text
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
-  end if;
+drop function if exists public.admin_delete_team(text, text);
 
-  delete from public.teams where id = p_team_id;
-  return true;
-end;
-$$;
-
--- 11. Admin Upsert Player
+-- 10. Admin Upsert Player
 create or replace function public.admin_upsert_player(
   p_admin_pin text,
   p_id text,
@@ -916,7 +1103,7 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
+    return false;
   end if;
 
   insert into public.players (id, team_id, name, active)
@@ -930,27 +1117,9 @@ begin
 end;
 $$;
 
--- 12. Admin Delete Player
-create or replace function public.admin_delete_player(
-  p_admin_pin text,
-  p_player_id text
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
-  end if;
+drop function if exists public.admin_delete_player(text, text);
 
-  delete from public.players where id = p_player_id;
-  return true;
-end;
-$$;
-
--- 13. Admin Create / Upsert Scheduled Fixture
+-- 13. Admin Create / Upsert Scheduled Fixture (Supports both League & Knockout Cup matches)
 create or replace function public.admin_upsert_fixture(
   p_admin_pin text,
   p_id text,
@@ -962,7 +1131,14 @@ create or replace function public.admin_upsert_fixture(
   p_away_team_id text,
   p_status text,
   p_lineups jsonb,
-  p_frames jsonb
+  p_frames jsonb,
+  p_match_type text default 'league',
+  p_competition_name text default null,
+  p_round text default null,
+  p_play_all_frames boolean default false,
+  p_knockout_format text default 'first_to_8',
+  p_cup_name text default null,
+  p_cup_round text default null
 )
 returns boolean
 language plpgsql
@@ -971,16 +1147,26 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
+    return false;
   end if;
 
   insert into public.fixtures (
     id, season_id, division, match_date, week_number,
-    home_team_id, away_team_id, status, lineups, frames, updated_at
+    home_team_id, away_team_id, status, lineups, frames,
+    match_type, competition_name, round, play_all_frames, knockout_format, cup_name, cup_round,
+    updated_at
   )
   values (
     p_id, p_season_id, p_division, p_match_date, p_week_number,
-    p_home_team_id, p_away_team_id, p_status, p_lineups, p_frames, now()
+    p_home_team_id, p_away_team_id, p_status, p_lineups, p_frames,
+    coalesce(p_match_type, 'league'),
+    coalesce(p_competition_name, p_cup_name),
+    coalesce(p_round, p_cup_round),
+    coalesce(p_play_all_frames, false),
+    coalesce(p_knockout_format, 'first_to_8'),
+    coalesce(p_cup_name, p_competition_name),
+    coalesce(p_cup_round, p_round),
+    now()
   )
   on conflict (id) do update
     set division = excluded.division,
@@ -989,8 +1175,13 @@ begin
         home_team_id = excluded.home_team_id,
         away_team_id = excluded.away_team_id,
         status = excluded.status,
-        lineups = excluded.lineups,
-        frames = excluded.frames,
+        match_type = excluded.match_type,
+        competition_name = excluded.competition_name,
+        round = excluded.round,
+        play_all_frames = excluded.play_all_frames,
+        knockout_format = excluded.knockout_format,
+        cup_name = excluded.cup_name,
+        cup_round = excluded.cup_round,
         updated_at = now();
 
   return true;
@@ -1009,7 +1200,7 @@ set search_path = public, pg_temp
 as $$
 begin
   if not public.verify_admin_pin(p_admin_pin) then
-    raise exception 'Unauthorized: Invalid League Admin PIN';
+    return false;
   end if;
 
   delete from public.fixtures where id = p_fixture_id;

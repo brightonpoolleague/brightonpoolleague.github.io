@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const STORAGE_URL_KEY = 'bpl_supabase_url';
 const STORAGE_ANON_KEY = 'bpl_supabase_anon_key';
+const STORAGE_FORCE_KEY = 'bpl_force_supabase';
 
 const DEFAULT_SUPABASE_URL = 'https://sttjprycpauamxkiwqit.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
@@ -12,15 +13,21 @@ export function getSupabaseConfig(): {
   anonKey: string;
   isConfigured: boolean;
 } {
+  const forceSupabase =
+    import.meta.env.VITE_FORCE_SUPABASE === 'true' ||
+    (typeof window !== 'undefined' &&
+      localStorage.getItem(STORAGE_FORCE_KEY) === 'true');
+
   // When running locally (localhost / 127.0.0.1 / local network IP), stay in local sandbox mode
-  // so local testing never modifies the live production database.
+  // so local testing never modifies the live production database, unless explicitly forced
+  // (e.g. inside containerized E2E tests against an isolated Supabase instance).
   const isLocalHost =
     typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1' ||
       window.location.hostname.startsWith('192.168.'));
 
-  if (import.meta.env.DEV || isLocalHost) {
+  if ((import.meta.env.DEV || isLocalHost) && !forceSupabase) {
     return {
       url: '',
       anonKey: '',
@@ -40,8 +47,11 @@ export function getSupabaseConfig(): {
       ? localStorage.getItem(STORAGE_ANON_KEY) || ''
       : '';
 
-  const url = (localUrl || envUrl || DEFAULT_SUPABASE_URL).trim();
-  const anonKey = (localKey || envKey || DEFAULT_SUPABASE_ANON_KEY).trim();
+  const fallbackUrl = isLocalHost ? '' : DEFAULT_SUPABASE_URL;
+  const fallbackKey = isLocalHost ? '' : DEFAULT_SUPABASE_ANON_KEY;
+
+  const url = (localUrl || envUrl || fallbackUrl).trim();
+  const anonKey = (localKey || envKey || fallbackKey).trim();
 
   return {
     url,

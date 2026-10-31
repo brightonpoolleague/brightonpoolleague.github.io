@@ -13,7 +13,6 @@ import {
   Pencil,
   PenLine,
   RefreshCw,
-  RotateCcw,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -46,7 +45,6 @@ import {
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
-import { getSupabaseClient } from '../lib/supabase';
 import { ExportScorecardModal } from './ExportScorecardModal';
 
 interface MatchScorecardModalProps {
@@ -61,7 +59,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const {
     teams,
     players,
-    seasons,
+    seasonName,
     fixtures,
     session,
     canEditFixture,
@@ -286,12 +284,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       : otherSide === 'away'
       ? awayTeam.name
       : 'Opponent';
-  const myTeamName =
-    mySide === 'home'
-      ? homeTeam.name
-      : mySide === 'away'
-      ? awayTeam.name
-      : 'Your Team';
 
   const changesLockedMessage = useMemo(() => {
     if (
@@ -491,15 +483,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       },
       'frames'
     );
-  };
-
-  const getLagBreakCount = (side: 'home' | 'away'): string | null => {
-    if (!fixture.lagWinner) return null;
-    const isWinner = fixture.lagWinner === side;
-    if (isKnockout && !playAllFrames) {
-      return isWinner ? '(Breaks 1st)' : '(Breaks 2nd)';
-    }
-    return isWinner ? '(8 breaks)' : '(7 breaks)';
   };
 
   const handleSlotChange = async (
@@ -960,29 +943,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           return;
         }
 
-        const supabase = getSupabaseClient();
-        if (supabase) {
-          try {
-            const { data: remote } = await supabase
-              .from('fixtures')
-              .select('home_captain_signed, away_captain_signed, status')
-              .eq('id', fixture.id)
-              .single();
-            if (
-              remote &&
-              (remote.status === 'submitted' ||
-                remote.status === 'approved' ||
-                !remote.home_captain_signed ||
-                !remote.away_captain_signed)
-            ) {
-              await refreshSingleFixture(fixture.id);
-              return;
-            }
-          } catch {
-            // fallback to local check
-          }
-        }
-
         await saveFixture({
           ...latest,
           status: 'submitted',
@@ -1044,14 +1004,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       setNumber === 1 &&
       (side === 'home' ? fixture.homeSet1Locked : fixture.awaySet1Locked);
     const set1Complete = isSet1LineupComplete(side);
-    const set1FilledCount = fixture.lineups.set1[side].filter(Boolean).length;
     const hideSideSlots = !bothSet1Locked && !sideEditable;
 
-    const otherSide = side === 'home' ? 'away' : 'home';
     const myUnlockReq = Boolean(fixture.lineups.unlockRequested?.[side]);
-    const otherUnlockReq = Boolean(
-      fixture.lineups.unlockRequested?.[otherSide]
-    );
 
     const isSubsConfirmedAndLocked =
       setNumber > 1 && isSubsLocked(fixture.lineups, setNumber, side);
@@ -1643,14 +1598,27 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const renderSubsUnlockRequestBanner = () => {
+    const targetSide =
+      otherSide ||
+      (canManageLeague
+        ? isSubsUnlockRequested(fixture.lineups, activeSet, 'home')
+          ? 'home'
+          : isSubsUnlockRequested(fixture.lineups, activeSet, 'away')
+          ? 'away'
+          : null
+        : null);
+
     if (
       activeSet <= 1 ||
       !bothSet1Locked ||
-      !otherSide ||
-      !isSubsUnlockRequested(fixture.lineups, activeSet, otherSide)
+      !targetSide ||
+      !isSubsUnlockRequested(fixture.lineups, activeSet, targetSide)
     ) {
       return null;
     }
+
+    const targetTeamName =
+      targetSide === 'home' ? homeTeam.name : awayTeam.name;
 
     return (
       <div className="bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-200 shadow-lg animate-in fade-in duration-200">
@@ -1658,7 +1626,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
           <div>
             <strong className="text-white block text-sm font-bold">
-              {otherTeamName} captain requested to change their Set {activeSet} substitutions
+              {targetTeamName} captain requested to change their Set {activeSet} substitutions
             </strong>
             <span className="text-slate-300 text-xs">
               Substitutions are locked once confirmed. Click &ldquo;Allow Substitution Changes&rdquo; to unlock their substitutions for editing.
@@ -1668,7 +1636,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => handleAllowSubsUnlock(activeSet as 2 | 3, otherSide)}
+            onClick={() => handleAllowSubsUnlock(activeSet as 2 | 3, targetSide)}
             className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
           >
             <CheckCircle2 className="w-4 h-4 text-slate-950" />
@@ -1680,19 +1648,31 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const renderSubsApprovalRequestBanner = () => {
+    const targetSide =
+      otherSide ||
+      (canManageLeague
+        ? isSubsPendingApproval(fixture.lineups, activeSet, 'home')
+          ? 'home'
+          : isSubsPendingApproval(fixture.lineups, activeSet, 'away')
+          ? 'away'
+          : null
+        : null);
+
     if (
       activeSet <= 1 ||
       !bothSet1Locked ||
-      !otherSide ||
-      !isSubsPendingApproval(fixture.lineups, activeSet, otherSide)
+      !targetSide ||
+      !isSubsPendingApproval(fixture.lineups, activeSet, targetSide)
     ) {
       return null;
     }
 
+    const targetTeamName =
+      targetSide === 'home' ? homeTeam.name : awayTeam.name;
     const otherSubs = getSubstitutionsMade(
       fixture.lineups,
       activeSet as 2 | 3,
-      otherSide
+      targetSide
     );
 
     return (
@@ -1701,7 +1681,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
           <div>
             <strong className="text-white block text-sm font-bold">
-              {otherTeamName} captain made Set {activeSet} substitution{otherSubs.length > 1 ? 's' : ''}
+              {targetTeamName} captain made Set {activeSet} substitution{otherSubs.length > 1 ? 's' : ''}
             </strong>
             <span className="text-slate-300 text-xs">
               {otherSubs.length > 0 ? (
@@ -1720,7 +1700,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => handleApproveSubs(activeSet as 2 | 3, otherSide)}
+            onClick={() => handleApproveSubs(activeSet as 2 | 3, targetSide)}
             className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5"
           >
             <CheckCircle2 className="w-4 h-4 text-slate-950" />
@@ -3171,10 +3151,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           fixture={fixture}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
-          seasonName={
-            seasons.find((s) => s.id === fixture.seasonId)?.name ||
-            'Brighton & Hove Pool League'
-          }
+          seasonName={seasonName || 'Brighton & Hove Pool League'}
           players={players}
         />
       )}
