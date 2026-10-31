@@ -125,12 +125,10 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     if (!isContainerized) {
       await page.getByRole('button', { name: 'Overdue', exact: true }).click();
     }
-    const scorecardBtns = page.getByRole('button', {
-      name: /View Scorecard|Start Match/i,
-    });
-    await (
-      isContainerized ? scorecardBtns.last() : scorecardBtns.first()
-    ).click();
+    await page
+      .getByRole('button', { name: /View Scorecard|Start Match/i })
+      .first()
+      .click();
 
     // 1. Select Home Set 1 running order (Positions 1 to 5) via UI dropdowns and click Confirm
     for (let pos = 1; pos <= 5; pos++) {
