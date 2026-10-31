@@ -243,17 +243,10 @@ export const TeamsAndVenuesView: React.FC = () => {
                 {/* Venue Header */}
                 <div className="flex flex-wrap items-start justify-between gap-2.5 border-b border-slate-800/80 pb-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                      <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 min-w-0">
-                        <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="truncate">{venueGroup.venue}</span>
-                      </h3>
-                      {hasMultipleTeams && (
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0 whitespace-nowrap">
-                          {venueGroup.teams.length} Home Teams
-                        </span>
-                      )}
-                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 min-w-0">
+                      <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="truncate">{venueGroup.venue}</span>
+                    </h3>
                     {venueGroup.address && (
                       <p className="text-xs text-slate-400 mt-1 pl-6">
                         {venueGroup.address}
@@ -261,16 +254,24 @@ export const TeamsAndVenuesView: React.FC = () => {
                     )}
                   </div>
 
-                  <a
-                    href={mapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium transition shrink-0"
-                    title="Open address in Google Maps"
-                  >
-                    <span>Directions</span>
-                    <ExternalLink className="w-3 h-3 text-slate-400" />
-                  </a>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {hasMultipleTeams && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs font-medium whitespace-nowrap shadow-sm">
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{venueGroup.teams.length} Teams</span>
+                      </span>
+                    )}
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium transition shrink-0"
+                      title="Open address in Google Maps"
+                    >
+                      <span>Directions</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                    </a>
+                  </div>
                 </div>
 
                 {/* Teams playing at this venue */}
