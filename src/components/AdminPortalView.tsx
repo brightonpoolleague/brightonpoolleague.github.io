@@ -93,7 +93,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   const [fixtureSearchQuery, setFixtureSearchQuery] = useState('');
   const [fixtureDateFilter, setFixtureDateFilter] = useState('ALL');
   const [fixtureTimeframeFilter, setFixtureTimeframeFilter] = useState<
-    'ALL' | 'live' | 'upcoming' | 'today' | 'past'
+    'ALL' | 'live' | 'upcoming' | 'today' | 'past' | 'completed'
   >('ALL');
   const [approvalFilter, setApprovalFilter] = useState<
     'all' | 'submitted' | 'live' | 'scheduled' | 'overdue' | 'approved'
@@ -544,6 +544,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     let upcoming = 0;
     let today = 0;
     let past = 0;
+    let completed = 0;
 
     for (const f of fixtures) {
       if (fixtureFilterDivision === 'KNOCKOUT') {
@@ -556,17 +557,20 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       all++;
       if (f.status === 'live') {
         live++;
-      }
-      const tf = getMatchTimeframe(f.matchDate, f.status);
-      if (tf === 'today') {
-        today++;
-      } else if (tf === 'upcoming') {
-        upcoming++;
-      } else if (tf === 'past') {
-        past++;
+      } else if (f.status === 'approved' || f.status === 'submitted') {
+        completed++;
+      } else {
+        const tf = getMatchTimeframe(f.matchDate, f.status);
+        if (tf === 'today') {
+          today++;
+        } else if (tf === 'upcoming') {
+          upcoming++;
+        } else if (tf === 'past') {
+          past++;
+        }
       }
     }
-    return { all, live, upcoming, today, past };
+    return { all, live, upcoming, today, past, completed };
   }, [fixtures, fixtureFilterDivision]);
 
   const filteredFixtures = useMemo(() => {
@@ -581,15 +585,20 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       if (fixtureTimeframeFilter !== 'ALL') {
         if (fixtureTimeframeFilter === 'live') {
           if (f.status !== 'live') return false;
+        } else if (fixtureTimeframeFilter === 'completed') {
+          if (f.status !== 'approved' && f.status !== 'submitted') return false;
         } else if (fixtureTimeframeFilter === 'today') {
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'today') return false;
         } else if (fixtureTimeframeFilter === 'upcoming') {
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
-          if (tf !== 'upcoming' || f.status === 'live') return false;
+          if (tf !== 'upcoming') return false;
         } else if (fixtureTimeframeFilter === 'past') {
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
-          if (tf !== 'past' || f.status === 'live') return false;
+          if (tf !== 'past') return false;
         }
       }
       if (fixtureDateFilter !== 'ALL' && f.matchDate !== fixtureDateFilter) {
@@ -1453,6 +1462,24 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   <History className="w-3 h-3 text-slate-400" />
                   Overdue ({fixtureTimeframeCounts.past})
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setFixtureTimeframeFilter('completed')}
+                  className={`px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1.5 whitespace-nowrap ${
+                    fixtureTimeframeFilter === 'completed'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <CheckCircle2
+                    className={`w-3 h-3 ${
+                      fixtureTimeframeFilter === 'completed'
+                        ? 'text-white'
+                        : 'text-emerald-400'
+                    }`}
+                  />
+                  Completed ({fixtureTimeframeCounts.completed})
+                </button>
               </div>
             </div>
 
@@ -1859,6 +1886,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       ? 'Today'
                       : fixtureTimeframeFilter === 'past'
                       ? 'Overdue'
+                      : fixtureTimeframeFilter === 'completed'
+                      ? 'Completed'
                       : null;
 
                   const divLabel =
