@@ -10,11 +10,13 @@ import { PinInput } from './PinInput';
 
 interface RoleSwitcherModalProps {
   onClose: () => void;
+  onCaptainLoginSuccess?: () => void;
   onAdminLoginSuccess?: () => void;
 }
 
 export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
   onClose,
+  onCaptainLoginSuccess,
   onAdminLoginSuccess,
 }) => {
   const {
@@ -49,6 +51,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
     const res = await loginAsCaptainWithPin(captainPinInput);
     if (res.success) {
       setCaptainError('');
+      onCaptainLoginSuccess?.();
       onClose();
     } else {
       setCaptainError(
