@@ -187,7 +187,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             </p>
           </div>
         ),
-        confirmLabel: 'Approve Scorecard',
+        confirmLabel: 'Approve',
         variant: 'warning',
         onConfirm: () => approveFixture(fix.id),
       });
@@ -2578,7 +2578,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              Approve Result
+                              Approve
                             </button>
                           ) : (
                             <button

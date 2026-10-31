@@ -67,7 +67,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     canManageLeague,
     saveFixture,
     approveFixture,
-    reopenFixture,
     isOnline,
     isSyncing,
     syncError,
@@ -199,7 +198,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </p>
           </div>
         ),
-        confirmLabel: 'Approve Scorecard',
+        confirmLabel: 'Approve',
         variant: 'warning',
         onConfirm: () => approveFixture(fixture.id),
       });
@@ -2971,7 +2970,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             {fixture.status === 'approved' && (
               <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5 text-center">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Officially Approved by League Admin</span>
+                <span>Approved by league admin</span>
               </div>
             )}
 
@@ -3079,20 +3078,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Approve Official Scorecard</span>
+                <span>Approve</span>
               </button>
-            )}
-            {canManageLeague && fixture.status === 'approved' && (
-              <div className="flex justify-end pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => reopenFixture(fixture.id)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition"
-                >
-                  <Unlock className="w-3 h-3" />
-                  <span>Reopen Scorecard</span>
-                </button>
-              </div>
             )}
           </div>
         </div>
