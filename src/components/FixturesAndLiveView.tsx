@@ -185,11 +185,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         return false;
       }
       if (statusFilter === 'mine') {
-        return (
-          f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
-        );
-      }
-      if (statusFilter === 'scheduled') {
+        if (f.homeTeamId !== session.teamId && f.awayTeamId !== session.teamId) {
+          return false;
+        }
+      } else if (statusFilter === 'scheduled') {
         const tf = getMatchTimeframe(f.matchDate, f.status);
         if (tf === 'past' || f.status !== 'scheduled') {
           return false;
