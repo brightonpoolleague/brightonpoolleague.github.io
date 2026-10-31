@@ -948,6 +948,46 @@ test.describe('Containerized Supabase & PostgreSQL Database E2E Suite', () => {
       await homePage.getByRole('button', { name: 'Start Match' }).first().click();
       await awayPage.getByRole('button', { name: 'Start Match' }).first().click();
 
+      // 3b. Security Check: Verify Home Captain CANNOT inject an opponent/foreign player ID ('p-cc-1') into the Home lineup
+      const forgedPlayerRes = await request.post(
+        `${SUPABASE_URL}/rest/v1/rpc/captain_save_fixture`,
+        {
+          headers,
+          data: {
+            p_fixture_id: 'fix-scheduled-1',
+            p_team_id: 't-prem-1',
+            p_pin: '111222',
+            p_status: 'scheduled',
+            p_lag_winner: 'home',
+            p_home_set1_locked: true,
+            p_away_set1_locked: false,
+            p_lineups: {
+              set1: {
+                home: ['p-cc-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+              set2: {
+                home: ['p-cc-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+              set3: {
+                home: ['p-cc-1', 'p-kq-2', 'p-kq-3', 'p-kq-4', 'p-kq-5'],
+                away: [null, null, null, null, null],
+              },
+            },
+            p_frames: [],
+            p_home_captain_signed: false,
+            p_away_captain_signed: false,
+            p_submitted_at: null,
+            p_edited_side: 'home',
+          },
+        }
+      );
+      expect(forgedPlayerRes.status()).toBe(400);
+      expect(await forgedPlayerRes.text()).toContain(
+        'must belong to the Home team'
+      );
+
       // 4. Home Captain submits & locks their Set 1 lineup (side='home') via PostgreSQL RPC
       const homeSaveRes = await request.post(
         `${SUPABASE_URL}/rest/v1/rpc/captain_save_fixture`,

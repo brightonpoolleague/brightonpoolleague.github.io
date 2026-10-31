@@ -717,6 +717,39 @@ begin
     end;
     v_public_away_s3 := coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away');
     v_away_signed := v_fixture.away_captain_signed;
+
+    -- Validate that all non-null, non-BYE player IDs in Home lineups belong to the Home team's active squad
+    if p_edited_side <> 'frames' then
+      if jsonb_typeof(coalesce(v_real_home_s1, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_home_s2, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_home_s3, '[]'::jsonb)) <> 'array' then
+        raise exception 'Invalid lineup format: lineup slots must be JSON arrays';
+      end if;
+
+      if exists (
+        select 1
+        from jsonb_array_elements(
+          coalesce(v_real_home_s1, '[]'::jsonb) ||
+          coalesce(v_public_home_s2, '[]'::jsonb) ||
+          coalesce(v_public_home_s3, '[]'::jsonb)
+        ) as slot_val
+        where jsonb_typeof(slot_val) <> 'null'
+          and (
+            jsonb_typeof(slot_val) <> 'string'
+            or (
+              (slot_val #>> '{}') <> 'BYE'
+              and not exists (
+                select 1 from public.players pl
+                where pl.id = (slot_val #>> '{}')
+                  and pl.team_id = v_fixture.home_team_id
+                  and pl.active = true
+              )
+            )
+          )
+      ) then
+        raise exception 'Forbidden: All selected players in the Home lineup must belong to the Home team''s active squad';
+      end if;
+    end if;
   elsif p_team_id = v_fixture.away_team_id then
     if p_edited_side <> 'frames' and not (v_fixture.home_captain_signed or v_fixture.away_captain_signed) then
       v_away_unlock_req := coalesce((p_lineups->'unlockRequested'->>'away')::boolean, false);
@@ -803,6 +836,39 @@ begin
       else p_lineups->'set3'->'away'
     end;
     v_home_signed := v_fixture.home_captain_signed;
+
+    -- Validate that all non-null, non-BYE player IDs in Away lineups belong to the Away team's active squad
+    if p_edited_side <> 'frames' then
+      if jsonb_typeof(coalesce(v_real_away_s1, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_away_s2, '[]'::jsonb)) <> 'array'
+         or jsonb_typeof(coalesce(v_public_away_s3, '[]'::jsonb)) <> 'array' then
+        raise exception 'Invalid lineup format: lineup slots must be JSON arrays';
+      end if;
+
+      if exists (
+        select 1
+        from jsonb_array_elements(
+          coalesce(v_real_away_s1, '[]'::jsonb) ||
+          coalesce(v_public_away_s2, '[]'::jsonb) ||
+          coalesce(v_public_away_s3, '[]'::jsonb)
+        ) as slot_val
+        where jsonb_typeof(slot_val) <> 'null'
+          and (
+            jsonb_typeof(slot_val) <> 'string'
+            or (
+              (slot_val #>> '{}') <> 'BYE'
+              and not exists (
+                select 1 from public.players pl
+                where pl.id = (slot_val #>> '{}')
+                  and pl.team_id = v_fixture.away_team_id
+                  and pl.active = true
+              )
+            )
+          )
+      ) then
+        raise exception 'Forbidden: All selected players in the Away lineup must belong to the Away team''s active squad';
+      end if;
+    end if;
   end if;
 
   -- Persist real Set 1 lineups in private table (never readable by anon/DevTools)
