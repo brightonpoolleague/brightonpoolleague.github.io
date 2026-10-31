@@ -1849,13 +1849,58 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   <p>
                     No fixtures match &ldquo;<strong className="text-white">{fixtureSearchQuery.trim()}</strong>&rdquo;.
                   </p>
-                ) : fixtureDateFilter !== 'ALL' ? (
-                  <p>
-                    No fixtures match <strong>{formatMatchDate(fixtureDateFilter)}</strong>.
-                  </p>
-                ) : (
-                  <p>No fixtures found for {seasonName}.</p>
-                )}
+                ) : (() => {
+                  const stateLabel =
+                    fixtureTimeframeFilter === 'live'
+                      ? 'Live'
+                      : fixtureTimeframeFilter === 'upcoming'
+                      ? 'Upcoming'
+                      : fixtureTimeframeFilter === 'today'
+                      ? 'Today'
+                      : fixtureTimeframeFilter === 'past'
+                      ? 'Past'
+                      : null;
+
+                  const divLabel =
+                    fixtureFilterDivision === 'KNOCKOUT'
+                      ? 'Knockouts'
+                      : fixtureFilterDivision !== 'ALL'
+                      ? fixtureFilterDivision
+                      : null;
+
+                  const dateStr =
+                    fixtureDateFilter !== 'ALL' ? formatMatchDate(fixtureDateFilter) : null;
+
+                  if (stateLabel && divLabel) {
+                    return (
+                      <p>
+                        No &lsquo;{stateLabel}&rsquo; fixtures in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                      </p>
+                    );
+                  }
+
+                  if (stateLabel) {
+                    return (
+                      <p>
+                        No &lsquo;{stateLabel}&rsquo; fixtures{dateStr ? ` on ${dateStr}` : ' across all divisions'}.
+                      </p>
+                    );
+                  }
+
+                  if (divLabel) {
+                    return (
+                      <p>
+                        No fixtures in &lsquo;{divLabel}&rsquo;{dateStr ? ` on ${dateStr}` : ''}.
+                      </p>
+                    );
+                  }
+
+                  if (dateStr) {
+                    return <p>No fixtures on {dateStr}.</p>;
+                  }
+
+                  return <p>No fixtures found for {seasonName}.</p>;
+                })()}
               </div>
             ) : (
               <div className="space-y-2.5">
