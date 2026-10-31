@@ -8,13 +8,13 @@ Hosted live at: **[brightonpoolleague.github.io](https://brightonpoolleague.gith
 
 ## Features
 
-- **Live Scoring & Digital Scorecards**: Real-time match scoring with multi-frame tracking, blind Set 1 secrecy ("folded paper"), Set 2/3 substitutions with opponent approval handshakes, lag winners, break dishes, reverse dishes, and dual-captain sign-off via unique 6-digit PIN verification.
-- **League Tables & Divisions**: Live calculated standings across Premier League, Division 1, Division 2, and Division 3 with frame differential, bonus points, and tiebreakers.
-- **Player Stats & Roll of Honour**: Comprehensive player statistics including frames played/won, win percentages, most dishes (Top Dish), and historical Roll of Honour archives.
-- **Fixtures & Results**: Filterable match calendar by division, status, and date, with downloadable high-res PNG table and match result scorecard image exports.
-- **Venues & Teams**: Directory of venues with map directions, contact numbers, match table quantities, and assigned team lists.
-- **Admin Portal**: League administration controls for team details, venue tables, PIN management/regeneration, player sign-ons, renames & transfers, League & Knockout Cup fixture scheduling, and scorecard review, approval, and reopening.
-- **Resilient Offline & Reconnection Support**: Seamless local storage persistence, live offline/weak connection banner, and queued automatic background synchronization for reliable venue use on mobile devices even with poor cellular reception.
+- **Live Scoring & Digital Scorecards**: Real-time match scoring with multi-frame tracking, blind Set 1 secrecy ("folded paper"), Set 2/3 substitutions with opponent approval handshakes, lag winners, break dishes, reverse dishes and dual-captain sign-off via unique 6-digit PIN verification.
+- **League Tables & Divisions**: Live calculated standings across Premier League, Division 1, Division 2 and Division 3 with frame differential, bonus points and tiebreakers.
+- **Player Stats & Roll of Honour**: Comprehensive player statistics including frames played/won, win percentages, most dishes (Top Dish) and historical Roll of Honour archives.
+- **Fixtures & Results**: Filterable match calendar by division, status and date, with downloadable high-res PNG table and match result scorecard image exports.
+- **Venues & Teams**: Directory of venues with map directions, contact numbers, match table quantities and assigned team lists.
+- **Admin Portal**: League administration controls for team details, venue tables, PIN management/regeneration, player sign-ons, renames & transfers, League & Knockout Cup fixture scheduling and scorecard review, approval and reopening.
+- **Resilient Offline & Reconnection Support**: Seamless local storage persistence, live offline/weak connection banner and queued automatic background synchronization for reliable venue use on mobile devices even with poor cellular reception.
 
 ---
 

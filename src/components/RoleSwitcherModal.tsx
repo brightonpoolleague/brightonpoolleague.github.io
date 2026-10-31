@@ -184,7 +184,7 @@ export const RoleSwitcherModal: React.FC<RoleSwitcherModalProps> = ({
           >
             <p className="text-xs text-slate-400">
               Enter the League Admin PIN to manage teams, players, Team PINs,
-              fixtures, and approve scorecards.
+              fixtures and approve scorecards.
             </p>
 
             <div className="flex items-center gap-2">
