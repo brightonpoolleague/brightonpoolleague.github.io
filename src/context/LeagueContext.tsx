@@ -43,7 +43,6 @@ import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
 const STORAGE_KEYS = {
   SEASONS: 'bpl_seasons_v3',
-  ACTIVE_SEASON_ID: 'bpl_active_season_id_v3',
   ADMIN_PIN: 'bpl_admin_pin_local_v5',
   TEAMS: 'bpl_teams_local_v3',
   PLAYERS: 'bpl_players_local_v3',
@@ -194,18 +193,8 @@ function mergeBlindSet1Lineups(
 }
 
 interface LeagueContextValue {
-  seasons: Season[];
-  seasonId: string;
   seasonName: string;
   divisions: Division[];
-  setSelectedSeasonId: (id: string) => void;
-  createNewSeason: (
-    name: string,
-    copyTeamsFromCurrent: boolean,
-    customDivisions?: Division[]
-  ) => Promise<Season>;
-  addDivision: (divisionName: string) => Promise<void>;
-  removeDivision: (divisionName: string) => Promise<void>;
   teams: Team[];
   players: Player[];
   fixtures: Fixture[];
@@ -233,11 +222,6 @@ interface LeagueContextValue {
     teamId: string,
     newPin: string
   ) => Promise<{ success: boolean; error?: string }>;
-  addTeam: (
-    data: Omit<Team, 'id' | 'seasonId' | 'captainPin'> & {
-      captainPin?: string;
-    }
-  ) => Promise<Team>;
   updateTeam: (team: Team) => Promise<void>;
   addPlayer: (teamId: string, name: string) => Promise<Player>;
   updatePlayer: (player: Player) => Promise<void>;
@@ -256,10 +240,6 @@ interface LeagueContextValue {
     cupName?: string;
     cupRound?: string;
   }) => Promise<Fixture>;
-  generateDivisionFixtures: (
-    division: Division,
-    startDate: string
-  ) => Promise<number>;
   deleteFixture: (fixtureId: string) => Promise<void>;
   updateFixtureDetails: (updated: Fixture) => Promise<void>;
   saveFixture: (
@@ -268,7 +248,6 @@ interface LeagueContextValue {
   ) => Promise<void>;
   approveFixture: (fixtureId: string) => Promise<void>;
   reopenFixture: (fixtureId: string) => Promise<void>;
-  refreshFromCloud: (options?: { silent?: boolean }) => Promise<void>;
   refreshSingleFixture: (fixtureId: string) => Promise<void>;
   resetLocalTestData: () => void;
   canEditFixture: (fixture: Fixture) => boolean;
@@ -295,9 +274,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [seasons, setSeasons] = useState<Season[]>(() =>
     loadFromStorage(STORAGE_KEYS.SEASONS, INITIAL_SEASONS)
-  );
-  const [selectedSeasonId, setSelectedSeasonIdState] = useState<string>(() =>
-    loadFromStorage(STORAGE_KEYS.ACTIVE_SEASON_ID, DEFAULT_SEASON_ID)
   );
   const [adminPin, setAdminPin] = useState<string>(() =>
     loadFromStorage(STORAGE_KEYS.ADMIN_PIN, DEFAULT_ADMIN_PIN)
@@ -362,7 +338,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const lastLocalFixtureSaveAtRef = useRef<Map<string, number>>(new Map());
 
   const activeSeason =
-    seasons.find((s) => s.id === selectedSeasonId) ||
+    seasons.find((s) => s.isActive) ||
     seasons[0] ||
     INITIAL_SEASONS[0];
 
@@ -396,13 +372,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       allFixtures.filter((f) => (f.seasonId || DEFAULT_SEASON_ID) === seasonId),
     [allFixtures, seasonId]
   );
-
-  const setSelectedSeasonId = useCallback((id: string) => {
-    setSelectedSeasonIdState(id);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.ACTIVE_SEASON_ID, JSON.stringify(id));
-    }
-  }, []);
 
   const persistLocal = useCallback(
     (
@@ -1187,255 +1156,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
-  const addDivision = useCallback(
-    async (divisionName: string): Promise<void> => {
-      const clean = divisionName.trim();
-      if (!clean || divisions.includes(clean)) return;
-      const nextDivisions = [...divisions, clean];
-      const nextSeasons = seasons.map((s) =>
-        s.id === seasonId ? { ...s, divisions: nextDivisions } : s
-      );
-      setSeasons(nextSeasons);
-      persistLocal(allTeams, allPlayers, allFixtures, nextSeasons, adminPin);
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('admin_upsert_season', {
-          p_admin_pin: adminPin,
-          p_id: seasonId,
-          p_name: seasonName,
-          p_is_active: activeSeason.isActive,
-          p_divisions: nextDivisions,
-        });
-      }
-    },
-    [
-      divisions,
-      seasons,
-      seasonId,
-      seasonName,
-      activeSeason.isActive,
-      allTeams,
-      allPlayers,
-      allFixtures,
-      adminPin,
-      persistLocal,
-    ]
-  );
-
-  const removeDivision = useCallback(
-    async (divisionName: string): Promise<void> => {
-      if (divisions.length <= 1) return;
-      const nextDivisions = divisions.filter((d) => d !== divisionName);
-      const nextSeasons = seasons.map((s) =>
-        s.id === seasonId ? { ...s, divisions: nextDivisions } : s
-      );
-      setSeasons(nextSeasons);
-      persistLocal(allTeams, allPlayers, allFixtures, nextSeasons, adminPin);
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('admin_upsert_season', {
-          p_admin_pin: adminPin,
-          p_id: seasonId,
-          p_name: seasonName,
-          p_is_active: activeSeason.isActive,
-          p_divisions: nextDivisions,
-        });
-      }
-    },
-    [
-      divisions,
-      seasons,
-      seasonId,
-      seasonName,
-      activeSeason.isActive,
-      allTeams,
-      allPlayers,
-      allFixtures,
-      adminPin,
-      persistLocal,
-    ]
-  );
-
-  const createNewSeason = useCallback(
-    async (
-      name: string,
-      copyTeamsFromCurrent: boolean,
-      customDivisions?: Division[]
-    ): Promise<Season> => {
-      const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      const newSeasonId = `${slug}-${Date.now().toString(36).slice(-3)}`;
-      const seasonDivisions =
-        customDivisions && customDivisions.length > 0
-          ? customDivisions
-          : [...divisions];
-
-      const newSeason: Season = {
-        id: newSeasonId,
-        name: name.trim(),
-        isActive: true,
-        divisions: seasonDivisions,
-      };
-
-      const nextSeasons = [
-        ...seasons.map((s) => ({ ...s, isActive: false })),
-        newSeason,
-      ];
-
-      let nextTeams = [...allTeams];
-      let nextPlayers = [...allPlayers];
-      const clonedTeams: Team[] = [];
-      const clonedPlayers: Player[] = [];
-
-      if (copyTeamsFromCurrent) {
-        teams.forEach((oldTeam) => {
-          const newTeamId = `team-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2, 6)}`;
-          clonedTeams.push({
-            ...oldTeam,
-            id: newTeamId,
-            seasonId: newSeasonId,
-          });
-          players
-            .filter((p) => p.teamId === oldTeam.id)
-            .forEach((oldP) => {
-              clonedPlayers.push({
-                ...oldP,
-                id: `player-${Date.now()}-${Math.random()
-                  .toString(36)
-                  .slice(2, 6)}`,
-                teamId: newTeamId,
-              });
-            });
-        });
-        nextTeams = [...nextTeams, ...clonedTeams];
-        nextPlayers = [...nextPlayers, ...clonedPlayers];
-      }
-
-      setSeasons(nextSeasons);
-      setAllTeams(nextTeams);
-      setAllPlayers(nextPlayers);
-      setSelectedSeasonId(newSeasonId);
-      persistLocal(nextTeams, nextPlayers, allFixtures, nextSeasons, adminPin);
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('admin_upsert_season', {
-          p_admin_pin: adminPin,
-          p_id: newSeason.id,
-          p_name: newSeason.name,
-          p_is_active: true,
-          p_divisions: seasonDivisions,
-        });
-        for (const t of clonedTeams) {
-          await supabase.rpc('admin_upsert_team', {
-            p_admin_pin: adminPin,
-            p_id: t.id,
-            p_season_id: t.seasonId,
-            p_division: t.division,
-            p_name: t.name,
-            p_venue: t.venue,
-            p_address: t.address,
-            p_captain_name: t.captainName,
-            p_captain_pin:
-              t.captainPin && !t.captainPin.includes('•')
-                ? t.captainPin
-                : generateRandomPin(),
-          });
-        }
-        for (const p of clonedPlayers) {
-          await supabase.rpc('admin_upsert_player', {
-            p_admin_pin: adminPin,
-            p_id: p.id,
-            p_team_id: p.teamId,
-            p_name: p.name,
-            p_active: p.active,
-          });
-        }
-      }
-
-      return newSeason;
-    },
-    [
-      divisions,
-      seasons,
-      allTeams,
-      allPlayers,
-      allFixtures,
-      teams,
-      players,
-      adminPin,
-      setSelectedSeasonId,
-      persistLocal,
-    ]
-  );
-
-  const addTeam = useCallback(
-    async (
-      data: Omit<Team, 'id' | 'seasonId' | 'captainPin'> & {
-        captainPin?: string;
-      }
-    ): Promise<Team> => {
-      const existingPins = allTeams
-        .map((t) => t.captainPin)
-        .filter((p) => Boolean(p) && !p.includes('•'));
-      if (adminPin) existingPins.push(adminPin);
-
-      let generatedPin = data.captainPin?.trim();
-      if (!generatedPin || existingPins.includes(generatedPin)) {
-        generatedPin = generateRandomPin(existingPins);
-      }
-      const newTeam: Team = {
-        ...data,
-        id: `team-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        seasonId,
-        captainPin: generatedPin,
-      };
-      const nextTeams = [...allTeams, newTeam];
-      setAllTeams(nextTeams);
-      persistLocal(nextTeams, allPlayers, allFixtures);
-
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        await supabase.rpc('admin_upsert_season', {
-          p_admin_pin: adminPin,
-          p_id: seasonId,
-          p_name: seasonName,
-          p_is_active: true,
-          p_divisions: divisions,
-        });
-        await supabase.rpc('admin_upsert_team', {
-          p_admin_pin: adminPin,
-          p_id: newTeam.id,
-          p_season_id: newTeam.seasonId,
-          p_division: newTeam.division,
-          p_name: newTeam.name,
-          p_venue: newTeam.venue,
-          p_address: newTeam.address,
-          p_captain_name: newTeam.captainName,
-          p_captain_pin: generatedPin,
-          p_table_number: newTeam.tableNumber ?? null,
-        });
-      }
-      return newTeam;
-    },
-    [
-      seasonId,
-      seasonName,
-      divisions,
-      adminPin,
-      allTeams,
-      allPlayers,
-      allFixtures,
-      persistLocal,
-    ]
-  );
-
   const updateTeam = useCallback(
     async (updatedTeam: Team): Promise<void> => {
       const nextTeams = allTeams.map((t) =>
@@ -1614,104 +1334,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       return newFixture;
     },
     [adminPin, seasonId, allTeams, allPlayers, allFixtures, persistLocal]
-  );
-
-  const generateDivisionFixtures = useCallback(
-    async (division: Division, startDate: string): Promise<number> => {
-      const divTeams = teams.filter((t) => t.division === division);
-      if (divTeams.length < 2) return 0;
-
-      const list: (Team | null)[] = [...divTeams];
-      if (list.length % 2 === 1) {
-        list.push(null);
-      }
-
-      const n = list.length;
-      const rounds = n - 1;
-      const matchesPerRound = n / 2;
-      const generated: Fixture[] = [];
-
-      const baseDate = new Date(startDate || '2026-11-02');
-
-      const addDays = (d: Date, days: number) => {
-        const copy = new Date(d);
-        copy.setDate(copy.getDate() + days);
-        return copy.toISOString().slice(0, 10);
-      };
-
-      const rotation = [...list];
-      for (let leg = 0; leg < 2; leg++) {
-        for (let round = 0; round < rounds; round++) {
-          const weekIndex = leg * rounds + round;
-          const matchDate = addDays(baseDate, weekIndex * 7);
-
-          for (let i = 0; i < matchesPerRound; i++) {
-            const t1 = rotation[i];
-            const t2 = rotation[n - 1 - i];
-            if (t1 && t2) {
-              const home = leg === 0 ? t1 : t2;
-              const away = leg === 0 ? t2 : t1;
-              generated.push({
-                id: `fix-${division.toLowerCase().replace(/\s+/g, '')}-w${
-                  weekIndex + 1
-                }-${home.id}-${away.id}-${Date.now()}`,
-                seasonId,
-                division,
-                matchDate,
-                weekNumber: weekIndex + 1,
-                homeTeamId: home.id,
-                awayTeamId: away.id,
-                status: 'scheduled',
-                lagWinner: null,
-                homeSet1Locked: false,
-                awaySet1Locked: false,
-                lineups: createEmptyLineups(),
-                frames: createEmptyFrames(),
-                homeCaptainSigned: false,
-                awayCaptainSigned: false,
-                updatedAt: new Date().toISOString(),
-              });
-            }
-          }
-          const last = rotation.pop()!;
-          rotation.splice(1, 0, last);
-        }
-      }
-
-      const nextFixtures = [...allFixtures, ...generated];
-      setAllFixtures(nextFixtures);
-      persistLocal(allTeams, allPlayers, nextFixtures);
-
-      const supabase = getSupabaseClient();
-      if (supabase && generated.length > 0) {
-        for (const f of generated) {
-          await supabase.rpc('admin_upsert_fixture', {
-            p_admin_pin: adminPin,
-            p_id: f.id,
-            p_season_id: f.seasonId,
-            p_division: f.division,
-            p_match_date: f.matchDate,
-            p_week_number: f.weekNumber,
-            p_home_team_id: f.homeTeamId,
-            p_away_team_id: f.awayTeamId,
-            p_status: f.status,
-            p_lineups: f.lineups,
-            p_frames: f.frames,
-          });
-        }
-      }
-
-      return generated.length;
-    },
-    [
-      adminPin,
-      seasonId,
-      teams,
-      allTeams,
-      allPlayers,
-      allFixtures,
-      persistLocal,
-    ]
   );
 
   const deleteFixture = useCallback(
@@ -2072,7 +1694,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const resetLocalTestData = useCallback(() => {
     if (isCloudConnected) return;
     setSeasons(INITIAL_SEASONS);
-    setSelectedSeasonIdState(DEFAULT_SEASON_ID);
     setAllTeams(LOCAL_TEST_TEAMS);
     setAllPlayers(LOCAL_TEST_PLAYERS);
     setAllFixtures(LOCAL_TEST_FIXTURES);
@@ -2108,14 +1729,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <LeagueContext.Provider
       value={{
-        seasons,
-        seasonId,
         seasonName,
         divisions,
-        setSelectedSeasonId,
-        createNewSeason,
-        addDivision,
-        removeDivision,
         teams,
         players,
         fixtures,
@@ -2130,19 +1745,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         loginAsCaptainWithPin,
         loginAsAdminWithPin,
         updateTeamPin,
-        addTeam,
         updateTeam,
         addPlayer,
         updatePlayer,
         transferPlayer,
         addFixture,
-        generateDivisionFixtures,
         deleteFixture,
         updateFixtureDetails,
         saveFixture,
         approveFixture,
         reopenFixture,
-        refreshFromCloud,
         refreshSingleFixture,
         resetLocalTestData,
         canEditFixture,

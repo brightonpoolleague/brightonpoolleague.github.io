@@ -13,7 +13,6 @@ import {
   Pencil,
   PenLine,
   RefreshCw,
-  RotateCcw,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -60,7 +59,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const {
     teams,
     players,
-    seasons,
+    seasonName,
     fixtures,
     session,
     canEditFixture,
@@ -285,12 +284,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       : otherSide === 'away'
       ? awayTeam.name
       : 'Opponent';
-  const myTeamName =
-    mySide === 'home'
-      ? homeTeam.name
-      : mySide === 'away'
-      ? awayTeam.name
-      : 'Your Team';
 
   const changesLockedMessage = useMemo(() => {
     if (
@@ -490,15 +483,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       },
       'frames'
     );
-  };
-
-  const getLagBreakCount = (side: 'home' | 'away'): string | null => {
-    if (!fixture.lagWinner) return null;
-    const isWinner = fixture.lagWinner === side;
-    if (isKnockout && !playAllFrames) {
-      return isWinner ? '(Breaks 1st)' : '(Breaks 2nd)';
-    }
-    return isWinner ? '(8 breaks)' : '(7 breaks)';
   };
 
   const handleSlotChange = async (
@@ -1020,14 +1004,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       setNumber === 1 &&
       (side === 'home' ? fixture.homeSet1Locked : fixture.awaySet1Locked);
     const set1Complete = isSet1LineupComplete(side);
-    const set1FilledCount = fixture.lineups.set1[side].filter(Boolean).length;
     const hideSideSlots = !bothSet1Locked && !sideEditable;
 
-    const otherSide = side === 'home' ? 'away' : 'home';
     const myUnlockReq = Boolean(fixture.lineups.unlockRequested?.[side]);
-    const otherUnlockReq = Boolean(
-      fixture.lineups.unlockRequested?.[otherSide]
-    );
 
     const isSubsConfirmedAndLocked =
       setNumber > 1 && isSubsLocked(fixture.lineups, setNumber, side);
@@ -3172,10 +3151,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
           fixture={fixture}
           homeTeam={homeTeam}
           awayTeam={awayTeam}
-          seasonName={
-            seasons.find((s) => s.id === fixture.seasonId)?.name ||
-            'Brighton & Hove Pool League'
-          }
+          seasonName={seasonName || 'Brighton & Hove Pool League'}
           players={players}
         />
       )}

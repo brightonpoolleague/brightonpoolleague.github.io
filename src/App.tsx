@@ -25,10 +25,7 @@ type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'rules' | 'admin';
 
 const MainShell: React.FC = () => {
   const {
-    seasons,
-    seasonId,
     seasonName,
-    setSelectedSeasonId,
     fixtures,
     session,
     setRoleSession,
@@ -198,21 +195,7 @@ const MainShell: React.FC = () => {
               </div>
               <div className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
                 <Radio className="w-3 h-3 shrink-0" />
-                {seasons.length > 1 ? (
-                  <select
-                    value={seasonId}
-                    onChange={(e) => setSelectedSeasonId(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-emerald-300 font-bold"
-                  >
-                    {seasons.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span>{seasonName}</span>
-                )}
+                <span>{seasonName}</span>
               </div>
             </div>
           </div>
@@ -293,9 +276,6 @@ const MainShell: React.FC = () => {
         {currentTab === 'fixtures' && (
           <FixturesAndLiveView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}
-            onGoToAdmin={() => {
-              setActiveTab('admin');
-            }}
           />
         )}
         {currentTab === 'table' && <LeagueTableView />}

@@ -658,8 +658,11 @@ begin
     end if;
 
     -- Merge Set 2 and Set 3 subs lock states and unlock requests
-    v_home_s2_locked := coalesce((p_lineups->'subsLocked'->'set2'->>'home')::boolean, (v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false);
-    v_home_s3_locked := coalesce((p_lineups->'subsLocked'->'set3'->>'home')::boolean, (v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false);
+    -- Once locked, a captain cannot unilaterally unlock their own Set 2 / Set 3 substitutions
+    v_home_s2_locked := coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set2'->>'home')::boolean, false);
+    v_home_s3_locked := coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set3'->>'home')::boolean, false);
     v_home_s2_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set2'->>'home')::boolean, false);
     v_home_s3_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set3'->>'home')::boolean, false);
     v_home_s2_pending := coalesce((p_lineups->'subsPendingApproval'->'set2'->>'home')::boolean, false);
@@ -695,9 +698,23 @@ begin
       v_away_s3_pending := coalesce((v_fixture.lineups->'subsPendingApproval'->'set3'->>'away')::boolean, false);
     end if;
 
-    v_public_home_s2 := case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home') else p_lineups->'set2'->'home' end;
+    v_public_home_s2 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'home')::boolean, false)
+      then coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home')
+      else p_lineups->'set2'->'home'
+    end;
     v_public_away_s2 := coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away');
-    v_public_home_s3 := case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home') else p_lineups->'set3'->'home' end;
+    v_public_home_s3 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'home')::boolean, false)
+      then coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home')
+      else p_lineups->'set3'->'home'
+    end;
     v_public_away_s3 := coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away');
     v_away_signed := v_fixture.away_captain_signed;
   elsif p_team_id = v_fixture.away_team_id then
@@ -727,8 +744,11 @@ begin
     end if;
 
     -- Merge Set 2 and Set 3 subs lock states and unlock requests
-    v_away_s2_locked := coalesce((p_lineups->'subsLocked'->'set2'->>'away')::boolean, (v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false);
-    v_away_s3_locked := coalesce((p_lineups->'subsLocked'->'set3'->>'away')::boolean, (v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false);
+    -- Once locked, a captain cannot unilaterally unlock their own Set 2 / Set 3 substitutions
+    v_away_s2_locked := coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set2'->>'away')::boolean, false);
+    v_away_s3_locked := coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false)
+      or coalesce((p_lineups->'subsLocked'->'set3'->>'away')::boolean, false);
     v_away_s2_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set2'->>'away')::boolean, false);
     v_away_s3_unlock_req := coalesce((p_lineups->'subsUnlockRequested'->'set3'->>'away')::boolean, false);
     v_away_s2_pending := coalesce((p_lineups->'subsPendingApproval'->'set2'->>'away')::boolean, false);
@@ -765,9 +785,23 @@ begin
     end if;
 
     v_public_home_s2 := coalesce(v_fixture.lineups->'set2'->'home', p_lineups->'set2'->'home');
-    v_public_away_s2 := case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away') else p_lineups->'set2'->'away' end;
+    v_public_away_s2 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set2'->>'away')::boolean, false)
+      then coalesce(v_fixture.lineups->'set2'->'away', p_lineups->'set2'->'away')
+      else p_lineups->'set2'->'away'
+    end;
     v_public_home_s3 := coalesce(v_fixture.lineups->'set3'->'home', p_lineups->'set3'->'home');
-    v_public_away_s3 := case when p_edited_side = 'frames' then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away') else p_lineups->'set3'->'away' end;
+    v_public_away_s3 := case
+      when p_edited_side = 'frames'
+        or v_fixture.home_captain_signed
+        or v_fixture.away_captain_signed
+        or coalesce((v_fixture.lineups->'subsLocked'->'set3'->>'away')::boolean, false)
+      then coalesce(v_fixture.lineups->'set3'->'away', p_lineups->'set3'->'away')
+      else p_lineups->'set3'->'away'
+    end;
     v_home_signed := v_fixture.home_captain_signed;
   end if;
 
@@ -922,43 +956,8 @@ begin
 end;
 $$;
 
--- 8. Admin Upsert Season (with dynamic divisions per season)
-create or replace function public.admin_upsert_season(
-  p_admin_pin text,
-  p_id text,
-  p_name text,
-  p_is_active boolean,
-  p_divisions jsonb default '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_admin_pin) then
-    return false;
-  end if;
-
-  if p_is_active then
-    update public.seasons set is_active = false where id <> p_id;
-  end if;
-
-  insert into public.seasons (id, name, is_active, divisions)
-  values (
-    p_id,
-    trim(p_name),
-    p_is_active,
-    coalesce(p_divisions, '["Premier League", "Division 1", "Division 2", "Division 3"]'::jsonb)
-  )
-  on conflict (id) do update
-    set name = excluded.name,
-        is_active = excluded.is_active,
-        divisions = coalesce(p_divisions, public.seasons.divisions);
-
-  return true;
-end;
-$$;
+-- 8. Drop legacy Season / Team / Player deletion RPCs (no longer used by the web portal)
+drop function if exists public.admin_upsert_season(text, text, text, boolean, jsonb);
 
 -- 9. Admin Upsert Team (+ optional Team PIN & Table Number)
 create or replace function public.admin_upsert_team(
@@ -1021,27 +1020,9 @@ begin
 end;
 $$;
 
--- 10. Admin Delete Team
-create or replace function public.admin_delete_team(
-  p_admin_pin text,
-  p_team_id text
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_admin_pin) then
-    return false;
-  end if;
+drop function if exists public.admin_delete_team(text, text);
 
-  delete from public.teams where id = p_team_id;
-  return true;
-end;
-$$;
-
--- 11. Admin Upsert Player
+-- 10. Admin Upsert Player
 create or replace function public.admin_upsert_player(
   p_admin_pin text,
   p_id text,
@@ -1070,25 +1051,7 @@ begin
 end;
 $$;
 
--- 12. Admin Delete Player
-create or replace function public.admin_delete_player(
-  p_admin_pin text,
-  p_player_id text
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-begin
-  if not public.verify_admin_pin(p_admin_pin) then
-    return false;
-  end if;
-
-  delete from public.players where id = p_player_id;
-  return true;
-end;
-$$;
+drop function if exists public.admin_delete_player(text, text);
 
 -- 13. Admin Create / Upsert Scheduled Fixture (Supports both League & Knockout Cup matches)
 create or replace function public.admin_upsert_fixture(

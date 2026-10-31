@@ -54,8 +54,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   }, []);
 
   const {
-    seasons,
-    seasonId,
     seasonName,
     divisions,
     teams,

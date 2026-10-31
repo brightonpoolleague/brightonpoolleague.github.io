@@ -7,8 +7,6 @@ export const DEFAULT_DIVISIONS: Division[] = [
   'Division 3',
 ];
 
-export const DIVISIONS: Division[] = DEFAULT_DIVISIONS;
-
 export type UserRole = 'viewer' | 'captain' | 'admin';
 
 export interface UserSession {
