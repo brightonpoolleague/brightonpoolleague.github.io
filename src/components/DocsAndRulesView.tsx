@@ -79,25 +79,35 @@ export const DocsAndRulesView: React.FC = () => {
 
     const renderSeasonBadge = (seasonText: string | number) => {
       const text = String(seasonText);
-      const isSummer = text.toLowerCase().includes('summer');
-      const isWinter = text.toLowerCase().includes('winter');
-      if (isSummer) {
+      const match = text.match(/^(Summer|Winter)\s+(\d{4}(?:\/\d{2})?)(?:\s+(.*))?$/i);
+      if (match) {
+        const [, seasonType, year, extra] = match;
+        const isSummer = seasonType.toLowerCase() === 'summer';
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[11px]">
-            <Sun className="w-3 h-3 text-amber-400 shrink-0" />
-            <span>{text}</span>
-          </span>
+          <div className="flex flex-col items-start gap-0.5 min-w-0">
+            <span
+              className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md font-bold text-[10px] sm:text-[11px] shrink-0 ${
+                isSummer
+                  ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300'
+                  : 'bg-sky-500/10 border border-sky-500/30 text-sky-300'
+              }`}
+            >
+              {isSummer ? (
+                <Sun className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0" />
+              ) : (
+                <Snowflake className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-sky-400 shrink-0" />
+              )}
+              <span className="whitespace-nowrap">{seasonType} {year}</span>
+            </span>
+            {extra && (
+              <span className="text-[10px] sm:text-xs text-slate-400 font-medium leading-tight break-words">
+                {extra}
+              </span>
+            )}
+          </div>
         );
       }
-      if (isWinter) {
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-sky-300 font-bold text-[11px]">
-            <Snowflake className="w-3 h-3 text-sky-400 shrink-0" />
-            <span>{text}</span>
-          </span>
-        );
-      }
-      return <span className="font-semibold text-slate-300">{text}</span>;
+      return <span className="font-semibold text-slate-300 text-[11px] sm:text-xs break-words">{text}</span>;
     };
 
     if (filteredRows.length === 0) {
@@ -159,13 +169,39 @@ export const DocsAndRulesView: React.FC = () => {
     }
 
     // Leaderboard Table View
+    const colCount = headers.length;
+    const isTopDish = headers.some((h) => h.toLowerCase().includes('dishes'));
+
     return (
       <div className="overflow-x-auto border border-slate-800 rounded-xl">
-        <table className="w-full text-xs sm:text-sm border-collapse">
+        <table className="w-full table-fixed text-xs sm:text-sm border-collapse">
+          <colgroup>
+            {colCount === 2 ? (
+              <>
+                <col className="w-[38%] sm:w-[30%]" />
+                <col className="w-[62%] sm:w-[70%]" />
+              </>
+            ) : isTopDish ? (
+              <>
+                <col className="w-[32%] sm:w-[25%]" />
+                <col className="w-[46%] sm:w-[50%]" />
+                <col className="w-[22%] sm:w-[25%]" />
+              </>
+            ) : (
+              <>
+                <col className="w-[30%] sm:w-[26%]" />
+                <col className="w-[35%] sm:w-[37%]" />
+                <col className="w-[35%] sm:w-[37%]" />
+              </>
+            )}
+          </colgroup>
           <thead>
             <tr className="bg-slate-950 text-slate-300 border-b border-slate-800 text-left">
               {headers.map((h, i) => (
-                <th key={i} className="py-2.5 px-3 font-bold text-[11px] uppercase tracking-wider text-slate-400">
+                <th
+                  key={i}
+                  className="py-2 px-2 sm:py-2.5 sm:px-3 font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 break-words"
+                >
                   {h}
                 </th>
               ))}
@@ -180,33 +216,31 @@ export const DocsAndRulesView: React.FC = () => {
                 {r.map((cell, cIdx) => (
                   <td
                     key={cIdx}
-                    className={`py-2 px-3 ${
-                      cIdx === 0
-                        ? 'whitespace-nowrap'
-                        : cIdx === 1
-                        ? 'text-white font-bold'
-                        : 'text-slate-300'
-                    }`}
+                    className="py-2 px-2 sm:py-2.5 sm:px-3 text-[11px] sm:text-xs align-top"
                   >
                     {cIdx === 0 ? (
                       renderSeasonBadge(cell)
                     ) : cIdx === 1 ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="text-xs">🏆</span>
-                        <span>{cell}</span>
-                      </span>
+                      <div className="flex items-start gap-1 sm:gap-1.5 min-w-0">
+                        <span className="text-[10px] sm:text-xs shrink-0 mt-0.5">🏆</span>
+                        <span className="text-white font-bold break-words min-w-0 leading-tight sm:leading-normal">
+                          {cell}
+                        </span>
+                      </div>
                     ) : cIdx === 2 && typeof cell === 'string' ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="text-xs">🥈</span>
-                        <span>{cell}</span>
-                      </span>
+                      <div className="flex items-start gap-1 sm:gap-1.5 min-w-0">
+                        <span className="text-[10px] sm:text-xs shrink-0 mt-0.5">🥈</span>
+                        <span className="text-slate-300 break-words min-w-0 leading-tight sm:leading-normal">
+                          {cell}
+                        </span>
+                      </div>
                     ) : cIdx === 2 && typeof cell === 'number' ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-xs">
-                        <Flame className="w-3 h-3 text-amber-400" />
-                        <span>{cell} dishes</span>
+                      <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold text-[10px] sm:text-xs whitespace-nowrap">
+                        <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 shrink-0" />
+                        <span>{cell} <span className="hidden sm:inline">dishes</span></span>
                       </span>
                     ) : (
-                      cell
+                      <span className="break-words">{cell}</span>
                     )}
                   </td>
                 ))}
