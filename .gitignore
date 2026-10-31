@@ -3,6 +3,7 @@
 node_modules
 dist
 public
+.vite
 *.tsbuildinfo
 .env
 .env.local
