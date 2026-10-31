@@ -2,8 +2,8 @@ name: Weekly Supabase Database Backup
 
 on:
   schedule:
-    # Runs every Sunday at 03:00 UTC (100% automated weekly backup)
-    - cron: '0 3 * * 0'
+    # Runs every Tuesday at 03:00 UTC (100% automated weekly backup after Monday match night)
+    - cron: '0 3 * * 2'
   workflow_dispatch:
     # Allows manual trigger anytime from the GitHub Actions tab
 
