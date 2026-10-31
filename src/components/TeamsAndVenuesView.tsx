@@ -213,13 +213,18 @@ export const TeamsAndVenuesView: React.FC = () => {
 
       {/* Content Area */}
       {filteredTeams.length === 0 ? (
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 space-y-1.5">
-          <p className="font-semibold text-slate-300">No teams or venues found.</p>
-          <p className="text-xs text-slate-500">
-            {searchQuery
-              ? `No results matching "${searchQuery}". Try a different keyword.`
-              : `No teams registered under ${selectedDivision} for this season.`}
-          </p>
+        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
+          {searchQuery.trim() ? (
+            <p>
+              No teams or venues match &ldquo;<strong className="text-white">{searchQuery.trim()}</strong>&rdquo;.
+            </p>
+          ) : (
+            <p>
+              No teams registered under{' '}
+              {selectedDivision === 'ALL' ? 'all divisions' : selectedDivision}{' '}
+              for this season.
+            </p>
+          )}
         </div>
       ) : viewStyle === 'venue' ? (
         /* VIEW 1: GROUPED BY VENUE */

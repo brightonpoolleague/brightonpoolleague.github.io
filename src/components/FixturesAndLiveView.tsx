@@ -10,7 +10,6 @@ import {
   MapPin,
   PlayCircle,
   Radio,
-  RefreshCw,
   Search,
   ShieldAlert,
   Sparkles,
@@ -622,69 +621,21 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400 space-y-2">
-          {searchQuery.trim() || dateFilter !== 'ALL' ? (
-            <>
-              <p>
-                No fixtures match
-                {searchQuery.trim() && (
-                  <span>
-                    {' '}&ldquo;
-                    <strong className="text-white">{searchQuery}</strong>&rdquo;
-                  </span>
-                )}
-                {dateFilter !== 'ALL' && (
-                  <span>
-                    {' '}on <strong>{formatMatchDate(dateFilter)}</strong>
-                  </span>
-                )}
-                {selectedDivision !== 'ALL' && (
-                  <span>
-                    {' '}in <strong>{selectedDivision}</strong>
-                  </span>
-                )}
-                {statusFilter !== 'all' && (
-                  <span>
-                    {' '}({statusTabs.find((t) => t.id === statusFilter)?.label || statusFilter})
-                  </span>
-                )}.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setDateFilter('ALL');
-                  setSelectedDivision('ALL');
-                  setStatusFilter(isCaptain ? 'mine' : 'all');
-                }}
-                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:underline font-semibold"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Reset all filters
-              </button>
-            </>
+        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-400">
+          {searchQuery.trim() ? (
+            <p>
+              No fixtures match &ldquo;<strong className="text-white">{searchQuery.trim()}</strong>&rdquo;.
+            </p>
+          ) : dateFilter !== 'ALL' ? (
+            <p>
+              No fixtures match <strong>{formatMatchDate(dateFilter)}</strong>.
+            </p>
           ) : (
             <p>No fixtures match your selected division and status filters.</p>
           )}
         </div>
       ) : (
         <div className="space-y-3">
-          {searchQuery.trim() && (
-            <div className="text-xs text-slate-400 font-medium px-1 flex items-center justify-between">
-              <span>
-                Found <strong className="text-white">{filtered.length}</strong>{' '}
-                fixture{filtered.length === 1 ? '' : 's'} matching &ldquo;
-                <strong className="text-white">{searchQuery}</strong>&rdquo;
-              </span>
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="text-emerald-400 hover:underline font-semibold"
-              >
-                Clear search
-              </button>
-            </div>
-          )}
           {listFixtures.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {listFixtures.map((fix) => {

@@ -256,7 +256,17 @@ export const PlayerStatsView: React.FC = () => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         {list.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-400">
-            No player statistics recorded for this filter yet.
+            {searchQuery.trim() ? (
+              <p>
+                No players match &ldquo;<strong className="text-white">{searchQuery.trim()}</strong>&rdquo;.
+              </p>
+            ) : (
+              <p>
+                No player statistics recorded for{' '}
+                {selectedDivision === 'ALL' ? 'all divisions' : selectedDivision}{' '}
+                yet.
+              </p>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

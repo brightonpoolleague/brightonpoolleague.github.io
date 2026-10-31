@@ -1844,41 +1844,15 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               {seasonName} Fixtures ({filteredFixtures.length})
             </h3>
             {filteredFixtures.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400 space-y-1.5">
-                {fixtureSearchQuery.trim() || fixtureDateFilter !== 'ALL' ? (
-                  <>
-                    <p>
-                      No fixtures match your current filters
-                      {fixtureDateFilter !== 'ALL' && (
-                        <span>
-                          {' '}
-                          on{' '}
-                          <strong>{formatMatchDate(fixtureDateFilter)}</strong>
-                        </span>
-                      )}
-                      {fixtureSearchQuery.trim() && (
-                        <span>
-                          {' '}
-                          matching &ldquo;
-                          <strong>{fixtureSearchQuery}</strong>&rdquo;
-                        </span>
-                      )}
-                      .
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFixtureSearchQuery('');
-                        setFixtureDateFilter('ALL');
-                        setFixtureTimeframeFilter('ALL');
-                        setFixtureFilterDivision('ALL');
-                      }}
-                      className="inline-flex items-center gap-1 text-emerald-400 hover:underline font-semibold mt-1"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      Reset all filters
-                    </button>
-                  </>
+              <div className="py-8 text-center text-xs text-slate-400">
+                {fixtureSearchQuery.trim() ? (
+                  <p>
+                    No fixtures match &ldquo;<strong className="text-white">{fixtureSearchQuery.trim()}</strong>&rdquo;.
+                  </p>
+                ) : fixtureDateFilter !== 'ALL' ? (
+                  <p>
+                    No fixtures match <strong>{formatMatchDate(fixtureDateFilter)}</strong>.
+                  </p>
                 ) : (
                   <p>No fixtures found for {seasonName}.</p>
                 )}
@@ -2458,29 +2432,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               </div>
 
               {filtered.length === 0 ? (
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-xs text-slate-400 space-y-1.5">
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center text-xs text-slate-400">
                   {scorecardSearchQuery.trim() ? (
-                    <>
-                      <p>
-                        No scorecards match &ldquo;<strong>{scorecardSearchQuery}</strong>&rdquo;
-                        {approvalFilter !== 'all' && (
-                          <span>
-                            {' '}with status <strong>{approvalFilter === 'overdue' ? 'Overdue' : approvalFilter === 'submitted' ? 'Awaiting Approval' : approvalFilter}</strong>
-                          </span>
-                        )}.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setScorecardSearchQuery('');
-                          setApprovalFilter('all');
-                        }}
-                        className="inline-flex items-center gap-1 text-emerald-400 hover:underline font-semibold mt-1"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Reset search &amp; filters
-                      </button>
-                    </>
+                    <p>
+                      No scorecards match &ldquo;<strong className="text-white">{scorecardSearchQuery.trim()}</strong>&rdquo;.
+                    </p>
                   ) : (
                     <p>
                       {approvalFilter === 'submitted'
