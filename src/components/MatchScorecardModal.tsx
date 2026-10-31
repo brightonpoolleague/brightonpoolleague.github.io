@@ -46,6 +46,7 @@ import {
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
 import { useLeague } from '../context/LeagueContext';
+import { getSupabaseClient } from '../lib/supabase';
 import { ExportScorecardModal } from './ExportScorecardModal';
 
 interface MatchScorecardModalProps {
@@ -67,6 +68,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     canManageLeague,
     saveFixture,
     approveFixture,
+    refreshSingleFixture,
     isOnline,
     isSyncing,
     syncError,
@@ -74,6 +76,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   } = useLeague();
 
   const isLoggedIn = session.role === 'captain' || session.role === 'admin';
+  const fixtureRef = useRef(fixture);
+  fixtureRef.current = fixture;
+  const fixturesRef = useRef(fixtures);
+  fixturesRef.current = fixtures;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFirstMount = useRef<boolean>(true);
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
@@ -919,7 +925,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const handleFinishMatch = () => {
     // Guard against race conditions: verify both signatures exist
-    const current = fixtures.find((f) => f.id === fixture.id) || fixture;
+    const current =
+      fixturesRef.current.find((f) => f.id === fixture.id) || fixtureRef.current;
     if (!current.homeCaptainSigned || !current.awayCaptainSigned) {
       return;
     }
@@ -945,9 +952,32 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       variant: 'success',
       onConfirm: async () => {
         // Guard against race condition: ensure both captains are still signed at the moment of submission
-        const latest = fixtures.find((f) => f.id === fixture.id) || fixture;
+        const latest =
+          fixturesRef.current.find((f) => f.id === fixture.id) ||
+          fixtureRef.current;
         if (!latest.homeCaptainSigned || !latest.awayCaptainSigned) {
+          await refreshSingleFixture(fixture.id);
           return;
+        }
+
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          try {
+            const { data: remote } = await supabase
+              .from('fixtures')
+              .select('home_captain_signed, away_captain_signed, status')
+              .eq('id', fixture.id)
+              .single();
+            if (
+              remote &&
+              (!remote.home_captain_signed || !remote.away_captain_signed)
+            ) {
+              await refreshSingleFixture(fixture.id);
+              return;
+            }
+          } catch {
+            // fallback to local check
+          }
         }
 
         await saveFixture({

@@ -724,7 +724,9 @@ begin
 
   -- Determine match status: only live once both Set 1 lineups are locked (or frames have been scored/submitted)
   v_next_status := p_status;
-  if v_home_locked and v_away_locked and v_next_status = 'scheduled' then
+  if v_next_status = 'submitted' and not (v_home_signed and v_away_signed) then
+    v_next_status := 'live';
+  elsif v_home_locked and v_away_locked and v_next_status = 'scheduled' then
     v_next_status := 'live';
   elsif not (v_home_locked and v_away_locked) and v_next_status = 'live' then
     if not exists (

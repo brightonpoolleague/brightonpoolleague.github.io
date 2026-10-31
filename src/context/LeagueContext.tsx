@@ -1701,11 +1701,15 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           if (error) throw error;
           return true;
         } else if (session.role === 'captain' && session.teamId) {
+          let pushStatus = updated.status;
+          if (pushStatus === 'submitted' && (!updated.homeCaptainSigned || !updated.awayCaptainSigned)) {
+            pushStatus = 'live';
+          }
           const baseArgs = {
             p_fixture_id: updated.id,
             p_team_id: session.teamId,
             p_pin: session.pin ?? '',
-            p_status: updated.status,
+            p_status: pushStatus,
             p_lag_winner: updated.lagWinner,
             p_home_set1_locked: updated.homeSet1Locked,
             p_away_set1_locked: updated.awaySet1Locked,
@@ -1822,7 +1826,40 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       ).length;
 
       let nextStatus = rawUpdated.status;
-      if (nextStatus === 'scheduled' && (bothSet1Locked || completedCount > 0)) {
+      let homeSigned = Boolean(rawUpdated.homeCaptainSigned);
+      let awaySigned = Boolean(rawUpdated.awayCaptainSigned);
+
+      // Prevent stale submission from overwriting an unsigned state from the other captain
+      const existing = allFixtures.find((f) => f.id === rawUpdated.id);
+      if (existing) {
+        if (!existing.homeCaptainSigned) homeSigned = false;
+        if (!existing.awayCaptainSigned) awaySigned = false;
+      }
+
+      if (nextStatus === 'submitted') {
+        const supabase = getSupabaseClient();
+        if (supabase) {
+          try {
+            const { data: cloudRow } = await supabase
+              .from('fixtures')
+              .select('home_captain_signed, away_captain_signed')
+              .eq('id', rawUpdated.id)
+              .single();
+            if (cloudRow) {
+              if (!cloudRow.home_captain_signed || !cloudRow.away_captain_signed) {
+                homeSigned = Boolean(cloudRow.home_captain_signed);
+                awaySigned = Boolean(cloudRow.away_captain_signed);
+                nextStatus = 'live';
+              }
+            }
+          } catch {
+            // fallback
+          }
+        }
+        if (!homeSigned || !awaySigned) {
+          nextStatus = 'live';
+        }
+      } else if (nextStatus === 'scheduled' && (bothSet1Locked || completedCount > 0)) {
         nextStatus = 'live';
       } else if (
         nextStatus === 'live' &&
@@ -1835,6 +1872,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const updated: Fixture = {
         ...rawUpdated,
         status: nextStatus,
+        homeCaptainSigned: homeSigned,
+        awayCaptainSigned: awaySigned,
         lineups: syncedLineups,
         frames: syncedFrames,
         updatedAt: new Date().toISOString(),
