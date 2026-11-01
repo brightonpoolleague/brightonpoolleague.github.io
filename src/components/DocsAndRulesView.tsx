@@ -336,7 +336,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>d.</strong> The same player <strong>cannot</strong>{' '}
-                  play multiple times in the same set (e.g., a player cannot
+                  play multiple times in the same set (e.g. a player cannot
                   play all 3 games in Set 1 and then leave).
                 </li>
               </ul>
@@ -402,7 +402,7 @@ export const DocsAndRulesView: React.FC = () => {
 
             <div className="space-y-2 border-t border-slate-800/80 pt-4">
               <h3 className="text-base font-bold text-emerald-400">
-                3. Time Keeping
+                3. Timekeeping
               </h3>
               <ul className="space-y-1.5 list-none">
                 <li>
@@ -422,8 +422,7 @@ export const DocsAndRulesView: React.FC = () => {
                   speeded up.
                 </li>
                 <li>
-                  <strong>d.</strong> <strong>Shot clocks</strong> are advised
-                  to be introduced at <strong>10:30 PM</strong> if the 3rd game
+                  <strong>d.</strong> Captains are advised to introduce a <strong>shot clock</strong> at <strong>10:30 PM</strong> if the 3rd game
                   (in the 3rd set) has not yet started. The shot clock can be
                   found{' '}
                   <a
@@ -569,7 +568,7 @@ export const DocsAndRulesView: React.FC = () => {
                 <li>
                   <strong>b.</strong> Substitutes take the{' '}
                   <strong>same position</strong> as the player they replace
-                  (e.g., if Player 1 is replaced in Set 3, the substitute plays
+                  (e.g. if Player 1 is replaced in Set 3, the substitute plays
                   second in that set).
                 </li>
                 <li>
@@ -627,7 +626,7 @@ export const DocsAndRulesView: React.FC = () => {
               </h3>
               <div className="space-y-2">
                 <p>
-                  <strong>a.</strong> The teams league table is sorted as
+                  <strong>a.</strong> The teams' league table is sorted as
                   follows:
                 </p>
                 <ul className="list-disc list-inside pl-4 space-y-1">
@@ -649,7 +648,7 @@ export const DocsAndRulesView: React.FC = () => {
                       </li>
                       <li>
                         <strong>2.</strong> If that is also tied, then each
-                        team’s record against the highest placed team in the
+                        team’s record against the highest-placed team in the
                         league: a) Total points won (both games combined), b)
                         Frame difference (both games combined).
                       </li>
@@ -665,7 +664,7 @@ export const DocsAndRulesView: React.FC = () => {
 
               <div className="space-y-2 pt-2">
                 <p>
-                  <strong>b.</strong> The players averages table is sorted as
+                  <strong>b.</strong> The players' averages table is sorted as
                   follows:
                 </p>
                 <ul className="list-disc list-inside pl-4 space-y-1">
@@ -692,8 +691,8 @@ export const DocsAndRulesView: React.FC = () => {
                       </li>
                       <li>
                         <strong>3.</strong> If players are in the same team –
-                        then a single frame shoot out will be played on finals
-                        night
+                        then a single-frame shoot-out will be played on finals
+                        night.
                       </li>
                     </ul>
                   </li>
@@ -702,7 +701,7 @@ export const DocsAndRulesView: React.FC = () => {
 
               <div className="space-y-2 pt-2">
                 <p>
-                  <strong>c.</strong> The players dish table is sorted as
+                  <strong>c.</strong> The players' dish table is sorted as
                   follows:
                 </p>
                 <ul className="list-disc list-inside pl-4 space-y-1">
@@ -783,7 +782,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <p>
                     c. The team that wins the lag is awarded the wins in{' '}
                     <strong>Set 1 (5 vs 5)</strong> and{' '}
-                    <strong>(4 vs 4)</strong>, and the win in{' '}
+                    <strong>(4 vs 4)</strong> and the win in{' '}
                     <strong>Set 3 (5 vs 4)</strong>.
                   </p>
                 </div>
@@ -814,25 +813,25 @@ export const DocsAndRulesView: React.FC = () => {
               <ul className="space-y-1.5 list-none">
                 <li>
                   <strong>a.</strong> All players are expected to uphold the
-                  values of the Brighton league, and to conduct themselves in a
-                  respectful &amp; accepting manner – without any forms of abuse
+                  values of the Brighton league and to conduct themselves in a
+                  respectful and accepting manner – without any forms of abuse
                   or discrimination.
                 </li>
                 <li>
                   <strong>b.</strong> Venues are required to uphold the values
-                  of the Brighton league, with the safety &amp; welfare of
-                  players as of paramount consideration.
+                  of the Brighton league, with the safety and welfare of
+                  players of paramount consideration.
                 </li>
                 <li>
-                  <strong>c.</strong> In line with the UK equality act, the
-                  Brighton league has zero tolerance of discrimination across
+                  <strong>c.</strong> In line with the UK Equality Act 2010, the
+                  Brighton league has zero tolerance for discrimination across
                   any of the protected characteristics:
                   <ul className="list-disc list-inside pl-4 mt-1 space-y-1">
                     <li>
                       <strong>i.</strong> Age, Disability, Gender Reassignment,
-                      Marriage &amp; Civil Partnership, Pregnancy &amp;
+                      Marriage and Civil Partnership, Pregnancy and
                       Maternity, Race, Religion or Belief, Sex and Sexual
-                      orientation.
+                      Orientation.
                     </li>
                     <li>
                       <strong>ii.</strong> Discrimination is classed as Direct,
@@ -842,18 +841,18 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>d.</strong> All reported instances where these
-                  standards have not been met, will result in an investigation
-                  by the committee, on a case-by-case basis:
+                  standards have not been met will result in an investigation
+                  by the committee on a case-by-case basis:
                   <ul className="list-disc list-inside pl-4 mt-1 space-y-1">
                     <li>
                       <strong>i.</strong> The league reserves the right to ban
-                      any individual or venue that break these rules &amp; may
+                      any individual or venue that breaks these rules and may
                       pass all relevant information to the police for further
                       investigation.
                     </li>
                     <li>
-                      <strong>ii.</strong> Teams / venues who are banned, will
-                      not be refunded for team registrations.
+                      <strong>ii.</strong> Teams and venues that are banned will not
+                      be refunded their team registrations.
                     </li>
                   </ul>
                 </li>
@@ -1012,7 +1011,7 @@ export const DocsAndRulesView: React.FC = () => {
           <div className="space-y-6">
             <div className="border-b border-slate-800 pb-3">
               <h2 className="text-lg sm:text-xl font-black text-white">
-                Champions of Champions
+                Champion of Champions
               </h2>
               <p className="mt-2 text-slate-300">
                 The Champion of Champions event is usually played in November
@@ -1039,7 +1038,7 @@ export const DocsAndRulesView: React.FC = () => {
               <ul className="list-disc list-inside space-y-1.5">
                 <li>
                   The <strong>Brighton League</strong> can be represented by up
-                  to <strong>four (4) teams</strong> in the Champions of
+                  to <strong>four (4) teams</strong> in the Champion of
                   Champions.
                 </li>
                 <li>
@@ -1049,7 +1048,7 @@ export const DocsAndRulesView: React.FC = () => {
                 <li>
                   These singles spots are for entry into either the{' '}
                   <strong>Men’s Singles</strong> or{' '}
-                  <strong>Ladies Singles</strong> competitions.
+                  <strong>Ladies’ Singles</strong> competitions.
                 </li>
                 <li>
                   Any team wishing to represent Brighton{' '}
@@ -1112,7 +1111,7 @@ export const DocsAndRulesView: React.FC = () => {
               <ul className="list-disc list-inside space-y-1.5">
                 <li>
                   There is a{' '}
-                  <strong>possibility of a 7th and 8th singles spot</strong> (if
+                  <strong>possibility of a 7th and an 8th singles spot</strong> (if
                   four teams represent the Brighton League).
                 </li>
                 <li>
