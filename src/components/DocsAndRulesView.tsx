@@ -83,10 +83,11 @@ export const DocsAndRulesView: React.FC = () => {
       if (match) {
         const [, seasonType, year, extra] = match;
         const isSummer = seasonType.toLowerCase() === 'summer';
+        const shortYear = year.replace(/^20(\d\d)\/(\d\d)$/, "'$1/$2").replace(/^20(\d\d)$/, "'$1");
         return (
-          <div className="flex flex-col items-start gap-0.5 min-w-0">
+          <div className="flex flex-col items-start gap-0.5 min-w-0 max-w-full">
             <span
-              className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md font-bold text-[10px] sm:text-[11px] shrink-0 ${
+              className={`inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-md font-bold text-[10px] sm:text-[11px] shrink-0 max-w-full ${
                 isSummer
                   ? 'bg-amber-500/10 border border-amber-500/30 text-amber-300'
                   : 'bg-sky-500/10 border border-sky-500/30 text-sky-300'
@@ -97,7 +98,8 @@ export const DocsAndRulesView: React.FC = () => {
               ) : (
                 <Snowflake className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-sky-400 shrink-0" />
               )}
-              <span className="whitespace-nowrap">{seasonType} {year}</span>
+              <span className="sm:hidden whitespace-nowrap">{seasonType} {shortYear}</span>
+              <span className="hidden sm:inline whitespace-nowrap">{seasonType} {year}</span>
             </span>
             {extra && (
               <span className="text-[10px] sm:text-xs text-slate-400 font-medium leading-tight break-words">
@@ -183,15 +185,15 @@ export const DocsAndRulesView: React.FC = () => {
               </>
             ) : isTopDish ? (
               <>
-                <col className="w-[32%] sm:w-[25%]" />
-                <col className="w-[46%] sm:w-[50%]" />
+                <col className="w-[35%] sm:w-[25%]" />
+                <col className="w-[43%] sm:w-[50%]" />
                 <col className="w-[22%] sm:w-[25%]" />
               </>
             ) : (
               <>
-                <col className="w-[30%] sm:w-[26%]" />
-                <col className="w-[35%] sm:w-[37%]" />
-                <col className="w-[35%] sm:w-[37%]" />
+                <col className="w-[34%] sm:w-[26%]" />
+                <col className="w-[33%] sm:w-[37%]" />
+                <col className="w-[33%] sm:w-[37%]" />
               </>
             )}
           </colgroup>
@@ -216,7 +218,13 @@ export const DocsAndRulesView: React.FC = () => {
                 {r.map((cell, cIdx) => (
                   <td
                     key={cIdx}
-                    className="py-2 px-2 sm:py-2.5 sm:px-3 text-[11px] sm:text-xs align-top"
+                    className={`py-2 px-2 sm:py-2.5 sm:px-3 text-[11px] sm:text-xs align-top ${
+                      cIdx === 0
+                        ? 'pr-1.5 sm:pr-3 overflow-hidden'
+                        : cIdx === 1
+                        ? 'pl-1.5 sm:pl-3'
+                        : ''
+                    }`}
                   >
                     {cIdx === 0 ? (
                       renderSeasonBadge(cell)
