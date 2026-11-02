@@ -57,12 +57,12 @@ export const StatusDashboardView: React.FC = () => {
 
   // Real-time WebSocket Presence metrics
   const [wsStatus, setWsStatus] = useState<string>('CONNECTING');
-  const [concurrentUsers, setConcurrentUsers] = useState<number>(1);
+  const [concurrentUsers, setConcurrentUsers] = useState<number>(0);
   const [roleBreakdown, setRoleBreakdown] = useState<{
     viewers: number;
     captains: number;
     admins: number;
-  }>({ viewers: 1, captains: 0, admins: 0 });
+  }>({ viewers: 0, captains: 0, admins: 0 });
   const [connectedCaptains, setConnectedCaptains] = useState<ConnectedCaptain[]>([]);
 
   // REST API ping latency
@@ -188,9 +188,10 @@ export const StatusDashboardView: React.FC = () => {
 
     const syncPresence = () => {
       const state = channel.presenceState();
-      const all = Object.values(state).flat() as PresencePayload[];
-      const count = Math.max(1, all.length);
-      setConcurrentUsers(count);
+      const all = (Object.values(state).flat() as PresencePayload[]).filter(
+        (p) => p.role !== 'status_monitor'
+      );
+      setConcurrentUsers(all.length);
 
       const viewers = all.filter(
         (p) => !p.role || p.role === 'viewer'
@@ -199,7 +200,7 @@ export const StatusDashboardView: React.FC = () => {
       const admins = all.filter((p) => p.role === 'admin').length;
 
       setRoleBreakdown({
-        viewers: viewers || 1,
+        viewers,
         captains,
         admins,
       });
@@ -244,14 +245,8 @@ export const StatusDashboardView: React.FC = () => {
       .on('presence', { event: 'sync' }, syncPresence)
       .on('presence', { event: 'join' }, syncPresence)
       .on('presence', { event: 'leave' }, syncPresence)
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         setWsStatus(status);
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            role: 'status_monitor',
-            onlineAt: Date.now(),
-          });
-        }
       });
 
     return () => {
@@ -317,22 +312,22 @@ export const StatusDashboardView: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center min-w-[120px]">
-                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+            <div className="flex items-stretch gap-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center w-36 sm:w-40 flex flex-col justify-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
                   REST API Latency
                 </div>
-                <div className="text-base font-black text-white mt-0.5">
+                <div className="text-sm sm:text-base font-black text-white h-6 flex items-center justify-center mt-0.5">
                   {restLatencyMs !== null ? `${restLatencyMs} ms` : '—'}
                 </div>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center min-w-[120px]">
-                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center w-36 sm:w-40 flex flex-col justify-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
                   WebSocket
                 </div>
-                <div className="text-xs font-black text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <div className="text-xs sm:text-sm font-black text-emerald-400 h-6 flex items-center justify-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   <span>{wsStatus}</span>
                 </div>
               </div>

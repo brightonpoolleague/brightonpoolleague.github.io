@@ -393,9 +393,13 @@ export function App() {
     };
   }, []);
 
+  if (showStatusPage) {
+    return <StatusDashboardView />;
+  }
+
   return (
     <LeagueProvider>
-      {showStatusPage ? <StatusDashboardView /> : <MainShell />}
+      <MainShell />
     </LeagueProvider>
   );
 }
