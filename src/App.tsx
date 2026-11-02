@@ -54,34 +54,32 @@ const MainShell: React.FC = () => {
     const vv = window.visualViewport;
 
     const checkKeyboard = () => {
+      // Check if an editable text element is currently focused
+      const activeEl = document.activeElement;
+      const isInputFocused = Boolean(
+        activeEl &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            (activeEl as HTMLElement).isContentEditable) &&
+          !(
+            activeEl instanceof HTMLInputElement &&
+            (activeEl.type === 'checkbox' || activeEl.type === 'radio')
+          )
+      );
+
+      // If no text input element is focused, the keyboard is definitely NOT open.
+      // This prevents false positives when returning from native share sheets, downloads, or mobile browser toolbars.
+      if (!isInputFocused) {
+        setIsKeyboardOpen(false);
+        return;
+      }
+
       if (vv) {
         // When the virtual keyboard appears, visualViewport height shrinks relative to innerHeight
         const heightDiff = window.innerHeight - vv.height;
-        if (heightDiff > 100) {
-          setIsKeyboardOpen(true);
-          return;
-        }
-      }
-
-      // Check if an editable text element is currently focused
-      const activeEl = document.activeElement;
-      const isInputFocused =
-        activeEl &&
-        (activeEl.tagName === 'INPUT' ||
-          activeEl.tagName === 'TEXTAREA' ||
-          (activeEl as HTMLElement).isContentEditable);
-
-      if (isInputFocused && activeEl instanceof HTMLInputElement) {
-        if (activeEl.type === 'checkbox' || activeEl.type === 'radio') {
-          setIsKeyboardOpen(false);
-          return;
-        }
-      }
-
-      if (vv) {
-        setIsKeyboardOpen(false);
+        setIsKeyboardOpen(heightDiff > 100);
       } else {
-        setIsKeyboardOpen(Boolean(isInputFocused));
+        setIsKeyboardOpen(true);
       }
     };
 
@@ -116,6 +114,7 @@ const MainShell: React.FC = () => {
 
     window.addEventListener('focusin', onFocusIn);
     window.addEventListener('focusout', onFocusOut);
+    window.addEventListener('focus', checkKeyboard);
 
     return () => {
       if (vv) {
@@ -124,6 +123,7 @@ const MainShell: React.FC = () => {
       }
       window.removeEventListener('focusin', onFocusIn);
       window.removeEventListener('focusout', onFocusOut);
+      window.removeEventListener('focus', checkKeyboard);
     };
   }, []);
 
