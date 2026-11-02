@@ -353,11 +353,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       presenceChannelRef.current
         .track({
           role: session.role,
+          teamId: session.teamId,
+          teamName:
+            session.role === 'captain'
+              ? session.name.replace(/ Captain$/i, '')
+              : undefined,
           onlineAt: Date.now(),
         })
         .catch(() => {});
     }
-  }, [session.role]);
+  }, [session.role, session.teamId, session.name]);
 
   const activeSeason =
     seasons.find((s) => s.isActive) ||
@@ -702,6 +707,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
               await pChan.track({
                 role: sessionRef.current.role,
+                teamId: sessionRef.current.teamId,
+                teamName:
+                  sessionRef.current.role === 'captain'
+                    ? sessionRef.current.name.replace(/ Captain$/i, '')
+                    : undefined,
                 onlineAt: Date.now(),
               });
             } catch {

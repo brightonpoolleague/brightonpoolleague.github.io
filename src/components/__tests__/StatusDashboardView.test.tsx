@@ -21,6 +21,7 @@ describe('StatusDashboardView Component', () => {
       screen.getByText(/PostgreSQL Connection Pool/i)
     ).toBeInTheDocument();
     expect(screen.getByText(/Database Disk Size/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connected Team Captains/i)).toBeInTheDocument();
     expect(screen.getByText(/Database Table Records/i)).toBeInTheDocument();
   });
 

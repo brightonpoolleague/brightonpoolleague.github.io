@@ -35,6 +35,16 @@ interface TableCounts {
 
 interface PresencePayload {
   role?: string;
+  teamId?: string;
+  teamName?: string;
+  onlineAt?: number;
+}
+
+interface ConnectedCaptain {
+  key: string;
+  teamId?: string;
+  teamName: string;
+  deviceCount: number;
   onlineAt?: number;
 }
 
@@ -51,6 +61,7 @@ export const StatusDashboardView: React.FC = () => {
     captains: number;
     admins: number;
   }>({ viewers: 1, captains: 0, admins: 0 });
+  const [connectedCaptains, setConnectedCaptains] = useState<ConnectedCaptain[]>([]);
 
   // REST API ping latency
   const [restLatencyMs, setRestLatencyMs] = useState<number | null>(null);
@@ -190,6 +201,41 @@ export const StatusDashboardView: React.FC = () => {
         captains,
         admins,
       });
+
+      const captainsMap = new Map<
+        string,
+        { teamName: string; teamId?: string; count: number; onlineAt?: number }
+      >();
+
+      for (const p of all) {
+        if (p.role === 'captain' && p.teamName) {
+          const key = p.teamId || p.teamName;
+          const existing = captainsMap.get(key);
+          if (existing) {
+            existing.count += 1;
+            if (p.onlineAt && (!existing.onlineAt || p.onlineAt < existing.onlineAt)) {
+              existing.onlineAt = p.onlineAt;
+            }
+          } else {
+            captainsMap.set(key, {
+              teamName: p.teamName,
+              teamId: p.teamId,
+              count: 1,
+              onlineAt: p.onlineAt,
+            });
+          }
+        }
+      }
+
+      setConnectedCaptains(
+        Array.from(captainsMap.entries()).map(([key, data]) => ({
+          key,
+          teamId: data.teamId,
+          teamName: data.teamName,
+          deviceCount: data.count,
+          onlineAt: data.onlineAt,
+        }))
+      );
     };
 
     channel
@@ -393,6 +439,70 @@ export const StatusDashboardView: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Connected Team Captains */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                Connected Team Captains
+              </h2>
+            </div>
+            <span className="text-xs text-slate-400">
+              {connectedCaptains.length > 0
+                ? `${connectedCaptains.length} active ${
+                    connectedCaptains.length === 1 ? 'captain' : 'captains'
+                  }`
+                : '0 captains active'}
+            </span>
+          </div>
+
+          {connectedCaptains.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {connectedCaptains.map((c) => (
+                <div
+                  key={c.key}
+                  className="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-xs sm:text-sm truncate">
+                        {c.teamName}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        Captain session active
+                        {c.deviceCount > 1
+                          ? ` (${c.deviceCount} devices)`
+                          : ''}
+                      </div>
+                    </div>
+                  </div>
+                  {c.onlineAt && (
+                    <span className="text-[10px] text-slate-500 shrink-0 font-medium">
+                      Since{' '}
+                      {new Date(c.onlineAt).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-6 text-center text-xs text-slate-400 space-y-1">
+              <p className="font-medium text-slate-300">
+                No team captains are currently logged in.
+              </p>
+              <p className="text-[11px] text-slate-500">
+                When a captain logs in with their team PIN, their team name will
+                appear here live.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Database Health & Server Details */}
