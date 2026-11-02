@@ -1735,21 +1735,26 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             className="w-8 h-8 object-contain shrink-0"
           />
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               {isKnockout ? (
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-                  🏆 {knockoutDisplay}
-                  <span className="text-amber-500/80 font-normal">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 truncate flex items-center gap-1 min-w-0">
+                  <span className="shrink-0">🏆</span>
+                  <span className="truncate">{knockoutDisplay}</span>
+                  <span className="text-amber-500/80 font-normal hidden sm:inline shrink-0">
                     • {playAllFrames ? 'All 15 Frames' : 'First to 8'}
                   </span>
                 </span>
               ) : (
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
-                  {fixture.division} • {formatMatchDate(fixture.matchDate)}
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400 truncate min-w-0">
+                  {fixture.division}
+                  <span className="hidden sm:inline text-emerald-400/80 font-normal">
+                    {' '}• {formatMatchDate(fixture.matchDate)}
+                  </span>
                 </span>
               )}
               <span
-                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                key={fixture.status}
+                className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 inline-flex items-center justify-center whitespace-nowrap ${
                   fixture.status === 'live'
                     ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
                     : fixture.status === 'submitted'
