@@ -256,7 +256,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
               type="button"
               onClick={handleShare}
               disabled={isSharing || isDownloading}
-              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-90 text-white text-xs font-bold transition shadow select-none cursor-pointer min-w-[95px]"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-90 text-white text-xs font-bold transition-colors shadow select-none cursor-pointer min-w-[108px] shrink-0"
             >
               {isSharing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -273,7 +273,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
             type="button"
             onClick={handleDownload}
             disabled={isSharing || isDownloading}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 disabled:bg-slate-800 disabled:opacity-90 border border-slate-700 text-white text-xs font-bold transition select-none cursor-pointer min-w-[125px]"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 disabled:bg-slate-800 disabled:opacity-90 border border-slate-700 text-white text-xs font-bold transition-colors select-none cursor-pointer min-w-[140px] shrink-0"
           >
             {isDownloading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -282,7 +282,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
             ) : (
               <Download className="w-3.5 h-3.5 text-emerald-400" />
             )}
-            <span>{downloadSuccess === 'png' ? 'Saved!' : isDownloading ? 'Generating...' : 'Download PNG'}</span>
+            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : isDownloading ? 'Generating...' : 'Download PNG'}</span>
           </button>
         </div>
 
