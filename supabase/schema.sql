@@ -1207,3 +1207,68 @@ begin
   return true;
 end;
 $$;
+
+-- 15. System & Database Health Stats (Public Non-Sensitive)
+create or replace function public.get_system_status()
+returns json
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  result json;
+  v_db_size text;
+  v_uptime text;
+  v_active_conn int;
+  v_idle_conn int;
+  v_total_conn int;
+  v_max_conn int;
+  v_fixtures_count int;
+  v_teams_count int;
+  v_players_count int;
+  v_seasons_count int;
+  v_live_fixtures int;
+begin
+  -- Connection statistics from pg_stat_activity
+  select count(*) into v_total_conn from pg_stat_activity;
+  select count(*) into v_active_conn from pg_stat_activity where state = 'active';
+  select count(*) into v_idle_conn from pg_stat_activity where state = 'idle';
+  v_max_conn := current_setting('max_connections')::int;
+
+  -- Storage and uptime
+  select pg_size_pretty(pg_database_size(current_database())) into v_db_size;
+  select (now() - pg_postmaster_start_time())::text into v_uptime;
+
+  -- High-level row counts (non-sensitive counts)
+  select count(*) into v_fixtures_count from public.fixtures;
+  select count(*) into v_teams_count from public.teams;
+  select count(*) into v_players_count from public.players;
+  select count(*) into v_seasons_count from public.seasons;
+  select count(*) into v_live_fixtures from public.fixtures where status = 'live';
+
+  select json_build_object(
+    'database', json_build_object(
+      'activeConnections', v_active_conn,
+      'idleConnections', v_idle_conn,
+      'totalConnections', v_total_conn,
+      'maxConnections', v_max_conn,
+      'size', v_db_size,
+      'uptime', v_uptime,
+      'postgresVersion', split_part(version(), ' ', 2)
+    ),
+    'tables', json_build_object(
+      'seasons', v_seasons_count,
+      'teams', v_teams_count,
+      'players', v_players_count,
+      'fixtures', v_fixtures_count,
+      'liveFixtures', v_live_fixtures
+    ),
+    'timestamp', now()
+  ) into result;
+
+  return result;
+end;
+$$;
+
+grant execute on function public.get_system_status() to anon, authenticated;
+

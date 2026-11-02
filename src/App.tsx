@@ -20,6 +20,19 @@ import { DocsAndRulesView } from './components/DocsAndRulesView';
 import { MatchScorecardModal } from './components/MatchScorecardModal';
 import { RoleSwitcherModal } from './components/RoleSwitcherModal';
 import { NetworkStatusBanner } from './components/NetworkStatusBanner';
+import { StatusDashboardView } from './components/StatusDashboardView';
+
+function isStatusRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+  const hash = window.location.hash.toLowerCase().replace(/\/+$/, '');
+  return (
+    path === '/status' ||
+    path.endsWith('/status') ||
+    hash === '#/status' ||
+    hash.endsWith('/status')
+  );
+}
 
 type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'rules' | 'admin';
 
@@ -364,9 +377,40 @@ const MainShell: React.FC = () => {
 };
 
 export function App() {
+  const [showStatusPage, setShowStatusPage] = useState<boolean>(() =>
+    isStatusRoute()
+  );
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setShowStatusPage(isStatusRoute());
+    };
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('hashchange', handleRouteChange);
+    };
+  }, []);
+
   return (
     <LeagueProvider>
-      <MainShell />
+      {showStatusPage ? (
+        <StatusDashboardView
+          onNavigateHome={() => {
+            if (typeof window !== 'undefined') {
+              if (window.location.hash) {
+                window.location.hash = '';
+              }
+              const baseUrl = import.meta.env.BASE_URL || '/';
+              window.history.pushState({}, '', baseUrl);
+            }
+            setShowStatusPage(false);
+          }}
+        />
+      ) : (
+        <MainShell />
+      )}
     </LeagueProvider>
   );
 }
