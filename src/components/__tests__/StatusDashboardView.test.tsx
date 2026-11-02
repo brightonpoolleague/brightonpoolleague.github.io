@@ -1,9 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import {
-  StatusDashboardView,
-  formatUptimeDuration,
-} from '../StatusDashboardView';
+import { StatusDashboardView } from '../StatusDashboardView';
+import { formatUptimeDuration } from '../../utils/formatters';
 
 describe('StatusDashboardView Component', () => {
   it('renders status dashboard with real-time connections and database metrics', () => {
