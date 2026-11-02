@@ -3,13 +3,11 @@ name: Path to Production
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
   workflow_dispatch:
 
 concurrency:
-  group: pipeline-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: path-to-prod
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -20,7 +18,7 @@ defaults:
 
 jobs:
   # ===========================================================================
-  # Stage 1: Quality Gate & Automated Testing (Runs on PRs and on merge to main)
+  # Stage 1: Quality Gate & Automated Testing (Gate before deployment)
   # ===========================================================================
   unit-tests:
     name: Typecheck & Unit Tests (Vitest)
@@ -166,13 +164,12 @@ jobs:
         run: docker compose -f docker-compose.test.yml down -v
 
   # ===========================================================================
-  # Stage 2: Deployment & Sync (Runs in parallel ONLY on main after tests pass)
+  # Stage 2: Deployment & Sync (Runs in parallel ONLY after Stage 1 tests pass)
   # ===========================================================================
   deploy-pages:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: [unit-tests, containerized-e2e]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -216,7 +213,6 @@ jobs:
     name: Sync Supabase Schema
     runs-on: ubuntu-latest
     needs: [unit-tests, containerized-e2e]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     permissions:
       contents: read
     steps:
