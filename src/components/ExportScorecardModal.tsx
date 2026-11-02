@@ -273,7 +273,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
             ) : (
               <Download className="w-3.5 h-3.5 text-emerald-400" />
             )}
-            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : isDownloading ? 'Generating...' : 'Download PNG'}</span>
+            <span>{downloadSuccess === 'png' ? 'Saved PNG!' : isDownloading ? 'Downloading...' : 'Download PNG'}</span>
           </button>
         </div>
 
