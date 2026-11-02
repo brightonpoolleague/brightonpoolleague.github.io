@@ -395,22 +395,7 @@ export function App() {
 
   return (
     <LeagueProvider>
-      {showStatusPage ? (
-        <StatusDashboardView
-          onNavigateHome={() => {
-            if (typeof window !== 'undefined') {
-              if (window.location.hash) {
-                window.location.hash = '';
-              }
-              const baseUrl = import.meta.env.BASE_URL || '/';
-              window.history.pushState({}, '', baseUrl);
-            }
-            setShowStatusPage(false);
-          }}
-        />
-      ) : (
-        <MainShell />
-      )}
+      {showStatusPage ? <StatusDashboardView /> : <MainShell />}
     </LeagueProvider>
   );
 }

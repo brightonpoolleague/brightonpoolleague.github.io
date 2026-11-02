@@ -1,17 +1,17 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { StatusDashboardView } from '../StatusDashboardView';
 
 describe('StatusDashboardView Component', () => {
-  it('renders status dashboard with real-time connections, database metrics and back button', () => {
-    const onNavigateHome = vi.fn();
+  it('renders status dashboard with real-time connections and database metrics', () => {
+    render(<StatusDashboardView />);
 
-    render(<StatusDashboardView onNavigateHome={onNavigateHome} />);
-
-    // Header & Navigation
+    // Header & Title
     expect(screen.getByText(/System & Database Status/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Back to League/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
+
+    // Ensure it is separate without main site navigation or back buttons
+    expect(screen.queryByRole('button', { name: /Back to League/i })).not.toBeInTheDocument();
 
     // Primary metric cards
     expect(
@@ -22,21 +22,15 @@ describe('StatusDashboardView Component', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Database Disk Size/i)).toBeInTheDocument();
     expect(screen.getByText(/Database Table Records/i)).toBeInTheDocument();
-
-    // Clicking Back to League triggers onNavigateHome
-    fireEvent.click(screen.getByRole('button', { name: /Back to League/i }));
-    expect(onNavigateHome).toHaveBeenCalledTimes(1);
   });
 
   it('triggers manual refresh when the Refresh button is clicked', () => {
-    const onNavigateHome = vi.fn();
-    render(<StatusDashboardView onNavigateHome={onNavigateHome} />);
+    render(<StatusDashboardView />);
 
     const refreshBtn = screen.getByRole('button', { name: /Refresh/i });
     expect(refreshBtn).toBeInTheDocument();
 
     fireEvent.click(refreshBtn);
-    // Button state or text updates while refreshing
     expect(refreshBtn).toBeInTheDocument();
   });
 });

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Activity,
-  ArrowLeft,
   Clock,
   Cpu,
   Database,
@@ -15,10 +14,6 @@ import {
   Wifi,
 } from 'lucide-react';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
-
-interface StatusDashboardViewProps {
-  onNavigateHome: () => void;
-}
 
 interface DbSystemStats {
   activeConnections: number;
@@ -43,9 +38,7 @@ interface PresencePayload {
   onlineAt?: number;
 }
 
-export const StatusDashboardView: React.FC<StatusDashboardViewProps> = ({
-  onNavigateHome,
-}) => {
+export const StatusDashboardView: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
@@ -231,22 +224,10 @@ export const StatusDashboardView: React.FC<StatusDashboardViewProps> = ({
       {/* Top Header */}
       <header className="sticky top-0 z-30 w-full bg-slate-900 border-b border-slate-800 pt-[env(safe-area-inset-top,0px)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              type="button"
-              onClick={onNavigateHome}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition cursor-pointer shrink-0"
-              title="Return to Brighton Pool League"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to League</span>
-            </button>
-            <div className="h-5 w-px bg-slate-800 hidden sm:block" />
-            <div className="flex items-center gap-2 min-w-0">
-              <Activity className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div className="font-black text-sm sm:text-base text-white truncate">
-                System &amp; Database Status
-              </div>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Activity className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="font-black text-sm sm:text-base text-white truncate">
+              System &amp; Database Status
             </div>
           </div>
 
