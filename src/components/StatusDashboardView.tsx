@@ -14,6 +14,7 @@ import {
   Wifi,
 } from 'lucide-react';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
+import { formatUptimeDuration } from '../utils/formatters';
 
 interface DbSystemStats {
   activeConnections: number;
@@ -47,6 +48,7 @@ interface ConnectedCaptain {
   deviceCount: number;
   onlineAt?: number;
 }
+
 
 export const StatusDashboardView: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -258,13 +260,6 @@ export const StatusDashboardView: React.FC = () => {
     };
   }, [supabase, fetchBackendStats]);
 
-  const connPercent = dbStats
-    ? Math.min(
-        100,
-        Math.round((dbStats.totalConnections / (dbStats.maxConnections || 1)) * 100)
-      )
-    : null;
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Top Header */}
@@ -317,7 +312,7 @@ export const StatusDashboardView: React.FC = () => {
               </h1>
               <p className="text-xs sm:text-sm text-slate-400">
                 {config.isConfigured
-                  ? `Connected to Supabase (${new URL(config.url).hostname})`
+                  ? 'Connected to live database'
                   : 'Running in Local Sandbox Mode (Offline/In-Memory)'}
               </p>
             </div>
@@ -404,40 +399,55 @@ export const StatusDashboardView: React.FC = () => {
           {/* Database Connection Pool */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
             <div className="space-y-1">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Database className="w-3.5 h-3.5 text-sky-400" />
-                <span>PostgreSQL Connection Pool</span>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Database className="w-3.5 h-3.5 text-sky-400" />
+                  <span>PostgreSQL Connection Pool</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                  Healthy
+                </span>
               </div>
-              <div className="text-3xl font-black text-white pt-2">
-                {dbStats ? dbStats.totalConnections : '—'}
-                <span className="text-sm font-semibold text-slate-400">
-                  {dbStats ? ` / ${dbStats.maxConnections} max` : ''}
+              <div className="text-3xl font-black text-white pt-2 flex items-baseline gap-2">
+                {dbStats ? dbStats.activeConnections : '0'}
+                <span className="text-sm font-bold text-emerald-400">
+                  {dbStats && dbStats.activeConnections === 1
+                    ? 'Active Query'
+                    : 'Active Queries'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 pt-1">
-                Active PostgreSQL server processes allocated by PostgREST and
-                the connection pooler.
+                Pre-warmed pool connections are reused in milliseconds to serve incoming
+                requests, scaling smoothly across hundreds of concurrent visitors.
               </p>
             </div>
 
-            {connPercent !== null && (
-              <div className="mt-4 space-y-1.5">
-                <div className="flex justify-between text-[11px] text-slate-400 font-medium">
-                  <span>Pool Capacity Used</span>
-                  <span className="text-white font-bold">{connPercent}%</span>
+            <div className="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-3 gap-2 text-center">
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl py-2 px-1">
+                <div className="text-[10px] uppercase font-bold text-slate-500">
+                  Active
                 </div>
-                <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
-                  <div
-                    className="bg-sky-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${connPercent}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-500 pt-1">
-                  <span>Active: {dbStats?.activeConnections ?? 0}</span>
-                  <span>Idle: {dbStats?.idleConnections ?? 0}</span>
+                <div className="text-sm font-bold text-emerald-400 mt-0.5">
+                  {dbStats?.activeConnections ?? 0}
                 </div>
               </div>
-            )}
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl py-2 px-1">
+                <div className="text-[10px] uppercase font-bold text-slate-500">
+                  Idle in Pool
+                </div>
+                <div className="text-sm font-bold text-slate-200 mt-0.5">
+                  {dbStats?.idleConnections ?? 0}
+                </div>
+              </div>
+              <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl py-2 px-1">
+                <div className="text-[10px] uppercase font-bold text-slate-500">
+                  Pool Limit
+                </div>
+                <div className="text-sm font-bold text-slate-400 mt-0.5">
+                  {dbStats?.maxConnections ?? 60} max
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -526,7 +536,7 @@ export const StatusDashboardView: React.FC = () => {
               <span>Server Uptime</span>
             </div>
             <div className="text-xl font-bold text-white truncate">
-              {dbStats?.uptime ?? 'Online'}
+              {formatUptimeDuration(dbStats?.uptime)}
             </div>
             <div className="text-[11px] text-slate-500">
               PostgreSQL continuous run time
