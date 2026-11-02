@@ -341,6 +341,28 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const inFlightFixtureSavesRef = useRef<Map<string, number>>(new Map());
   const fixtureSaveQueueRef = useRef<Map<string, Promise<boolean>>>(new Map());
   const lastLocalFixtureSaveAtRef = useRef<Map<string, number>>(new Map());
+  const presenceChannelRef = useRef<ReturnType<
+    NonNullable<ReturnType<typeof getSupabaseClient>>['channel']
+  > | null>(null);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  useEffect(() => {
+    sessionRef.current = session;
+    if (presenceChannelRef.current) {
+      presenceChannelRef.current
+        .track({
+          role: session.role,
+          teamId: session.teamId,
+          teamName:
+            session.role === 'captain'
+              ? session.name.replace(/ Captain$/i, '')
+              : undefined,
+          onlineAt: Date.now(),
+        })
+        .catch(() => {});
+    }
+  }, [session.role, session.teamId, session.name]);
 
   const activeSeason =
     seasons.find((s) => s.isActive) ||
@@ -639,6 +661,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           // Ignore teardown errors
         }
       }
+      if (presenceChannelRef.current) {
+        const pChan = presenceChannelRef.current;
+        presenceChannelRef.current = null;
+        try {
+          await pChan.untrack();
+          await supabase.removeChannel(pChan);
+        } catch {
+          // Ignore teardown errors
+        }
+      }
     };
 
     const scheduleReconnect = (status: string, err?: unknown) => {
@@ -666,6 +698,28 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     const connectRealtime = () => {
       if (activeChannel) return;
       const myConnectionId = ++connectionId;
+
+      if (!presenceChannelRef.current) {
+        const pChan = supabase.channel('bpl-global-presence');
+        presenceChannelRef.current = pChan;
+        pChan.subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            try {
+              await pChan.track({
+                role: sessionRef.current.role,
+                teamId: sessionRef.current.teamId,
+                teamName:
+                  sessionRef.current.role === 'captain'
+                    ? sessionRef.current.name.replace(/ Captain$/i, '')
+                    : undefined,
+                onlineAt: Date.now(),
+              });
+            } catch {
+              // Ignore presence track errors
+            }
+          }
+        });
+      }
       activeChannel = supabase
         // Unique topic per connection: supabase.channel() returns any existing channel with the
         // same topic, so reusing a fixed name could hand back a channel that is still being torn
