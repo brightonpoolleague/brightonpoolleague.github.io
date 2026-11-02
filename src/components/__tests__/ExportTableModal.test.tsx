@@ -90,7 +90,7 @@ describe('ExportTableModal Component', () => {
     const onClose = vi.fn();
     render(<ExportTableModal {...defaultProps} onClose={onClose} />);
 
-    const closeBtn = screen.getByRole('button', { name: '' });
+    const closeBtn = screen.getByRole('button', { name: /close/i });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalled();
   });

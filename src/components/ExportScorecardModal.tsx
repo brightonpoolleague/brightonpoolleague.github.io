@@ -210,11 +210,11 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-6 overscroll-none touch-manipulation select-none"
+      className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 py-6 sm:py-8 overscroll-none touch-manipulation select-none"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full max-h-[96vh] sm:max-h-[92vh] flex flex-col shadow-2xl overflow-hidden overscroll-contain select-text"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full max-h-[86vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden overscroll-contain select-text"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Bar */}
@@ -233,7 +233,8 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+            aria-label="Close"
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-400 hover:text-white transition cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
