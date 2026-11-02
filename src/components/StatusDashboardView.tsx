@@ -312,22 +312,22 @@ export const StatusDashboardView: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center min-w-[120px]">
-                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+            <div className="flex items-stretch gap-2.5">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center w-36 sm:w-40 flex flex-col justify-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
                   REST API Latency
                 </div>
-                <div className="text-base font-black text-white mt-0.5">
+                <div className="text-sm sm:text-base font-black text-white h-6 flex items-center justify-center mt-0.5">
                   {restLatencyMs !== null ? `${restLatencyMs} ms` : '—'}
                 </div>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center min-w-[120px]">
-                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-center w-36 sm:w-40 flex flex-col justify-center">
+                <div className="text-[10px] uppercase font-bold text-slate-400 tracking-wider truncate">
                   WebSocket
                 </div>
-                <div className="text-xs font-black text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <div className="text-xs sm:text-sm font-black text-emerald-400 h-6 flex items-center justify-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
                   <span>{wsStatus}</span>
                 </div>
               </div>
