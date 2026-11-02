@@ -57,12 +57,12 @@ export const StatusDashboardView: React.FC = () => {
 
   // Real-time WebSocket Presence metrics
   const [wsStatus, setWsStatus] = useState<string>('CONNECTING');
-  const [concurrentUsers, setConcurrentUsers] = useState<number>(1);
+  const [concurrentUsers, setConcurrentUsers] = useState<number>(0);
   const [roleBreakdown, setRoleBreakdown] = useState<{
     viewers: number;
     captains: number;
     admins: number;
-  }>({ viewers: 1, captains: 0, admins: 0 });
+  }>({ viewers: 0, captains: 0, admins: 0 });
   const [connectedCaptains, setConnectedCaptains] = useState<ConnectedCaptain[]>([]);
 
   // REST API ping latency
@@ -188,9 +188,10 @@ export const StatusDashboardView: React.FC = () => {
 
     const syncPresence = () => {
       const state = channel.presenceState();
-      const all = Object.values(state).flat() as PresencePayload[];
-      const count = Math.max(1, all.length);
-      setConcurrentUsers(count);
+      const all = (Object.values(state).flat() as PresencePayload[]).filter(
+        (p) => p.role !== 'status_monitor'
+      );
+      setConcurrentUsers(all.length);
 
       const viewers = all.filter(
         (p) => !p.role || p.role === 'viewer'
@@ -199,7 +200,7 @@ export const StatusDashboardView: React.FC = () => {
       const admins = all.filter((p) => p.role === 'admin').length;
 
       setRoleBreakdown({
-        viewers: viewers || 1,
+        viewers,
         captains,
         admins,
       });
@@ -244,14 +245,8 @@ export const StatusDashboardView: React.FC = () => {
       .on('presence', { event: 'sync' }, syncPresence)
       .on('presence', { event: 'join' }, syncPresence)
       .on('presence', { event: 'leave' }, syncPresence)
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         setWsStatus(status);
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            role: 'status_monitor',
-            onlineAt: Date.now(),
-          });
-        }
       });
 
     return () => {
