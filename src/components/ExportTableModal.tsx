@@ -82,14 +82,20 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 
       // Safe margin: 16px on mobile, 32px on desktop
       const padX = window.innerWidth < 640 ? 16 : 32;
-      const padY = window.innerWidth < 640 ? 16 : 32;
-
       const availWidth = Math.max(100, cWidth - padX);
-      const availHeight = Math.max(100, cHeight - padY);
+      const scaleX = Math.min(1, availWidth / 800);
 
-      const scaleX = availWidth / 800;
+      const padY = window.innerWidth < 640 ? 16 : 32;
+      const availHeight = Math.max(100, cHeight - padY);
       const scaleY = availHeight / unscaledHeight;
-      const bestScale = Math.min(1, scaleX, scaleY);
+
+      // On desktop, if the card naturally fits available height comfortably (scaleY >= 0.75), fit to screen.
+      // Otherwise, or on mobile, scale to fit width (scaleX) so user can comfortably scroll up/down without text shrinking to microscopic size.
+      const bestScale =
+        window.innerWidth >= 640 && scaleY >= 0.75
+          ? Math.min(scaleX, scaleY)
+          : scaleX;
+
       setFitScale(bestScale);
     };
 
@@ -137,7 +143,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     setIsDownloading(true);
     try {
       const options = {
-        pixelRatio: 2,
+        pixelRatio: 3,
         backgroundColor: '#020617', // slate-950
         cacheBust: true,
         style: {
@@ -167,7 +173,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     setIsSharing(true);
     try {
       const blob = await toBlob(cardRef.current, {
-        pixelRatio: 2,
+        pixelRatio: 3,
         backgroundColor: '#020617',
         cacheBust: true,
         style: {
@@ -279,19 +285,18 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
           </button>
         </div>
 
-        {/* Scaled Preview Area: fits cleanly on mobile and desktop without scrolling */}
+        {/* Scaled Preview Area: scrolls vertically when table is tall on mobile & desktop */}
         <div
           ref={containerRef}
-          className="flex-1 min-h-0 p-2 sm:p-5 bg-slate-950/40 flex items-center justify-center overflow-hidden"
+          className="flex-1 min-h-0 p-3 sm:p-5 bg-slate-950/40 overflow-y-auto overflow-x-hidden flex justify-center overscroll-contain touch-pan-y"
         >
           <div
             style={{
               width: `${800 * fitScale}px`,
               height: cardHeight ? `${cardHeight * fitScale}px` : 'auto',
               maxWidth: '100%',
-              maxHeight: '100%',
             }}
-            className="relative transition-all duration-150 shrink-0"
+            className="relative transition-all duration-150 shrink-0 my-auto"
           >
             <div
               style={{
@@ -307,7 +312,13 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
               {/* The Actual Rendered Graphic (Width 800px for high-res retina output) */}
               <div
                 ref={cardRef}
-                style={{ width: '800px', margin: 0 }}
+                style={{
+                  width: '800px',
+                  margin: 0,
+                  WebkitFontSmoothing: 'antialiased',
+                  MozOsxFontSmoothing: 'grayscale',
+                  textRendering: 'optimizeLegibility',
+                }}
                 className="bg-slate-950 text-slate-100 p-7 space-y-5"
               >
                 {/* Graphic Card Header - Centered */}
@@ -398,11 +409,11 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 
                             {/* Primary & Secondary Label */}
                             <td className="py-2.5 px-3 text-left">
-                              <div className="font-bold text-white text-xs">
+                              <div className="font-bold text-white text-sm">
                                 {row.primaryText}
                               </div>
                               {row.secondaryText && (
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-xs text-slate-400 font-medium mt-0.5">
                                   {row.secondaryText}
                                 </div>
                               )}
@@ -443,6 +454,10 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
               </div>
             </div>
           </div>
+        </div>
+        {/* Mobile scroll hint */}
+        <div className="py-1 px-4 bg-slate-950/80 border-t border-slate-800 text-center text-[10px] text-slate-500 shrink-0 sm:hidden">
+          Scroll preview to inspect full table
         </div>
       </div>
     </div>

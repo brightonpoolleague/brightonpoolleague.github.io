@@ -148,7 +148,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
     setIsDownloading(true);
     try {
       const dataUrl = await toPng(cardRef.current, {
-        pixelRatio: 2,
+        pixelRatio: 3,
         backgroundColor: '#020617',
         cacheBust: true,
         style: { margin: '0', transform: 'none' },
@@ -173,7 +173,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
     setIsSharing(true);
     try {
       const blob = await toBlob(cardRef.current, {
-        pixelRatio: 2,
+        pixelRatio: 3,
         backgroundColor: '#020617',
         cacheBust: true,
         style: { margin: '0', transform: 'none' },
