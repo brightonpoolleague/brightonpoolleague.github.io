@@ -453,9 +453,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         supabase.from('fixtures').select('*').order('match_date'),
       ]);
 
+      const currentSession = sessionRef.current;
+      // If logged in as Captain, verify that the stored team PIN is still valid on the server
+      if (currentSession.role === 'captain' && currentSession.teamId && currentSession.pin) {
+        const { data: isValid, error: vError } = await supabase.rpc('verify_captain_pin', {
+          p_team_id: currentSession.teamId,
+          p_pin: currentSession.pin,
+        });
+        if (!vError && isValid === false) {
+          setRoleSession('viewer');
+          return;
+        }
+      }
+
       // If logged in as Admin, fetch protected team PINs via server-side RPC (requires League Admin PIN)
       const pinMap: Record<string, string> = {};
-      if (session.role === 'admin' && adminPin) {
+      if (currentSession.role === 'admin' && adminPin) {
         const pinsRes = await supabase.rpc('get_all_team_pins', {
           p_admin_pin: adminPin,
         });
@@ -467,6 +480,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             }
           );
+        } else if (pinsRes.data === false) {
+          setRoleSession('viewer');
+          return;
         }
       }
 
@@ -631,6 +647,34 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       if (now - lastCatchUpAt < 3000) return;
       lastCatchUpAt = now;
       refreshChangedFixtures();
+
+      const current = sessionRef.current;
+      if (current.role === 'captain' && current.teamId && current.pin) {
+        supabase
+          .rpc('verify_captain_pin', {
+            p_team_id: current.teamId,
+            p_pin: current.pin,
+          })
+          .then(
+            ({ data: isValid, error: vError }) => {
+              if (!vError && isValid === false) {
+                setRoleSession('viewer');
+              }
+            },
+            () => {}
+          );
+      } else if (current.role === 'admin' && adminPin) {
+        supabase
+          .rpc('verify_admin_pin', { p_pin: adminPin })
+          .then(
+            ({ data: isValid, error: vError }) => {
+              if (!vError && isValid === false) {
+                setRoleSession('viewer');
+              }
+            },
+            () => {}
+          );
+      }
     };
 
     // Called when the user returns to the app or the device comes back online.
@@ -980,17 +1024,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             : 'Team Captain'
           : 'General Spectator');
       const next: UserSession = { role, teamId, name, pin };
+      sessionRef.current = next;
       setSession(next);
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(next));
-        if (role === 'viewer' && isCloudConnected) {
-          localStorage.removeItem(STORAGE_KEYS.ADMIN_PIN);
-          setAdminPin('');
-          setAllTeams((prev) => {
-            const scrubbed = prev.map((t) => ({ ...t, captainPin: '' }));
-            localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(scrubbed));
-            return scrubbed;
-          });
+        if (role === 'viewer') {
+          setPendingFixtureSync(null);
+          setSyncError(null);
+          if (isCloudConnected) {
+            localStorage.removeItem(STORAGE_KEYS.ADMIN_PIN);
+            setAdminPin('');
+            setAllTeams((prev) => {
+              const scrubbed = prev.map((t) => ({ ...t, captainPin: '' }));
+              localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(scrubbed));
+              return scrubbed;
+            });
+          }
         }
       }
     },
@@ -1475,7 +1524,12 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             p_submitted_at: updated.submittedAt ?? null,
             p_approved_at: updated.approvedAt ?? null,
           });
-          if (error || adminOk === false) throw error || new Error('Unauthorized');
+          if (adminOk === false) {
+            setRoleSession('viewer');
+            refreshFromCloudRef.current({ silent: true }).catch(() => {});
+            return false;
+          }
+          if (error) throw error;
           return true;
         } else if (session.role === 'captain' && session.teamId) {
           let pushStatus = updated.status;
@@ -1503,15 +1557,24 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           });
 
           if (error || capOk === false) {
-            if (capOk === false) throw new Error('Unauthorized');
+            if (capOk === false) {
+              setRoleSession('viewer');
+              refreshFromCloudRef.current({ silent: true }).catch(() => {});
+              return false;
+            }
             // Fallback if database schema hasn't been re-run with p_edited_side yet
             if (error?.code === 'PGRST202') {
               const retryRes = await supabase.rpc(
                 'captain_save_fixture',
                 baseArgs
               );
-              if (retryRes.error || retryRes.data === false) {
-                throw retryRes.error || new Error('Unauthorized');
+              if (retryRes.data === false) {
+                setRoleSession('viewer');
+                refreshFromCloudRef.current({ silent: true }).catch(() => {});
+                return false;
+              }
+              if (retryRes.error) {
+                throw retryRes.error;
               }
               return true;
             }
@@ -1544,6 +1607,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           setPendingFixtureSync(null);
           setSyncError(null);
           await refreshFromCloud();
+        } else if (sessionRef.current.role === 'viewer') {
+          setPendingFixtureSync(null);
+          setSyncError(null);
         }
       } else {
         await refreshFromCloud();
@@ -1696,8 +1762,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           }
           const ok = await pushFixtureToSupabase(toPush, editedSide);
           if (!ok) {
-            setPendingFixtureSync({ fixture: toPush, editedSide });
-            setSyncError('Weak connection detected.');
+            if (sessionRef.current.role === 'captain' || sessionRef.current.role === 'admin') {
+              setPendingFixtureSync({ fixture: toPush, editedSide });
+              setSyncError('Weak connection detected.');
+            } else {
+              setPendingFixtureSync(null);
+              setSyncError(null);
+            }
           } else {
             setPendingFixtureSync(null);
             setSyncError(null);
