@@ -1237,7 +1237,7 @@ begin
 
   -- Storage and uptime
   select pg_size_pretty(pg_database_size(current_database())) into v_db_size;
-  select (now() - pg_postmaster_start_time())::text into v_uptime;
+  select date_trunc('second', now() - pg_postmaster_start_time())::text into v_uptime;
 
   -- High-level row counts (non-sensitive counts)
   select count(*) into v_fixtures_count from public.fixtures;
