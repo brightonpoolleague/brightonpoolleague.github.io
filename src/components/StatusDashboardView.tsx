@@ -275,7 +275,7 @@ export const StatusDashboardView: React.FC<StatusDashboardViewProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 pb-12 space-y-6">
         {/* Real-time Status Banner */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 sm:p-6 relative overflow-hidden backdrop-blur-sm">
           <div className="absolute top-0 right-0 -mt-6 -mr-6 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -535,18 +535,6 @@ export const StatusDashboardView: React.FC<StatusDashboardViewProps> = ({
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
-        Brighton &amp; Hove Pool League &bull; System Status &bull;{' '}
-        <button
-          type="button"
-          onClick={onNavigateHome}
-          className="text-slate-400 hover:text-white underline cursor-pointer"
-        >
-          Return to main site
-        </button>
-      </footer>
     </div>
   );
 };
