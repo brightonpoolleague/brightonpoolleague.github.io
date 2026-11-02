@@ -227,7 +227,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Bar */}
-        <div className="p-3.5 sm:px-6 sm:py-4 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+        <div className="relative z-20 bg-slate-900 border-b border-slate-800 p-3.5 sm:px-6 sm:py-4 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <Camera className="w-4 h-4" />
@@ -250,13 +250,13 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         </div>
 
         {/* Modal Actions Bar */}
-        <div className="bg-slate-950/60 border-b border-slate-800/80 px-4 sm:px-6 py-3 flex items-center justify-end gap-2 shrink-0">
+        <div className="relative z-20 bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-end gap-2 shrink-0">
           {canNativeShare && (
             <button
               type="button"
               onClick={handleShare}
               disabled={isSharing || isDownloading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-90 text-white text-xs font-bold transition shadow select-none cursor-pointer min-w-[95px]"
             >
               {isSharing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -273,7 +273,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
             type="button"
             onClick={handleDownload}
             disabled={isSharing || isDownloading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 disabled:bg-slate-800 disabled:opacity-90 border border-slate-700 text-white text-xs font-bold transition select-none cursor-pointer min-w-[125px]"
           >
             {isDownloading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -289,7 +289,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
         {/* Scaled Preview Area: scrolls vertically when table is tall on mobile & desktop */}
         <div
           ref={containerRef}
-          className="flex-1 min-h-0 p-3 sm:p-5 bg-slate-950/40 overflow-y-auto overflow-x-hidden flex justify-center overscroll-contain touch-pan-y"
+          className="relative z-0 flex-1 min-h-0 p-3 sm:p-5 bg-slate-950/60 overflow-y-auto overflow-x-hidden flex justify-center overscroll-contain touch-pan-y"
         >
           <div
             style={{
