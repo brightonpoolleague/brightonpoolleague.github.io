@@ -2932,7 +2932,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         <span>
                           {isKnockout && !playAllFrames
-                            ? 'Match Decided — Review Scorecard'
+                            ? 'Match Complete — Review Scorecard'
                             : 'All 15 Frames Complete — Review Scorecard'}
                         </span>
                       </div>

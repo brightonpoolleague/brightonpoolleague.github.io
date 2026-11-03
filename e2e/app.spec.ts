@@ -556,7 +556,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       page.getByText('Not required (Decided at 8)').first()
     ).toBeVisible();
     await expect(
-      page.getByText(/Match Decided — Review Scorecard/i)
+      page.getByText(/Match Complete — Review Scorecard/i)
     ).toBeVisible();
 
     // 9. Close the scorecard modal and delete the temporary Knockout fixture
