@@ -602,12 +602,24 @@ export function computeLeagueTable(
     };
   });
 
+  const teamsByIdObj: Record<string, Team> = {};
+  teams.forEach((t) => {
+    teamsByIdObj[t.id] = t;
+  });
+
+  const halfwayInfo = getSeasonHalfwayDate(fixtures.filter((f) => f.division === division));
+  const halfwayDate = halfwayInfo.halfwayDate;
+
   // Sort fixtures chronologically for accurate form guide
   const sortedFixtures = [...divFixtures].sort((a, b) =>
     a.matchDate.localeCompare(b.matchDate)
   );
 
   sortedFixtures.forEach((fix) => {
+    if (isFixtureExpunged(fix, teamsByIdObj, halfwayDate).isExpunged) {
+      return;
+    }
+
     const score = calculateMatchScore(fix);
     if (score.completedFrames === 0) return;
 
@@ -661,8 +673,11 @@ export function computeLeagueTable(
 
   const rows = Object.values(rowsMap);
 
-  // Preliminary sort by Points, then Frame Diff
+  // Preliminary sort by active status, Points, then Frame Diff
   rows.sort((a, b) => {
+    if (Boolean(a.team.isFolded) !== Boolean(b.team.isFolded)) {
+      return a.team.isFolded ? 1 : -1;
+    }
     if (b.points !== a.points) return b.points - a.points;
     if (b.frameDiff !== a.frameDiff) return b.frameDiff - a.frameDiff;
     return a.team.name.localeCompare(b.team.name);
@@ -670,6 +685,9 @@ export function computeLeagueTable(
 
   // Full tie-breaker pass (Section 8a.iii)
   rows.sort((a, b) => {
+    if (Boolean(a.team.isFolded) !== Boolean(b.team.isFolded)) {
+      return a.team.isFolded ? 1 : -1;
+    }
     if (b.points !== a.points) return b.points - a.points;
     if (b.frameDiff !== a.frameDiff) return b.frameDiff - a.frameDiff;
 
@@ -742,6 +760,20 @@ export function computePlayerStats(
   const playerFormerTeams: Record<string, Map<string, Team>> = {};
   const playersById: Record<string, Player> = {};
 
+  const halfwayDateByDiv: Record<string, string | null> = {};
+  (
+    ['Premier League', 'Division 1', 'Division 2', 'Division 3'] as Division[]
+  ).forEach((div) => {
+    halfwayDateByDiv[div] = getSeasonHalfwayDate(
+      fixtures.filter((f) => f.division === div)
+    ).halfwayDate;
+  });
+
+  const isExpungedMatch = (f: Fixture) => {
+    const divHalfway = f.division ? halfwayDateByDiv[f.division] : null;
+    return isFixtureExpunged(f, teamsById, divHalfway).isExpunged;
+  };
+
   players.forEach((player) => {
     playersById[player.id] = player;
     playerMatchIds[player.id] = new Set();
@@ -769,7 +801,8 @@ export function computePlayerStats(
     (f) =>
       (division === 'ALL' || f.division === division) &&
       validStatuses.includes(f.status) &&
-      !isKnockoutFixture(f)
+      !isKnockoutFixture(f) &&
+      !isExpungedMatch(f)
   );
 
   // If a player previously played in this division before transferring to another division,
@@ -813,7 +846,7 @@ export function computePlayerStats(
   // Track distinct matches played per player for their team this season (Rules Section 5a/5b).
   // A match is counted if it was played/in-progress and the player participated (in lineup or played frames) for their team.
   const eligibleFixtures = fixtures.filter((f) =>
-    validStatuses.includes(f.status)
+    validStatuses.includes(f.status) && !isExpungedMatch(f)
   );
 
   eligibleFixtures.forEach((fix) => {
@@ -1135,6 +1168,69 @@ export function getSeasonHalfwayDate(
     endDate,
     halfwayDate,
     isPastHalfway,
+  };
+}
+
+export interface ExpungedFixtureInfo {
+  isExpunged: boolean;
+  reason?: 'rule_7a' | 'rule_7b';
+  foldedTeamName?: string;
+}
+
+/**
+ * Determines whether a fixture's results are expunged following League Rule 7:
+ * - Rule 7a: If a team folds in the first half of the season, all results will be expunged.
+ * - Rule 7b: If a team folds in the second half of the season, first half results will stand,
+ *   and all second half results will be expunged.
+ * - Rule 7c: Each situation of a team folding will be reviewed on a case-by-case basis.
+ */
+export function isFixtureExpunged(
+  fixture: Fixture,
+  teamsById: Record<string, Team>,
+  divisionHalfwayDate?: string | null
+): ExpungedFixtureInfo {
+  const homeTeam = teamsById[fixture.homeTeamId];
+  const awayTeam = teamsById[fixture.awayTeamId];
+
+  const foldedTeams: Team[] = [];
+  if (homeTeam?.isFolded) foldedTeams.push(homeTeam);
+  if (awayTeam?.isFolded) foldedTeams.push(awayTeam);
+
+  if (foldedTeams.length === 0) {
+    return { isExpunged: false };
+  }
+
+  // If any team folded in the first half of the season, Rule 7a applies:
+  // ALL results involving this team are expunged.
+  for (const team of foldedTeams) {
+    const isFirstHalf =
+      !divisionHalfwayDate ||
+      !team.foldedDate ||
+      team.foldedDate <= divisionHalfwayDate;
+
+    if (isFirstHalf) {
+      return {
+        isExpunged: true,
+        reason: 'rule_7a',
+        foldedTeamName: team.name,
+      };
+    }
+  }
+
+  // All folded teams folded in the second half of the season.
+  // Rule 7b applies: First half results stand, second half results are expunged.
+  if (
+    divisionHalfwayDate &&
+    fixture.matchDate &&
+    fixture.matchDate <= divisionHalfwayDate
+  ) {
+    return { isExpunged: false };
+  }
+
+  return {
+    isExpunged: true,
+    reason: 'rule_7b',
+    foldedTeamName: foldedTeams[0].name,
   };
 }
 

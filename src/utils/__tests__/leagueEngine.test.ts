@@ -18,6 +18,7 @@ import {
   getOrdinalSuffix,
   getScorecardApprovalWarnings,
   getSubstitutionsMade,
+  isFixtureExpunged,
   isKnockoutFixture,
   isSlotSubstituted,
   isSubsLocked,
@@ -1567,5 +1568,216 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
     const dishEntry = dishTable.find((r) => r.player.id === 'p1')!;
     expect(dishEntry).toBeDefined();
     expect(dishEntry.dishes).toBe(1);
+  });
+
+  describe('Rule 7: Folded Teams (expunging results and case-by-case review)', () => {
+    const teamA = makeTeam({ id: 'team-a', name: 'Team A' });
+    const teamB = makeTeam({ id: 'team-b', name: 'Team B' });
+    const teamC = makeTeam({ id: 'team-c', name: 'Team C' });
+
+    const pA1 = makePlayer({ id: 'pa1', teamId: 'team-a', name: 'Player A1' });
+    const pB1 = makePlayer({ id: 'pb1', teamId: 'team-b', name: 'Player B1' });
+
+    const buildPlayedMatch = (params: {
+      id: string;
+      matchDate: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      homeFramesWon: number;
+      awayFramesWon: number;
+      homePlayerId?: string;
+      awayPlayerId?: string;
+      dishFrames?: number[];
+    }): Fixture => {
+      const lineups = createEmptyLineups();
+      lineups.set1.home = [params.homePlayerId || 'p-h1', 'p-h2', 'p-h3', 'p-h4', 'p-h5'];
+      lineups.set2.home = [params.homePlayerId || 'p-h1', 'p-h2', 'p-h3', 'p-h4', 'p-h5'];
+      lineups.set3.home = [params.homePlayerId || 'p-h1', 'p-h2', 'p-h3', 'p-h4', 'p-h5'];
+      lineups.set1.away = [params.awayPlayerId || 'p-a1', 'p-a2', 'p-a3', 'p-a4', 'p-a5'];
+      lineups.set2.away = [params.awayPlayerId || 'p-a1', 'p-a2', 'p-a3', 'p-a4', 'p-a5'];
+      lineups.set3.away = [params.awayPlayerId || 'p-a1', 'p-a2', 'p-a3', 'p-a4', 'p-a5'];
+
+      const frames = createEmptyFrames().map((f, idx) => {
+        const isHomeWin = idx < params.homeFramesWon;
+        const isDish = params.dishFrames?.includes(f.frameNumber) ?? false;
+        return {
+          ...f,
+          winner: (isHomeWin ? 'home' : 'away') as 'home' | 'away',
+          dish: isDish,
+        };
+      });
+
+      return makeFixture({
+        id: params.id,
+        matchDate: params.matchDate,
+        homeTeamId: params.homeTeamId,
+        awayTeamId: params.awayTeamId,
+        division: 'Premier League',
+        status: 'approved',
+        lineups,
+        frames,
+      });
+    };
+
+    // Season runs from 2026-10-01 to 2026-12-01 (halfway date = 2026-11-01)
+    const fix1FirstHalf = buildPlayedMatch({
+      id: 'fix-1',
+      matchDate: '2026-10-15',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-b',
+      homeFramesWon: 10,
+      awayFramesWon: 5,
+      homePlayerId: 'pa1',
+      awayPlayerId: 'pb1',
+      dishFrames: [1],
+    });
+
+    const fix2SecondHalf = buildPlayedMatch({
+      id: 'fix-2',
+      matchDate: '2026-11-15',
+      homeTeamId: 'team-b',
+      awayTeamId: 'team-a',
+      homeFramesWon: 9,
+      awayFramesWon: 6,
+      homePlayerId: 'pb1',
+      awayPlayerId: 'pa1',
+    });
+
+    const fix3BetweenOthers = buildPlayedMatch({
+      id: 'fix-3',
+      matchDate: '2026-10-20',
+      homeTeamId: 'team-b',
+      awayTeamId: 'team-c',
+      homeFramesWon: 8,
+      awayFramesWon: 7,
+      homePlayerId: 'pb1',
+    });
+
+    const divisionFixtures = [fix1FirstHalf, fix2SecondHalf, fix3BetweenOthers];
+    const halfwayDate = '2026-11-01';
+
+    it('identifies unexpunged fixtures when neither team has folded', () => {
+      const teamsById = { 'team-a': teamA, 'team-b': teamB, 'team-c': teamC };
+      const res = isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate);
+      expect(res.isExpunged).toBe(false);
+    });
+
+    it('expunges all results if a team folds in the first half of the season (Rule 7a)', () => {
+      const foldedTeamA: Team = {
+        ...teamA,
+        isFolded: true,
+        foldedDate: '2026-10-25', // before halfwayDate (2026-11-01)
+        foldedReason: 'Venue closure',
+      };
+      const teamsById = { 'team-a': foldedTeamA, 'team-b': teamB, 'team-c': teamC };
+
+      // Both first-half and second-half matches involving team A must be expunged
+      const res1 = isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate);
+      expect(res1.isExpunged).toBe(true);
+      expect(res1.reason).toBe('rule_7a');
+      expect(res1.foldedTeamName).toBe('Team A');
+
+      const res2 = isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate);
+      expect(res2.isExpunged).toBe(true);
+      expect(res2.reason).toBe('rule_7a');
+
+      // Unrelated match between active teams stands
+      const res3 = isFixtureExpunged(fix3BetweenOthers, teamsById, halfwayDate);
+      expect(res3.isExpunged).toBe(false);
+
+      // Verify league table under Rule 7a
+      const table = computeLeagueTable('Premier League', [foldedTeamA, teamB, teamC], divisionFixtures);
+      const rowA = table.find((r) => r.team.id === 'team-a')!;
+      const rowB = table.find((r) => r.team.id === 'team-b')!;
+      const rowC = table.find((r) => r.team.id === 'team-c')!;
+
+      // Folded team A has all results expunged (0 played, 0 points) and is pinned to table bottom
+      expect(rowA.played).toBe(0);
+      expect(rowA.points).toBe(0);
+      expect(table[table.length - 1].team.id).toBe('team-a');
+
+      // Team B played Team A twice and Team C once; Team A results are expunged so only match vs Team C counts
+      expect(rowB.played).toBe(1);
+      expect(rowB.won).toBe(1);
+      expect(rowB.points).toBe(4); // 8-7 win = 4 pts
+      expect(rowC.played).toBe(1);
+      expect(rowC.lost).toBe(1);
+      expect(rowC.points).toBe(2); // 8-7 loss = 2 pts
+
+      // Verify player stats under Rule 7a: frames against team A are expunged so pa1 has 0 valid frames
+      const { averagesTable, dishTable } = computePlayerStats(
+        'Premier League',
+        [foldedTeamA, teamB, teamC],
+        [pA1, pB1],
+        divisionFixtures
+      );
+      const pa1Stats = averagesTable.find((r) => r.player.id === 'pa1');
+      expect(pa1Stats).toBeUndefined(); // Omitted from averages because all played frames were expunged
+
+      // Dish from fix1 involving folded team A must NOT appear in dish table
+      const pa1Dish = dishTable.find((r) => r.player.id === 'pa1');
+      expect(pa1Dish).toBeUndefined();
+    });
+
+    it('stands first-half results and expunges second-half results if a team folds in the second half (Rule 7b)', () => {
+      const foldedTeamA: Team = {
+        ...teamA,
+        isFolded: true,
+        foldedDate: '2026-11-20', // after halfwayDate (2026-11-01)
+        foldedReason: 'Player shortages',
+      };
+      const teamsById = { 'team-a': foldedTeamA, 'team-b': teamB, 'team-c': teamC };
+
+      // First-half fixture stands
+      const res1 = isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate);
+      expect(res1.isExpunged).toBe(false);
+
+      // Second-half fixture is expunged
+      const res2 = isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate);
+      expect(res2.isExpunged).toBe(true);
+      expect(res2.reason).toBe('rule_7b');
+      expect(res2.foldedTeamName).toBe('Team A');
+
+      // League table verification under Rule 7b
+      const table = computeLeagueTable('Premier League', [foldedTeamA, teamB, teamC], divisionFixtures);
+      const rowA = table.find((r) => r.team.id === 'team-a')!;
+      const rowB = table.find((r) => r.team.id === 'team-b')!;
+
+      // Team A keeps first-half match (10-5 win = 5 pts), second-half is expunged
+      expect(rowA.played).toBe(1);
+      expect(rowA.won).toBe(1);
+      expect(rowA.points).toBe(5);
+      // Folded team is still pinned below all active teams even if it has points
+      expect(table[table.length - 1].team.id).toBe('team-a');
+
+      // Team B has fix1 (lost vs A, 1 pt) and fix3 (won vs C, 4 pts) = 5 pts, fix2 vs A is expunged
+      expect(rowB.played).toBe(2);
+      expect(rowB.won).toBe(1);
+      expect(rowB.lost).toBe(1);
+      expect(rowB.points).toBe(5);
+
+      // Active team B finishes above folded team A
+      const bIndex = table.findIndex((r) => r.team.id === 'team-b');
+      const aIndex = table.findIndex((r) => r.team.id === 'team-a');
+      expect(bIndex).toBeLessThan(aIndex);
+    });
+
+    it('allows restoring a team on a case-by-case review (Rule 7c), reinstating all results', () => {
+      const restoredTeamA: Team = {
+        ...teamA,
+        isFolded: false,
+        foldedDate: undefined,
+        foldedReason: undefined,
+      };
+      const teamsById = { 'team-a': restoredTeamA, 'team-b': teamB, 'team-c': teamC };
+
+      expect(isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate).isExpunged).toBe(false);
+      expect(isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate).isExpunged).toBe(false);
+
+      const table = computeLeagueTable('Premier League', [restoredTeamA, teamB, teamC], divisionFixtures);
+      const rowA = table.find((r) => r.team.id === 'team-a')!;
+      expect(rowA.played).toBe(2);
+      expect(rowA.points).toBe(7); // fix1 (5 pts) + fix2 (2 pts) = 7 pts
+    });
   });
 });

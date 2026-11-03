@@ -93,6 +93,9 @@ function mapTeamRow(
     captainName: String(r.captain_name ?? ''),
     captainPin: existingPin.includes('•') ? '' : existingPin,
     tableNumber: r.table_number ? String(r.table_number) : undefined,
+    isFolded: Boolean(r.is_folded),
+    foldedDate: r.folded_date ? String(r.folded_date) : undefined,
+    foldedReason: r.folded_reason ? String(r.folded_reason) : undefined,
   };
 }
 
@@ -235,6 +238,8 @@ interface LeagueContextValue {
     newPin: string
   ) => Promise<{ success: boolean; error?: string }>;
   updateTeam: (team: Team) => Promise<void>;
+  foldTeam: (teamId: string, foldDate?: string, reason?: string) => Promise<void>;
+  unfoldTeam: (teamId: string) => Promise<void>;
   addPlayer: (teamId: string, name: string) => Promise<Player>;
   updatePlayer: (player: Player) => Promise<void>;
   transferPlayer: (playerId: string, toTeamId: string) => Promise<void>;
@@ -1314,6 +1319,65 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
+  const foldTeam = useCallback(
+    async (teamId: string, foldDate?: string, reason?: string): Promise<void> => {
+      const resolvedDate = foldDate || new Date().toISOString().split('T')[0];
+      const nextTeams = allTeams.map((t) =>
+        t.id === teamId
+          ? {
+              ...t,
+              isFolded: true,
+              foldedDate: resolvedDate,
+              foldedReason: reason?.trim() || undefined,
+            }
+          : t
+      );
+      setAllTeams(nextTeams);
+      persistLocal(nextTeams, allPlayers, allFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_fold_team', {
+          p_admin_pin: adminPin,
+          p_team_id: teamId,
+          p_is_folded: true,
+          p_folded_date: resolvedDate,
+          p_folded_reason: reason?.trim() || null,
+        });
+      }
+    },
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+  );
+
+  const unfoldTeam = useCallback(
+    async (teamId: string): Promise<void> => {
+      const nextTeams = allTeams.map((t) =>
+        t.id === teamId
+          ? {
+              ...t,
+              isFolded: false,
+              foldedDate: undefined,
+              foldedReason: undefined,
+            }
+          : t
+      );
+      setAllTeams(nextTeams);
+      persistLocal(nextTeams, allPlayers, allFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_fold_team', {
+          p_admin_pin: adminPin,
+          p_team_id: teamId,
+          p_is_folded: false,
+          p_folded_date: null,
+          p_folded_reason: null,
+        });
+      }
+    },
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+  );
+
   const addPlayer = useCallback(
     async (teamId: string, name: string): Promise<Player> => {
       const newPlayer: Player = {
@@ -1926,6 +1990,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         loginAsAdminWithPin,
         updateTeamPin,
         updateTeam,
+        foldTeam,
+        unfoldTeam,
         addPlayer,
         updatePlayer,
         transferPlayer,

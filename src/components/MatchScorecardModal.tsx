@@ -25,6 +25,7 @@ import {
   Fixture,
   MatchLineups,
   SlotPlayerId,
+  Team,
 } from '../types/league';
 import {
   calculateMatchScore,
@@ -34,9 +35,11 @@ import {
   getEligiblePlayersForSlot,
   getFrameBreaker,
   getFramePlayers,
+  getSeasonHalfwayDate,
   getScorecardApprovalWarnings,
   getSetKey,
   getSubstitutionsMade,
+  isFixtureExpunged,
   isKnockoutFixture,
   isSlotSubstituted,
   isSubsLocked,
@@ -259,6 +262,25 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const homeSquad = players.filter((p) => p.teamId === homeTeam.id && p.active);
   const awaySquad = players.filter((p) => p.teamId === awayTeam.id && p.active);
+
+  const teamsById = useMemo(() => {
+    const map: Record<string, Team> = {};
+    teams.forEach((t) => {
+      map[t.id] = t;
+    });
+    return map;
+  }, [teams]);
+
+  const divHalfwayDate = useMemo(() => {
+    return getSeasonHalfwayDate(
+      fixtures.filter((f) => f.division === fixture.division)
+    ).halfwayDate;
+  }, [fixtures, fixture.division]);
+
+  const expungedInfo = useMemo(
+    () => isFixtureExpunged(fixture, teamsById, divHalfwayDate),
+    [fixture, teamsById, divHalfwayDate]
+  );
 
   // Guarantee that frames and lineups are strictly complete and never empty arrays
   const frames = useMemo(
@@ -1919,6 +1941,21 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <span className="font-extrabold text-white text-xs truncate">
               {session.name.replace(/ Captain$/i, '')}
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Expunged Fixture Alert (Rule 7) */}
+      {expungedInfo.isExpunged && (
+        <div className="bg-amber-950/60 border-b border-amber-500/40 px-3 sm:px-6 py-2.5 text-xs text-amber-200 flex items-center gap-2 shrink-0">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          <div>
+            <strong className="text-white">
+              Official Result Expunged (Rule {expungedInfo.reason === 'rule_7a' ? '7a' : '7b'}):
+            </strong>{' '}
+            {expungedInfo.foldedTeamName || 'A team in this match'} folded in the{' '}
+            {expungedInfo.reason === 'rule_7a' ? 'first' : 'second'} half of the season.
+            This match result does not count towards the league table or player averages.
           </div>
         </div>
       )}
