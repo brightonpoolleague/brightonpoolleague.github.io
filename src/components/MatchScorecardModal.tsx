@@ -1845,7 +1845,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             <button
               type="button"
               onClick={() => setViewMode('mobile')}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+              aria-label="Live Scorecard"
+              title="Live Scorecard"
+              className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition ${
                 viewMode === 'mobile'
                   ? 'bg-emerald-600 text-white'
                   : 'text-slate-400 hover:text-white'
@@ -1853,12 +1855,13 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Live Scorecard</span>
-              <span className="sm:hidden text-[11px]">Live</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('paper')}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition ${
+              aria-label="Result Scorecard"
+              title="Result Scorecard"
+              className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold transition ${
                 viewMode === 'paper'
                   ? 'bg-emerald-600 text-white'
                   : 'text-slate-400 hover:text-white'
@@ -1866,7 +1869,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Result Scorecard</span>
-              <span className="sm:hidden text-[11px]">Result</span>
             </button>
           </div>
 
