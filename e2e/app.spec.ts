@@ -142,7 +142,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
         .getAttribute('value');
       await selectEl.selectOption(firstAvailableVal!);
     }
-    await page.getByRole('button', { name: 'Confirm', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Confirm Lineup', exact: true }).first().click();
 
     // Verify 1/2 confirmed state
     await expect(
@@ -654,12 +654,10 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       .first()
       .getAttribute('value');
     await putInSelect.selectOption(replacementVal!);
-
-    await page.getByRole('button', { name: 'Make Substitution' }).first().click();
     await expect(page.getByText(/Subbed in for/i).first()).toBeVisible();
 
     // 6. Confirm the Set 2 substitution -> triggers opponent approval banner
-    await page.getByRole('button', { name: 'Confirm', exact: true }).first().click();
+    await page.getByRole('button', { name: 'Confirm Subs', exact: true }).first().click();
     await expect(
       page.getByRole('button', { name: 'Approve Substitutions' })
     ).toBeVisible();

@@ -93,7 +93,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const handleSwitchSet = (targetSet: 1 | 2 | 3) => {
     setActiveSet(targetSet);
     setSubOutSlotBySide({ home: '', away: '' });
-    setSubInPlayerBySide({ home: '', away: '' });
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -168,10 +167,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const [subOutSlotBySide, setSubOutSlotBySide] = useState<{
     home: number | '';
     away: number | '';
-  }>({ home: '', away: '' });
-  const [subInPlayerBySide, setSubInPlayerBySide] = useState<{
-    home: string;
-    away: string;
   }>({ home: '', away: '' });
 
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -1027,7 +1022,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         : null;
 
     const selectedSubOutSlot = subOutSlotBySide[side];
-    const selectedSubInPlayer = subInPlayerBySide[side];
     const subOutSlotIdx =
       selectedSubOutSlot === '' ? null : Number(selectedSubOutSlot);
     const subInCandidates =
@@ -1290,15 +1284,15 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     })}
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-end gap-2">
+                  <div className="pt-2.5 border-t border-slate-800/80">
                     <button
                       type="button"
                       disabled={!set1Complete}
                       onClick={() => handleToggleLockSet1(side)}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-emerald-600 disabled:cursor-not-allowed text-white font-bold text-sm shadow-lg shadow-emerald-950/30 transition flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Confirm</span>
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>Confirm Lineup</span>
                     </button>
                   </div>
                 </div>
@@ -1339,10 +1333,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                             ...prev,
                             [side]: val,
                           }));
-                          setSubInPlayerBySide((prev) => ({
-                            ...prev,
-                            [side]: '',
-                          }));
                         }}
                         className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 truncate"
                       >
@@ -1372,13 +1362,21 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </label>
                       <select
                         disabled={subOutSlotIdx === null}
-                        value={selectedSubInPlayer}
-                        onChange={(e) =>
-                          setSubInPlayerBySide((prev) => ({
+                        value=""
+                        onChange={async (e) => {
+                          const newPlayerId = e.target.value as SlotPlayerId;
+                          if (!newPlayerId || subOutSlotIdx === null) return;
+                          await handleSlotChange(
+                            setNumber,
+                            side,
+                            subOutSlotIdx,
+                            newPlayerId
+                          );
+                          setSubOutSlotBySide((prev) => ({
                             ...prev,
-                            [side]: e.target.value,
-                          }))
-                        }
+                            [side]: '',
+                          }));
+                        }}
                         className="w-full min-w-0 max-w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 truncate"
                       >
                         <option value="">
@@ -1411,44 +1409,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </select>
                     </div>
                   </div>
-
-                  {subOutSlotIdx !== null && selectedSubInPlayer !== '' && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-800/80">
-                      <span className="text-[11px] text-slate-300">
-                        Placing{' '}
-                        <strong className="text-emerald-400">
-                          {getPlayerName(selectedSubInPlayer as SlotPlayerId)}
-                        </strong>{' '}
-                        into{' '}
-                        <strong className="text-white">
-                          Position #{subOutSlotIdx + 1}
-                        </strong>{' '}
-                        (for {getPlayerName(currentSlots[subOutSlotIdx])})
-                      </span>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await handleSlotChange(
-                            setNumber,
-                            side,
-                            subOutSlotIdx,
-                            selectedSubInPlayer as SlotPlayerId
-                          );
-                          setSubOutSlotBySide((prev) => ({
-                            ...prev,
-                            [side]: '',
-                          }));
-                          setSubInPlayerBySide((prev) => ({
-                            ...prev,
-                            [side]: '',
-                          }));
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
-                      >
-                        Make Substitution
-                      </button>
-                    </div>
-                  )}
                 </div>
               )
             )}
@@ -1529,14 +1489,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                 </div>
 
                 {setNumber > 1 && sideEditable && !isSubsConfirmedAndLocked && !isPendingApproval && subsMade.length > 0 && (
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-end">
+                  <div className="pt-2.5 border-t border-slate-800/80">
                     <button
                       type="button"
                       onClick={() => handleConfirmSubs(setNumber as 2 | 3, side)}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-950/30 transition flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Confirm</span>
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>Confirm Subs</span>
                     </button>
                   </div>
                 )}
