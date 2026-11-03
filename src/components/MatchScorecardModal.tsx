@@ -2937,9 +2937,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-slate-300">
-                        {isKnockout && !playAllFrames
-                          ? 'Please inspect the result scorecard before captains sign off.'
-                          : 'Please review the full result scorecard before captains sign off.'}
+                        Please review the full result scorecard before captains sign off.
                       </div>
                     </div>
                   </div>
