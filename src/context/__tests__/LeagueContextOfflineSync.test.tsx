@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LeagueProvider, useLeague } from '../LeagueContext';
+import { LeagueProvider, mergeBlindSet1Lineups, useLeague } from '../LeagueContext';
 import { Fixture } from '../../types/league';
 import { ensureValidLineups } from '../../utils/leagueEngine';
 import * as supabaseModule from '../../lib/supabase';
@@ -380,5 +380,172 @@ describe('LeagueContext Offline Mutation Queue & Concurrency Sync', () => {
     expect(fix?.awaySet1Locked).toBe(true);
     expect(fix?.lineups.set1.home).toEqual(['p1', 'p2', 'p3', 'p4', 'p5']);
     expect(fix?.lineups.set1.away).toEqual(['away1', 'away2', 'away3', 'away4', 'away5']);
+  });
+
+  it('does not resurrect stale player lineups or locked status when incoming fixture is reset or unlocked', async () => {
+    mockRpc.mockImplementation((rpcName: string) => {
+      if (rpcName === 'verify_captain_pin') {
+        return Promise.resolve({ data: true, error: null });
+      }
+      return Promise.resolve({ data: true, error: null });
+    });
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.session.role).toBe('captain');
+      expect(result.current.fixtures.length).toBeGreaterThan(0);
+    });
+
+    const baseFixture = result.current.fixtures.find((f) => f.id === targetFixtureId)!;
+
+    // Simulate existing fixture with locked lineup and player names
+    const existingFixture: Fixture = {
+      ...baseFixture,
+      homeSet1Locked: true,
+      lineups: {
+        ...baseFixture.lineups,
+        set1: {
+          ...baseFixture.lineups.set1,
+          home: ['p1', 'p2', 'p3', 'p4', 'p5'],
+        },
+      },
+    };
+
+    await act(async () => {
+      await result.current.saveFixture(existingFixture, 'home');
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 350));
+
+    // Admin resets the fixture: both sides unlocked with empty null lineups
+    const resetCloudRow = {
+      id: targetFixtureId,
+      home_set1_locked: false,
+      away_set1_locked: false,
+      home_team_id: baseFixture.homeTeamId,
+      away_team_id: baseFixture.awayTeamId,
+      division: baseFixture.division,
+      match_date: baseFixture.matchDate,
+      status: 'scheduled',
+      lineups: {
+        set1: {
+          home: [null, null, null, null, null],
+          away: [null, null, null, null, null],
+        },
+        set2: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+        set3: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+      },
+      frames: [],
+      updated_at: new Date().toISOString(),
+    };
+
+    act(() => {
+      if (realtimeListener) {
+        realtimeListener({ eventType: 'UPDATE', new: resetCloudRow });
+      }
+    });
+
+    const resetFix = result.current.fixtures.find((f) => f.id === targetFixtureId);
+    expect(resetFix?.homeSet1Locked).toBe(false);
+    expect(resetFix?.awaySet1Locked).toBe(false);
+    expect(resetFix?.lineups.set1.home).toEqual([null, null, null, null, null]);
+    expect(resetFix?.lineups.set1.away).toEqual([null, null, null, null, null]);
+  });
+});
+
+describe('mergeBlindSet1Lineups pure helper', () => {
+  it('returns incoming clean fixture when neither captain has locked Set 1', () => {
+    const existing: Fixture = {
+      id: 'fix-1',
+      seasonId: 'season-1',
+      division: 'Division 1',
+      matchDate: '2026-10-12',
+      weekNumber: 1,
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      status: 'scheduled',
+      lagWinner: null,
+      homeSet1Locked: true,
+      awaySet1Locked: false,
+      lineups: {
+        set1: {
+          home: ['h1', 'h2', 'h3', 'h4', 'h5'],
+          away: [null, null, null, null, null],
+        },
+        set2: { home: ['h1', 'h2', 'h3', 'h4', 'h5'], away: [null, null, null, null, null] },
+        set3: { home: ['h1', 'h2', 'h3', 'h4', 'h5'], away: [null, null, null, null, null] },
+      },
+      frames: [],
+      homeCaptainSigned: false,
+      awayCaptainSigned: false,
+      updatedAt: '2026-10-12T19:00:00Z',
+    };
+
+    const incomingReset: Fixture = {
+      ...existing,
+      homeSet1Locked: false,
+      awaySet1Locked: false,
+      lineups: {
+        set1: {
+          home: [null, null, null, null, null],
+          away: [null, null, null, null, null],
+        },
+        set2: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+        set3: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+      },
+    };
+
+    const result = mergeBlindSet1Lineups(existing, incomingReset);
+    expect(result.homeSet1Locked).toBe(false);
+    expect(result.awaySet1Locked).toBe(false);
+    expect(result.lineups.set1.home).toEqual([null, null, null, null, null]);
+    expect(result.lineups.set1.away).toEqual([null, null, null, null, null]);
+  });
+
+  it('preserves secret home lineup when server masks home during blind reveal', () => {
+    const existing: Fixture = {
+      id: 'fix-1',
+      seasonId: 'season-1',
+      division: 'Division 1',
+      matchDate: '2026-10-12',
+      weekNumber: 1,
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      status: 'scheduled',
+      lagWinner: null,
+      homeSet1Locked: true,
+      awaySet1Locked: false,
+      lineups: {
+        set1: {
+          home: ['h1', 'h2', 'h3', 'h4', 'h5'],
+          away: [null, null, null, null, null],
+        },
+        set2: { home: ['h1', 'h2', 'h3', 'h4', 'h5'], away: [null, null, null, null, null] },
+        set3: { home: ['h1', 'h2', 'h3', 'h4', 'h5'], away: [null, null, null, null, null] },
+      },
+      frames: [],
+      homeCaptainSigned: false,
+      awayCaptainSigned: false,
+      updatedAt: '2026-10-12T19:00:00Z',
+    };
+
+    const incomingMasked: Fixture = {
+      ...existing,
+      homeSet1Locked: true,
+      awaySet1Locked: false,
+      lineups: {
+        set1: {
+          home: [null, null, null, null, null],
+          away: [null, null, null, null, null],
+        },
+        set2: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+        set3: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+      },
+    };
+
+    const result = mergeBlindSet1Lineups(existing, incomingMasked);
+    expect(result.homeSet1Locked).toBe(true);
+    expect(result.lineups.set1.home).toEqual(['h1', 'h2', 'h3', 'h4', 'h5']);
   });
 });
