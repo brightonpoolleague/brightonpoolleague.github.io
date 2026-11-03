@@ -380,6 +380,43 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
         page.getByRole('heading', { name: 'Approve Incomplete Scorecard?' })
       ).toBeHidden();
     }
+
+    // 6. Test Award Walkover (Rule 8) in the Admin Portal
+    await page.getByRole('button', { name: /^Fixtures\b/i }).click();
+    const walkoverBtn = page.getByTitle('Award Walkover (Rule 8)').first();
+    await expect(walkoverBtn).toBeVisible();
+    await walkoverBtn.click();
+
+    // Verify Award Walkover Modal opens
+    const walkoverModal = page
+      .locator('div.fixed')
+      .filter({ hasText: /Award Walkover \(Rule 8\)/i });
+    await expect(walkoverModal).toBeVisible();
+
+    // Select the 5 starting players in Set 1 (which auto-fills Sets 2 and 3)
+    const slotSelects = walkoverModal.locator('select');
+    const selectCount = await slotSelects.count();
+    for (let i = 0; i < Math.min(selectCount, 5); i++) {
+      const sel = slotSelects.nth(i);
+      const options = sel.locator('option');
+      const optCount = await options.count();
+      if (optCount > 1) {
+        const val = await options.nth(1 + (i % (optCount - 1))).getAttribute('value');
+        if (val) await sel.selectOption(val);
+      }
+    }
+
+    // Confirm walkover
+    const confirmWalkoverBtn = walkoverModal.getByRole('button', {
+      name: 'Confirm Walkover',
+    });
+    await expect(confirmWalkoverBtn).toBeEnabled();
+    await confirmWalkoverBtn.click();
+
+    // Verify Walkover badge is visible on the awarded fixture
+    await expect(
+      page.getByText('Walkover').first()
+    ).toBeVisible();
   });
 
   test('filters fixtures by status/division/search and toggles Include Live & Unapproved standings', async ({

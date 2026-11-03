@@ -25,6 +25,9 @@ import {
   isSubsUnlockRequested,
   getPlayerAppearancesForTeam,
   getSeasonHalfwayDate,
+  awardWalkoverToFixture,
+  getFixtureWalkover,
+  isWalkoverFixture,
   syncDefaultSubsequentSets,
   validatePlayerTransfer,
 } from '../leagueEngine';
@@ -1022,5 +1025,218 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
       frameDiff: -8,
       form: ['L', 'L'],
     });
+  });
+});
+
+describe('leagueEngine - Walkovers (Rule 8)', () => {
+  it('awards a 15–0 walkover win with maximum 7 points to the non-offending team (Rule 8b)', () => {
+    const homeTeam = makeTeam({ id: 'team-home', name: 'The Crown', division: 'Premier League' });
+    const awayTeam = makeTeam({ id: 'team-away', name: 'The Lion', division: 'Premier League' });
+
+    const fixture = makeFixture({
+      id: 'fix-wo-1',
+      homeTeamId: 'team-home',
+      awayTeamId: 'team-away',
+      division: 'Premier League',
+      status: 'scheduled',
+    });
+
+    const p1 = makePlayer({ id: 'p1', teamId: 'team-home', name: 'Player 1' });
+    const p2 = makePlayer({ id: 'p2', teamId: 'team-home', name: 'Player 2' });
+    const p3 = makePlayer({ id: 'p3', teamId: 'team-home', name: 'Player 3' });
+    const p4 = makePlayer({ id: 'p4', teamId: 'team-home', name: 'Player 4' });
+    const p5 = makePlayer({ id: 'p5', teamId: 'team-home', name: 'Player 5' });
+
+    // Admin selects the first 5 players, auto-filling Sets 1, 2 and 3 (3 frames each = 15 frames)
+    const winningPlayerIds = [
+      p1.id, p2.id, p3.id, p4.id, p5.id, // Set 1
+      p1.id, p2.id, p3.id, p4.id, p5.id, // Set 2
+      p1.id, p2.id, p3.id, p4.id, p5.id, // Set 3
+    ];
+
+    const walkoverFix = awardWalkoverToFixture(
+      fixture,
+      'home',
+      winningPlayerIds,
+      'Away team unable to field a squad'
+    );
+
+    expect(isWalkoverFixture(walkoverFix)).toBe(true);
+    const wo = getFixtureWalkover(walkoverFix);
+    expect(wo?.awardedTo).toBe('home');
+    expect(wo?.defaultingTeamId).toBe('team-away');
+    expect(wo?.reason).toBe('Away team unable to field a squad');
+
+    // Verify 15 frames won by home team with 0 dishes
+    expect(walkoverFix.frames).toHaveLength(15);
+    expect(walkoverFix.frames.every((f) => f.winner === 'home')).toBe(true);
+    expect(walkoverFix.frames.every((f) => f.dish === false)).toBe(true);
+
+    // Verify status is approved and signed by both
+    expect(walkoverFix.status).toBe('approved');
+    expect(walkoverFix.homeCaptainSigned).toBe(true);
+    expect(walkoverFix.awayCaptainSigned).toBe(true);
+    expect(walkoverFix.homeSet1Locked).toBe(true);
+    expect(walkoverFix.awaySet1Locked).toBe(true);
+
+    // Score calculation: 15 frames won = 2 win points + 5 bonus points = 7 points
+    const score = calculateMatchScore(walkoverFix);
+    expect(score.homeFrames).toBe(15);
+    expect(score.awayFrames).toBe(0);
+    expect(score.homePoints).toBe(7);
+    expect(score.awayPoints).toBe(0);
+    expect(score.matchWinner).toBe('home');
+
+    // League table verification (Rule 8b & 8d)
+    const table = computeLeagueTable('Premier League', [homeTeam, awayTeam], [walkoverFix]);
+    const homeRow = table.find((r) => r.team.id === 'team-home')!;
+    const awayRow = table.find((r) => r.team.id === 'team-away')!;
+
+    expect(homeRow).toMatchObject({
+      played: 1,
+      won: 1,
+      lost: 0,
+      points: 7,
+      framesFor: 15,
+      framesAgainst: 0,
+      frameDiff: 15,
+      form: ['W'],
+    });
+
+    expect(awayRow).toMatchObject({
+      played: 1,
+      won: 0,
+      lost: 1,
+      points: 0,
+      framesFor: 0,
+      framesAgainst: 15,
+      frameDiff: -15,
+      form: ['L'],
+    });
+  });
+
+  it('allocates the 15 frame wins to winning squad players and does not penalise defaulting players (Rule 8c & 8d)', () => {
+    const homeTeam = makeTeam({ id: 'team-home', name: 'The Crown', division: 'Premier League' });
+    const awayTeam = makeTeam({ id: 'team-away', name: 'The Lion', division: 'Premier League' });
+
+    const fixture = makeFixture({
+      id: 'fix-wo-2',
+      homeTeamId: 'team-home',
+      awayTeamId: 'team-away',
+      division: 'Premier League',
+      status: 'scheduled',
+    });
+
+    // 5 players on winning home team
+    const h1 = makePlayer({ id: 'h1', teamId: 'team-home', name: 'Home One' });
+    const h2 = makePlayer({ id: 'h2', teamId: 'team-home', name: 'Home Two' });
+    const h3 = makePlayer({ id: 'h3', teamId: 'team-home', name: 'Home Three' });
+    const h4 = makePlayer({ id: 'h4', teamId: 'team-home', name: 'Home Four' });
+    const h5 = makePlayer({ id: 'h5', teamId: 'team-home', name: 'Home Five' });
+
+    // 2 players on defaulting away team
+    const a1 = makePlayer({ id: 'a1', teamId: 'team-away', name: 'Away One' });
+    const a2 = makePlayer({ id: 'a2', teamId: 'team-away', name: 'Away Two' });
+
+    const allPlayers = [h1, h2, h3, h4, h5, a1, a2];
+
+    const winningPlayerIds = [
+      h1.id, h2.id, h3.id, h4.id, h5.id, // Set 1 (1 frame each)
+      h1.id, h2.id, h3.id, h4.id, h5.id, // Set 2 (1 frame each)
+      h1.id, h2.id, h3.id, h4.id, h5.id, // Set 3 (1 frame each)
+    ];
+
+    const walkoverFix = awardWalkoverToFixture(
+      fixture,
+      'home',
+      winningPlayerIds,
+      'Away conceded'
+    );
+
+    const { averagesTable } = computePlayerStats(
+      'Premier League',
+      [homeTeam, awayTeam],
+      allPlayers,
+      [walkoverFix]
+    );
+
+    // Rule 8c: Each of the 5 winning squad players receives 3 played, 3 won (100% win rate)
+    [h1, h2, h3, h4, h5].forEach((player) => {
+      const stats = averagesTable.find((r) => r.player.id === player.id)!;
+      expect(stats).toBeDefined();
+      expect(stats.played).toBe(3);
+      expect(stats.won).toBe(3);
+      expect(stats.lost).toBe(0);
+      expect(stats.winPercentage).toBe(100);
+      expect(stats.dishes).toBe(0);
+      // Cup eligibility (Rule 5b): 1 match played towards minimum 4
+      expect(stats.matchesPlayed).toBe(1);
+    });
+
+    // Rule 8d: Defaulting players did NOT participate, so they have 0 played and 0 losses (excluded from averagesTable)
+    [a1, a2].forEach((player) => {
+      const stats = averagesTable.find((r) => r.player.id === player.id);
+      expect(stats).toBeUndefined();
+    });
+  });
+
+  it('supports walkovers awarded to away teams', () => {
+    const homeTeam = makeTeam({ id: 'team-home', name: 'The Crown', division: 'Premier League' });
+    const awayTeam = makeTeam({ id: 'team-away', name: 'The Lion', division: 'Premier League' });
+
+    const fixture = makeFixture({
+      id: 'fix-wo-away',
+      homeTeamId: 'team-home',
+      awayTeamId: 'team-away',
+      division: 'Premier League',
+      status: 'scheduled',
+    });
+
+    const a1 = makePlayer({ id: 'a1', teamId: 'team-away', name: 'Away One' });
+    const winningPlayerIds = Array(15).fill(a1.id);
+
+    const walkoverFix = awardWalkoverToFixture(fixture, 'away', winningPlayerIds, 'Home team forfeited');
+
+    const score = calculateMatchScore(walkoverFix);
+    expect(score.awayFrames).toBe(15);
+    expect(score.homeFrames).toBe(0);
+    expect(score.awayPoints).toBe(7);
+    expect(score.homePoints).toBe(0);
+    expect(score.matchWinner).toBe('away');
+
+    const table = computeLeagueTable('Premier League', [homeTeam, awayTeam], [walkoverFix]);
+    const awayRow = table.find((r) => r.team.id === 'team-away')!;
+    const homeRow = table.find((r) => r.team.id === 'team-home')!;
+
+    expect(awayRow.points).toBe(7);
+    expect(awayRow.framesFor).toBe(15);
+    expect(homeRow.points).toBe(0);
+    expect(homeRow.framesAgainst).toBe(15);
+  });
+
+  it('awards walkovers in knockout fixtures correctly', () => {
+    const koFixture = makeFixture({
+      id: 'fix-ko-wo',
+      homeTeamId: 'team-home',
+      awayTeamId: 'team-away',
+      matchType: 'knockout',
+      competitionName: 'Division 1 Cup',
+      round: 'Semi-Final',
+      knockoutFormat: 'first_to_8',
+      status: 'scheduled',
+    });
+
+    const h1 = makePlayer({ id: 'h1', teamId: 'team-home', name: 'Home One' });
+    const winningPlayerIds = Array(15).fill(h1.id);
+
+    const walkoverFix = awardWalkoverToFixture(koFixture, 'home', winningPlayerIds, 'Opponent forfeited semi-final');
+
+    const score = calculateMatchScore(walkoverFix);
+    expect(score.isKnockout).toBe(true);
+    expect(score.homeFrames).toBe(15);
+    expect(score.awayFrames).toBe(0);
+    expect(score.homePoints).toBe(0); // Knockout fixtures award 0 league points
+    expect(score.isDecided).toBe(true);
+    expect(score.matchWinner).toBe('home');
   });
 });

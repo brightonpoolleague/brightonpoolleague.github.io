@@ -17,6 +17,7 @@ import {
   Team,
   UserRole,
   UserSession,
+  WalkoverData,
 } from '../types/league';
 import {
   DEFAULT_ADMIN_PIN,
@@ -148,6 +149,10 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,
     approvedAt: r.approved_at ? String(r.approved_at) : undefined,
     updatedAt: String(r.updated_at ?? new Date().toISOString()),
+    walkover:
+      (r.walkover as WalkoverData) ||
+      ((r.lineups as any)?.walkover as WalkoverData) ||
+      undefined,
   };
 }
 
@@ -1843,12 +1848,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     async (fixtureId: string): Promise<void> => {
       const target = allFixtures.find((f) => f.id === fixtureId);
       if (!target) return;
+      const nextLineups = structuredClone(target.lineups);
+      delete nextLineups.walkover;
       await saveFixture({
         ...target,
         status: 'live',
         approvedAt: undefined,
         homeCaptainSigned: false,
         awayCaptainSigned: false,
+        walkover: undefined,
+        lineups: nextLineups,
       });
     },
     [allFixtures, saveFixture]

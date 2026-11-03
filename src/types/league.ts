@@ -45,6 +45,13 @@ export interface Team {
 // 'BYE' represents a missing player (No Player / BYE) in position 4 or 5
 export type SlotPlayerId = string | 'BYE' | null;
 
+export interface WalkoverData {
+  awardedTo: 'home' | 'away';
+  defaultingTeamId: string;
+  reason?: string;
+  awardedAt: string;
+}
+
 export interface MatchLineups {
   set1: {
     home: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
@@ -74,6 +81,7 @@ export interface MatchLineups {
     set2?: { home?: boolean; away?: boolean };
     set3?: { home?: boolean; away?: boolean };
   };
+  walkover?: WalkoverData;
 }
 
 export type FrameWinner = 'home' | 'away' | null;
@@ -118,6 +126,7 @@ export interface Fixture {
   submittedAt?: string;
   approvedAt?: string;
   updatedAt: string;
+  walkover?: WalkoverData;
 }
 
 export interface LeagueTableRow {
