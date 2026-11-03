@@ -262,9 +262,9 @@ export const PlayerStatsView: React.FC = () => {
               </p>
             ) : (
               <p>
-                No player statistics recorded for{' '}
-                {selectedDivision === 'ALL' ? 'all divisions' : selectedDivision}{' '}
-                yet.
+                {activeBoard === 'dishes'
+                  ? `No dishes recorded for ${selectedDivision === 'ALL' ? 'all divisions' : selectedDivision} yet.`
+                  : `No player statistics recorded for ${selectedDivision === 'ALL' ? 'all divisions' : selectedDivision} yet.`}
               </p>
             )}
           </div>
@@ -275,30 +275,41 @@ export const PlayerStatsView: React.FC = () => {
                 <tr className="bg-slate-950/90 text-slate-400 border-b border-slate-800 text-[11px] uppercase tracking-wider">
                   <th className="py-3 px-3 text-center w-10">#</th>
                   <th className="py-3 px-3 text-left">Player &amp; Team</th>
-                  <th className="py-3 px-2 text-center" title="Frames Played">
-                    P
-                  </th>
-                  <th className="py-3 px-2 text-center" title="Frames Won">
-                    W
-                  </th>
-                  <th className="py-3 px-2 text-center" title="Frames Lost">
-                    L
-                  </th>
-                  <th className="py-3 px-2.5 text-center" title="Win Percentage">
-                    Win %
-                  </th>
-                  <th
-                    className="py-3 px-2.5 text-center font-bold text-emerald-400"
-                    title="Dishes (including Reverse Dishes)"
-                  >
-                    Dishes
-                  </th>
-                  <th
-                    className="py-3 px-3 text-center hidden md:table-cell"
-                    title="Cup SF/Final Eligibility (min 4 matches played for team)"
-                  >
-                    Cup Eligible
-                  </th>
+                  {activeBoard === 'averages' ? (
+                    <>
+                      <th className="py-3 px-2 text-center" title="Frames Played">
+                        P
+                      </th>
+                      <th className="py-3 px-2 text-center" title="Frames Won">
+                        W
+                      </th>
+                      <th className="py-3 px-2 text-center" title="Frames Lost">
+                        L
+                      </th>
+                      <th className="py-3 px-2.5 text-center" title="Win Percentage">
+                        Win %
+                      </th>
+                      <th
+                        className="py-3 px-2.5 text-center font-bold text-emerald-400"
+                        title="Dishes (including Reverse Dishes)"
+                      >
+                        Dishes
+                      </th>
+                      <th
+                        className="py-3 px-3 text-center hidden md:table-cell"
+                        title="Cup SF/Final Eligibility (min 4 matches played for team)"
+                      >
+                        Cup Eligible
+                      </th>
+                    </>
+                  ) : (
+                    <th
+                      className="py-3 px-4 text-center font-bold text-emerald-400 w-28"
+                      title="Dishes (including Reverse Dishes)"
+                    >
+                      Dishes
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -334,37 +345,45 @@ export const PlayerStatsView: React.FC = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-2 text-center tabular-nums text-slate-300">
-                        {row.played}
-                      </td>
-                      <td className="py-3 px-2 text-center tabular-nums font-bold text-emerald-400">
-                        {row.won}
-                      </td>
-                      <td className="py-3 px-2 text-center tabular-nums text-slate-400">
-                        {row.lost}
-                      </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums font-semibold text-white">
-                        {row.winPercentage.toFixed(1)}%
-                      </td>
-                      <td className="py-3 px-2.5 text-center tabular-nums font-black text-emerald-300 bg-slate-950/40">
-                        {row.dishes}
-                      </td>
-                      <td className="py-3 px-3 text-center hidden md:table-cell">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            cupEligible
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-slate-800 text-slate-400'
-                          }`}
-                          title={`${row.matchesPlayed ?? 0} match${
-                            (row.matchesPlayed ?? 0) === 1 ? '' : 'es'
-                          } played for ${row.team.name} this season (minimum 4 required for Cup SF/Final)`}
-                        >
-                          {cupEligible
-                            ? '✓ Yes (4+)'
-                            : `${row.matchesPlayed ?? 0}/4 matches`}
-                        </span>
-                      </td>
+                      {activeBoard === 'averages' ? (
+                        <>
+                          <td className="py-3 px-2 text-center tabular-nums text-slate-300">
+                            {row.played}
+                          </td>
+                          <td className="py-3 px-2 text-center tabular-nums font-bold text-emerald-400">
+                            {row.won}
+                          </td>
+                          <td className="py-3 px-2 text-center tabular-nums text-slate-400">
+                            {row.lost}
+                          </td>
+                          <td className="py-3 px-2.5 text-center tabular-nums font-semibold text-white">
+                            {row.winPercentage.toFixed(1)}%
+                          </td>
+                          <td className="py-3 px-2.5 text-center tabular-nums font-black text-emerald-300 bg-slate-950/40">
+                            {row.dishes}
+                          </td>
+                          <td className="py-3 px-3 text-center hidden md:table-cell">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                cupEligible
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-slate-800 text-slate-400'
+                              }`}
+                              title={`${row.matchesPlayed ?? 0} match${
+                                (row.matchesPlayed ?? 0) === 1 ? '' : 'es'
+                              } played for ${row.team.name} this season (minimum 4 required for Cup SF/Final)`}
+                            >
+                              {cupEligible
+                                ? '✓ Yes (4+)'
+                                : `${row.matchesPlayed ?? 0}/4 matches`}
+                            </span>
+                          </td>
+                        </>
+                      ) : (
+                        <td className="py-3 px-4 text-center tabular-nums font-black text-base text-emerald-300 bg-slate-950/40">
+                          {row.dishes}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -400,10 +419,6 @@ export const PlayerStatsView: React.FC = () => {
           activeBoard === 'dishes'
             ? [
                 { header: 'Player & Team', align: 'left' },
-                { header: 'P', align: 'center' },
-                { header: 'W', align: 'center' },
-                { header: 'L', align: 'center' },
-                { header: 'Win %', align: 'center' },
                 { header: 'Dishes', align: 'center' },
               ]
             : [
@@ -421,13 +436,7 @@ export const PlayerStatsView: React.FC = () => {
           secondaryText: `${r.team.name} (${r.team.division})`,
           values:
             activeBoard === 'dishes'
-              ? [
-                  r.played,
-                  r.won,
-                  r.lost,
-                  `${r.winPercentage.toFixed(1)}%`,
-                  r.dishes,
-                ]
+              ? [r.dishes]
               : [
                   r.played,
                   r.won,
