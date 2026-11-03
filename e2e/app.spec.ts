@@ -381,8 +381,10 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       ).toBeHidden();
     }
 
-    // 6. Test Award Walkover (Rule 8) in the Admin Portal
+    // 6. Test Award Walkover (Rule 8) in the Admin Portal on a scheduled fixture
     await page.getByRole('button', { name: /^Fixtures\b/i }).click();
+    const fixtureSearch = page.getByPlaceholder(/Search by team, venue, table, division or date/i);
+    await fixtureSearch.fill('Week 3');
     const walkoverBtn = page.getByTitle('Award Walkover (Rule 8)').first();
     await expect(walkoverBtn).toBeVisible();
     await walkoverBtn.click();
@@ -417,6 +419,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(
       page.getByText('Walkover').first()
     ).toBeVisible();
+    await fixtureSearch.fill('');
   });
 
   test('filters fixtures by status/division/search and toggles Include Live & Unapproved standings', async ({
