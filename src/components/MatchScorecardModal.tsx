@@ -2922,10 +2922,10 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
               viewMode === 'mobile' ? (
                 /* Mobile Live Scoring view: Guide captains to review the result scorecard before signing */
-                <div className="relative overflow-hidden bg-gradient-to-r from-blue-500/20 via-indigo-500/15 to-emerald-500/20 border-2 border-blue-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-blue-500/30 animate-in fade-in duration-200">
+                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center shrink-0">
-                      <FileSpreadsheet className="w-4 h-4 text-blue-300" />
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
                     </div>
                     <div className="space-y-0.5 text-left">
                       <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
@@ -2946,7 +2946,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setViewMode('paper')}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm shrink-0 cursor-pointer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0 cursor-pointer"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5" />
                     <span>Review Result Scorecard</span>
@@ -2956,7 +2956,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               ) : (
                 /* Paper Result Scorecard view: Captain signatures prompt with inline Return to Live Scoring button */
                 <div
-                  className={`relative overflow-hidden border-2 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 animate-in fade-in duration-200 ${
+                  className={`w-full relative overflow-hidden border-2 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 animate-in fade-in duration-200 ${
                     isSignedByBoth
                       ? 'bg-gradient-to-r from-emerald-500/25 via-emerald-500/15 to-emerald-600/20 border-emerald-500/60 ring-emerald-500/30'
                       : 'bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-amber-500/20 border-emerald-500/50 ring-emerald-500/30'
@@ -3010,7 +3010,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             )}
 
             {fixture.status === 'submitted' && (
-              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-amber-500/15 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
+              <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-amber-500/15 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -3034,7 +3034,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             )}
 
             {fixture.status === 'approved' && (
-              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3 shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
+              <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3 shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
                 <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 </div>
