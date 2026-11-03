@@ -285,7 +285,7 @@ const MainShell: React.FC = () => {
       <NetworkStatusBanner />
 
       {/* Main Content Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6 min-w-0">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-24 md:pb-8 min-w-0">
         {currentTab === 'fixtures' && (
           <FixturesAndLiveView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}

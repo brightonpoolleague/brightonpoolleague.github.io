@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   AlertTriangle,
   Award,
@@ -154,6 +154,13 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   // Fixture creation state
   const [showAddFixture, setShowAddFixture] = useState(false);
+  const scheduleFormRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showAddFixture && scheduleFormRef.current) {
+      scheduleFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [showAddFixture]);
   const [newFixtureDraft, setNewFixtureDraft] = useState<{
     division: Division;
     matchDate: string;
@@ -1907,7 +1914,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
           {/* Inline Schedule Fixture Form */}
           {showAddFixture && (
-            <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-lg min-w-0 max-w-full">
+            <div
+              ref={scheduleFormRef}
+              className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-lg min-w-0 max-w-full overflow-hidden"
+            >
               <div className="flex items-center justify-between gap-2 min-w-0">
                 <div className="font-bold text-sm text-white flex items-center gap-1.5 min-w-0">
                   <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -2007,7 +2017,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Match Date
                   </label>
-                  <div className="relative">
+                  <div className="relative min-w-0 max-w-full">
                     <input
                       type="date"
                       value={newFixtureDraft.matchDate}
@@ -2022,15 +2032,27 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           e.currentTarget.showPicker?.();
                         } catch {}
                       }}
-                      className="w-full bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
+                      className="w-full max-w-full min-w-0 block box-border bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
                     />
                     <Calendar className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
-                  {newFixtureDraft.matchDate && (
-                    <div className="text-[10px] text-emerald-400 font-medium mt-1 truncate">
-                      {formatMatchDate(newFixtureDraft.matchDate)}
-                    </div>
-                  )}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pt-1 text-[10px]">
+                    <span className="text-emerald-400 font-medium truncate min-w-0">
+                      {newFixtureDraft.matchDate
+                        ? formatMatchDate(newFixtureDraft.matchDate)
+                        : 'No date selected'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        setNewFixtureDraft({ ...newFixtureDraft, matchDate: today });
+                      }}
+                      className="self-start sm:self-auto px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 transition whitespace-nowrap"
+                    >
+                      Today
+                    </button>
+                  </div>
                 </div>
 
                 {newFixtureDraft.matchType !== 'knockout' && (
