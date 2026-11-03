@@ -2954,54 +2954,51 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   </button>
                 </div>
               ) : (
-                /* Paper Result Scorecard view: Captain signatures prompt */
+                /* Paper Result Scorecard view: Captain signatures prompt with inline Return to Live Scoring button */
                 <div
-                  className={`relative overflow-hidden border-2 rounded-2xl p-3 sm:p-3.5 flex items-center justify-center gap-3 text-center shadow-lg ring-1 animate-in fade-in duration-200 ${
+                  className={`relative overflow-hidden border-2 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 animate-in fade-in duration-200 ${
                     isSignedByBoth
                       ? 'bg-gradient-to-r from-emerald-500/25 via-emerald-500/15 to-emerald-600/20 border-emerald-500/60 ring-emerald-500/30'
                       : 'bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-amber-500/20 border-emerald-500/50 ring-emerald-500/30'
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                    {isSignedByBoth ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                    ) : (
-                      <PenLine className="w-4 h-4 text-emerald-300" />
-                    )}
-                  </div>
-                  <div className="space-y-0.5 text-left sm:text-center">
-                    <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5 justify-start sm:justify-center">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                      {isSignedByBoth ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                      ) : (
+                        <PenLine className="w-4 h-4 text-emerald-300" />
+                      )}
+                    </div>
+                    <div className="space-y-0.5 text-left">
+                      <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>
+                          {isSignedByBoth
+                            ? 'Scorecard Signed — Ready to Submit'
+                            : 'Confirm & Sign Scorecard'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-300">
                         {isSignedByBoth
-                          ? 'Scorecard Signed — Ready to Submit'
-                          : 'Confirm & Sign Scorecard'}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-300">
-                      {isSignedByBoth
-                        ? 'Both captains have signed. Click Finish Match below to submit the official result.'
-                        : isKnockout && !playAllFrames
-                        ? 'Verify match frames above. Both captains must sign below to confirm the result.'
-                        : 'Verify all 15 frames above. Both captains must sign below to confirm the result.'}
+                          ? 'Both captains have signed. Click Finish Match below to submit the official result.'
+                          : isKnockout && !playAllFrames
+                          ? 'Verify match frames above. Both captains must sign below to confirm the result.'
+                          : 'Verify all 15 frames above. Both captains must sign below to confirm the result.'}
+                      </div>
                     </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('mobile')}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition shadow-sm shrink-0 cursor-pointer"
+                  >
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Return to Live Scoring</span>
+                  </button>
                 </div>
               )
-            )}
-
-            {/* In paper view before submission, provide a clear button to return to live scoring */}
-            {viewMode === 'paper' && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('mobile')}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 text-xs font-semibold transition"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Return to Live Scoring</span>
-                </button>
-              </div>
             )}
 
             {/* Dynamic Changes Locked Message */}
@@ -3013,22 +3010,43 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             )}
 
             {fixture.status === 'submitted' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-500/40 rounded-xl py-1.5 px-3 text-center shadow-sm">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Match result submitted</span>
+              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-amber-500/15 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div className="space-y-0.5 text-left">
+                    <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span>Match result submitted</span>
+                    </div>
+                    <div className="text-[11px] text-slate-300">
+                      Official score recorded &bull; Signed by both team captains
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5 text-center">
-                  <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold shrink-0 shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
                   <span>Awaiting league admin approval</span>
                 </div>
               </div>
             )}
 
             {fixture.status === 'approved' && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5 text-center">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Approved by league admin</span>
+              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3 shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="space-y-0.5 text-left">
+                  <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span>Approved by league admin</span>
+                  </div>
+                  <div className="text-[11px] text-slate-300">
+                    Official league results confirmed &bull; Points and averages applied
+                  </div>
+                </div>
               </div>
             )}
 
