@@ -584,6 +584,15 @@ begin
     raise exception 'Forbidden: Submitted or approved fixtures are locked and can only be edited by the League Admin';
   end if;
 
+  -- Ensure neither team has folded
+  if exists (
+    select 1 from public.teams
+    where (id = v_fixture.home_team_id or id = v_fixture.away_team_id)
+      and is_folded = true
+  ) then
+    raise exception 'Forbidden: Match involves a folded team and cannot be edited by captains';
+  end if;
+
   -- Ensure a Captain cannot set status to 'approved'
   if p_status not in ('scheduled', 'live', 'submitted') then
     raise exception 'Forbidden: Team Captains cannot mark a fixture as approved';

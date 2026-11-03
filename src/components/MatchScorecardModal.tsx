@@ -1944,6 +1944,17 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         </div>
       )}
 
+      {/* Cancelled Fixture Alert (Folded Team) */}
+      {expungedInfo.isCancelled && (
+        <div className="bg-slate-900 border-b border-slate-700 px-3 sm:px-6 py-2.5 text-xs text-slate-300 flex items-center gap-2 shrink-0">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+          <div>
+            <strong className="text-white">Match Cancelled (Team Folded):</strong>{' '}
+            {expungedInfo.foldedTeamName || 'A team in this match'} has folded and withdrawn from the league. Scores cannot be entered.
+          </div>
+        </div>
+      )}
+
       {/* Expunged Fixture Alert (Rule 7) */}
       {expungedInfo.isExpunged && (
         <div className="bg-amber-950/60 border-b border-amber-500/40 px-3 sm:px-6 py-2.5 text-xs text-amber-200 flex items-center gap-2 shrink-0">

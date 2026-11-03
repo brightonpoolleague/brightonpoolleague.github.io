@@ -1934,6 +1934,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         fixture.status !== 'approved' &&
         fixture.status !== 'submitted'
       ) {
+        const home = allTeams.find((t) => t.id === fixture.homeTeamId);
+        const away = allTeams.find((t) => t.id === fixture.awayTeamId);
+        if (home?.isFolded || away?.isFolded) {
+          return false;
+        }
         return (
           session.teamId === fixture.homeTeamId ||
           session.teamId === fixture.awayTeamId
@@ -1941,7 +1946,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return false;
     },
-    [session]
+    [session, allTeams]
   );
 
   return (

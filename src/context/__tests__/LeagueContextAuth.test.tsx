@@ -325,4 +325,69 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     const p = result.current.players.find((pl) => pl.id === 'p-vet');
     expect(p?.teamId).toBe('t-1');
   });
+
+  it('disallows team captains from editing or scoring fixtures when a team has folded, while permitting admins', async () => {
+    const mockTeams = [
+      { id: 't-1', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Alpha', venue: 'Venue 1', address: 'Addr 1', captainName: 'Cap 1', captainPin: '111111' },
+      { id: 't-2', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Beta', venue: 'Venue 2', address: 'Addr 2', captainName: 'Cap 2', captainPin: '222222' },
+    ];
+    const mockFixtures: Partial<Fixture>[] = [
+      {
+        id: 'fix-scheduled-1',
+        seasonId: 'winter-2026-27',
+        division: 'Premier League',
+        matchDate: '2026-11-20',
+        homeTeamId: 't-1',
+        awayTeamId: 't-2',
+        status: 'scheduled',
+      },
+    ];
+
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mockTeams));
+    localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(mockFixtures));
+
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        gte: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        }),
+      }),
+    });
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.teams.length).toBeGreaterThan(0);
+      expect(result.current.fixtures.length).toBeGreaterThan(0);
+    });
+
+    const activeFixture = result.current.fixtures[0];
+
+    // Log in as home team captain
+    act(() => {
+      result.current.setRoleSession('captain', 't-1', 'Captain One', '111111');
+    });
+
+    // Active match is editable by the captain
+    expect(result.current.canEditFixture(activeFixture)).toBe(true);
+
+    // Fold the team
+    await act(async () => {
+      await result.current.foldTeam('t-1', '2026-10-01');
+    });
+
+    // Now fixture involves a folded team -> captain CANNOT edit
+    expect(result.current.canEditFixture(activeFixture)).toBe(false);
+
+    // Admin CAN still edit for case-by-case reviews (Rule 7c)
+    act(() => {
+      result.current.setRoleSession('admin', undefined, 'League Admin', '000000');
+    });
+    expect(result.current.canEditFixture(activeFixture)).toBe(true);
+  });
 });
