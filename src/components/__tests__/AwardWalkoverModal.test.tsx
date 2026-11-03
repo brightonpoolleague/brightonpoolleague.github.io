@@ -174,4 +174,78 @@ describe('AwardWalkoverModal Component', () => {
     const updatedFixture: Fixture = handleConfirm.mock.calls[0][0];
     expect(updatedFixture.lineups.set2.home[4]).toBe('h6');
   });
+
+  it('disables Confirm Walkover button when fewer than 5 starting players are selected in Set 1', () => {
+    render(
+      <AwardWalkoverModal
+        fixture={baseFixture}
+        isOpen={true}
+        onClose={vi.fn()}
+        onConfirmWalkover={vi.fn()}
+        teamsById={teamsById}
+        players={players}
+      />
+    );
+
+    const selects = screen.getAllByRole('combobox');
+    // Only select 1 player
+    fireEvent.change(selects[0], { target: { value: 'h1' } });
+
+    expect(screen.getByText(/Please select all 5 starting players in Set 1/i)).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Walkover/i });
+    expect(confirmBtn).toBeDisabled();
+  });
+
+  it('disables Confirm Walkover button when duplicate players are selected in Set 1', () => {
+    render(
+      <AwardWalkoverModal
+        fixture={baseFixture}
+        isOpen={true}
+        onClose={vi.fn()}
+        onConfirmWalkover={vi.fn()}
+        teamsById={teamsById}
+        players={players}
+      />
+    );
+
+    const selects = screen.getAllByRole('combobox');
+    fireEvent.change(selects[0], { target: { value: 'h1' } });
+    fireEvent.change(selects[1], { target: { value: 'h1' } }); // duplicate
+    fireEvent.change(selects[2], { target: { value: 'h3' } });
+    fireEvent.change(selects[3], { target: { value: 'h4' } });
+    fireEvent.change(selects[4], { target: { value: 'h5' } });
+
+    expect(screen.getByText(/The 5 starting players in Set 1 must each be distinct/i)).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Walkover/i });
+    expect(confirmBtn).toBeDisabled();
+  });
+
+  it('disables Confirm Walkover button when fixture is already live or completed', () => {
+    const liveFixture: Fixture = {
+      ...baseFixture,
+      status: 'live',
+    };
+
+    render(
+      <AwardWalkoverModal
+        fixture={liveFixture}
+        isOpen={true}
+        onClose={vi.fn()}
+        onConfirmWalkover={vi.fn()}
+        teamsById={teamsById}
+        players={players}
+      />
+    );
+
+    const selects = screen.getAllByRole('combobox');
+    fireEvent.change(selects[0], { target: { value: 'h1' } });
+    fireEvent.change(selects[1], { target: { value: 'h2' } });
+    fireEvent.change(selects[2], { target: { value: 'h3' } });
+    fireEvent.change(selects[3], { target: { value: 'h4' } });
+    fireEvent.change(selects[4], { target: { value: 'h5' } });
+
+    expect(screen.getByText(/Walkovers can only be awarded to scheduled fixtures that have not yet been played/i)).toBeInTheDocument();
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Walkover/i });
+    expect(confirmBtn).toBeDisabled();
+  });
 });

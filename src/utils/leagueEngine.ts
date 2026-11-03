@@ -1296,6 +1296,23 @@ export function awardWalkoverToFixture(
   winningPlayerIds: SlotPlayerId[],
   reason?: string
 ): Fixture {
+  if (fixture.status !== 'scheduled') {
+    throw new Error(
+      'Walkovers can only be awarded to scheduled fixtures that have not yet been played (current status: ' +
+        fixture.status +
+        ').'
+    );
+  }
+
+  const starting5 = winningPlayerIds.slice(0, 5);
+  const validStarting5 = starting5.filter((id) => Boolean(id) && id !== 'BYE');
+  if (validStarting5.length < 5) {
+    throw new Error('A walkover requires 5 starting players to be selected for Set 1.');
+  }
+  if (new Set(validStarting5).size < 5) {
+    throw new Error('The 5 starting players for a walkover must be distinct squad players.');
+  }
+
   const defaultingTeamId =
     winningSide === 'home' ? fixture.awayTeamId : fixture.homeTeamId;
 

@@ -2242,7 +2242,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             ) : fix.status === 'approved' ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
-                                Approved
+                                {isWalkoverFixture(fix) ? 'Walkover' : 'Approved'}
                               </span>
                             ) : fix.status === 'submitted' ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
@@ -2322,15 +2322,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <PlayCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Scorecard</span>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => setWalkoverFixture(fix)}
-                            className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
-                            title="Award Walkover (Rule 8)"
-                          >
-                            <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                            <span>Walkover</span>
-                          </button>
+                          {fix.status === 'scheduled' && (
+                            <button
+                              type="button"
+                              onClick={() => setWalkoverFixture(fix)}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
+                              title="Award Walkover (Rule 8)"
+                            >
+                              <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <span>Walkover</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() =>
@@ -3177,17 +3179,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <PlayCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Scorecard</span>
                           </button>
-                          {fix.status !== 'approved' && !isWalkoverFixture(fix) && (
-                            <button
-                              type="button"
-                              onClick={() => setWalkoverFixture(fix)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold"
-                              title="Award Walkover (Rule 8)"
-                            >
-                              <Award className="w-3.5 h-3.5" />
-                              Walkover
-                            </button>
-                          )}
+
                           {fix.status !== 'approved' ? (
                             <button
                               type="button"

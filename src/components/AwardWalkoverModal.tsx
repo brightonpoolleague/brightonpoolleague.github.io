@@ -37,7 +37,6 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
   players,
 }) => {
   const [winningSide, setWinningSide] = useState<'home' | 'away'>('home');
-  const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showAdvancedSets, setShowAdvancedSets] = useState<boolean>(false);
 
@@ -80,25 +79,20 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
   }, [set3Custom, set1Slots]);
 
   // When admin updates a slot in Set 1:
-  // If custom sets are not explicitly detached, it auto-fills the corresponding slot in Set 2 and Set 3!
+  // If custom sets are not explicitly detached, it auto-fills the corresponding slot in Set 2 and Set 3
   const handleSet1Change = (slotIdx: number, playerId: string) => {
     const val: SlotPlayerId = playerId === '' ? null : playerId;
     const next1: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId] = [...set1Slots];
     next1[slotIdx] = val;
     setSet1Slots(next1);
 
-    // If custom sets have not been modified, keep them in sync
-    if (!set2Custom) {
-      // effectiveSet2 will automatically reflect next1
-    } else {
+    if (set2Custom) {
       const next2 = [...set2Custom] as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
       next2[slotIdx] = val;
       setSet2Custom(next2);
     }
 
-    if (!set3Custom) {
-      // effectiveSet3 will automatically reflect next1
-    } else {
+    if (set3Custom) {
       const next3 = [...set3Custom] as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
       next3[slotIdx] = val;
       setSet3Custom(next3);
@@ -153,7 +147,15 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
     0
   );
 
-  const canConfirm = set1Slots.some((id) => Boolean(id));
+  const isScheduled = fixture.status === 'scheduled';
+  const set1FilledCount = set1Slots.filter((id) => Boolean(id) && id !== 'BYE').length;
+  const has5Set1Players = set1FilledCount === 5;
+  const uniqueSet1Count = new Set(set1Slots.filter((id) => Boolean(id) && id !== 'BYE')).size;
+  const has5UniqueSet1Players = has5Set1Players && uniqueSet1Count === 5;
+  const hasEnoughSquadPlayers = winningSquad.length >= 5;
+  const all15Assigned = all15PlayerIds.length === 15 && all15PlayerIds.every((id) => Boolean(id) && id !== 'BYE');
+
+  const canConfirm = isScheduled && hasEnoughSquadPlayers && has5UniqueSet1Players && all15Assigned;
 
   const handleConfirm = async () => {
     if (!canConfirm || isSubmitting) return;
@@ -162,8 +164,7 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
       const updated = awardWalkoverToFixture(
         fixture,
         winningSide,
-        all15PlayerIds,
-        reason
+        all15PlayerIds
       );
       await onConfirmWalkover(updated);
       onClose();
@@ -230,7 +231,7 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
                 {homeTeam?.name}
               </span>
               <span className="text-[11px] text-emerald-300">
-                Awarded 15–0 Win &bull; Maximum 7 Points
+                Awarded 15–0 Win • Maximum 7 Points
               </span>
             </button>
 
@@ -255,7 +256,7 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
                 {awayTeam?.name}
               </span>
               <span className="text-[11px] text-emerald-300">
-                Awarded 15–0 Win &bull; Maximum 7 Points
+                Awarded 15–0 Win • Maximum 7 Points
               </span>
             </button>
           </div>
@@ -266,29 +267,15 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
           <div className="flex justify-between items-center text-slate-300">
             <span>Winning Team:</span>
             <span className="font-bold text-emerald-400">
-              {winningTeam?.name} (15–0 &bull; 7 Points)
+              {winningTeam?.name} (15–0 • 7 Points)
             </span>
           </div>
           <div className="flex justify-between items-center text-slate-300">
             <span>Defaulting / Conceding Team:</span>
             <span className="font-bold text-rose-400">
-              {defaultingTeam?.name} (0–15 &bull; 0 Points)
+              {defaultingTeam?.name} (0–15 • 0 Points)
             </span>
           </div>
-        </div>
-
-        {/* Optional Concession Reason */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-300">
-            Walkover Reason / Committee Note (Optional)
-          </label>
-          <input
-            type="text"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. Conceded in advance, Unable to field team"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition"
-          />
         </div>
 
         {/* 2. Rule 8c: Player Frame Win Allocation */}
@@ -296,16 +283,16 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
-                2. Allocate 15 Frame Wins to Players (Rule 8c)
+                2. Select 5 Starting Players (Rule 8c)
               </label>
               <span className="text-[11px] font-semibold text-emerald-400">
                 {totalAllocatedFrames} / 15 frames allocated
               </span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Pick the 5 starting players for <strong>{winningTeam?.name}</strong>.
-              Selecting these 5 players automatically fills Sets 2 and 3 (3 frame wins per player).
-              You can then expand Sets 2 &amp; 3 to adjust individual frame assignments if needed.
+              Select the 5 starting players for <strong>{winningTeam?.name}</strong>.
+              Selecting these 5 players automatically populates Sets 2 and 3 (3 frame wins per player).
+              You can then expand Sets 2 &amp; 3 to make individual frame substitutions if desired.
             </p>
           </div>
 
@@ -446,15 +433,43 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
           </div>
         </div>
 
-        {/* Warning if 0 players selected */}
-        {!canConfirm && (
+        {/* Validation Feedback Alerts */}
+        {!isScheduled ? (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            <span>
+              Walkovers can only be awarded to scheduled fixtures that have not yet been played.
+            </span>
+          </div>
+        ) : !hasEnoughSquadPlayers ? (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            <span>
+              {winningTeam?.name} only has {winningSquad.length} registered active squad player(s). At least 5 registered players are required to award a walkover.
+            </span>
+          </div>
+        ) : !has5Set1Players ? (
           <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
             <span>
-              Please select at least one player to receive frame wins under Rule 8c.
+              Please select all 5 starting players in Set 1 ({set1FilledCount} of 5 selected).
             </span>
           </div>
-        )}
+        ) : !has5UniqueSet1Players ? (
+          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>
+              The 5 starting players in Set 1 must each be distinct squad players.
+            </span>
+          </div>
+        ) : !all15Assigned ? (
+          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>
+              All 15 frames must have a player assigned.
+            </span>
+          </div>
+        ) : null}
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">

@@ -1193,7 +1193,11 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
     });
 
     const a1 = makePlayer({ id: 'a1', teamId: 'team-away', name: 'Away One' });
-    const winningPlayerIds = Array(15).fill(a1.id);
+    const a2 = makePlayer({ id: 'a2', teamId: 'team-away', name: 'Away Two' });
+    const a3 = makePlayer({ id: 'a3', teamId: 'team-away', name: 'Away Three' });
+    const a4 = makePlayer({ id: 'a4', teamId: 'team-away', name: 'Away Four' });
+    const a5 = makePlayer({ id: 'a5', teamId: 'team-away', name: 'Away Five' });
+    const winningPlayerIds = [a1.id, a2.id, a3.id, a4.id, a5.id, a1.id, a2.id, a3.id, a4.id, a5.id, a1.id, a2.id, a3.id, a4.id, a5.id];
 
     const walkoverFix = awardWalkoverToFixture(fixture, 'away', winningPlayerIds, 'Home team forfeited');
 
@@ -1227,7 +1231,11 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
     });
 
     const h1 = makePlayer({ id: 'h1', teamId: 'team-home', name: 'Home One' });
-    const winningPlayerIds = Array(15).fill(h1.id);
+    const h2 = makePlayer({ id: 'h2', teamId: 'team-home', name: 'Home Two' });
+    const h3 = makePlayer({ id: 'h3', teamId: 'team-home', name: 'Home Three' });
+    const h4 = makePlayer({ id: 'h4', teamId: 'team-home', name: 'Home Four' });
+    const h5 = makePlayer({ id: 'h5', teamId: 'team-home', name: 'Home Five' });
+    const winningPlayerIds = [h1.id, h2.id, h3.id, h4.id, h5.id, h1.id, h2.id, h3.id, h4.id, h5.id, h1.id, h2.id, h3.id, h4.id, h5.id];
 
     const walkoverFix = awardWalkoverToFixture(koFixture, 'home', winningPlayerIds, 'Opponent forfeited semi-final');
 
@@ -1238,5 +1246,30 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
     expect(score.homePoints).toBe(0); // Knockout fixtures award 0 league points
     expect(score.isDecided).toBe(true);
     expect(score.matchWinner).toBe('home');
+  });
+
+  it('rejects awarding walkover to a fixture that is already live, submitted or approved', () => {
+    const liveFix = makeFixture({ id: 'f-live', homeTeamId: 'team-h', awayTeamId: 'team-a', status: 'live' });
+    const submittedFix = makeFixture({ id: 'f-sub', homeTeamId: 'team-h', awayTeamId: 'team-a', status: 'submitted' });
+    const approvedFix = makeFixture({ id: 'f-app', homeTeamId: 'team-h', awayTeamId: 'team-a', status: 'approved' });
+    const valid5 = ['p1', 'p2', 'p3', 'p4', 'p5', 'p1', 'p2', 'p3', 'p4', 'p5', 'p1', 'p2', 'p3', 'p4', 'p5'];
+
+    expect(() => awardWalkoverToFixture(liveFix, 'home', valid5)).toThrow(/scheduled fixtures that have not yet been played/i);
+    expect(() => awardWalkoverToFixture(submittedFix, 'home', valid5)).toThrow(/scheduled fixtures that have not yet been played/i);
+    expect(() => awardWalkoverToFixture(approvedFix, 'home', valid5)).toThrow(/scheduled fixtures that have not yet been played/i);
+  });
+
+  it('rejects awarding walkover if fewer than 5 starting players are selected or if duplicates exist', () => {
+    const schedFix = makeFixture({ id: 'f-sched', homeTeamId: 'team-h', awayTeamId: 'team-a', status: 'scheduled' });
+
+    // Fewer than 5 players selected
+    expect(() =>
+      awardWalkoverToFixture(schedFix, 'home', ['p1', 'p2', null, null, null])
+    ).toThrow(/requires 5 starting players/i);
+
+    // 5 players with duplicates
+    expect(() =>
+      awardWalkoverToFixture(schedFix, 'home', ['p1', 'p1', 'p2', 'p3', 'p4'])
+    ).toThrow(/must be distinct squad players/i);
   });
 });

@@ -439,20 +439,27 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     // Select the 5 starting players in Set 1 (which auto-fills Sets 2 and 3)
     const slotSelects = walkoverModal.locator('select');
     const selectCount = await slotSelects.count();
-    for (let i = 0; i < Math.min(selectCount, 5); i++) {
-      const sel = slotSelects.nth(i);
-      const options = sel.locator('option');
-      const optCount = await options.count();
-      if (optCount > 1) {
-        const val = await options.nth(1 + (i % (optCount - 1))).getAttribute('value');
-        if (val) await sel.selectOption(val);
-      }
-    }
+    expect(selectCount).toBe(5);
 
-    // Confirm walkover
     const confirmWalkoverBtn = walkoverModal.getByRole('button', {
       name: 'Confirm Walkover',
     });
+    // Verify Confirm button is disabled before all 5 starting players are selected
+    await expect(confirmWalkoverBtn).toBeDisabled();
+
+    // Selecting only 1 player must keep the confirm button disabled
+    const firstOptionVal = await slotSelects.nth(0).locator('option').nth(1).getAttribute('value');
+    await slotSelects.nth(0).selectOption(firstOptionVal!);
+    await expect(confirmWalkoverBtn).toBeDisabled();
+
+    // Select remaining 4 distinct players
+    for (let i = 1; i < 5; i++) {
+      const sel = slotSelects.nth(i);
+      const val = await sel.locator('option').nth(i + 1).getAttribute('value');
+      if (val) await sel.selectOption(val);
+    }
+
+    // Confirm walkover now enabled with 5 distinct players
     await expect(confirmWalkoverBtn).toBeEnabled();
     await confirmWalkoverBtn.click();
 
