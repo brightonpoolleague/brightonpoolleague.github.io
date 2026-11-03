@@ -1583,7 +1583,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {otherTeamName} captain requested to change their Set 1 lineup
             </strong>
             <span className="text-slate-300 text-xs">
-              Lineups are locked once confirmed. Click &ldquo;Allow Lineup Changes&rdquo; to unlock both teams for editing.
+              Lineups are locked once confirmed. Press &ldquo;Allow Lineup Changes&rdquo; to unlock both teams for editing.
             </span>
           </div>
         </div>
@@ -1636,7 +1636,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {targetTeamName} captain requested to change their Set {activeSet} substitutions
             </strong>
             <span className="text-slate-300 text-xs">
-              Substitutions are locked once confirmed. Click &ldquo;Allow Substitution Changes&rdquo; to unlock their substitutions for editing.
+              Substitutions are locked once confirmed. Press &ldquo;Allow Substitution Changes&rdquo; to unlock their substitutions for editing.
             </span>
           </div>
         </div>
@@ -2587,8 +2587,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     ? 'Scorecard is in read-only mode'
                                     : 'Lineups must be confirmed first'
                                   : frame.dish
-                                  ? 'Click to remove dish'
-                                  : `Click if ${winnerName} cleared the table from the break (Dish / Reverse Dish)`
+                                  ? 'Press to remove dish'
+                                  : `Press if ${winnerName} cleared the table from the break (Dish / Reverse Dish)`
                               }
                             >
                               <Sparkles
@@ -2824,7 +2824,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     ? 'bg-emerald-600 text-white border border-emerald-500 shadow-sm'
                                     : 'text-transparent hover:text-slate-400 hover:bg-slate-800/80 min-w-4 min-h-4'
                                 }`}
-                                title={frame.dish ? 'Click to remove dish' : 'Click to record dish'}
+                                title={frame.dish ? 'Press to remove dish' : 'Press to record dish'}
                               >
                                 {frame.dish ? (
                                   <>
@@ -2938,8 +2938,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
                       <div className="text-[11px] text-slate-300">
                         {isKnockout && !playAllFrames
-                          ? 'Please inspect the result scorecard and dishes before captains sign off.'
-                          : 'Please review the full result scorecard and dishes before captains sign off.'}
+                          ? 'Please inspect the result scorecard before captains sign off.'
+                          : 'Please review the full result scorecard before captains sign off.'}
                       </div>
                     </div>
                   </div>
@@ -2975,7 +2975,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
                       <div className="text-[11px] text-slate-300">
                         {isSignedByBoth
-                          ? 'Both captains have signed. Click Finish Match below to submit the official result.'
+                          ? 'Both captains have signed. Press Finish Match below to submit the official result.'
                           : isKnockout && !playAllFrames
                           ? 'Verify match frames above. Both captains must sign below to confirm the result.'
                           : 'Verify all 15 frames above. Both captains must sign below to confirm the result.'}
@@ -3015,7 +3015,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       <span>Match result submitted</span>
                     </div>
                     <div className="text-[11px] text-slate-300">
-                      Official score recorded &bull; Signed by both team captains
+                      Signed by both team captains
                     </div>
                   </div>
                 </div>
@@ -3038,7 +3038,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <span>Approved by league admin</span>
                   </div>
                   <div className="text-[11px] text-slate-300">
-                    Official league results confirmed &bull; Points and averages applied
+                    Official match result confirmed
                   </div>
                 </div>
               </div>
