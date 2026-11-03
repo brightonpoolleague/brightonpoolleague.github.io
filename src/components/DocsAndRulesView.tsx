@@ -444,29 +444,19 @@ export const DocsAndRulesView: React.FC = () => {
               </h3>
               <ul className="space-y-1.5 list-none">
                 <li>
-                  <strong>a.</strong> The <strong>home captain</strong> writes
-                  their players’ full names against numbers{' '}
-                  <strong>1–5</strong> (running order in the first set).
+                  <strong>a.</strong> Both captains open the fixture in the app and log in with their <strong>6-digit Captain PIN</strong> to edit the live scorecard.
                 </li>
                 <li>
-                  <strong>b.</strong> Fold the paper in half (to hide what has
-                  been written) and pass it to the <strong>away captain</strong>
-                  , who writes their players’ full names against{' '}
-                  <strong>1–5</strong> (their running order in the first set).
+                  <strong>b. Blind Set 1 Lineup Entry:</strong> Each captain selects their 5 players from their squad dropdown for positions <strong>1–5</strong> (their running order in the first set). Selections remain hidden from opponents until both captains tap <strong>Confirm &amp; Lock Set 1 Lineup</strong>, revealing both teams' lineups simultaneously.
                 </li>
                 <li>
-                  <strong>c.</strong> Mark an <strong>“X”</strong> next to the
-                  player who will break first.
+                  <strong>c. Lag &amp; Break Determination:</strong> Player 1 from each team lags. Tap the winning side (<strong>Home</strong> or <strong>Away</strong>) on the scorecard. The app automatically assigns the break for all 15 frames across all 3 sets (8 breaks to the lag winner and 7 to their opponent).
                 </li>
                 <li>
-                  <strong>d.</strong> The{' '}
-                  <strong>home team’s playing order</strong> remains the same
-                  for all sets.
+                  <strong>d. Home Team Playing Order:</strong> The home team’s playing order remains in positions <strong>1–5</strong> across all sets.
                 </li>
                 <li>
-                  <strong>e.</strong> The{' '}
-                  <strong>away team’s playing order</strong> changes each set so
-                  that opponents always differ, as shown below:
+                  <strong>e. Away Team Playing Order:</strong> The away team’s playing order rotates each set so that opponents always differ, as shown below:
                 </li>
               </ul>
               <div className="py-2 max-w-lg">
@@ -520,36 +510,22 @@ export const DocsAndRulesView: React.FC = () => {
               </div>
               <ul className="space-y-1.5 list-none">
                 <li>
-                  <strong>f.</strong> Since substitutions are allowed in Sets 2
-                  and 3, captains should not complete player names for the next
-                  set unless no substitutions are being made.
+                  <strong>f. Subsequent Sets:</strong> Set 1 player selections automatically cascade into Sets 2 and 3. If no substitutions are made, captains do not need to re-enter names.
                 </li>
                 <li>
-                  <strong>g.</strong> You do not need to write players’ full
-                  names for each set they play — initials are fine, provided
-                  they are unique within the team.
+                  <strong>g. Substitutions:</strong> If making changes, tap <strong>Make Substitutions</strong> before the set starts and choose the replacement player from the squad list. The opposing captain will be prompted to approve the change with their PIN before play continues.
                 </li>
                 <li>
-                  <strong>h.</strong> When introducing a substitute for the
-                  first time, write their <strong>full name</strong>.
+                  <strong>h. Recording Frame Results:</strong> After each frame, tap <strong>Home Win</strong> or <strong>Away Win</strong> on the scorecard. The running match score and set totals update live automatically.
                 </li>
                 <li>
-                  <strong>i.</strong> After each game, record the result with{' '}
-                  <strong>W</strong> or <strong>L</strong> (you do not need to
-                  write 1–0).
-                </li>
-                <li>
-                  <strong>j.</strong> Record each game that is won by a{' '}
-                  <strong>dish</strong> or <strong>reverse dish</strong>:
+                  <strong>i. Dishes &amp; Reverse Dishes:</strong> If a game is won in a single visit, tap the <strong>Dish</strong> button on that frame:
                   <ul className="list-disc list-inside pl-4 mt-1 space-y-1">
                     <li>
-                      A <strong>dish</strong> is a clearance in one visit from
-                      the break.
+                      A <strong>dish</strong> is a clearance in one visit from the break.
                     </li>
                     <li>
-                      A <strong>reverse dish</strong> occurs when your opponent
-                      fails to pot from the break (or foul breaks) and you clear
-                      up in one visit.
+                      A <strong>reverse dish</strong> occurs when your opponent fails to pot from the break (or commits a foul break) and you clear up in one visit.
                     </li>
                   </ul>
                 </li>
@@ -580,6 +556,10 @@ export const DocsAndRulesView: React.FC = () => {
                   <strong>not</strong> have played in the previous set (to
                   prevent simply changing the playing order).
                 </li>
+                <li>
+                  <strong>e.</strong> To make substitutions in the app, tap{' '}
+                  <strong>Make Substitutions</strong> before the set starts, select the substitute from your squad list and have the opposing captain confirm with their PIN.
+                </li>
               </ul>
             </div>
 
@@ -597,6 +577,10 @@ export const DocsAndRulesView: React.FC = () => {
                   <strong>b.</strong> Breaks alternate between teams: the team
                   that breaks first gets <strong>8 breaks</strong>, while their
                   opponents get <strong>7</strong>.
+                </li>
+                <li>
+                  <strong>c.</strong> Tap the lag winner on the digital scorecard
+                  to automatically assign break indicators for every frame across all 3 sets.
                 </li>
               </ul>
             </div>
@@ -731,7 +715,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <h4 className="font-bold text-white">
                     1) Team with Only 4 Players
                   </h4>
-                  <p>a. Enter BYE in position 5 on the scorecard.</p>
+                  <p>a. Select BYE in position 5 from the lineup dropdown.</p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.
                   </p>
@@ -740,7 +724,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <h4 className="font-bold text-white">
                     2) Both Teams with Only 4 Players
                   </h4>
-                  <p>a. Both teams enter BYE in position 5 on the scorecard.</p>
+                  <p>a. Both teams select BYE in position 5 from the lineup dropdown.</p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.
                   </p>
@@ -753,7 +737,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <h4 className="font-bold text-white">
                     3) Team with Only 3 Players
                   </h4>
-                  <p>a. Enter BYE in positions 4 and 5.</p>
+                  <p>a. Select BYE in positions 4 and 5 from the lineup dropdown.</p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.
                   </p>
@@ -762,8 +746,8 @@ export const DocsAndRulesView: React.FC = () => {
                   <h4 className="font-bold text-white">
                     4) Team of 4 vs Team of 3
                   </h4>
-                  <p>a. The team of 3 enters BYE in positions 4 and 5.</p>
-                  <p>b. The team of 4 enters BYE in position 5.</p>
+                  <p>a. The team of 3 selects BYE in positions 4 and 5.</p>
+                  <p>b. The team of 4 selects BYE in position 5.</p>
                   <p>
                     c. Any player facing a BYE is automatically awarded the win.
                   </p>
@@ -777,8 +761,8 @@ export const DocsAndRulesView: React.FC = () => {
                     5) Team of 3 vs Team of 3
                   </h4>
                   <p>
-                    a. Both teams enter BYE in positions 4 and 5 on the
-                    scorecard.
+                    a. Both teams select BYE in positions 4 and 5 from the
+                    lineup dropdown.
                   </p>
                   <p>
                     b. Any player facing a BYE is automatically awarded the win.
@@ -1002,6 +986,26 @@ export const DocsAndRulesView: React.FC = () => {
                   <strong>d.</strong> The league may impose{' '}
                   <strong>player or team bans</strong> and/or{' '}
                   <strong>relegations</strong> as appropriate.
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2 border-t border-slate-800/80 pt-4">
+              <h3 className="text-base font-bold text-emerald-400">
+                8. Walkovers
+              </h3>
+              <ul className="space-y-1.5 list-none">
+                <li>
+                  <strong>a.</strong> If a team concedes or is unable to fulfill a fixture, a <strong>walkover</strong> is awarded.
+                </li>
+                <li>
+                  <strong>b.</strong> The non-offending team is awarded a <strong>15–0 win</strong> and maximum league points (<strong>7 points</strong>: 2 points for the match win plus 5 bonus points for winning all 15 frames).
+                </li>
+                <li>
+                  <strong>c.</strong> The winning team captain must notify the <strong>league admin</strong> which of their registered squad players are to be awarded the wins for the <strong>15 individual frames</strong>, ensuring their player statistics and individual averages reflect the walkover correctly.
+                </li>
+                <li>
+                  <strong>d.</strong> The defaulting team receives <strong>0 points</strong> and a 0–15 frame score for that match. Repeated walkovers or failure to fulfill fixtures will be referred to the league committee and may result in disciplinary action or team expulsion under Section 7.
                 </li>
               </ul>
             </div>
