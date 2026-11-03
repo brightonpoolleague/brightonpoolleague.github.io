@@ -311,6 +311,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const validFrames = ensureValidFrames(f.frames);
       const validLineups = ensureValidLineups(f.lineups);
       let status = f.status;
+      let homeTeamId = f.homeTeamId;
+      let awayTeamId = f.awayTeamId;
+      let division = f.division;
+      if (
+        f.id === 'test-fix-summer-cup-final' &&
+        (homeTeamId === 'team-hove-deep' || awayTeamId === 'team-connaught-a')
+      ) {
+        homeTeamId = 'team-kq-a';
+        awayTeamId = 'team-sportsman';
+        division = 'Division 1';
+      }
       if (
         status === 'live' &&
         !(f.homeSet1Locked && f.awaySet1Locked) &&
@@ -320,6 +331,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return {
         ...f,
+        homeTeamId,
+        awayTeamId,
+        division,
         status,
         frames: validFrames,
         lineups: validLineups,
