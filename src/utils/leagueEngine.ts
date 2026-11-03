@@ -8,6 +8,7 @@ import {
   PlayerStatsRow,
   SlotPlayerId,
   Team,
+  WalkoverData,
 } from '../types/league';
 
 export const HOME_SLOT_ORDER: Record<1 | 2 | 3, [1, 2, 3, 4, 5]> = {
@@ -136,6 +137,7 @@ export function ensureValidLineups(rawLineups: unknown): MatchLineups {
     subsLocked: typed.subsLocked ?? { set2: {}, set3: {} },
     subsUnlockRequested: typed.subsUnlockRequested ?? { set2: {}, set3: {} },
     subsPendingApproval: typed.subsPendingApproval ?? { set2: {}, set3: {} },
+    walkover: typed.walkover,
   };
 
   // If Set 3 slot is null, it continues from Set 2 (or Set 1)
@@ -193,6 +195,13 @@ export function applyByeRulesToFrames(
   lagWinner: 'home' | 'away' | null,
   bothSet1Locked = true
 ): FrameData[] {
+  if (lineups.walkover) {
+    return frames.map((frame) => ({
+      ...frame,
+      winner: lineups.walkover?.awardedTo ?? frame.winner,
+      dish: false,
+    }));
+  }
   if (!bothSet1Locked) {
     return frames.map((frame) => {
       const { homePlayerId, awayPlayerId } = getFramePlayers(lineups, frame);
@@ -290,6 +299,16 @@ export function getEligiblePlayersForSlot(
         }
       }
 
+      if (setNumber === 3 && lineups.set1?.[side]) {
+        const set1SlotIdx = lineups.set1[side].findIndex((id) => id === player.id);
+        if (set1SlotIdx !== -1 && set1SlotIdx !== slotIndex) {
+          return {
+            player,
+            disabledReason: `Played in slot ${set1SlotIdx + 1} in Set 1 (cannot change order)`,
+          };
+        }
+      }
+
       return { player };
     });
 }
@@ -339,6 +358,7 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
           },
         }
       : {}),
+    ...(lineups.walkover ? { walkover: lineups.walkover } : {}),
   };
 
   (['home', 'away'] as const).forEach((side) => {
@@ -1258,3 +1278,180 @@ export function validatePlayerTransfer(
   };
 }
 
+
+
+/**
+ * Helper to check whether a fixture has been awarded as a walkover under League Rule 8.
+ */
+export function isWalkoverFixture(fixture: Fixture): boolean {
+  return Boolean(fixture.walkover || fixture.lineups?.walkover);
+}
+
+/**
+ * Returns walkover metadata for a fixture, if awarded.
+ */
+export function getFixtureWalkover(fixture: Fixture): WalkoverData | undefined {
+  return fixture.walkover || fixture.lineups?.walkover;
+}
+
+/**
+ * Awards a walkover to a fixture following League Rule 8:
+ * - Rule 8a: Concedes or unable to fulfill fixture.
+ * - Rule 8b: Non-offending team is awarded 15–0 win (or knockout match win) and maximum 7 points.
+ * - Rule 8c: Registered squad players assigned to the 15 frames receive their individual averages and match appearances.
+ * - Rule 8d: Defaulting team receives 0 points and a 0–15 frame score with zero individual player losses.
+ */
+export function awardWalkoverToFixture(
+  fixture: Fixture,
+  winningSide: 'home' | 'away',
+  winningPlayerIds: SlotPlayerId[],
+  reason?: string
+): Fixture {
+  if (fixture.status !== 'scheduled') {
+    throw new Error(
+      'Walkovers can only be awarded to scheduled fixtures that have not yet been played (current status: ' +
+        fixture.status +
+        ').'
+    );
+  }
+
+  const starting5 = winningPlayerIds.slice(0, 5);
+  const validStarting5 = starting5.filter((id) => Boolean(id) && id !== 'BYE');
+  if (validStarting5.length < 5) {
+    throw new Error('A walkover requires 5 starting players to be selected for Set 1.');
+  }
+  if (new Set(validStarting5).size < 5) {
+    throw new Error('The 5 starting players for a walkover must be distinct squad players.');
+  }
+
+  const defaultingTeamId =
+    winningSide === 'home' ? fixture.awayTeamId : fixture.homeTeamId;
+
+  // Build 15 frames with all frames won by the winning side (Rule 8b)
+  const frames: FrameData[] = createEmptyFrames().map((f) => ({
+    ...f,
+    winner: winningSide,
+    dish: false,
+  }));
+
+  // Build lineups: assign winning player IDs across Set 1, Set 2, Set 3 (5 per set)
+  // Defaulting side is set to 'BYE' so players from defaulting team do not receive personal frame losses
+  const winningSet1: MatchLineups['set1']['home'] = [
+    winningPlayerIds[0] ?? null,
+    winningPlayerIds[1] ?? null,
+    winningPlayerIds[2] ?? null,
+    winningPlayerIds[3] ?? null,
+    winningPlayerIds[4] ?? null,
+  ];
+  const winningSet2: MatchLineups['set2']['home'] = [
+    winningPlayerIds[5] ?? winningSet1[0],
+    winningPlayerIds[6] ?? winningSet1[1],
+    winningPlayerIds[7] ?? winningSet1[2],
+    winningPlayerIds[8] ?? winningSet1[3],
+    winningPlayerIds[9] ?? winningSet1[4],
+  ];
+  const winningSet3: MatchLineups['set3']['home'] = [
+    winningPlayerIds[10] ?? winningSet2[0],
+    winningPlayerIds[11] ?? winningSet2[1],
+    winningPlayerIds[12] ?? winningSet2[2],
+    winningPlayerIds[13] ?? winningSet2[3],
+    winningPlayerIds[14] ?? winningSet2[4],
+  ];
+
+  // Validate Set 2 substitutions (Rule 7 & Section 5d)
+  const validSet2 = winningSet2.filter((id) => Boolean(id) && id !== 'BYE');
+  if (validSet2.length < 5) {
+    throw new Error('A walkover requires 5 players to be assigned for Set 2.');
+  }
+  if (new Set(validSet2).size < 5) {
+    throw new Error('The 5 players for Set 2 must be distinct squad players.');
+  }
+  for (let i = 0; i < 5; i++) {
+    const p = winningSet2[i];
+    const prevSet1Idx = winningSet1.indexOf(p);
+    if (prevSet1Idx !== -1 && prevSet1Idx !== i) {
+      throw new Error(
+        `Player in Set 2 slot ${i + 1} played in slot ${prevSet1Idx + 1} in Set 1 and cannot change positions.`
+      );
+    }
+  }
+
+  // Validate Set 3 substitutions (Rule 7 & Section 5d)
+  const validSet3 = winningSet3.filter((id) => Boolean(id) && id !== 'BYE');
+  if (validSet3.length < 5) {
+    throw new Error('A walkover requires 5 players to be assigned for Set 3.');
+  }
+  if (new Set(validSet3).size < 5) {
+    throw new Error('The 5 players for Set 3 must be distinct squad players.');
+  }
+  for (let i = 0; i < 5; i++) {
+    const p = winningSet3[i];
+    const prevSet2Idx = winningSet2.indexOf(p);
+    if (prevSet2Idx !== -1 && prevSet2Idx !== i) {
+      throw new Error(
+        `Player in Set 3 slot ${i + 1} played in slot ${prevSet2Idx + 1} in Set 2 and cannot change positions.`
+      );
+    }
+    const prevSet1Idx = winningSet1.indexOf(p);
+    if (prevSet1Idx !== -1 && prevSet1Idx !== i) {
+      throw new Error(
+        `Player in Set 3 slot ${i + 1} played in slot ${prevSet1Idx + 1} in Set 1 and cannot change positions.`
+      );
+    }
+  }
+
+  const defaultingSet: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId] = [
+    'BYE',
+    'BYE',
+    'BYE',
+    'BYE',
+    'BYE',
+  ];
+
+  const walkoverData: WalkoverData = {
+    awardedTo: winningSide,
+    defaultingTeamId,
+    reason: reason?.trim() || undefined,
+    awardedAt: new Date().toISOString(),
+  };
+
+  const lineups: MatchLineups = {
+    set1: {
+      home: winningSide === 'home' ? winningSet1 : defaultingSet,
+      away: winningSide === 'away' ? winningSet1 : defaultingSet,
+    },
+    set2: {
+      home: winningSide === 'home' ? winningSet2 : defaultingSet,
+      away: winningSide === 'away' ? winningSet2 : defaultingSet,
+    },
+    set3: {
+      home: winningSide === 'home' ? winningSet3 : defaultingSet,
+      away: winningSide === 'away' ? winningSet3 : defaultingSet,
+    },
+    unlockRequested: { home: false, away: false },
+    subsLocked: {
+      set2: { home: true, away: true },
+      set3: { home: true, away: true },
+    },
+    subsUnlockRequested: { set2: {}, set3: {} },
+    subsPendingApproval: { set2: {}, set3: {} },
+    walkover: walkoverData,
+  };
+
+  const now = new Date().toISOString();
+
+  return {
+    ...fixture,
+    status: 'approved',
+    lagWinner: winningSide,
+    homeSet1Locked: true,
+    awaySet1Locked: true,
+    homeCaptainSigned: true,
+    awayCaptainSigned: true,
+    approvedAt: now,
+    updatedAt: now,
+    lineups,
+    frames,
+    walkover: walkoverData,
+  };
+}

@@ -380,6 +380,101 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
         page.getByRole('heading', { name: 'Approve Incomplete Scorecard?' })
       ).toBeHidden();
     }
+
+    // 6. Test Award Walkover (Rule 8) on a dedicated temporary fixture
+    await page.getByRole('button', { name: /^Fixtures\b/i }).click();
+    await page.getByRole('button', { name: 'Schedule Fixture' }).click();
+
+    // Configure a Knockout Cup fixture
+    await page
+      .locator('select')
+      .filter({ hasText: 'League Match (15 frames)' })
+      .first()
+      .selectOption('knockout');
+    await page
+      .getByPlaceholder(/e\.g\. Division 1 Cup, Summer Cup/i)
+      .fill('E2E Walkover Cup');
+    await page
+      .getByPlaceholder(/e\.g\. Quarter-Final, Semi-Final/i)
+      .fill('Walkover Final');
+
+    const walkoverHomeSelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select Home Team --' })
+      .first();
+    const wHomeId = await walkoverHomeSelect
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value');
+    await walkoverHomeSelect.selectOption(wHomeId!);
+
+    const walkoverAwaySelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select Away Team --' })
+      .first();
+    const wAwayId = await walkoverAwaySelect
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value');
+    await walkoverAwaySelect.selectOption(wAwayId!);
+
+    await page.getByRole('button', { name: 'Confirm & Schedule' }).click();
+
+    // Search for the newly created Walkover fixture
+    const adminFixtureSearch = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await adminFixtureSearch.fill('E2E Walkover Cup');
+
+    const walkoverBtn = page.getByTitle('Award Walkover (Rule 8)').first();
+    await expect(walkoverBtn).toBeVisible();
+    await walkoverBtn.click();
+
+    // Verify Award Walkover Modal opens
+    const walkoverModal = page
+      .locator('div.fixed')
+      .filter({ hasText: /Award Walkover \(Rule 8\)/i });
+    await expect(walkoverModal).toBeVisible();
+
+    // Select the 5 starting players in Set 1 (which auto-fills Sets 2 and 3)
+    const slotSelects = walkoverModal.locator('select');
+    const selectCount = await slotSelects.count();
+    expect(selectCount).toBe(5);
+
+    const confirmWalkoverBtn = walkoverModal.getByRole('button', {
+      name: 'Confirm Walkover',
+    });
+    // Verify Confirm button is disabled before all 5 starting players are selected
+    await expect(confirmWalkoverBtn).toBeDisabled();
+
+    // Selecting only 1 player must keep the confirm button disabled
+    const firstOptionVal = await slotSelects.nth(0).locator('option').nth(1).getAttribute('value');
+    await slotSelects.nth(0).selectOption(firstOptionVal!);
+    await expect(confirmWalkoverBtn).toBeDisabled();
+
+    // Select remaining 4 distinct players
+    for (let i = 1; i < 5; i++) {
+      const sel = slotSelects.nth(i);
+      const val = await sel.locator('option').nth(i + 1).getAttribute('value');
+      if (val) await sel.selectOption(val);
+    }
+
+    // Confirm walkover now enabled with 5 distinct players
+    await expect(confirmWalkoverBtn).toBeEnabled();
+    await confirmWalkoverBtn.click();
+
+    // Verify Walkover badge is visible on the awarded fixture
+    await expect(
+      page.getByText('Walkover').first()
+    ).toBeVisible();
+
+    // Clean up temporary fixture
+    await page.getByTitle('Delete Fixture').first().click();
+    await expect(
+      page.getByRole('heading', { name: 'Delete Fixture?' })
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Delete Fixture' }).last().click();
+    await adminFixtureSearch.fill('');
   });
 
   test('filters fixtures by status/division/search and toggles Include Live & Unapproved standings', async ({

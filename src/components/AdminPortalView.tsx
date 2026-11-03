@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   AlertTriangle,
+  Award,
   Calendar,
   Check,
   CheckCircle2,
@@ -41,8 +42,10 @@ import {
   getPlayerAppearancesForTeam,
   getScorecardApprovalWarnings,
   isKnockoutFixture,
+  isWalkoverFixture,
   validatePlayerTransfer,
 } from '../utils/leagueEngine';
+import { AwardWalkoverModal } from './AwardWalkoverModal';
 
 interface AdminPortalViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -70,6 +73,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     transferPlayer,
     addFixture,
     updateFixtureDetails,
+    saveFixture,
     deleteFixture,
     approveFixture,
     reopenFixture,
@@ -129,6 +133,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   // Fixture inline editing state
   const [editingFixtureId, setEditingFixtureId] = useState<string | null>(null);
+  const [walkoverFixture, setWalkoverFixture] = useState<Fixture | null>(null);
   const [fixtureDraft, setFixtureDraft] = useState<{
     division: Division;
     matchDate: string;
@@ -540,7 +545,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       dateSet.add(f.matchDate);
     }
     return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
-  }, [fixtures, fixtureFilterDivision]);
+  }, [fixtures, fixtureFilterDivision, teamsById]);
 
   const uniqueScorecardDates = useMemo(() => {
     const dateSet = new Set<string>();
@@ -567,6 +572,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     let completed = 0;
 
     for (const f of fixtures) {
+      if (!teamsById[f.homeTeamId] || !teamsById[f.awayTeamId]) {
+        continue;
+      }
       if (fixtureFilterDivision === 'KNOCKOUT') {
         if (!isKnockoutFixture(f)) continue;
       } else if (fixtureFilterDivision !== 'ALL') {
@@ -575,9 +583,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         }
       }
       all++;
-      if (f.status === 'live') {
+      if (f.status === 'live' && !isWalkoverFixture(f)) {
         live++;
-      } else if (f.status === 'approved' || f.status === 'submitted') {
+      } else if (f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) {
         completed++;
       } else {
         const tf = getMatchTimeframe(f.matchDate, f.status);
@@ -595,6 +603,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   const filteredFixtures = useMemo(() => {
     return fixtures.filter((f) => {
+      if (!teamsById[f.homeTeamId] || !teamsById[f.awayTeamId]) {
+        return false;
+      }
       if (fixtureFilterDivision === 'KNOCKOUT') {
         if (!isKnockoutFixture(f)) return false;
       } else if (fixtureFilterDivision !== 'ALL') {
@@ -604,19 +615,19 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       }
       if (fixtureTimeframeFilter !== 'ALL') {
         if (fixtureTimeframeFilter === 'live') {
-          if (f.status !== 'live') return false;
+          if (f.status !== 'live' || isWalkoverFixture(f)) return false;
         } else if (fixtureTimeframeFilter === 'completed') {
-          if (f.status !== 'approved' && f.status !== 'submitted') return false;
+          if (f.status !== 'approved' && f.status !== 'submitted' && !isWalkoverFixture(f)) return false;
         } else if (fixtureTimeframeFilter === 'today') {
-          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'today') return false;
         } else if (fixtureTimeframeFilter === 'upcoming') {
-          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'upcoming') return false;
         } else if (fixtureTimeframeFilter === 'past') {
-          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'past') return false;
         }
@@ -2234,10 +2245,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                     : 'First to 8'
                                   : `${score.completedFrames}/15`})
                               </span>
-                            ) : fix.status === 'approved' ? (
+                            ) : fix.status === 'approved' || isWalkoverFixture(fix) ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
-                                Approved
+                                {isWalkoverFixture(fix) ? 'Walkover' : 'Approved'}
                               </span>
                             ) : fix.status === 'submitted' ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
@@ -2317,6 +2328,17 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <PlayCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Scorecard</span>
                           </button>
+                          {fix.status === 'scheduled' && !isWalkoverFixture(fix) && (
+                            <button
+                              type="button"
+                              onClick={() => setWalkoverFixture(fix)}
+                              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
+                              title="Award Walkover (Rule 8)"
+                            >
+                              <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <span>Walkover</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() =>
@@ -3163,6 +3185,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <PlayCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Scorecard</span>
                           </button>
+
                           {fix.status !== 'approved' ? (
                             <button
                               type="button"
@@ -3218,6 +3241,21 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             Reset Local Test Data
           </button>
         </div>
+      )}
+
+      {/* Award Walkover Modal */}
+      {walkoverFixture && (
+        <AwardWalkoverModal
+          fixture={walkoverFixture}
+          isOpen={Boolean(walkoverFixture)}
+          onClose={() => setWalkoverFixture(null)}
+          onConfirmWalkover={async (updated) => {
+            await saveFixture(updated);
+            setWalkoverFixture(null);
+          }}
+          teamsById={teamsById}
+          players={players}
+        />
       )}
 
       {/* Custom Confirmation Modal */}

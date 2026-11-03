@@ -17,6 +17,7 @@ import {
   Team,
   UserRole,
   UserSession,
+  WalkoverData,
 } from '../types/league';
 import {
   DEFAULT_ADMIN_PIN,
@@ -148,6 +149,10 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     submittedAt: r.submitted_at ? String(r.submitted_at) : undefined,
     approvedAt: r.approved_at ? String(r.approved_at) : undefined,
     updatedAt: String(r.updated_at ?? new Date().toISOString()),
+    walkover:
+      (r.walkover as WalkoverData) ||
+      ((r.lineups as any)?.walkover as WalkoverData) ||
+      undefined,
   };
 }
 
@@ -302,7 +307,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       STORAGE_KEYS.FIXTURES,
       isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES
     );
-    return raw.map((f: Fixture) => {
+    return raw
+      .filter((f: Fixture) => f.id !== 'test-fix-summer-cup-final')
+      .map((f: Fixture) => {
       const validFrames = ensureValidFrames(f.frames);
       const validLineups = ensureValidLineups(f.lineups);
       let status = f.status;
@@ -1714,7 +1721,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       let homeSigned = Boolean(rawUpdated.homeCaptainSigned);
       let awaySigned = Boolean(rawUpdated.awayCaptainSigned);
 
-      if (nextStatus === 'submitted') {
+      if (rawUpdated.walkover || rawUpdated.lineups?.walkover) {
+        nextStatus = 'approved';
+        homeSigned = true;
+        awaySigned = true;
+      } else if (nextStatus === 'submitted') {
         // Prevent stale submission from overwriting an unsigned state from the other captain
         const existing = allFixtures.find((f) => f.id === rawUpdated.id);
         if (existing) {
@@ -1741,6 +1752,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         awayCaptainSigned: awaySigned,
         lineups: syncedLineups,
         frames: syncedFrames,
+        walkover: rawUpdated.walkover ?? syncedLineups.walkover,
         updatedAt: new Date().toISOString(),
       };
 
@@ -1843,12 +1855,16 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     async (fixtureId: string): Promise<void> => {
       const target = allFixtures.find((f) => f.id === fixtureId);
       if (!target) return;
+      const nextLineups = structuredClone(target.lineups);
+      delete nextLineups.walkover;
       await saveFixture({
         ...target,
         status: 'live',
         approvedAt: undefined,
         homeCaptainSigned: false,
         awayCaptainSigned: false,
+        walkover: undefined,
+        lineups: nextLineups,
       });
     },
     [allFixtures, saveFixture]

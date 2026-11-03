@@ -24,6 +24,7 @@ import {
   getMatchTimeframe,
   getScorecardApprovalWarnings,
   isKnockoutFixture,
+  isWalkoverFixture,
 } from '../utils/leagueEngine';
 
 interface FixturesAndLiveViewProps {
@@ -757,10 +758,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                             : 'LIVE (First to 8)'
                           : `LIVE (${score.completedFrames}/15)`}
                       </>
-                    ) : fix.status === 'approved' ? (
+                    ) : fix.status === 'approved' || isWalkoverFixture(fix) ? (
                       <>
                         <CheckCircle2 className="w-2.5 h-2.5" />
-                        Approved
+                        {isWalkoverFixture(fix) ? 'Walkover' : 'Approved'}
                       </>
                     ) : fix.status === 'submitted' ? (
                       <>
