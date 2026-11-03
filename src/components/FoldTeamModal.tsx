@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Calendar, Info, X } from 'lucide-react';
 import { Fixture, Team } from '../types/league';
 import {
+  calculateMatchScore,
   formatMatchDate,
   getSeasonHalfwayDate,
   isKnockoutFixture,
@@ -58,6 +59,40 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
         .sort((a, b) => a.matchDate.localeCompare(b.matchDate)),
     [fixtures, team.id]
   );
+
+  const { firstHalfCount, secondHalfCount, firstHalfPlayed, secondHalfPlayed } =
+    useMemo(() => {
+      let firstHalf = 0;
+      let secondHalf = 0;
+      let firstPlayed = 0;
+      let secondPlayed = 0;
+
+      teamFixtures.forEach((fix) => {
+        const isFirst = Boolean(
+          halfwayDate && fix.matchDate && fix.matchDate <= halfwayDate
+        );
+        const matchScore = calculateMatchScore(fix);
+        const played =
+          fix.status === 'approved' ||
+          fix.status === 'submitted' ||
+          matchScore.completedFrames > 0;
+
+        if (isFirst) {
+          firstHalf++;
+          if (played) firstPlayed++;
+        } else {
+          secondHalf++;
+          if (played) secondPlayed++;
+        }
+      });
+
+      return {
+        firstHalfCount: firstHalf,
+        secondHalfCount: secondHalf,
+        firstHalfPlayed: firstPlayed,
+        secondHalfPlayed: secondPlayed,
+      };
+    }, [teamFixtures, halfwayDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,13 +245,24 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
 
           {/* Fixtures Impact Preview */}
           <div className="flex-1 flex flex-col min-h-0 space-y-1.5">
-            <div className="flex items-center justify-between text-xs shrink-0">
+            <div className="flex items-center justify-between text-xs shrink-0 flex-wrap gap-1">
               <span className="font-bold text-slate-300">
                 Fixtures Impact Preview ({teamFixtures.length})
               </span>
-              <span className="text-[11px] text-slate-500">
-                Case-by-case review (Rule 7c)
-              </span>
+              <div className="flex items-center gap-1.5 text-[11px]">
+                <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">
+                  1st Half: <strong className="text-white">{firstHalfCount}</strong>
+                  {firstHalfPlayed > 0 && (
+                    <span className="text-slate-400 font-normal"> ({firstHalfPlayed} played)</span>
+                  )}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">
+                  2nd Half: <strong className="text-white">{secondHalfCount}</strong>
+                  {secondHalfPlayed > 0 && (
+                    <span className="text-slate-400 font-normal"> ({secondHalfPlayed} played)</span>
+                  )}
+                </span>
+              </div>
             </div>
 
             <div className="flex-1 max-h-36 sm:max-h-40 overflow-y-auto space-y-1.5 pr-1 border border-slate-800 rounded-xl p-2 bg-slate-950/60">
@@ -229,10 +275,11 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                   const isHome = fix.homeTeamId === team.id;
                   const opponentId = isHome ? fix.awayTeamId : fix.homeTeamId;
                   const opponent = teamsById.get(opponentId);
+                  const score = calculateMatchScore(fix);
                   const hasResult =
                     fix.status === 'approved' ||
                     fix.status === 'submitted' ||
-                    fix.frames.some((f) => f.winner !== null);
+                    score.completedFrames > 0;
                   const isMatchFirstHalf =
                     halfwayDate && fix.matchDate && fix.matchDate <= halfwayDate;
                   const willExpunge = hasResult && (isFirstHalf || !isMatchFirstHalf);
@@ -242,13 +289,34 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                       key={fix.id}
                       className="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-900 border border-slate-800/80 text-xs"
                     >
-                      <div className="min-w-0">
-                        <div className="font-semibold text-white truncate">
-                          {isHome ? 'Home vs ' : 'Away vs '}
-                          {opponent?.name || 'Unknown'}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-white truncate flex items-center gap-1.5">
+                          <span className="truncate">
+                            {isHome ? 'Home vs ' : 'Away vs '}
+                            {opponent?.name || 'Unknown'}
+                          </span>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ${
+                              isMatchFirstHalf
+                                ? 'bg-sky-950/80 text-sky-300 border border-sky-800/60'
+                                : 'bg-purple-950/80 text-purple-300 border border-purple-800/60'
+                            }`}
+                          >
+                            {isMatchFirstHalf ? '1st Half' : '2nd Half'}
+                          </span>
                         </div>
-                        <div className="text-[11px] text-slate-400">
-                          {formatMatchDate(fix.matchDate)} • {fix.status}
+                        <div className="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
+                          <span>{formatMatchDate(fix.matchDate)}</span>
+                          <span>•</span>
+                          <span className="capitalize">{fix.status}</span>
+                          {hasResult && score.completedFrames > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="font-semibold text-emerald-400">
+                                Score: {score.homeFrames} - {score.awayFrames}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <span

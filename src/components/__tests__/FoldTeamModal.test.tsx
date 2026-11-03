@@ -41,9 +41,12 @@ describe('FoldTeamModal Component', () => {
       homeSet1Locked: true,
       awaySet1Locked: true,
       lineups: createEmptyLineups(),
-      frames: createEmptyFrames(),
       homeCaptainSigned: true,
       awayCaptainSigned: true,
+      frames: createEmptyFrames().map((f, i) => ({
+        ...f,
+        winner: (i < 10 ? 'home' : 'away') as 'home' | 'away',
+      })),
       updatedAt: '2026-10-15T22:00:00Z',
     },
     {
@@ -83,8 +86,11 @@ describe('FoldTeamModal Component', () => {
     expect(screen.getByText('Fold Alpha Hawks')).toBeInTheDocument();
     expect(screen.getByText(/Premier League • Hawks Nest/)).toBeInTheDocument();
     expect(screen.getByText(/Fixtures Impact Preview \(2\)/)).toBeInTheDocument();
+    expect(screen.getByText(/1st Half:/)).toBeInTheDocument();
+    expect(screen.getByText(/2nd Half:/)).toBeInTheDocument();
     expect(screen.getByText('Home vs Beta Bears')).toBeInTheDocument();
     expect(screen.getByText('Away vs Beta Bears')).toBeInTheDocument();
+    expect(screen.getByText(/Score: 10 - 5/)).toBeInTheDocument();
     expect(screen.getByText('Cancelled (Unplayed)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open Calendar/i })).toBeInTheDocument();
   });
