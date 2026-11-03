@@ -299,6 +299,16 @@ export function getEligiblePlayersForSlot(
         }
       }
 
+      if (setNumber === 3 && lineups.set1?.[side]) {
+        const set1SlotIdx = lineups.set1[side].findIndex((id) => id === player.id);
+        if (set1SlotIdx !== -1 && set1SlotIdx !== slotIndex) {
+          return {
+            player,
+            disabledReason: `Played in slot ${set1SlotIdx + 1} in Set 1 (cannot change order)`,
+          };
+        }
+      }
+
       return { player };
     });
 }
@@ -348,6 +358,7 @@ export function syncDefaultSubsequentSets(lineups: MatchLineups): MatchLineups {
           },
         }
       : {}),
+    ...(lineups.walkover ? { walkover: lineups.walkover } : {}),
   };
 
   (['home', 'away'] as const).forEach((side) => {
@@ -1346,6 +1357,48 @@ export function awardWalkoverToFixture(
     winningPlayerIds[13] ?? winningSet2[3],
     winningPlayerIds[14] ?? winningSet2[4],
   ];
+
+  // Validate Set 2 substitutions (Rule 7 & Section 5d)
+  const validSet2 = winningSet2.filter((id) => Boolean(id) && id !== 'BYE');
+  if (validSet2.length < 5) {
+    throw new Error('A walkover requires 5 players to be assigned for Set 2.');
+  }
+  if (new Set(validSet2).size < 5) {
+    throw new Error('The 5 players for Set 2 must be distinct squad players.');
+  }
+  for (let i = 0; i < 5; i++) {
+    const p = winningSet2[i];
+    const prevSet1Idx = winningSet1.indexOf(p);
+    if (prevSet1Idx !== -1 && prevSet1Idx !== i) {
+      throw new Error(
+        `Player in Set 2 slot ${i + 1} played in slot ${prevSet1Idx + 1} in Set 1 and cannot change positions.`
+      );
+    }
+  }
+
+  // Validate Set 3 substitutions (Rule 7 & Section 5d)
+  const validSet3 = winningSet3.filter((id) => Boolean(id) && id !== 'BYE');
+  if (validSet3.length < 5) {
+    throw new Error('A walkover requires 5 players to be assigned for Set 3.');
+  }
+  if (new Set(validSet3).size < 5) {
+    throw new Error('The 5 players for Set 3 must be distinct squad players.');
+  }
+  for (let i = 0; i < 5; i++) {
+    const p = winningSet3[i];
+    const prevSet2Idx = winningSet2.indexOf(p);
+    if (prevSet2Idx !== -1 && prevSet2Idx !== i) {
+      throw new Error(
+        `Player in Set 3 slot ${i + 1} played in slot ${prevSet2Idx + 1} in Set 2 and cannot change positions.`
+      );
+    }
+    const prevSet1Idx = winningSet1.indexOf(p);
+    if (prevSet1Idx !== -1 && prevSet1Idx !== i) {
+      throw new Error(
+        `Player in Set 3 slot ${i + 1} played in slot ${prevSet1Idx + 1} in Set 1 and cannot change positions.`
+      );
+    }
+  }
 
   const defaultingSet: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId] = [
     'BYE',

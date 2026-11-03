@@ -1719,7 +1719,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       let homeSigned = Boolean(rawUpdated.homeCaptainSigned);
       let awaySigned = Boolean(rawUpdated.awayCaptainSigned);
 
-      if (nextStatus === 'submitted') {
+      if (rawUpdated.walkover || rawUpdated.lineups?.walkover) {
+        nextStatus = 'approved';
+        homeSigned = true;
+        awaySigned = true;
+      } else if (nextStatus === 'submitted') {
         // Prevent stale submission from overwriting an unsigned state from the other captain
         const existing = allFixtures.find((f) => f.id === rawUpdated.id);
         if (existing) {
@@ -1746,6 +1750,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         awayCaptainSigned: awaySigned,
         lineups: syncedLineups,
         frames: syncedFrames,
+        walkover: rawUpdated.walkover ?? syncedLineups.walkover,
         updatedAt: new Date().toISOString(),
       };
 

@@ -253,4 +253,103 @@ describe('AwardWalkoverModal Component', () => {
     const confirmBtn = screen.getByRole('button', { name: /Confirm Walkover/i });
     expect(confirmBtn).toBeDisabled();
   });
+
+  it('only displays "Awarded 15–0 Win" on the selected winning team card and "Defaulting Team" on the other', () => {
+    render(
+      <AwardWalkoverModal
+        fixture={baseFixture}
+        isOpen={true}
+        onClose={vi.fn()}
+        onConfirmWalkover={vi.fn()}
+        teamsById={teamsById}
+        players={players}
+      />
+    );
+
+    // Default: Home is selected
+    expect(screen.getByText('Awarded 15–0 Win • Maximum 7 Points')).toBeInTheDocument();
+    expect(screen.getByText('Defaulting Team • 0 Points')).toBeInTheDocument();
+
+    // Click on Away Team to select Away
+    const awayCard = screen.getByRole('button', { name: /Away Aces/i });
+    fireEvent.click(awayCard);
+
+    // Now Away has the win label, Home has the defaulting label
+    expect(screen.getByText('Awarded 15–0 Win • Maximum 7 Points')).toBeInTheDocument();
+    expect(screen.getByText('Defaulting Team • 0 Points')).toBeInTheDocument();
+  });
+
+  it('enforces substitution rules and allows a player subbed out in Set 2 to come back in Set 3', async () => {
+    const handleConfirm = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <AwardWalkoverModal
+        fixture={baseFixture}
+        isOpen={true}
+        onClose={vi.fn()}
+        onConfirmWalkover={handleConfirm}
+        teamsById={teamsById}
+        players={players}
+      />
+    );
+
+    // Pick 5 players in Set 1: h1, h2, h3, h4, h5
+    const set1Selects = screen.getAllByRole('combobox');
+    fireEvent.change(set1Selects[0], { target: { value: 'h1' } });
+    fireEvent.change(set1Selects[1], { target: { value: 'h2' } });
+    fireEvent.change(set1Selects[2], { target: { value: 'h3' } });
+    fireEvent.change(set1Selects[3], { target: { value: 'h4' } });
+    fireEvent.change(set1Selects[4], { target: { value: 'h5' } });
+
+    // Open Customise Sets 2 & 3
+    const expandBtn = screen.getByRole('button', { name: /Customise Sets 2 & 3/i });
+    fireEvent.click(expandBtn);
+
+    const allSelects = screen.getAllByRole('combobox');
+    expect(allSelects).toHaveLength(15);
+
+    // In Set 2, substitute h1 in Slot 1 (Frame 6, allSelects[5]) with h6 (Harry Sub)
+    fireEvent.change(allSelects[5], { target: { value: 'h6' } });
+
+    // Verify h1 (now benched in Set 2) cannot change order to Slot 2 in Set 2 (Frame 7, allSelects[6])
+    const set2Slot2Options = allSelects[6].querySelectorAll('option');
+    const h1InSet2Slot2 = Array.from(set2Slot2Options).find((opt) => opt.value === 'h1');
+    expect(h1InSet2Slot2).toBeDefined();
+    expect(h1InSet2Slot2).toBeDisabled();
+    expect(h1InSet2Slot2?.textContent).toContain('cannot change order');
+
+    // In Set 3, check Slot 1 (Frame 11, allSelects[10]):
+    // h1 (subbed out in Set 2) is eligible to COME BACK in Set 3 into Slot 1
+    const set3Slot1Options = allSelects[10].querySelectorAll('option');
+    const h1InSet3Slot1 = Array.from(set3Slot1Options).find((opt) => opt.value === 'h1');
+    expect(h1InSet3Slot1).toBeDefined();
+    expect(h1InSet3Slot1).not.toBeDisabled();
+
+    // But in Set 3, check Slot 2 (Frame 12, allSelects[11]):
+    // h1 cannot be put into Slot 2 in Set 3 because h1 played in Slot 1 in Set 1
+    const set3Slot2Options = allSelects[11].querySelectorAll('option');
+    const h1InSet3Slot2 = Array.from(set3Slot2Options).find((opt) => opt.value === 'h1');
+    expect(h1InSet3Slot2).toBeDefined();
+    expect(h1InSet3Slot2).toBeDisabled();
+    expect(h1InSet3Slot2?.textContent).toContain('cannot change order');
+
+    // Now select h1 back into Slot 1 in Set 3
+    fireEvent.change(allSelects[10], { target: { value: 'h1' } });
+
+    // Confirm walkover
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Walkover/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(handleConfirm).toHaveBeenCalledTimes(1);
+    });
+
+    const updatedFixture: Fixture = handleConfirm.mock.calls[0][0];
+    // Set 1: h1 played in slot 1
+    expect(updatedFixture.lineups.set1.home[0]).toBe('h1');
+    // Set 2: h6 subbed in for slot 1
+    expect(updatedFixture.lineups.set2.home[0]).toBe('h6');
+    // Set 3: h1 returned to slot 1
+    expect(updatedFixture.lineups.set3.home[0]).toBe('h1');
+  });
 });

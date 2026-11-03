@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import {
   Fixture,
+  MatchLineups,
   Player,
   SlotPlayerId,
   Team,
@@ -17,6 +18,8 @@ import {
 import {
   awardWalkoverToFixture,
   formatMatchDate,
+  getEligiblePlayersForSlot,
+  isKnockoutFixture,
 } from '../utils/leagueEngine';
 
 export interface AwardWalkoverModalProps {
@@ -67,7 +70,9 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [players, winningTeam]);
 
-  // Derive Set 2 and Set 3 from custom overrides or auto-fill from Set 1
+  const isKnockout = isKnockoutFixture(fixture);
+
+  // Derive Set 2 and Set 3 from custom overrides or auto-fill from Set 1 / Set 2
   const effectiveSet2 = useMemo(() => {
     if (set2Custom) return set2Custom;
     return [...set1Slots] as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
@@ -75,8 +80,16 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
 
   const effectiveSet3 = useMemo(() => {
     if (set3Custom) return set3Custom;
-    return [...set1Slots] as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
-  }, [set3Custom, set1Slots]);
+    return effectiveSet2;
+  }, [set3Custom, effectiveSet2]);
+
+  const tempLineups = useMemo((): MatchLineups => {
+    return {
+      set1: { home: set1Slots, away: set1Slots },
+      set2: { home: effectiveSet2, away: effectiveSet2 },
+      set3: { home: effectiveSet3, away: effectiveSet3 },
+    };
+  }, [set1Slots, effectiveSet2, effectiveSet3]);
 
   // When admin updates a slot in Set 1:
   // If custom sets are not explicitly detached, it auto-fills the corresponding slot in Set 2 and Set 3
@@ -97,47 +110,37 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
 
     if (set2Custom) {
       const next2 = [...set2Custom] as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
-      next2[slotIdx] = val;
+      if (set2Custom[slotIdx] === set1Slots[slotIdx]) {
+        next2[slotIdx] = val;
+      }
       setSet2Custom(next2);
     }
 
     if (set3Custom) {
       const next3 = [...set3Custom] as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId];
-      next3[slotIdx] = val;
+      if (set3Custom[slotIdx] === set1Slots[slotIdx]) {
+        next3[slotIdx] = val;
+      }
       setSet3Custom(next3);
     }
   };
 
   const handleSet2Change = (slotIdx: number, playerId: string) => {
     const val: SlotPlayerId = playerId === '' ? null : playerId;
-    const base = set2Custom ? [...set2Custom] : [...set1Slots];
-
-    // Disallow selecting the same player twice in Set 2
-    if (val) {
-      for (let i = 0; i < 5; i++) {
-        if (i !== slotIdx && base[i] === val) {
-          base[i] = null;
-        }
-      }
-    }
+    const base: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId] =
+      set2Custom ? [...set2Custom] : [...set1Slots];
     base[slotIdx] = val;
-    setSet2Custom(base as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId]);
+    const isIdenticalToSet1 = base.every((id, idx) => id === set1Slots[idx]);
+    setSet2Custom(isIdenticalToSet1 ? null : base);
   };
 
   const handleSet3Change = (slotIdx: number, playerId: string) => {
     const val: SlotPlayerId = playerId === '' ? null : playerId;
-    const base = set3Custom ? [...set3Custom] : [...set1Slots];
-
-    // Disallow selecting the same player twice in Set 3
-    if (val) {
-      for (let i = 0; i < 5; i++) {
-        if (i !== slotIdx && base[i] === val) {
-          base[i] = null;
-        }
-      }
-    }
+    const base: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId] =
+      set3Custom ? [...set3Custom] : [...effectiveSet2];
     base[slotIdx] = val;
-    setSet3Custom(base as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId]);
+    const isIdenticalToSet2 = base.every((id, idx) => id === effectiveSet2[idx]);
+    setSet3Custom(isIdenticalToSet2 ? null : base);
   };
 
   // When changing winning team, reset selected slots
@@ -257,9 +260,17 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
               <span className="text-sm font-bold text-white">
                 {homeTeam?.name}
               </span>
-              <span className="text-[11px] text-emerald-300">
-                Awarded 15–0 Win • Maximum 7 Points
-              </span>
+              {winningSide === 'home' ? (
+                <span className="text-[11px] text-emerald-300">
+                  {isKnockout
+                    ? 'Awarded 15–0 Win • Match Win'
+                    : 'Awarded 15–0 Win • Maximum 7 Points'}
+                </span>
+              ) : (
+                <span className="text-[11px] text-slate-500">
+                  Defaulting Team • 0 Points
+                </span>
+              )}
             </button>
 
             <button
@@ -282,9 +293,17 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
               <span className="text-sm font-bold text-white">
                 {awayTeam?.name}
               </span>
-              <span className="text-[11px] text-emerald-300">
-                Awarded 15–0 Win • Maximum 7 Points
-              </span>
+              {winningSide === 'away' ? (
+                <span className="text-[11px] text-emerald-300">
+                  {isKnockout
+                    ? 'Awarded 15–0 Win • Match Win'
+                    : 'Awarded 15–0 Win • Maximum 7 Points'}
+                </span>
+              ) : (
+                <span className="text-[11px] text-slate-500">
+                  Defaulting Team • 0 Points
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -390,8 +409,13 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
           <div className="pt-1">
             <button
               type="button"
+              disabled={!has5UniqueSet1Players}
               onClick={() => setShowAdvancedSets((prev) => !prev)}
-              className="inline-flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-semibold transition"
+              className={`inline-flex items-center gap-1 text-xs font-semibold transition ${
+                !has5UniqueSet1Players
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'text-amber-400 hover:text-amber-300'
+              }`}
             >
               {showAdvancedSets ? (
                 <ChevronUp className="w-3.5 h-3.5" />
@@ -401,91 +425,143 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
               <span>
                 {showAdvancedSets
                   ? 'Hide Custom Sets 2 & 3'
-                  : 'Customise Sets 2 & 3 (Optional substitutions)'}
+                  : has5UniqueSet1Players
+                  ? 'Customise Sets 2 & 3 (Substitutions)'
+                  : 'Customise Sets 2 & 3 (Select 5 Set 1 players first)'}
               </span>
             </button>
 
-            {showAdvancedSets && (
+            {showAdvancedSets && has5UniqueSet1Players && (
               <div className="mt-2.5 space-y-3 p-3 rounded-xl bg-slate-950 border border-slate-800 animate-in fade-in duration-150">
                 {/* Set 2 */}
                 <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold text-slate-300">
-                    Set 2 (Frames 6–10)
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-300">
+                      Set 2 (Frames 6–10) • Substitutions
+                    </span>
+                    {set2Custom && (
+                      <button
+                        type="button"
+                        onClick={() => setSet2Custom(null)}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 underline font-medium"
+                      >
+                        Reset to Set 1 Lineup
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                    {[0, 1, 2, 3, 4].map((slotIdx) => (
-                      <div key={slotIdx} className="space-y-0.5">
-                        <label className="block text-[9px] text-slate-400 uppercase">
-                          Frame {slotIdx + 6}
-                        </label>
-                        <select
-                          value={effectiveSet2[slotIdx] ?? ''}
-                          onChange={(e) => handleSet2Change(slotIdx, e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500 transition cursor-pointer"
-                        >
-                          <option value="" className="text-slate-500">
-                            Select...
-                          </option>
-                          {winningSquad.map((player) => {
-                            const otherSlotIdx = effectiveSet2.findIndex(
-                              (id, idx) => idx !== slotIdx && id === player.id
-                            );
-                            const isAlreadySelected = otherSlotIdx !== -1;
-                            return (
+                    {[0, 1, 2, 3, 4].map((slotIdx) => {
+                      const currentVal = effectiveSet2[slotIdx];
+                      const isSubstituted = currentVal !== set1Slots[slotIdx];
+                      const eligible = getEligiblePlayersForSlot(
+                        winningSquad,
+                        tempLineups,
+                        2,
+                        'home',
+                        slotIdx
+                      );
+
+                      return (
+                        <div key={slotIdx} className="space-y-0.5">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-[9px] text-slate-400 uppercase">
+                              Frame {slotIdx + 6}
+                            </label>
+                            {isSubstituted && (
+                              <span className="text-[8px] font-bold px-1 rounded bg-amber-500/20 text-amber-300">
+                                Sub
+                              </span>
+                            )}
+                          </div>
+                          <select
+                            value={currentVal ?? ''}
+                            onChange={(e) => handleSet2Change(slotIdx, e.target.value)}
+                            className={`w-full bg-slate-900 border rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500 transition cursor-pointer ${
+                              isSubstituted
+                                ? 'border-amber-500/50 ring-1 ring-amber-500/20'
+                                : 'border-slate-800'
+                            }`}
+                          >
+                            {eligible.map(({ player, disabledReason }) => (
                               <option
                                 key={player.id}
                                 value={player.id}
-                                disabled={isAlreadySelected}
+                                disabled={Boolean(disabledReason)}
                               >
                                 {player.name}
-                                {isAlreadySelected ? ` (Frame ${otherSlotIdx + 6})` : ''}
+                                {disabledReason ? ` (${disabledReason})` : ''}
                               </option>
-                            );
-                          })}
-                        </select>
-                      </div>
-                    ))}
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Set 3 */}
                 <div className="space-y-1.5 pt-2 border-t border-slate-800">
-                  <span className="text-[11px] font-bold text-slate-300">
-                    Set 3 (Frames 11–15)
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-300">
+                      Set 3 (Frames 11–15) • Substitutions
+                    </span>
+                    {set3Custom && (
+                      <button
+                        type="button"
+                        onClick={() => setSet3Custom(null)}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 underline font-medium"
+                      >
+                        Reset to Set 2 Lineup
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                    {[0, 1, 2, 3, 4].map((slotIdx) => (
-                      <div key={slotIdx} className="space-y-0.5">
-                        <label className="block text-[9px] text-slate-400 uppercase">
-                          Frame {slotIdx + 11}
-                        </label>
-                        <select
-                          value={effectiveSet3[slotIdx] ?? ''}
-                          onChange={(e) => handleSet3Change(slotIdx, e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500 transition cursor-pointer"
-                        >
-                          <option value="" className="text-slate-500">
-                            Select...
-                          </option>
-                          {winningSquad.map((player) => {
-                            const otherSlotIdx = effectiveSet3.findIndex(
-                              (id, idx) => idx !== slotIdx && id === player.id
-                            );
-                            const isAlreadySelected = otherSlotIdx !== -1;
-                            return (
+                    {[0, 1, 2, 3, 4].map((slotIdx) => {
+                      const currentVal = effectiveSet3[slotIdx];
+                      const isSubstituted = currentVal !== effectiveSet2[slotIdx];
+                      const eligible = getEligiblePlayersForSlot(
+                        winningSquad,
+                        tempLineups,
+                        3,
+                        'home',
+                        slotIdx
+                      );
+
+                      return (
+                        <div key={slotIdx} className="space-y-0.5">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-[9px] text-slate-400 uppercase">
+                              Frame {slotIdx + 11}
+                            </label>
+                            {isSubstituted && (
+                              <span className="text-[8px] font-bold px-1 rounded bg-amber-500/20 text-amber-300">
+                                Sub
+                              </span>
+                            )}
+                          </div>
+                          <select
+                            value={currentVal ?? ''}
+                            onChange={(e) => handleSet3Change(slotIdx, e.target.value)}
+                            className={`w-full bg-slate-900 border rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500 transition cursor-pointer ${
+                              isSubstituted
+                                ? 'border-amber-500/50 ring-1 ring-amber-500/20'
+                                : 'border-slate-800'
+                            }`}
+                          >
+                            {eligible.map(({ player, disabledReason }) => (
                               <option
                                 key={player.id}
                                 value={player.id}
-                                disabled={isAlreadySelected}
+                                disabled={Boolean(disabledReason)}
                               >
                                 {player.name}
-                                {isAlreadySelected ? ` (Frame ${otherSlotIdx + 11})` : ''}
+                                {disabledReason ? ` (${disabledReason})` : ''}
                               </option>
-                            );
-                          })}
-                        </select>
-                      </div>
-                    ))}
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

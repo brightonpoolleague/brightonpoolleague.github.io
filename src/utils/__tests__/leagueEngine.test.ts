@@ -1272,4 +1272,46 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
       awardWalkoverToFixture(schedFix, 'home', ['p1', 'p1', 'p2', 'p3', 'p4'])
     ).toThrow(/must be distinct squad players/i);
   });
+
+  it('rejects awarding walkover if substitutions in Set 2 or Set 3 change player order', () => {
+    const schedFix = makeFixture({ id: 'f-sched', homeTeamId: 'team-h', awayTeamId: 'team-a', status: 'scheduled' });
+
+    // Set 1: p1, p2, p3, p4, p5
+    // Set 2 has p2 in slot 1 and p1 in slot 2 (shuffled order!)
+    const invalidSet2 = [
+      'p1', 'p2', 'p3', 'p4', 'p5',
+      'p2', 'p1', 'p3', 'p4', 'p5',
+      'p1', 'p2', 'p3', 'p4', 'p5',
+    ];
+
+    expect(() =>
+      awardWalkoverToFixture(schedFix, 'home', invalidSet2)
+    ).toThrow(/cannot change positions/i);
+
+    // Set 3 has p1 in slot 2 (p1 played in slot 1 in Set 1)
+    const invalidSet3 = [
+      'p1', 'p2', 'p3', 'p4', 'p5',
+      'p1', 'p2', 'p3', 'p4', 'p5',
+      'p6', 'p1', 'p3', 'p4', 'p5',
+    ];
+
+    expect(() =>
+      awardWalkoverToFixture(schedFix, 'home', invalidSet3)
+    ).toThrow(/cannot change positions/i);
+  });
+
+  it('syncDefaultSubsequentSets preserves the walkover property', () => {
+    const lineups = createEmptyLineups();
+    lineups.set1.home = ['p1', 'p2', 'p3', 'p4', 'p5'];
+    lineups.walkover = {
+      awardedTo: 'home',
+      defaultingTeamId: 'team-away',
+      awardedAt: new Date().toISOString(),
+    };
+
+    const synced = syncDefaultSubsequentSets(lineups);
+    expect(synced.walkover).toBeDefined();
+    expect(synced.walkover?.awardedTo).toBe('home');
+    expect(synced.walkover?.defaultingTeamId).toBe('team-away');
+  });
 });

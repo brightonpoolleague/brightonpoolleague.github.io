@@ -580,9 +580,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         }
       }
       all++;
-      if (f.status === 'live') {
+      if (f.status === 'live' && !isWalkoverFixture(f)) {
         live++;
-      } else if (f.status === 'approved' || f.status === 'submitted') {
+      } else if (f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) {
         completed++;
       } else {
         const tf = getMatchTimeframe(f.matchDate, f.status);
@@ -609,19 +609,19 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       }
       if (fixtureTimeframeFilter !== 'ALL') {
         if (fixtureTimeframeFilter === 'live') {
-          if (f.status !== 'live') return false;
+          if (f.status !== 'live' || isWalkoverFixture(f)) return false;
         } else if (fixtureTimeframeFilter === 'completed') {
-          if (f.status !== 'approved' && f.status !== 'submitted') return false;
+          if (f.status !== 'approved' && f.status !== 'submitted' && !isWalkoverFixture(f)) return false;
         } else if (fixtureTimeframeFilter === 'today') {
-          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'today') return false;
         } else if (fixtureTimeframeFilter === 'upcoming') {
-          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'upcoming') return false;
         } else if (fixtureTimeframeFilter === 'past') {
-          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted') return false;
+          if (f.status === 'live' || f.status === 'approved' || f.status === 'submitted' || isWalkoverFixture(f)) return false;
           const tf = getMatchTimeframe(f.matchDate, f.status);
           if (tf !== 'past') return false;
         }
@@ -2239,7 +2239,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                     : 'First to 8'
                                   : `${score.completedFrames}/15`})
                               </span>
-                            ) : fix.status === 'approved' ? (
+                            ) : fix.status === 'approved' || isWalkoverFixture(fix) ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                                 <CheckCircle2 className="w-2.5 h-2.5" />
                                 {isWalkoverFixture(fix) ? 'Walkover' : 'Approved'}
@@ -2322,7 +2322,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <PlayCircle className="w-3.5 h-3.5 shrink-0" />
                             <span>Scorecard</span>
                           </button>
-                          {fix.status === 'scheduled' && (
+                          {fix.status === 'scheduled' && !isWalkoverFixture(fix) && (
                             <button
                               type="button"
                               onClick={() => setWalkoverFixture(fix)}
