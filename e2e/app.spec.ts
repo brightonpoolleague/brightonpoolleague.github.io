@@ -171,6 +171,10 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       await frameCard.locator('button').first().click();
     }
 
+    // Verify auto-scroll brings Next: Set 2 navigation into view
+    const nextSet2Btn = page.getByRole('button', { name: /Next: Set 2/i });
+    await expect(nextSet2Btn).toBeInViewport();
+
     // Toggle Dish / Reverse Dish on the first frame
     const dishBtn = page
       .getByRole('button', { name: /Dish \/ Reverse Dish/i })
@@ -208,6 +212,9 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     // 6. Verify completion prompt appears at bottom once all 15 frames are scored
     await expect(
       page.getByText(/Match Complete — Review Scorecard/i)
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Please review the full result scorecard before captains sign off/i)
     ).toBeVisible();
 
     // 7. Sign as Home Captain, then test Unsign / Re-sign flow
@@ -321,7 +328,20 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await page.getByRole('button', { name: 'Transfer Player' }).click();
     await expect(page.getByText('Ronnie O-Renamed')).toBeHidden();
 
-    // 3d. Verify Rule 4b restriction: Trying to transfer a player with appearances in the second half of the season
+    // 3d. Verify Ronnie O-Renamed now appears on the target team's squad roster
+    const teamSearchInput = page.getByPlaceholder(
+      /Search by team, venue, table, captain, player or street/i
+    );
+    await teamSearchInput.fill('Ronnie O-Renamed');
+    await expect(
+      page
+        .locator('div.inline-flex')
+        .filter({ has: page.getByText('Ronnie O-Renamed', { exact: true }) })
+        .first()
+    ).toBeVisible();
+    await teamSearchInput.fill('');
+
+    // 3e. Verify Rule 4b restriction: Trying to transfer a player with appearances in the second half of the season
     const playerWithAppsChip = page
       .locator('div.inline-flex')
       .filter({ hasText: /\(\d+ apps?\)/ })
@@ -436,6 +456,31 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       .filter({ hasText: /Award Walkover \(Rule 8\)/i });
     await expect(walkoverModal).toBeVisible();
 
+    // Verify non-offending vs defaulting team card summaries
+    await expect(
+      walkoverModal.getByText(/Awarded 15–0 Win • Match Win/i)
+    ).toBeVisible();
+    await expect(
+      walkoverModal.getByText(/Defaulting Team • 0 Points/i)
+    ).toBeVisible();
+
+    // Toggle winning side to Away and verify text updates
+    await walkoverModal
+      .locator('button')
+      .filter({ hasText: /Away Team/i })
+      .first()
+      .click();
+    await expect(
+      walkoverModal.getByText(/Awarded 15–0 Win • Match Win/i)
+    ).toBeVisible();
+
+    // Toggle back to Home team
+    await walkoverModal
+      .locator('button')
+      .filter({ hasText: /Home Team/i })
+      .first()
+      .click();
+
     // Select the 5 starting players in Set 1 (which auto-fills Sets 2 and 3)
     const slotSelects = walkoverModal.locator('select');
     const selectCount = await slotSelects.count();
@@ -459,14 +504,61 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       if (val) await sel.selectOption(val);
     }
 
+    // Verify Custom Sets 2 & 3 accordion can be expanded and collapsed
+    const customSetsToggle = walkoverModal.getByRole('button', {
+      name: /Customise Sets 2 & 3/i,
+    });
+    await expect(customSetsToggle).toBeVisible();
+    await customSetsToggle.click();
+    await expect(
+      walkoverModal.getByText(/Set 2 \(Frames 6.*10\) • Substitutions/i)
+    ).toBeVisible();
+    await expect(
+      walkoverModal.getByText(/Set 3 \(Frames 11.*15\) • Substitutions/i)
+    ).toBeVisible();
+    await walkoverModal
+      .getByRole('button', { name: /Hide Custom Sets 2 & 3/i })
+      .click();
+
     // Confirm walkover now enabled with 5 distinct players
     await expect(confirmWalkoverBtn).toBeEnabled();
     await confirmWalkoverBtn.click();
 
     // Verify Walkover badge is visible on the awarded fixture
+    await expect(page.getByText('Walkover', { exact: true }).first()).toBeVisible();
+
+    // Verify timeframe filter isolation: must show in Completed and NOT in Upcoming
+    await page.getByRole('button', { name: /Completed/i }).click();
+    await expect(page.getByText('Walkover', { exact: true }).first()).toBeVisible();
+
+    await page.getByRole('button', { name: /Upcoming/i }).click();
+    await expect(page.getByText(/No fixtures match/i)).toBeVisible();
+    await expect(page.getByText('Walkover', { exact: true })).toBeHidden();
+
+    await page.getByRole('button', { name: /^All\b/i }).nth(1).click();
+    await expect(page.getByText('Walkover', { exact: true }).first()).toBeVisible();
+
+    // Verify Reopen lifecycle on Walkover fixture in Scorecards tab
+    await page
+      .getByRole('button', { name: /Scorecards/i })
+      .first()
+      .click();
+    await page.getByRole('button', { name: /Approved/i }).first().click();
+    const scorecardSearchInput = page.getByPlaceholder(
+      /Search by team, division, status, date or player/i
+    );
+    await scorecardSearchInput.fill('E2E Walkover Cup');
+    const reopenWalkoverBtn = page.getByRole('button', { name: 'Reopen' }).first();
+    await expect(reopenWalkoverBtn).toBeVisible();
+    await reopenWalkoverBtn.click();
+
+    // Switch back to Fixtures tab: verify walkover cleared and fixture returned to live scorecard state
+    await page.getByRole('button', { name: /^Fixtures\b/i }).first().click();
+    await adminFixtureSearch.fill('E2E Walkover Cup');
     await expect(
-      page.getByText('Walkover').first()
+      page.getByRole('button', { name: 'Scorecard' }).first()
     ).toBeVisible();
+    await expect(page.getByText('Walkover', { exact: true })).toBeHidden();
 
     // Clean up temporary fixture
     await page.getByTitle('Delete Fixture').first().click();
@@ -854,6 +946,29 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(
       page.getByRole('heading', { name: /All Divisions Dish Leaderboard/i })
     ).toBeVisible();
+
+    // Verify Dish Leaderboard table structure: dishes-only focus, zero dishes excluded
+    await expect(page.getByRole('columnheader', { name: 'Dishes' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Win %' })).toBeHidden();
+    await expect(page.getByRole('columnheader', { name: 'P', exact: true })).toBeHidden();
+
+    // Verify all rows have at least 1 dish (zero-dish players excluded)
+    const dishRows = page.locator('table tbody tr');
+    const rowCount = await dishRows.count();
+    expect(rowCount).toBeGreaterThan(0);
+    for (let i = 0; i < Math.min(rowCount, 5); i++) {
+      const dishCountCell = dishRows.nth(i).locator('td').last();
+      const countText = await dishCountCell.textContent();
+      expect(Number(countText?.trim())).toBeGreaterThanOrEqual(1);
+    }
+
+    // Switch back to Player Averages and verify standard stat columns return
+    await page.getByRole('button', { name: 'Player Averages' }).click();
+    await page.getByRole('button', { name: 'Division 1' }).click();
+    await expect(page.getByRole('columnheader', { name: 'Win %' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'All Divisions' })).toBeHidden();
+    await page.getByRole('button', { name: 'Dish Leaderboard' }).click();
+    await page.getByRole('button', { name: 'All Divisions' }).click();
 
     // Search player stats
     const statsSearch = page.getByPlaceholder('Search player or team...');
