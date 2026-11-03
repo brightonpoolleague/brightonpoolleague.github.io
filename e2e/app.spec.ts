@@ -597,9 +597,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByRole('heading', { name: /Fold King & Queen A/i })).toBeVisible();
     await expect(page.getByText(/League Rule 7 • Fold Team/i)).toBeVisible();
     await expect(page.getByText(/Fixtures Impact Preview/i)).toBeVisible();
-
-    const reasonInput = page.getByPlaceholder(/Venue closure, player shortage/i);
-    await reasonInput.fill('Withdrawn by committee for testing');
+    await expect(page.getByRole('button', { name: /Date Picker/i })).toBeVisible();
 
     const confirmFoldBtn = page.getByRole('button', { name: /Confirm Fold & Expunge/i });
     await confirmFoldBtn.click();

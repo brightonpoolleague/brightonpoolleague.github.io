@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Calendar, Info, X } from 'lucide-react';
 import { Fixture, Team } from '../types/league';
 import {
@@ -12,7 +12,7 @@ interface FoldTeamModalProps {
   fixtures: Fixture[];
   teams: Team[];
   onClose: () => void;
-  onConfirmFold: (teamId: string, foldDate: string, reason?: string) => Promise<void>;
+  onConfirmFold: (teamId: string, foldDate: string) => Promise<void>;
 }
 
 export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
@@ -24,8 +24,8 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
 }) => {
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const [foldDate, setFoldDate] = useState<string>(todayStr);
-  const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const teamsById = useMemo(() => {
     const map = new Map<string, Team>();
@@ -64,33 +64,41 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
     if (!foldDate) return;
     setIsSubmitting(true);
     try {
-      await onConfirmFold(team.id, foldDate, reason.trim() || undefined);
+      await onConfirmFold(team.id, foldDate);
       onClose();
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleOpenPicker = () => {
+    try {
+      dateInputRef.current?.showPicker?.();
+    } catch {
+      dateInputRef.current?.focus();
+    }
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-5 my-8"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-3.5 my-auto max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
-              <AlertTriangle className="w-5 h-5" />
+        <div className="flex items-start justify-between gap-3 shrink-0">
+          <div className="flex items-start gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+              <AlertTriangle className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
                 League Rule 7 • Fold Team
               </span>
-              <h2 className="text-lg font-bold text-white leading-snug">
+              <h2 className="text-base sm:text-lg font-bold text-white leading-snug">
                 Fold {team.name}
               </h2>
               <p className="text-xs text-slate-400">
@@ -101,7 +109,7 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -109,21 +117,21 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
 
         {/* Rule 7 Explanation Banner */}
         <div
-          className={`p-3.5 rounded-xl border text-xs space-y-1.5 ${
+          className={`p-2.5 sm:p-3 rounded-xl border text-xs space-y-1 shrink-0 ${
             isFirstHalf
               ? 'bg-amber-950/40 border-amber-500/40 text-amber-200'
               : 'bg-sky-950/40 border-sky-500/40 text-sky-200'
           }`}
         >
           <div className="flex items-center gap-1.5 font-bold">
-            <Info className="w-4 h-4 shrink-0" />
+            <Info className="w-3.5 h-3.5 shrink-0" />
             <span>
               {isFirstHalf
                 ? 'Rule 7a Applies: First Half Fold'
                 : 'Rule 7b Applies: Second Half Fold'}
             </span>
           </div>
-          <p className="leading-relaxed">
+          <p className="leading-relaxed text-[11px] sm:text-xs">
             {isFirstHalf ? (
               <>
                 Because this team folded in the first half of the season (on or before{' '}
@@ -147,48 +155,71 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
         </div>
 
         {/* Fold Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 space-y-3">
+          {/* Date Picker Input */}
+          <div className="shrink-0">
             <label htmlFor="fold-date-input" className="block text-xs font-bold text-slate-300 mb-1">
               Date Team Folded / Withdrew
             </label>
             <div className="relative">
-              <Calendar className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <button
+                type="button"
+                onClick={handleOpenPicker}
+                aria-label="Calendar Icon"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-emerald-400 transition"
+                title="Calendar Icon"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
               <input
+                ref={dateInputRef}
                 id="fold-date-input"
                 type="date"
                 required
                 value={foldDate}
                 onChange={(e) => setFoldDate(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 transition"
+                onClick={handleOpenPicker}
+                className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-28 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
               />
+              <button
+                type="button"
+                onClick={handleOpenPicker}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-[11px] font-semibold transition flex items-center gap-1 shadow-sm"
+                title="Open date picker calendar"
+              >
+                <Calendar className="w-3 h-3 text-emerald-400" />
+                <span>Date Picker</span>
+              </button>
             </div>
-            {halfwayDate && (
-              <p className="text-[11px] text-slate-500 mt-1">
-                Division halfway point:{' '}
-                <strong className="text-slate-400">
-                  {formatMatchDate(halfwayDate)}
-                </strong>
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1">
-              Reason for Withdrawal (Optional)
-            </label>
-            <input
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Venue closure, player shortage, withdrawn by captain"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition"
-            />
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-1 text-[11px]">
+              <span className="text-emerald-400 font-semibold truncate">
+                Selected: {formatMatchDate(foldDate)}
+              </span>
+              <div className="flex items-center gap-1 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setFoldDate(todayStr)}
+                  className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                >
+                  Today
+                </button>
+                {halfwayDate && (
+                  <button
+                    type="button"
+                    onClick={() => setFoldDate(halfwayDate)}
+                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                    title={`Set date to division halfway date (${formatMatchDate(halfwayDate)})`}
+                  >
+                    Halfway Date
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Fixtures Impact Preview */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
+          <div className="flex-1 flex flex-col min-h-0 space-y-1.5">
+            <div className="flex items-center justify-between text-xs shrink-0">
               <span className="font-bold text-slate-300">
                 Fixtures Impact Preview ({teamFixtures.length})
               </span>
@@ -197,7 +228,7 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
               </span>
             </div>
 
-            <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 border border-slate-800 rounded-xl p-2 bg-slate-950/60">
+            <div className="flex-1 max-h-36 sm:max-h-40 overflow-y-auto space-y-1.5 pr-1 border border-slate-800 rounded-xl p-2 bg-slate-950/60">
               {teamFixtures.length === 0 ? (
                 <p className="text-xs text-slate-500 text-center py-2">
                   No fixtures scheduled for this team.
@@ -218,7 +249,8 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                     >
                       <div className="min-w-0">
                         <div className="font-semibold text-white truncate">
-                          {isHome ? 'vs' : '@'} {opponent?.name || 'Unknown'}
+                          {isHome ? 'Home vs ' : 'Away vs '}
+                          {opponent?.name || 'Unknown'}
                         </div>
                         <div className="text-[11px] text-slate-400">
                           {formatMatchDate(fix.matchDate)} • {fix.status}
@@ -245,19 +277,19 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800 shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-amber-950/30"
+              className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-amber-950/30"
             >
               <AlertTriangle className="w-3.5 h-3.5" />
               {isSubmitting ? 'Folding Team...' : 'Confirm Fold & Expunge'}

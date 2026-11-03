@@ -83,8 +83,9 @@ describe('FoldTeamModal Component', () => {
     expect(screen.getByText('Fold Alpha Hawks')).toBeInTheDocument();
     expect(screen.getByText(/Premier League • Hawks Nest/)).toBeInTheDocument();
     expect(screen.getByText(/Fixtures Impact Preview \(2\)/)).toBeInTheDocument();
-    expect(screen.getByText('vs Beta Bears')).toBeInTheDocument();
-    expect(screen.getByText('@ Beta Bears')).toBeInTheDocument();
+    expect(screen.getByText('Home vs Beta Bears')).toBeInTheDocument();
+    expect(screen.getByText('Away vs Beta Bears')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Date Picker/i })).toBeInTheDocument();
   });
 
   it('dynamically switches explanation between Rule 7a (First Half) and Rule 7b (Second Half)', () => {
@@ -121,7 +122,7 @@ describe('FoldTeamModal Component', () => {
     ).toBeInTheDocument();
   });
 
-  it('submits fold details with optional reason and closes modal', async () => {
+  it('submits fold date and closes modal', async () => {
     const handleClose = vi.fn();
     const handleConfirm = vi.fn().mockResolvedValue(undefined);
 
@@ -138,17 +139,13 @@ describe('FoldTeamModal Component', () => {
     const dateInput = screen.getByLabelText(/Date Team Folded \/ Withdrew/);
     fireEvent.change(dateInput, { target: { value: '2026-10-25' } });
 
-    const reasonInput = screen.getByPlaceholderText(/Venue closure/i);
-    fireEvent.change(reasonInput, { target: { value: 'Venue closed indefinitely' } });
-
     const submitBtn = screen.getByRole('button', { name: /Confirm Fold & Expunge/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(handleConfirm).toHaveBeenCalledWith(
         'team-a',
-        '2026-10-25',
-        'Venue closed indefinitely'
+        '2026-10-25'
       );
       expect(handleClose).toHaveBeenCalled();
     });

@@ -945,7 +945,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           <div className="font-bold">Team Folded • Results Expunged (Rule 7)</div>
                           <div className="text-[11px] text-amber-300/80">
                             Folded on {team.foldedDate ? formatMatchDate(team.foldedDate) : 'Unknown date'}
-                            {team.foldedReason ? ` • ${team.foldedReason}` : ''}
                           </div>
                         </div>
                       </div>
