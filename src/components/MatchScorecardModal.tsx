@@ -1583,7 +1583,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {otherTeamName} captain requested to change their Set 1 lineup
             </strong>
             <span className="text-slate-300 text-xs">
-              Lineups are locked once confirmed. Click &ldquo;Allow Lineup Changes&rdquo; to unlock both teams for editing.
+              Lineups are locked once confirmed. Press &ldquo;Allow Lineup Changes&rdquo; to unlock both teams for editing.
             </span>
           </div>
         </div>
@@ -1636,7 +1636,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {targetTeamName} captain requested to change their Set {activeSet} substitutions
             </strong>
             <span className="text-slate-300 text-xs">
-              Substitutions are locked once confirmed. Click &ldquo;Allow Substitution Changes&rdquo; to unlock their substitutions for editing.
+              Substitutions are locked once confirmed. Press &ldquo;Allow Substitution Changes&rdquo; to unlock their substitutions for editing.
             </span>
           </div>
         </div>
@@ -1795,6 +1795,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Live Scorecard</span>
+              <span className="sm:hidden text-[11px]">Live</span>
             </button>
             <button
               type="button"
@@ -1807,6 +1808,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Result Scorecard</span>
+              <span className="sm:hidden text-[11px]">Result</span>
             </button>
           </div>
 
@@ -2585,8 +2587,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     ? 'Scorecard is in read-only mode'
                                     : 'Lineups must be confirmed first'
                                   : frame.dish
-                                  ? 'Click to remove dish'
-                                  : `Click if ${winnerName} cleared the table from the break (Dish / Reverse Dish)`
+                                  ? 'Press to remove dish'
+                                  : `Press if ${winnerName} cleared the table from the break (Dish / Reverse Dish)`
                               }
                             >
                               <Sparkles
@@ -2822,7 +2824,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                                     ? 'bg-emerald-600 text-white border border-emerald-500 shadow-sm'
                                     : 'text-transparent hover:text-slate-400 hover:bg-slate-800/80 min-w-4 min-h-4'
                                 }`}
-                                title={frame.dish ? 'Click to remove dish' : 'Click to record dish'}
+                                title={frame.dish ? 'Press to remove dish' : 'Press to record dish'}
                               >
                                 {frame.dish ? (
                                   <>
@@ -2916,53 +2918,75 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {showSignOff && (
         <div className="bg-slate-900/95 border-t border-slate-800 shadow-2xl px-3 sm:px-6 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] shrink-0 shadow-md">
           <div className="max-w-4xl mx-auto space-y-2">
-            {/* Prominent Match Completion Prompt (appears when all 15 frames are complete, before submission) */}
+            {/* Prominent Match Completion Prompt (appears when match is complete, before submission) */}
             {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-amber-500/20 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center justify-center gap-3 text-center shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                  <PenLine className="w-4 h-4 text-emerald-300" />
-                </div>
-                <div className="space-y-0.5 text-left sm:text-center">
-                  <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5 justify-start sm:justify-center">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>
-                      {isSignedByBoth
-                        ? 'Scorecard Signed — Ready to Submit'
-                        : 'Please Sign & Submit the Scorecard'}
-                    </span>
+              viewMode === 'mobile' ? (
+                /* Mobile Live Scoring view: Guide captains to review the result scorecard before signing */
+                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 shadow-lg ring-1 ring-emerald-500/30 space-y-2.5 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
+                    </div>
+                    <div className="space-y-0.5 flex-1 min-w-0 text-left">
+                      <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Match Complete — Review Scorecard</span>
+                      </div>
+                      <div className="text-[11px] text-slate-300">
+                        Please review the full result scorecard before captains sign off.
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-300">
-                    {isSignedByBoth
-                      ? 'Both captains have signed. Click Finish Match below to submit the official result.'
-                      : 'Both captains must sign below to confirm the result before finishing the match.'}
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {/* Review Scorecard / Make Changes Toggle Button (only before submission) */}
-            {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setViewMode(viewMode === 'mobile' ? 'paper' : 'mobile')
-                  }
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition shadow-sm"
-                >
-                  {viewMode === 'mobile' ? (
-                    <>
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Review Scorecard</span>
-                    </>
-                  ) : (
-                    <>
-                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Make Changes</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('paper')}
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition shadow-sm cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Review Result Scorecard</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+                </div>
+              ) : (
+                /* Paper Result Scorecard view: Captain signatures prompt with Return to Live Scoring button */
+                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 shadow-lg ring-1 ring-emerald-500/30 space-y-2.5 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                      {isSignedByBoth ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                      ) : (
+                        <PenLine className="w-4 h-4 text-emerald-300" />
+                      )}
+                    </div>
+                    <div className="space-y-0.5 flex-1 min-w-0 text-left">
+                      <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>
+                          {isSignedByBoth
+                            ? 'Scorecard Signed — Ready to Submit'
+                            : 'Confirm & Sign Scorecard'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-300">
+                        {isSignedByBoth
+                          ? 'Press Finish Match below to submit the official result.'
+                          : 'Both captains must sign below to confirm the result.'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('mobile')}
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition shadow-sm cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Return to Live Scoring</span>
+                  </button>
+                </div>
+              )
             )}
 
             {/* Dynamic Changes Locked Message */}
@@ -2974,22 +2998,43 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             )}
 
             {fixture.status === 'submitted' && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-500/40 rounded-xl py-1.5 px-3 text-center shadow-sm">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Match result submitted</span>
+              <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 shadow-lg ring-1 ring-emerald-500/30 space-y-2.5 animate-in fade-in duration-200">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div className="space-y-0.5 flex-1 min-w-0 text-left">
+                    <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>Match result submitted</span>
+                    </div>
+                    <div className="text-[11px] text-slate-300">
+                      Signed by both captains.
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-semibold bg-amber-500/10 border border-amber-500/30 rounded-lg py-1 px-2.5 text-center">
-                  <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+
+                <div className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold text-center shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse shrink-0" />
                   <span>Awaiting league admin approval</span>
                 </div>
               </div>
             )}
 
             {fixture.status === 'approved' && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/30 rounded-lg py-1 px-2.5 text-center">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Approved by league admin</span>
+              <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3 shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="space-y-0.5 text-left">
+                  <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span>Approved by league admin</span>
+                  </div>
+                  <div className="text-[11px] text-slate-300">
+                    Official match result confirmed.
+                  </div>
+                </div>
               </div>
             )}
 

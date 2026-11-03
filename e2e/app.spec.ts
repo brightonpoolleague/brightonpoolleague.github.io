@@ -207,7 +207,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
     // 6. Verify completion prompt appears at bottom once all 15 frames are scored
     await expect(
-      page.getByText(/Please Sign & Submit the Scorecard/i)
+      page.getByText(/Match Complete — Review Scorecard/i)
     ).toBeVisible();
 
     // 7. Sign as Home Captain, then test Unsign / Re-sign flow
@@ -556,7 +556,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       page.getByText('Not required (Decided at 8)').first()
     ).toBeVisible();
     await expect(
-      page.getByText(/Please Sign & Submit the Scorecard/i)
+      page.getByText(/Match Complete — Review Scorecard/i)
     ).toBeVisible();
 
     // 9. Close the scorecard modal and delete the temporary Knockout fixture
