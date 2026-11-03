@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LeagueProvider, useLeague } from '../LeagueContext';
+import { LeagueProvider, useLeague, STORAGE_KEYS } from '../LeagueContext';
 import { Fixture } from '../../types/league';
 import { ensureValidLineups } from '../../utils/leagueEngine';
 import * as supabaseModule from '../../lib/supabase';
@@ -28,7 +28,7 @@ describe('LeagueContext Offline Mutation Queue & Concurrency Sync', () => {
 
     // Seed captain session matching home team of test-fix-d1-w1-1
     localStorage.setItem(
-      'bpl_session_v2',
+      STORAGE_KEYS.SESSION,
       JSON.stringify({
         role: 'captain',
         teamId: 'team-kq-a',

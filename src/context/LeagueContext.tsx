@@ -41,14 +41,14 @@ import {
 } from '../utils/leagueEngine';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
-const STORAGE_KEYS = {
-  SEASONS: 'bpl_seasons_v3',
-  ADMIN_PIN: 'bpl_admin_pin_local_v5',
-  TEAMS: 'bpl_teams_local_v3',
-  PLAYERS: 'bpl_players_local_v3',
-  FIXTURES: 'bpl_fixtures_local_v3',
-  SESSION: 'bpl_session_v2',
-};
+export const STORAGE_KEYS = {
+  SEASONS: 'bpl_seasons',
+  ADMIN_PIN: 'bpl_admin_pin',
+  TEAMS: 'bpl_teams',
+  PLAYERS: 'bpl_players',
+  FIXTURES: 'bpl_fixtures',
+  SESSION: 'bpl_session',
+} as const;
 
 export function generateRandomPin(existingPins: string[] = []): string {
   const existingSet = new Set(
