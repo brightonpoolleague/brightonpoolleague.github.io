@@ -545,7 +545,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       dateSet.add(f.matchDate);
     }
     return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
-  }, [fixtures, fixtureFilterDivision]);
+  }, [fixtures, fixtureFilterDivision, teamsById]);
 
   const uniqueScorecardDates = useMemo(() => {
     const dateSet = new Set<string>();
@@ -572,6 +572,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     let completed = 0;
 
     for (const f of fixtures) {
+      if (!teamsById[f.homeTeamId] || !teamsById[f.awayTeamId]) {
+        continue;
+      }
       if (fixtureFilterDivision === 'KNOCKOUT') {
         if (!isKnockoutFixture(f)) continue;
       } else if (fixtureFilterDivision !== 'ALL') {
@@ -600,6 +603,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
 
   const filteredFixtures = useMemo(() => {
     return fixtures.filter((f) => {
+      if (!teamsById[f.homeTeamId] || !teamsById[f.awayTeamId]) {
+        return false;
+      }
       if (fixtureFilterDivision === 'KNOCKOUT') {
         if (!isKnockoutFixture(f)) return false;
       } else if (fixtureFilterDivision !== 'ALL') {

@@ -307,7 +307,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       STORAGE_KEYS.FIXTURES,
       isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES
     );
-    return raw.map((f: Fixture) => {
+    return raw
+      .filter((f: Fixture) => f.id !== 'test-fix-summer-cup-final')
+      .map((f: Fixture) => {
       const validFrames = ensureValidFrames(f.frames);
       const validLineups = ensureValidLineups(f.lineups);
       let status = f.status;
