@@ -603,6 +603,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq('id', fixtureId)
         .single();
       if (!error && data) {
+        const inFlight = inFlightFixtureSavesRef.current.get(fixtureId) ?? 0;
+        const lastSavedAt =
+          lastLocalFixtureSaveAtRef.current.get(fixtureId) ?? 0;
+        if (inFlight > 0 || Date.now() - lastSavedAt < 500) {
+          return;
+        }
+        setIsOnline(true);
+        setSyncError(null);
         const updated = mapFixtureRow(data as Record<string, unknown>);
         setAllFixtures((prev) => {
           const next = prev.map((f) =>

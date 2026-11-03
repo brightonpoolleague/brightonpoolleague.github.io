@@ -130,6 +130,11 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       .first()
       .click();
 
+    // Verify scorecard header refresh button is available and clickable
+    const refreshScorecardBtn = page.getByRole('button', { name: 'Refresh scorecard' });
+    await expect(refreshScorecardBtn).toBeVisible();
+    await refreshScorecardBtn.click();
+
     // 1. Select Home Set 1 running order (Positions 1 to 5) via UI dropdowns and click Confirm
     for (let pos = 1; pos <= 5; pos++) {
       const selectEl = page
@@ -774,6 +779,11 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       .getByRole('button', { name: /View Scorecard|Start Match/i })
       .first()
       .click();
+
+    // Verify scorecard header refresh button is available and clickable
+    const refreshScorecardBtn = page.getByRole('button', { name: 'Refresh scorecard' });
+    await expect(refreshScorecardBtn).toBeVisible();
+    await refreshScorecardBtn.click();
     await page.getByRole('button', { name: /Result Scorecard/i }).click();
     await page.getByRole('button', { name: 'Export' }).click();
     await expect(
