@@ -2922,12 +2922,12 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
               viewMode === 'mobile' ? (
                 /* Mobile Live Scoring view: Guide captains to review the result scorecard before signing */
-                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-3">
+                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 shadow-lg ring-1 ring-emerald-500/30 space-y-2.5 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3 w-full">
                     <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
                       <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
                     </div>
-                    <div className="space-y-0.5 text-left">
+                    <div className="space-y-0.5 flex-1 min-w-0 text-left">
                       <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         <span>
@@ -2943,20 +2943,21 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
                     </div>
                   </div>
+
                   <button
                     type="button"
                     onClick={() => setViewMode('paper')}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0 cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition shadow-sm cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Review Result Scorecard</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                   </button>
                 </div>
               ) : (
-                /* Paper Result Scorecard view: Captain signatures prompt with matching inline Return to Live Scoring button */
-                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-3">
+                /* Paper Result Scorecard view: Captain signatures prompt with Return to Live Scoring button */
+                <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 shadow-lg ring-1 ring-emerald-500/30 space-y-2.5 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3 w-full">
                     <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
                       {isSignedByBoth ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-300" />
@@ -2964,7 +2965,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                         <PenLine className="w-4 h-4 text-emerald-300" />
                       )}
                     </div>
-                    <div className="space-y-0.5 text-left">
+                    <div className="space-y-0.5 flex-1 min-w-0 text-left">
                       <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                         <span>
@@ -2975,10 +2976,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       </div>
                       <div className="text-[11px] text-slate-300">
                         {isSignedByBoth
-                          ? 'Both captains have signed. Press Finish Match below to submit the official result.'
-                          : isKnockout && !playAllFrames
-                          ? 'Verify match frames above. Both captains must sign below to confirm the result.'
-                          : 'Verify all 15 frames above. Both captains must sign below to confirm the result.'}
+                          ? 'Press Finish Match below to submit the official result.'
+                          : 'Both captains must sign below to confirm the result.'}
                       </div>
                     </div>
                   </div>
@@ -2986,9 +2985,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setViewMode('mobile')}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm shrink-0 cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition shadow-sm cursor-pointer"
                   >
-                    <Smartphone className="w-3.5 h-3.5 text-white" />
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Return to Live Scoring</span>
                   </button>
                 </div>
@@ -3015,7 +3014,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       <span>Match result submitted</span>
                     </div>
                     <div className="text-[11px] text-slate-300">
-                      Signed by both team captains
+                      Signed by both captains.
                     </div>
                   </div>
                 </div>
@@ -3038,7 +3037,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <span>Approved by league admin</span>
                   </div>
                   <div className="text-[11px] text-slate-300">
-                    Official match result confirmed
+                    Official match result confirmed.
                   </div>
                 </div>
               </div>
