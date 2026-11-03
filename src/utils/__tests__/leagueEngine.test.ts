@@ -864,4 +864,156 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
     expect(daveD1Stats?.team.id).toBe('team-d1'); // Attributed to the team he played for in Division 1
     expect(d1Dishes.some((r) => r.player.id === 'dave-cross' && r.dishes === 1)).toBe(true);
   });
+
+  it('maintains 100% accurate league tables and team statistics before, during, and after player transfers', () => {
+    const teamA = makeTeam({ id: 'team-a', name: 'The Crown', division: 'Premier League' });
+    const teamB = makeTeam({ id: 'team-b', name: 'The Lion', division: 'Premier League' });
+    const teamC = makeTeam({ id: 'team-c', name: 'Castle Lagers', division: 'Premier League' });
+    const teamD = makeTeam({ id: 'team-d', name: 'Sea View', division: 'Premier League' });
+    const allTeams = [teamA, teamB, teamC, teamD];
+
+    // Player Dave initially plays for Team A
+    let dave = makePlayer({ id: 'dave', teamId: 'team-a', name: 'Dave Miller' });
+    const playerC = makePlayer({ id: 'p-c', teamId: 'team-c', name: 'Chris Cue' });
+    const playerD = makePlayer({ id: 'p-d', teamId: 'team-d', name: 'Dan Double' });
+
+    // Week 1 Match 1: Team A beats Team C (9 - 6)
+    // Dave plays 3 frames for Team A, winning all 3
+    const lineups1 = createEmptyLineups();
+    lineups1.set1.home = ['dave', 'h2', 'h3', 'h4', 'h5'];
+    lineups1.set1.away = ['p-c', 'c2', 'c3', 'c4', 'c5'];
+    lineups1.set2.home = ['dave', 'h2', 'h3', 'h4', 'h5'];
+    lineups1.set2.away = ['c3', 'c4', 'c5', 'c2', 'p-c'];
+    lineups1.set3.home = ['dave', 'h2', 'h3', 'h4', 'h5'];
+    lineups1.set3.away = ['c4', 'p-c', 'c2', 'c5', 'c3'];
+
+    // 9 home wins, 6 away wins
+    const frames1 = createEmptyFrames().map((f, idx) => ({
+      ...f,
+      winner: idx < 9 ? ('home' as const) : ('away' as const),
+    }));
+
+    const f1 = makeFixture({
+      id: 'fix-1',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+      division: 'Premier League',
+      matchDate: '2026-11-02',
+      weekNumber: 1,
+      status: 'approved',
+      lineups: lineups1,
+      frames: frames1,
+    });
+
+    // Week 1 Match 2: Team B loses to Team D (7 - 8)
+    const lineups2 = createEmptyLineups();
+    const frames2 = createEmptyFrames().map((f, idx) => ({
+      ...f,
+      winner: idx < 7 ? ('home' as const) : ('away' as const),
+    }));
+
+    const f2 = makeFixture({
+      id: 'fix-2',
+      homeTeamId: 'team-b',
+      awayTeamId: 'team-d',
+      division: 'Premier League',
+      matchDate: '2026-11-02',
+      weekNumber: 1,
+      status: 'approved',
+      lineups: lineups2,
+      frames: frames2,
+    });
+
+    // Baseline: Table before transfer
+    const tableBefore = computeLeagueTable('Premier League', allTeams, [f1, f2]);
+    const rowABefore = tableBefore.find((r) => r.team.id === 'team-a')!;
+    const rowBBefore = tableBefore.find((r) => r.team.id === 'team-b')!;
+    const rowCBefore = tableBefore.find((r) => r.team.id === 'team-c')!;
+    const rowDBefore = tableBefore.find((r) => r.team.id === 'team-d')!;
+
+    // League points formula (Rule 2): 2 pts for match win + 1 bonus pt per 3 frames won
+    // Team A: 2 win pts + 3 bonus pts (9 frames) = 5 pts
+    // Team B: 0 win pts + 2 bonus pts (7 frames) = 2 pts
+    // Team C: 0 win pts + 2 bonus pts (6 frames) = 2 pts
+    // Team D: 2 win pts + 2 bonus pts (8 frames) = 4 pts
+    expect(rowABefore).toMatchObject({ played: 1, won: 1, lost: 0, points: 5, framesFor: 9, framesAgainst: 6, frameDiff: 3, form: ['W'] });
+    expect(rowBBefore).toMatchObject({ played: 1, won: 0, lost: 1, points: 2, framesFor: 7, framesAgainst: 8, frameDiff: -1, form: ['L'] });
+    expect(rowCBefore).toMatchObject({ played: 1, won: 0, lost: 1, points: 2, framesFor: 6, framesAgainst: 9, frameDiff: -3, form: ['L'] });
+    expect(rowDBefore).toMatchObject({ played: 1, won: 1, lost: 0, points: 4, framesFor: 8, framesAgainst: 7, frameDiff: 1, form: ['W'] });
+
+    // === ACTION: Dave transfers to Team B ===
+    dave = { ...dave, teamId: 'team-b' };
+
+    // Standings immediately after transfer (no new matches played yet):
+    // Verifies that transferring a player does not alter past team points or frame scores
+    const tableImmediate = computeLeagueTable('Premier League', allTeams, [f1, f2]);
+    const rowAImmediate = tableImmediate.find((r) => r.team.id === 'team-a')!;
+    const rowBImmediate = tableImmediate.find((r) => r.team.id === 'team-b')!;
+
+    expect(rowAImmediate).toEqual(rowABefore);
+    expect(rowBImmediate).toEqual(rowBBefore);
+
+    // Week 2 Match: Team B plays Team C (with Dave in Team B\'s lineup)
+    // Team B wins 10 - 5 (with Dave winning his frames)
+    const lineups3 = createEmptyLineups();
+    lineups3.set1.home = ['dave', 'b2', 'b3', 'b4', 'b5'];
+    lineups3.set1.away = ['p-c', 'c2', 'c3', 'c4', 'c5'];
+    const frames3 = createEmptyFrames().map((f, idx) => ({
+      ...f,
+      winner: idx < 10 ? ('home' as const) : ('away' as const),
+    }));
+
+    const f3 = makeFixture({
+      id: 'fix-3',
+      homeTeamId: 'team-b',
+      awayTeamId: 'team-c',
+      division: 'Premier League',
+      matchDate: '2026-11-09',
+      weekNumber: 2,
+      status: 'approved',
+      lineups: lineups3,
+      frames: frames3,
+    });
+
+    const tableAfter = computeLeagueTable('Premier League', allTeams, [f1, f2, f3]);
+    const rowAAfter = tableAfter.find((r) => r.team.id === 'team-a')!;
+    const rowBAfter = tableAfter.find((r) => r.team.id === 'team-b')!;
+    const rowCAfter = tableAfter.find((r) => r.team.id === 'team-c')!;
+
+    // Team A remains completely unchanged from Week 1 (1 played, 1 won, 5 pts, 9-6 frames)
+    expect(rowAAfter).toMatchObject({
+      played: 1,
+      won: 1,
+      lost: 0,
+      points: 5,
+      framesFor: 9,
+      framesAgainst: 6,
+      frameDiff: 3,
+      form: ['W'],
+    });
+
+    // Team B has gained 1 win and 5 pts in Week 2 (total: 2 played, 1 won, 1 lost, 7 pts, 17-13 frames, diff +4)
+    expect(rowBAfter).toMatchObject({
+      played: 2,
+      won: 1,
+      lost: 1,
+      points: 7,
+      framesFor: 17,
+      framesAgainst: 13,
+      frameDiff: 4,
+      form: ['L', 'W'],
+    });
+
+    // Team C has played 2, lost 2, 3 pts (2 in Week 1 + 1 in Week 2), 11-19 frames, diff -8
+    expect(rowCAfter).toMatchObject({
+      played: 2,
+      won: 0,
+      lost: 2,
+      points: 3,
+      framesFor: 11,
+      framesAgainst: 19,
+      frameDiff: -8,
+      form: ['L', 'L'],
+    });
+  });
 });
