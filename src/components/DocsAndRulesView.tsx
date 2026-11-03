@@ -607,15 +607,19 @@ export const DocsAndRulesView: React.FC = () => {
               </h3>
               <ul className="space-y-1.5 list-none">
                 <li>
-                  <strong>a.</strong> Record the number of games each team has
-                  won at the bottom of the scorecard (the total should be{' '}
-                  <strong>15</strong>).
+                  <strong>a.</strong> Verify that all <strong>15 frames</strong> and
+                  any <strong>dish / reverse dish</strong> awards have been recorded
+                  correctly on the scorecard.
                 </li>
                 <li>
-                  <strong>b.</strong> The <strong>winning captain</strong> must
-                  take a clear photo of the completed scorecard and either post it
-                  on Facebook or send it to the captains’ WhatsApp group{' '}
-                  <strong>before 10:00 AM the following day</strong>.
+                  <strong>b.</strong> Both captains must sign off at the bottom of the
+                  scorecard using their Captain PIN.
+                </li>
+                <li>
+                  <strong>c.</strong> Once both captains have signed, either captain
+                  taps <strong>Submit Scorecard</strong> to finalise the match. League tables
+                  and player statistics update live automatically with no need to take a photo or
+                  post to WhatsApp or social media.
                 </li>
               </ul>
             </div>
