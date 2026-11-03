@@ -196,7 +196,7 @@ describe('AwardWalkoverModal Component', () => {
     expect(confirmBtn).toBeDisabled();
   });
 
-  it('disables Confirm Walkover button when duplicate players are selected in Set 1', () => {
+  it('disables a player in other dropdown slots once already selected in that set', () => {
     render(
       <AwardWalkoverModal
         fixture={baseFixture}
@@ -209,15 +209,20 @@ describe('AwardWalkoverModal Component', () => {
     );
 
     const selects = screen.getAllByRole('combobox');
+    // Select Harry One (h1) in Slot 1
     fireEvent.change(selects[0], { target: { value: 'h1' } });
-    fireEvent.change(selects[1], { target: { value: 'h1' } }); // duplicate
-    fireEvent.change(selects[2], { target: { value: 'h3' } });
-    fireEvent.change(selects[3], { target: { value: 'h4' } });
-    fireEvent.change(selects[4], { target: { value: 'h5' } });
 
-    expect(screen.getByText(/The 5 starting players in Set 1 must each be distinct/i)).toBeInTheDocument();
-    const confirmBtn = screen.getByRole('button', { name: /Confirm Walkover/i });
-    expect(confirmBtn).toBeDisabled();
+    // Check Slot 2 dropdown options: Harry One should be disabled with Slot 1 label
+    const slot2Options = selects[1].querySelectorAll('option');
+    const h1Option = Array.from(slot2Options).find((opt) => opt.value === 'h1');
+    expect(h1Option).toBeDefined();
+    expect(h1Option).toBeDisabled();
+    expect(h1Option?.textContent).toContain('(Slot 1)');
+
+    // Attempting to select h1 in Slot 2 clears Slot 1 to avoid duplicate assignment
+    fireEvent.change(selects[1], { target: { value: 'h1' } });
+    expect(selects[0]).toHaveValue('');
+    expect(selects[1]).toHaveValue('h1');
   });
 
   it('disables Confirm Walkover button when fixture is already live or completed', () => {

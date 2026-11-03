@@ -83,6 +83,15 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
   const handleSet1Change = (slotIdx: number, playerId: string) => {
     const val: SlotPlayerId = playerId === '' ? null : playerId;
     const next1: [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId] = [...set1Slots];
+
+    // Disallow selecting the same player twice: clear any previous slot holding this player
+    if (val) {
+      for (let i = 0; i < 5; i++) {
+        if (i !== slotIdx && next1[i] === val) {
+          next1[i] = null;
+        }
+      }
+    }
     next1[slotIdx] = val;
     setSet1Slots(next1);
 
@@ -102,6 +111,15 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
   const handleSet2Change = (slotIdx: number, playerId: string) => {
     const val: SlotPlayerId = playerId === '' ? null : playerId;
     const base = set2Custom ? [...set2Custom] : [...set1Slots];
+
+    // Disallow selecting the same player twice in Set 2
+    if (val) {
+      for (let i = 0; i < 5; i++) {
+        if (i !== slotIdx && base[i] === val) {
+          base[i] = null;
+        }
+      }
+    }
     base[slotIdx] = val;
     setSet2Custom(base as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId]);
   };
@@ -109,6 +127,15 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
   const handleSet3Change = (slotIdx: number, playerId: string) => {
     const val: SlotPlayerId = playerId === '' ? null : playerId;
     const base = set3Custom ? [...set3Custom] : [...set1Slots];
+
+    // Disallow selecting the same player twice in Set 3
+    if (val) {
+      for (let i = 0; i < 5; i++) {
+        if (i !== slotIdx && base[i] === val) {
+          base[i] = null;
+        }
+      }
+    }
     base[slotIdx] = val;
     setSet3Custom(base as [SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId, SlotPlayerId]);
   };
@@ -316,11 +343,22 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
                     <option value="" className="text-slate-500">
                       Select...
                     </option>
-                    {winningSquad.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {player.name}
-                      </option>
-                    ))}
+                    {winningSquad.map((player) => {
+                      const otherSlotIdx = set1Slots.findIndex(
+                        (id, idx) => idx !== slotIdx && id === player.id
+                      );
+                      const isAlreadySelected = otherSlotIdx !== -1;
+                      return (
+                        <option
+                          key={player.id}
+                          value={player.id}
+                          disabled={isAlreadySelected}
+                        >
+                          {player.name}
+                          {isAlreadySelected ? ` (Slot ${otherSlotIdx + 1})` : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               ))}
@@ -388,11 +426,22 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
                           <option value="" className="text-slate-500">
                             Select...
                           </option>
-                          {winningSquad.map((player) => (
-                            <option key={player.id} value={player.id}>
-                              {player.name}
-                            </option>
-                          ))}
+                          {winningSquad.map((player) => {
+                            const otherSlotIdx = effectiveSet2.findIndex(
+                              (id, idx) => idx !== slotIdx && id === player.id
+                            );
+                            const isAlreadySelected = otherSlotIdx !== -1;
+                            return (
+                              <option
+                                key={player.id}
+                                value={player.id}
+                                disabled={isAlreadySelected}
+                              >
+                                {player.name}
+                                {isAlreadySelected ? ` (Frame ${otherSlotIdx + 6})` : ''}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
                     ))}
@@ -418,11 +467,22 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
                           <option value="" className="text-slate-500">
                             Select...
                           </option>
-                          {winningSquad.map((player) => (
-                            <option key={player.id} value={player.id}>
-                              {player.name}
-                            </option>
-                          ))}
+                          {winningSquad.map((player) => {
+                            const otherSlotIdx = effectiveSet3.findIndex(
+                              (id, idx) => idx !== slotIdx && id === player.id
+                            );
+                            const isAlreadySelected = otherSlotIdx !== -1;
+                            return (
+                              <option
+                                key={player.id}
+                                value={player.id}
+                                disabled={isAlreadySelected}
+                              >
+                                {player.name}
+                                {isAlreadySelected ? ` (Frame ${otherSlotIdx + 11})` : ''}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
                     ))}
