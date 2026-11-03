@@ -67,6 +67,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     saveFixture,
     approveFixture,
     refreshSingleFixture,
+    isCloudConnected,
+    isRealtimeConnected,
     isOnline,
     isSyncing,
     syncError,
@@ -93,22 +95,38 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     }
   };
 
-  // Fresh cloud fetch on mount and lightweight background safety sync while scorecard is open
+  // Fresh cloud fetch on mount and conditional background safety sync when connection is degraded/offline
   useEffect(() => {
     if (!fixture.id) return;
     refreshSingleFixture(fixture.id);
 
     const interval = setInterval(() => {
       if (
-        typeof document === 'undefined' ||
-        document.visibilityState === 'visible'
+        typeof document !== 'undefined' &&
+        document.visibilityState !== 'visible'
       ) {
+        return;
+      }
+
+      // Only poll when connection is degraded, offline, or experiencing sync errors
+      const isDegraded =
+        isCloudConnected &&
+        (!isRealtimeConnected || !isOnline || Boolean(syncError));
+
+      if (isDegraded) {
         refreshSingleFixture(fixture.id);
       }
-    }, 5000);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, [fixture.id, refreshSingleFixture]);
+  }, [
+    fixture.id,
+    isCloudConnected,
+    isRealtimeConnected,
+    isOnline,
+    syncError,
+    refreshSingleFixture,
+  ]);
 
   const [viewMode, setViewMode] = useState<'mobile' | 'paper'>(() =>
     !isLoggedIn ||

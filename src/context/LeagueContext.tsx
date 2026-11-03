@@ -207,6 +207,7 @@ interface LeagueContextValue {
   adminPin: string;
   isCloudConnected: boolean;
   isOnline: boolean;
+  isRealtimeConnected: boolean;
   isSyncing: boolean;
   syncError: string | null;
   retryPendingSync: () => Promise<void>;
@@ -332,6 +333,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [pendingFixtureSync, setPendingFixtureSync] = useState<{
@@ -704,6 +706,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         reconnectTimeout = null;
       }
       isSubscribed = false;
+      setIsRealtimeConnected(false);
       if (activeChannel) {
         const chan = activeChannel;
         activeChannel = null;
@@ -726,6 +729,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const scheduleReconnect = (status: string, err?: unknown) => {
+      setIsRealtimeConnected(false);
       if (isReconnecting) return;
       isReconnecting = true;
       console.warn(`[Realtime] Socket dropped or timed out (${status}), reconnecting in 2s...`, err);
@@ -942,16 +946,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           if (status === 'SUBSCRIBED') {
             console.log('[Realtime] Live WebSocket connected and listening');
             isSubscribed = true;
+            setIsRealtimeConnected(true);
             // After a reconnect, quietly catch up on any changes broadcast while we were offline
             if (hasSubscribedOnce) {
               catchUp();
             }
             hasSubscribedOnce = true;
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             isSubscribed = false;
-            scheduleReconnect(status, err);
+            setIsRealtimeConnected(false);
+            if (status !== 'CLOSED') {
+              scheduleReconnect(status, err);
+            }
           }
-          // Note: Never reconnect on 'CLOSED' because 'CLOSED' is naturally triggered by removeChannel/unsubscribe
         });
     };
 
@@ -1638,6 +1645,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const handleOffline = () => {
       setIsOnline(false);
+      setIsRealtimeConnected(false);
     };
 
     window.addEventListener('online', handleOnline);
@@ -1876,6 +1884,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         adminPin,
         isCloudConnected,
         isOnline,
+        isRealtimeConnected,
         isSyncing,
         syncError,
         retryPendingSync,

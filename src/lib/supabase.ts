@@ -69,7 +69,12 @@ export function getSupabaseClient(): SupabaseClient | null {
 
   const key = `${url}::${anonKey}`;
   if (!cachedClient || cachedConfigKey !== key) {
-    cachedClient = createClient(url, anonKey);
+    cachedClient = createClient(url, anonKey, {
+      realtime: {
+        heartbeatIntervalMs: 5000,
+        timeout: 7000,
+      },
+    });
     cachedConfigKey = key;
   }
   return cachedClient;
