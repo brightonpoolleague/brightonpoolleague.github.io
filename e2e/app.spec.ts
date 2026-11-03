@@ -322,18 +322,18 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(page.getByText('Ronnie O-Renamed')).toBeHidden();
 
     // 3d. Verify Rule 4b restriction: Trying to transfer a player with appearances in the second half of the season
-    const daveChip = page
+    const playerWithAppsChip = page
       .locator('div.inline-flex')
-      .filter({ has: page.getByText('Dave Mercer', { exact: true }) })
+      .filter({ hasText: /\(\d+ apps?\)/ })
       .first();
-    const daveTransferSelect = daveChip.getByTitle(
+    const restrictedTransferSelect = playerWithAppsChip.getByTitle(
       'Transfer player to another team'
     );
-    const daveTargetTeamOption = await daveTransferSelect
+    const restrictedTargetOption = await restrictedTransferSelect
       .locator('option')
       .nth(1)
       .getAttribute('value');
-    await daveTransferSelect.selectOption(daveTargetTeamOption!);
+    await restrictedTransferSelect.selectOption(restrictedTargetOption!);
     await expect(
       page.getByRole('heading', { name: /Transfer Restricted \(Rule 4b\)/i })
     ).toBeVisible();
