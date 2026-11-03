@@ -3010,14 +3010,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             )}
 
             {fixture.status === 'submitted' && (
-              <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-amber-500/15 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
-                <div className="flex items-center gap-3">
+              <div className="w-full relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-slate-900/90 to-emerald-500/10 border-2 border-emerald-500/50 rounded-2xl p-3.5 sm:p-4 shadow-lg ring-1 ring-emerald-500/30 space-y-2.5 animate-in fade-in duration-200">
+                <div className="flex items-center gap-3 w-full">
                   <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <div className="space-y-0.5 text-left">
+                  <div className="space-y-0.5 flex-1 min-w-0 text-left">
                     <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       <span>Match result submitted</span>
                     </div>
                     <div className="text-[11px] text-slate-300">
@@ -3026,8 +3026,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold shrink-0 shadow-sm">
-                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                <div className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold text-center shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse shrink-0" />
                   <span>Awaiting league admin approval</span>
                 </div>
               </div>
