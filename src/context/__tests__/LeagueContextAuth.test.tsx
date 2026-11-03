@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LeagueProvider, useLeague } from '../LeagueContext';
+import { LeagueProvider, useLeague, STORAGE_KEYS } from '../LeagueContext';
 import { Fixture } from '../../types/league';
 import { ensureValidLineups } from '../../utils/leagueEngine';
 import * as supabaseModule from '../../lib/supabase';
@@ -49,7 +49,7 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
   it('automatically logs out captain to spectator when verify_captain_pin returns false on cloud refresh', async () => {
     // Seed localStorage with a captain session
     localStorage.setItem(
-      'bpl_session_v2',
+      STORAGE_KEYS.SESSION,
       JSON.stringify({
         role: 'captain',
         teamId: 'team-1',
@@ -76,13 +76,13 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
       expect(result.current.session.role).toBe('viewer');
     });
 
-    const savedSession = JSON.parse(localStorage.getItem('bpl_session_v2') || '{}');
+    const savedSession = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSION) || '{}');
     expect(savedSession.role).toBe('viewer');
   });
 
   it('preserves captain session if verify_captain_pin encounters a network error', async () => {
     localStorage.setItem(
-      'bpl_session_v2',
+      STORAGE_KEYS.SESSION,
       JSON.stringify({
         role: 'captain',
         teamId: 'team-1',
@@ -115,7 +115,7 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
 
   it('automatically logs out captain when saving a fixture and captain_save_fixture returns false', async () => {
     localStorage.setItem(
-      'bpl_session_v2',
+      STORAGE_KEYS.SESSION,
       JSON.stringify({
         role: 'captain',
         teamId: 'team-1',
@@ -173,7 +173,7 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     });
 
     expect(result.current.syncError).toBeNull();
-    const savedSession = JSON.parse(localStorage.getItem('bpl_session_v2') || '{}');
+    const savedSession = JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSION) || '{}');
     expect(savedSession.role).toBe('viewer');
   });
 

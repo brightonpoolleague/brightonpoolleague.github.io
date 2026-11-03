@@ -41,13 +41,22 @@ import {
 } from '../utils/leagueEngine';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
-const STORAGE_KEYS = {
-  SEASONS: 'bpl_seasons_v3',
-  ADMIN_PIN: 'bpl_admin_pin_local_v5',
-  TEAMS: 'bpl_teams_local_v3',
-  PLAYERS: 'bpl_players_local_v3',
-  FIXTURES: 'bpl_fixtures_local_v3',
-  SESSION: 'bpl_session_v2',
+export const STORAGE_KEYS = {
+  SEASONS: 'bpl_seasons',
+  ADMIN_PIN: 'bpl_admin_pin',
+  TEAMS: 'bpl_teams',
+  PLAYERS: 'bpl_players',
+  FIXTURES: 'bpl_fixtures',
+  SESSION: 'bpl_session',
+} as const;
+
+const LEGACY_STORAGE_KEYS: Record<keyof typeof STORAGE_KEYS, string[]> = {
+  SEASONS: ['bpl_seasons_v3', 'bpl_seasons_v2'],
+  ADMIN_PIN: ['bpl_admin_pin_local_v5', 'bpl_admin_pin_local_v4', 'bpl_admin_pin_v2'],
+  TEAMS: ['bpl_teams_local_v3', 'bpl_teams_v2'],
+  PLAYERS: ['bpl_players_local_v3', 'bpl_players_v2'],
+  FIXTURES: ['bpl_fixtures_local_v3', 'bpl_fixtures_v2'],
+  SESSION: ['bpl_session_v2', 'bpl_session_v1'],
 };
 
 export function generateRandomPin(existingPins: string[] = []): string {
@@ -262,10 +271,20 @@ interface LeagueContextValue {
 
 const LeagueContext = createContext<LeagueContextValue | null>(null);
 
-function loadFromStorage<T>(key: string, fallback: T): T {
+function loadFromStorage<T>(key: string, fallback: T, legacyKeys: string[] = []): T {
   if (typeof window === 'undefined') return fallback;
   try {
-    const raw = localStorage.getItem(key);
+    let raw = localStorage.getItem(key);
+    if (!raw && legacyKeys.length > 0) {
+      for (const legacyKey of legacyKeys) {
+        raw = localStorage.getItem(legacyKey);
+        if (raw) {
+          localStorage.setItem(key, raw);
+          localStorage.removeItem(legacyKey);
+          break;
+        }
+      }
+    }
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -279,27 +298,30 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const isCloudConnected = getSupabaseConfig().isConfigured;
 
   const [seasons, setSeasons] = useState<Season[]>(() =>
-    loadFromStorage(STORAGE_KEYS.SEASONS, INITIAL_SEASONS)
+    loadFromStorage(STORAGE_KEYS.SEASONS, INITIAL_SEASONS, LEGACY_STORAGE_KEYS.SEASONS)
   );
   const [adminPin, setAdminPin] = useState<string>(() =>
-    loadFromStorage(STORAGE_KEYS.ADMIN_PIN, DEFAULT_ADMIN_PIN)
+    loadFromStorage(STORAGE_KEYS.ADMIN_PIN, DEFAULT_ADMIN_PIN, LEGACY_STORAGE_KEYS.ADMIN_PIN)
   );
   const [allTeams, setAllTeams] = useState<Team[]>(() =>
     loadFromStorage(
       STORAGE_KEYS.TEAMS,
-      isCloudConnected ? INITIAL_TEAMS : LOCAL_TEST_TEAMS
+      isCloudConnected ? INITIAL_TEAMS : LOCAL_TEST_TEAMS,
+      LEGACY_STORAGE_KEYS.TEAMS
     )
   );
   const [allPlayers, setAllPlayers] = useState<Player[]>(() =>
     loadFromStorage(
       STORAGE_KEYS.PLAYERS,
-      isCloudConnected ? INITIAL_PLAYERS : LOCAL_TEST_PLAYERS
+      isCloudConnected ? INITIAL_PLAYERS : LOCAL_TEST_PLAYERS,
+      LEGACY_STORAGE_KEYS.PLAYERS
     )
   );
   const [allFixtures, setAllFixtures] = useState<Fixture[]>(() => {
     const raw = loadFromStorage(
       STORAGE_KEYS.FIXTURES,
-      isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES
+      isCloudConnected ? INITIAL_FIXTURES : LOCAL_TEST_FIXTURES,
+      LEGACY_STORAGE_KEYS.FIXTURES
     );
     return raw.map((f: Fixture) => {
       const validFrames = ensureValidFrames(f.frames);
@@ -324,7 +346,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     const raw = loadFromStorage<UserSession>(STORAGE_KEYS.SESSION, {
       role: 'viewer',
       name: 'General Spectator',
-    });
+    }, LEGACY_STORAGE_KEYS.SESSION);
     if (raw.role === 'captain' && raw.name && raw.name.endsWith(' Captain')) {
       return { ...raw, name: raw.name.replace(/ Captain$/i, '') };
     }
