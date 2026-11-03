@@ -1795,6 +1795,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Live Scorecard</span>
+              <span className="sm:hidden text-[11px]">Live</span>
             </button>
             <button
               type="button"
@@ -1807,6 +1808,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Result Scorecard</span>
+              <span className="sm:hidden text-[11px]">Result</span>
             </button>
           </div>
 
@@ -2916,51 +2918,88 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
       {showSignOff && (
         <div className="bg-slate-900/95 border-t border-slate-800 shadow-2xl px-3 sm:px-6 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] shrink-0 shadow-md">
           <div className="max-w-4xl mx-auto space-y-2">
-            {/* Prominent Match Completion Prompt (appears when all 15 frames are complete, before submission) */}
+            {/* Prominent Match Completion Prompt (appears when match is complete, before submission) */}
             {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
-              <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-amber-500/20 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-3.5 flex items-center justify-center gap-3 text-center shadow-lg ring-1 ring-emerald-500/30 animate-in fade-in duration-200">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                  <PenLine className="w-4 h-4 text-emerald-300" />
+              viewMode === 'mobile' ? (
+                /* Mobile Live Scoring view: Guide captains to review the result scorecard before signing */
+                <div className="relative overflow-hidden bg-gradient-to-r from-blue-500/20 via-indigo-500/15 to-emerald-500/20 border-2 border-blue-500/50 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg ring-1 ring-blue-500/30 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center shrink-0">
+                      <FileSpreadsheet className="w-4 h-4 text-blue-300" />
+                    </div>
+                    <div className="space-y-0.5 text-left">
+                      <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>
+                          {isKnockout && !playAllFrames
+                            ? 'Match Decided — Review Scorecard'
+                            : 'All 15 Frames Complete — Review Scorecard'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-300">
+                        {isKnockout && !playAllFrames
+                          ? 'Please inspect the result scorecard and dishes before captains sign off.'
+                          : 'Please review the full result scorecard and dishes before captains sign off.'}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('paper')}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm shrink-0 cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Review Result Scorecard</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <div className="space-y-0.5 text-left sm:text-center">
-                  <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5 justify-start sm:justify-center">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>
+              ) : (
+                /* Paper Result Scorecard view: Captain signatures prompt */
+                <div
+                  className={`relative overflow-hidden border-2 rounded-2xl p-3 sm:p-3.5 flex items-center justify-center gap-3 text-center shadow-lg ring-1 animate-in fade-in duration-200 ${
+                    isSignedByBoth
+                      ? 'bg-gradient-to-r from-emerald-500/25 via-emerald-500/15 to-emerald-600/20 border-emerald-500/60 ring-emerald-500/30'
+                      : 'bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-amber-500/20 border-emerald-500/50 ring-emerald-500/30'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    {isSignedByBoth ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    ) : (
+                      <PenLine className="w-4 h-4 text-emerald-300" />
+                    )}
+                  </div>
+                  <div className="space-y-0.5 text-left sm:text-center">
+                    <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5 justify-start sm:justify-center">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>
+                        {isSignedByBoth
+                          ? 'Scorecard Signed — Ready to Submit'
+                          : 'Confirm & Sign Scorecard'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-300">
                       {isSignedByBoth
-                        ? 'Scorecard Signed — Ready to Submit'
-                        : 'Please Sign & Submit the Scorecard'}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-300">
-                    {isSignedByBoth
-                      ? 'Both captains have signed. Click Finish Match below to submit the official result.'
-                      : 'Both captains must sign below to confirm the result before finishing the match.'}
+                        ? 'Both captains have signed. Click Finish Match below to submit the official result.'
+                        : isKnockout && !playAllFrames
+                        ? 'Verify match frames above. Both captains must sign below to confirm the result.'
+                        : 'Verify all 15 frames above. Both captains must sign below to confirm the result.'}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )
             )}
 
-            {/* Review Scorecard / Make Changes Toggle Button (only before submission) */}
-            {fixture.status !== 'submitted' && fixture.status !== 'approved' && (
+            {/* In paper view before submission, provide a clear button to return to live scoring */}
+            {viewMode === 'paper' && fixture.status !== 'submitted' && fixture.status !== 'approved' && (
               <div className="flex justify-center">
                 <button
                   type="button"
-                  onClick={() =>
-                    setViewMode(viewMode === 'mobile' ? 'paper' : 'mobile')
-                  }
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition shadow-sm"
+                  onClick={() => setViewMode('mobile')}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 text-xs font-semibold transition"
                 >
-                  {viewMode === 'mobile' ? (
-                    <>
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Review Scorecard</span>
-                    </>
-                  ) : (
-                    <>
-                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Make Changes</span>
-                    </>
-                  )}
+                  <Smartphone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Return to Live Scoring</span>
                 </button>
               </div>
             )}
