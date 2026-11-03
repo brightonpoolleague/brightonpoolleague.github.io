@@ -1,28 +1,38 @@
 import React, { useState } from 'react';
 import {
+  AlertTriangle,
+  ArrowLeftRight,
   Award,
   BookOpen,
   Calendar,
+  CheckCircle2,
   Clock,
   Coins,
   Crown,
+  ExternalLink,
   FileText,
   Flame,
+  HeartHandshake,
   Info,
+  Layers,
   LayoutGrid,
   List,
-  Medal,
-  Search,
-  X,
   MapPin,
+  Medal,
   MessageSquare,
   Scale,
+  Search,
+  Shield,
   Shuffle,
   Snowflake,
-  Sun,
   Sparkles,
+  Sun,
+  Timer,
   Trophy,
+  UserCheck,
+  UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 import { useLeague } from '../context/LeagueContext';
 
@@ -309,485 +319,742 @@ export const DocsAndRulesView: React.FC = () => {
         {/* ================================================================ */}
         {section === 'format' && (
           <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-3">
-              <h2 className="text-lg sm:text-xl font-black text-white">
-                League Format
-              </h2>
+            {/* Hero Header */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Official Match Guidelines</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    League Format
+                  </h2>
+                  <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                    Official 15-frame match structure, points scoring, lagging, substitutions and digital scorecard protocol for the Brighton Pool League.
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Highlights Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Layers className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">15 Frames Total</div>
+                    <div className="text-xs text-slate-400">3 sets of 5 singles frame games per match.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Clock className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">8:00 PM Sharp</div>
+                    <div className="text-xs text-slate-400">1 hour max per set; matches finish before 11:00 PM.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Users className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Rolling Squad</div>
+                    <div className="text-xs text-slate-400">Up to 15 players per match; substitutions before Sets 2 and 3.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Award className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">7 Max Points</div>
+                    <div className="text-xs text-slate-400">2 points for match win + 1 point for every 3 frames won.</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-emerald-400">
-                1. Overview
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> All matches consist of{' '}
-                  <strong>3 sets</strong> of{' '}
-                  <strong>5 singles frame games</strong> (15 games in total).
-                </li>
-                <li>
-                  <strong>b.</strong> Player substitutions are allowed{' '}
-                  <strong>before the start of the 2nd and 3rd sets</strong> (up
-                  to 15 different players can play in one match).
-                </li>
-                <li>
-                  <strong>c.</strong> The same player can play in each of the 3
-                  sets (maximum of 3 games).
-                </li>
-                <li>
-                  <strong>d.</strong> The same player <strong>cannot</strong>{' '}
-                  play multiple times in the same set (e.g. a player cannot
-                  play all 3 games in Set 1 and then leave).
-                </li>
-              </ul>
+            {/* 1. Overview */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Layers className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  1. Overview
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    All matches consist of <strong>3 sets</strong> of <strong>5 singles frame games</strong> (15 games in total).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Player substitutions are allowed <strong>before the start of the 2nd and 3rd sets</strong> (up to 15 different players can play in one match).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The same player can play in each of the 3 sets (maximum of 3 games).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The same player <strong>cannot</strong> play multiple times in the same set (e.g. a player cannot play all 3 games in Set 1 and then leave).
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                2. Points
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Each match win is worth{' '}
-                  <strong>2 points</strong>.
-                </li>
-                <li>
-                  <strong>b.</strong> In a match, every 3 frames won is worth{' '}
-                  <strong>1 point</strong>.
-                </li>
-                <li>
-                  <strong>c.</strong> The maximum number of points a team can
-                  earn from a single match is <strong>7 points</strong> (2 for
-                  the win + 5 for winning all 15 frames).
-                </li>
-                <li>
-                  <strong>d.</strong> The possible outcomes are:
-                  <ul className="list-disc list-inside pl-4 mt-1.5 space-y-1 text-slate-200">
-                    <li>
-                      <strong>15–0</strong>: 7 points to the winner, 0 points to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>14–1</strong>: 6 points to the winner, 0 points to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>13–2</strong>: 6 points to the winner, 0 points to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>12–3</strong>: 6 points to the winner, 1 point to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>11–4</strong>: 5 points to the winner, 1 point to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>10–5</strong>: 5 points to the winner, 1 point to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>9–6</strong>: 5 points to the winner, 2 points to
-                      the loser
-                    </li>
-                    <li>
-                      <strong>8–7</strong>: 4 points to the winner, 2 points to
-                      the loser
-                    </li>
-                  </ul>
-                </li>
-              </ul>
+            {/* 2. Points */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Coins className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  2. Points
+                </h3>
+              </div>
+
+              {/* Points Summary Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3.5 flex flex-col">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Match Win</span>
+                  <span className="text-xl font-black text-white mt-0.5">2 Points</span>
+                  <span className="text-[11px] text-slate-400 mt-1">Awarded to the match winner</span>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3.5 flex flex-col">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Frame Bonus</span>
+                  <span className="text-xl font-black text-white mt-0.5">1 Point</span>
+                  <span className="text-[11px] text-slate-400 mt-1">For every 3 frames won</span>
+                </div>
+                <div className="bg-slate-900/80 border border-emerald-500/30 rounded-xl p-3.5 flex flex-col bg-emerald-500/5">
+                  <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Maximum Available</span>
+                  <span className="text-xl font-black text-emerald-400 mt-0.5">7 Points</span>
+                  <span className="text-[11px] text-slate-400 mt-1">2 for win + 5 for all 15 frames</span>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Each match win is worth <strong>2 points</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    In a match, every 3 frames won is worth <strong>1 point</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The maximum number of points a team can earn from a single match is <strong>7 points</strong> (2 for the win + 5 for winning all 15 frames).
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">
+                      d
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-white">The possible outcomes are:</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                    {[
+                      { score: '15–0', win: '7 points', loss: '0 points' },
+                      { score: '14–1', win: '6 points', loss: '0 points' },
+                      { score: '13–2', win: '6 points', loss: '0 points' },
+                      { score: '12–3', win: '6 points', loss: '1 point' },
+                      { score: '11–4', win: '5 points', loss: '1 point' },
+                      { score: '10–5', win: '5 points', loss: '1 point' },
+                      { score: '9–6', win: '5 points', loss: '2 points' },
+                      { score: '8–7', win: '4 points', loss: '2 points' },
+                    ].map((row, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2.5 flex items-center justify-between gap-2"
+                      >
+                        <span className="font-extrabold text-white text-xs sm:text-sm tracking-wide">
+                          {row.score}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[11px]">
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold whitespace-nowrap">
+                            {row.win}
+                          </span>
+                          <span className="text-slate-600">/</span>
+                          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-medium whitespace-nowrap">
+                            {row.loss}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                3. Timekeeping
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Matches should start at{' '}
-                  <strong>8:00 PM sharp</strong>.
-                </li>
-                <li>
-                  <strong>b.</strong> Captains are responsible for ensuring
-                  matches start on time, maintaining the flow of play through
-                  each set and finishing the match before{' '}
-                  <strong>11:00 PM</strong>.
-                </li>
-                <li>
-                  <strong>c.</strong> Captains should allow a{' '}
-                  <strong>maximum of 1 hour per set</strong>. If the 3rd set has
-                  not started by 10:00 PM, both captains must ensure play is
-                  speeded up.
-                </li>
-                <li>
-                  <strong>d.</strong> Captains are advised to introduce a <strong>shot clock</strong> at <strong>10:30 PM</strong> if the 3rd game
-                  (in the 3rd set) has not yet started. The shot clock can be
-                  found{' '}
+            {/* 3. Timekeeping */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  3. Timekeeping
+                </h3>
+              </div>
+
+              {/* Time Milestones Banner */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 flex flex-col">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Start Time</span>
+                  <span className="text-base font-extrabold text-emerald-400 mt-0.5">8:00 PM Sharp</span>
+                  <span className="text-[11px] text-slate-400 mt-1">Prompt match start</span>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 flex flex-col">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Set Limit</span>
+                  <span className="text-base font-extrabold text-white mt-0.5">Max 1 Hour</span>
+                  <span className="text-[11px] text-slate-400 mt-1">10:00 PM Set 3 target</span>
+                </div>
+                <div className="bg-slate-900/80 border border-amber-500/30 rounded-xl p-3 flex flex-col bg-amber-500/5">
+                  <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Shot Clock</span>
+                  <span className="text-base font-extrabold text-amber-400 mt-0.5">10:30 PM</span>
+                  <span className="text-[11px] text-slate-400 mt-1">If Set 3, Frame 3 not started</span>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 flex flex-col">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Curfew</span>
+                  <span className="text-base font-extrabold text-rose-400 mt-0.5">11:00 PM</span>
+                  <span className="text-[11px] text-slate-400 mt-1">Match must conclude</span>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Matches should start at <strong>8:00 PM sharp</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Captains are responsible for ensuring matches start on time, maintaining the flow of play through each set and finishing the match before <strong>11:00 PM</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Captains should allow a <strong>maximum of 1 hour per set</strong>. If the 3rd set has not started by 10:00 PM, both captains must ensure play is speeded up.
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <div className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      d
+                    </span>
+                    <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                      Captains are advised to introduce a <strong>shot clock</strong> at <strong>10:30 PM</strong> if the 3rd game (in the 3rd set) has not yet started.
+                    </div>
+                  </div>
                   <a
-                    href="https://www.epa.org.uk/stopclock/epa/index.php"
+                    href="https://www.epa.org.uk/stopclock/"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-emerald-400 underline font-semibold"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold whitespace-nowrap transition-colors self-start sm:self-auto shrink-0"
                   >
-                    here
+                    <Timer className="w-3.5 h-3.5" />
+                    <span>EPA Shot Clock</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
                   </a>
-                  .
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                4. Completing the Scorecard
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> The <strong>home captain</strong> writes
-                  their players’ full names against numbers{' '}
-                  <strong>1–5</strong> (running order in the first set).
-                </li>
-                <li>
-                  <strong>b.</strong> Fold the paper in half (to hide what has
-                  been written) and pass it to the <strong>away captain</strong>
-                  , who writes their players’ full names against{' '}
-                  <strong>1–5</strong> (their running order in the first set).
-                </li>
-                <li>
-                  <strong>c.</strong> Mark an <strong>“X”</strong> next to the
-                  player who will break first.
-                </li>
-                <li>
-                  <strong>d.</strong> The{' '}
-                  <strong>home team’s playing order</strong> remains the same
-                  for all sets.
-                </li>
-                <li>
-                  <strong>e.</strong> The{' '}
-                  <strong>away team’s playing order</strong> changes each set so
-                  that opponents always differ, as shown below:
-                </li>
-              </ul>
-              <div className="py-2 max-w-lg">
-                <div className="overflow-x-auto border border-slate-800 rounded-xl">
-                  <table className="w-full text-xs sm:text-sm border-collapse text-left">
-                    <thead>
-                      <tr className="bg-slate-950 text-slate-300 border-b border-slate-800">
-                        <th className="py-2.5 px-3 font-bold text-center border-r border-slate-800">
-                          Set 1
-                        </th>
-                        <th className="py-2.5 px-3 font-bold text-center border-r border-slate-800">
-                          Set 2
-                        </th>
-                        <th className="py-2.5 px-3 font-bold text-center">
-                          Set 3
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/70">
-                      {[
-                        { s1: ['1', 'Player A'], s2: ['3', 'Player C'], s3: ['4', 'Player D'] },
-                        { s1: ['2', 'Player B'], s2: ['4', 'Player D'], s3: ['1', 'Player A'] },
-                        { s1: ['3', 'Player C'], s2: ['5', 'Player E'], s3: ['2', 'Player B'] },
-                        { s1: ['4', 'Player D'], s2: ['2', 'Player B'], s3: ['5', 'Player E'] },
-                        { s1: ['5', 'Player E'], s2: ['1', 'Player A'], s3: ['3', 'Player C'] },
-                      ].map((row, idx) => (
-                        <tr key={idx} className="hover:bg-slate-800/30">
-                          <td className="py-2 px-3 border-r border-slate-800">
-                            <span className="inline-block w-5 font-bold text-emerald-400">
-                              {row.s1[0]}
-                            </span>
-                            <span className="text-white font-medium">{row.s1[1]}</span>
-                          </td>
-                          <td className="py-2 px-3 border-r border-slate-800">
-                            <span className="inline-block w-5 font-bold text-emerald-400">
-                              {row.s2[0]}
-                            </span>
-                            <span className="text-white font-medium">{row.s2[1]}</span>
-                          </td>
-                          <td className="py-2 px-3">
-                            <span className="inline-block w-5 font-bold text-emerald-400">
-                              {row.s3[0]}
-                            </span>
-                            <span className="text-white font-medium">{row.s3[1]}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>f.</strong> Since substitutions are allowed in Sets 2
-                  and 3, captains should not complete player names for the next
-                  set unless no substitutions are being made.
-                </li>
-                <li>
-                  <strong>g.</strong> You do not need to write players’ full
-                  names for each set they play — initials are fine, provided
-                  they are unique within the team.
-                </li>
-                <li>
-                  <strong>h.</strong> When introducing a substitute for the
-                  first time, write their <strong>full name</strong>.
-                </li>
-                <li>
-                  <strong>i.</strong> After each game, record the result with{' '}
-                  <strong>W</strong> or <strong>L</strong> (you do not need to
-                  write 1–0).
-                </li>
-                <li>
-                  <strong>j.</strong> Record each game that is won by a{' '}
-                  <strong>dish</strong> or <strong>reverse dish</strong>:
-                  <ul className="list-disc list-inside pl-4 mt-1 space-y-1">
-                    <li>
-                      A <strong>dish</strong> is a clearance in one visit from
-                      the break.
-                    </li>
-                    <li>
-                      A <strong>reverse dish</strong> occurs when your opponent
-                      fails to pot from the break (or foul breaks) and you clear
-                      up in one visit.
-                    </li>
-                  </ul>
-                </li>
-              </ul>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                5. Substitutions
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Before the 2nd and 3rd sets begin,
-                  captains may substitute as many players as they wish.
-                </li>
-                <li>
-                  <strong>b.</strong> Substitutes take the{' '}
-                  <strong>same position</strong> as the player they replace
-                  (e.g. if Player 1 is replaced in Set 3, the substitute plays
-                  second in that set).
-                </li>
-                <li>
-                  <strong>c.</strong> A player may be substituted out in Set 2
-                  and substituted back in for Set 3.
-                </li>
-                <li>
-                  <strong>d.</strong> Substituted players must{' '}
-                  <strong>not</strong> have played in the previous set (to
-                  prevent simply changing the playing order).
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                6. Lagging
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Only <strong>Player 1</strong> from each
-                  team lags — this determines the breaking order for the rest of
-                  the match.
-                </li>
-                <li>
-                  <strong>b.</strong> Breaks alternate between teams: the team
-                  that breaks first gets <strong>8 breaks</strong>, while their
-                  opponents get <strong>7</strong>.
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                7. End of the Match
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Verify that all <strong>15 frames</strong> and
-                  any <strong>dish / reverse dish</strong> awards have been recorded
-                  correctly on the scorecard.
-                </li>
-                <li>
-                  <strong>b.</strong> Both captains must sign off at the bottom of the
-                  scorecard using their Captain PIN.
-                </li>
-                <li>
-                  <strong>c.</strong> Once both captains have signed, either captain
-                  taps <strong>Submit Scorecard</strong> to finalise the match. League tables
-                  and player statistics update live automatically with no need to take a photo or
-                  post to WhatsApp or social media.
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                8. League Tables
-              </h3>
-              <div className="space-y-2">
-                <p>
-                  <strong>a.</strong> The teams' league table is sorted as
-                  follows:
-                </p>
-                <ul className="list-disc list-inside pl-4 space-y-1">
-                  <li>
-                    <strong>i.</strong> Total Points
-                  </li>
-                  <li>
-                    <strong>ii.</strong> Frame difference (Total frames won
-                    minus total frames lost)
-                  </li>
-                  <li>
-                    <strong>iii.</strong> In the event of teams finishing the
-                    season with the same record:
-                    <ul className="list-disc list-inside pl-6 mt-1 space-y-1">
-                      <li>
-                        <strong>1. Head-to-head record:</strong> a) Total points
-                        won (both games combined), b) Frame difference (both
-                        games combined).
-                      </li>
-                      <li>
-                        <strong>2.</strong> If that is also tied, then each
-                        team’s record against the highest-placed team in the
-                        league: a) Total points won (both games combined), b)
-                        Frame difference (both games combined).
-                      </li>
-                      <li>
-                        <strong>3.</strong> If that is also tied, then this will
-                        be repeated down the league table until the teams can be
-                        separated.
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
+            {/* 4. Completing the Scorecard */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  4. Completing the Scorecard
+                </h3>
               </div>
 
-              <div className="space-y-2 pt-2">
-                <p>
-                  <strong>b.</strong> The players' averages table is sorted as
-                  follows:
-                </p>
-                <ul className="list-disc list-inside pl-4 space-y-1">
-                  <li>
-                    <strong>i.</strong> Total wins
-                  </li>
-                  <li>
-                    <strong>ii.</strong> Overall win percentage
-                  </li>
-                  <li>
-                    <strong>iii.</strong> Total number of dishes made
-                  </li>
-                  <li>
-                    <strong>iv.</strong> If the averages winner cannot be
-                    determined, then the following is used to determine the
-                    winner:
-                    <ul className="list-disc list-inside pl-6 mt-1 space-y-1">
-                      <li>
-                        <strong>1.</strong> Head-to-head record
-                      </li>
-                      <li>
-                        <strong>2.</strong> If that is still tied, then
-                        determined by whose team finished highest in the league
-                      </li>
-                      <li>
-                        <strong>3.</strong> If players are in the same team –
-                        then a single-frame shoot-out will be played on finals
-                        night.
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Both captains open the fixture in the app and log in with their <strong>6-digit Captain PIN</strong> to edit the live scorecard.
+                  </div>
+                </div>
 
-              <div className="space-y-2 pt-2">
-                <p>
-                  <strong>c.</strong> The players' dish table is sorted as
-                  follows:
-                </p>
-                <ul className="list-disc list-inside pl-4 space-y-1">
-                  <li>
-                    <strong>i.</strong> Total number of dishes + reverse dishes
-                    made over the season
-                  </li>
-                  <li>
-                    <strong>ii.</strong> If the overall winner cannot be
-                    determined as it is tied, then awarded to the player highest
-                    in the averages table
-                  </li>
-                </ul>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    <strong>Blind Set 1 Lineup Entry:</strong> Each captain selects their 5 players from their squad dropdown for positions <strong>1–5</strong> (their running order in the first set). Selections remain hidden from opponents until both captains tap <strong>Confirm Lineup</strong>, revealing both teams' lineups simultaneously.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    <strong>Lag &amp; Break Determination:</strong> Player 1 from each team lags. Tap the winning side (<strong>Home</strong> or <strong>Away</strong>) on the scorecard. The app automatically assigns the break for all 15 frames across all 3 sets (8 breaks to the lag winner and 7 to their opponent).
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    <strong>Home Team Playing Order:</strong> The home team’s playing order remains in positions <strong>1–5</strong> across all sets.
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      e
+                    </span>
+                    <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                      <strong>Away Team Playing Order:</strong> The away team’s playing order rotates each set so that opponents always differ, as shown below:
+                    </div>
+                  </div>
+
+                  {/* Away Rotation Matrix Table */}
+                  <div className="max-w-lg mx-auto sm:mx-0 pt-1">
+                    <div className="overflow-x-auto border border-slate-800 rounded-xl bg-slate-950/90 shadow-sm">
+                      <table className="w-full text-xs sm:text-sm border-collapse text-left">
+                        <thead>
+                          <tr className="bg-slate-900 text-slate-200 border-b border-slate-800 text-[11px] uppercase tracking-wider">
+                            <th className="py-2.5 px-3.5 font-bold border-r border-slate-800 text-center">
+                              Set 1
+                            </th>
+                            <th className="py-2.5 px-3.5 font-bold border-r border-slate-800 text-center">
+                              Set 2
+                            </th>
+                            <th className="py-2.5 px-3.5 font-bold text-center">
+                              Set 3
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/70">
+                          {[
+                            { s1: ['1', 'Player A'], s2: ['3', 'Player C'], s3: ['4', 'Player D'] },
+                            { s1: ['2', 'Player B'], s2: ['4', 'Player D'], s3: ['1', 'Player A'] },
+                            { s1: ['3', 'Player C'], s2: ['5', 'Player E'], s3: ['2', 'Player B'] },
+                            { s1: ['4', 'Player D'], s2: ['2', 'Player B'], s3: ['5', 'Player E'] },
+                            { s1: ['5', 'Player E'], s2: ['1', 'Player A'], s3: ['3', 'Player C'] },
+                          ].map((row, idx) => (
+                            <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                              <td className="py-2.5 px-3.5 border-r border-slate-800">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold text-xs mr-2">
+                                  {row.s1[0]}
+                                </span>
+                                <span className="text-white font-medium">{row.s1[1]}</span>
+                              </td>
+                              <td className="py-2.5 px-3.5 border-r border-slate-800">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold text-xs mr-2">
+                                  {row.s2[0]}
+                                </span>
+                                <span className="text-white font-medium">{row.s2[1]}</span>
+                              </td>
+                              <td className="py-2.5 px-3.5">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 font-bold text-xs mr-2">
+                                  {row.s3[0]}
+                                </span>
+                                <span className="text-white font-medium">{row.s3[1]}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    f
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    <strong>Subsequent Sets:</strong> Set 1 player selections automatically cascade into Sets 2 and 3. If no substitutions are made, captains do not need to re-enter names.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    g
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    <strong>Substitutions:</strong> If making changes, tap <strong>Make Subs</strong> before the set starts, select the replacement player from the squad list and tap <strong>Confirm Subs</strong>. The opposing captain will be prompted to approve the change before play continues.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    h
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    <strong>Recording Frame Results:</strong> After each frame, tap the player who won the frame on the scorecard. The running match score and set totals update live automatically.
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      i
+                    </span>
+                    <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                      <strong>Dishes &amp; Reverse Dishes:</strong> If a game is won in a single visit, tap the <strong>Dish</strong> button on that frame:
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 pl-9">
+                    <div className="bg-slate-950/70 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2.5">
+                      <Flame className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-slate-300">
+                        A <strong className="text-white">dish</strong> is a clearance in one visit from the break.
+                      </div>
+                    </div>
+                    <div className="bg-slate-950/70 border border-amber-500/20 rounded-xl p-3 flex items-start gap-2.5">
+                      <Flame className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-slate-300">
+                        A <strong className="text-white">reverse dish</strong> occurs when your opponent fails to pot from the break (or commits a foul break) and you clear up in one visit.
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                9. Additional Information for Teams Without 5 Players
-              </h3>
+            {/* 5. Substitutions */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Shuffle className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  5. Substitutions
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Before the 2nd and 3rd sets begin, captains may substitute as many players as they wish.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Substitutes take the <strong>same position</strong> as the player they replace (e.g. if Player 1 is replaced in Set 3, the substitute plays second in that set).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    A player may be substituted out in Set 2 and substituted back in for Set 3.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Substituted players must <strong>not</strong> have played in the previous set (to prevent simply changing the playing order).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    e
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    To make substitutions in the app, tap <strong>Make Subs</strong> before the set starts, select the substitute from your squad list and tap <strong>Confirm Subs</strong> for the opposing captain to approve.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Lagging */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Coins className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  6. Lagging
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Only <strong>Player 1</strong> from each team lags — this determines the breaking order for the rest of the match.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Breaks alternate between teams: the team that breaks first gets <strong>8 breaks</strong>, while their opponents get <strong>7</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Tap the lag winner on the digital scorecard to automatically assign break indicators for every frame across all 3 sets.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. End of the Match */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  7. End of the Match
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Verify that all <strong>15 frames</strong> and any <strong>dish / reverse dish</strong> awards have been recorded correctly on the scorecard.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Both captains must sign off at the bottom of the scorecard by tapping <strong>Sign</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                    Once both captains have signed, tap <strong>Finish &amp; Submit Match</strong> to finalise the match result. League tables and player statistics update live automatically with no need to take a photo or post to WhatsApp or social media.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 8. League Tables */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  8. League Tables
+                </h3>
+              </div>
+
+              {/* a. Teams Table */}
+              <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-4 space-y-3">
+                <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center justify-center">a</span>
+                  <span>The teams' league table is sorted as follows:</span>
+                </div>
+                <div className="space-y-2 pl-7">
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">i.</span>
+                    <span>Total Points</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">ii.</span>
+                    <span>Frame difference (Total frames won minus total frames lost)</span>
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    <div className="text-xs font-semibold text-slate-200">
+                      <span className="text-emerald-400 mr-2">iii.</span>
+                      In the event of teams finishing the season with the same record:
+                    </div>
+                    <div className="space-y-1.5 pl-5 text-xs text-slate-300">
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/60">
+                        <strong className="text-white">1. Head-to-head record:</strong> a) Total points won (both games combined), b) Frame difference (both games combined).
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/60">
+                        <strong className="text-white">2.</strong> If that is also tied, then each team’s record against the highest-placed team in the league: a) Total points won (both games combined), b) Frame difference (both games combined).
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/60">
+                        <strong className="text-white">3.</strong> If that is also tied, then this will be repeated down the league table until the teams can be separated.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* b. Players Averages */}
+              <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-4 space-y-3">
+                <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center justify-center">b</span>
+                  <span>The players' averages table is sorted as follows:</span>
+                </div>
+                <div className="space-y-2 pl-7">
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">i.</span>
+                    <span>Total wins</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">ii.</span>
+                    <span>Overall win percentage</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">iii.</span>
+                    <span>Total number of dishes made</span>
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    <div className="text-xs font-semibold text-slate-200">
+                      <span className="text-emerald-400 mr-2">iv.</span>
+                      If the averages winner cannot be determined, then the following is used to determine the winner:
+                    </div>
+                    <div className="space-y-1.5 pl-5 text-xs text-slate-300">
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/60">
+                        <strong className="text-white">1.</strong> Head-to-head record
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/60">
+                        <strong className="text-white">2.</strong> If that is still tied, then determined by whose team finished highest in the league
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800/60">
+                        <strong className="text-white">3.</strong> If players are in the same team – then a single-frame shoot-out will be played on finals night.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* c. Dishes Table */}
+              <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-4 space-y-3">
+                <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center justify-center">c</span>
+                  <span>The players' dish table is sorted as follows:</span>
+                </div>
+                <div className="space-y-2 pl-7">
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">i.</span>
+                    <span>Total number of dishes + reverse dishes made over the season</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-300">
+                    <span className="font-semibold text-emerald-400">ii.</span>
+                    <span>If the overall winner cannot be determined as it is tied, then awarded to the player highest in the averages table</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 9. Additional Information for Teams Without 5 Players */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  9. Additional Information for Teams Without 5 Players
+                </h3>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1">
-                  <h4 className="font-bold text-white">
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-xs font-bold text-white">
                     1) Team with Only 4 Players
-                  </h4>
-                  <p>a. Enter BYE in position 5 on the scorecard.</p>
-                  <p>
-                    b. Any player facing a BYE is automatically awarded the win.
-                  </p>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300">a. Select BYE in position 5 from the lineup dropdown.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">b. Any player facing a BYE is automatically awarded the win.</p>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1">
-                  <h4 className="font-bold text-white">
+
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-xs font-bold text-white">
                     2) Both Teams with Only 4 Players
-                  </h4>
-                  <p>a. Both teams enter BYE in position 5 on the scorecard.</p>
-                  <p>
-                    b. Any player facing a BYE is automatically awarded the win.
-                  </p>
-                  <p>
-                    c. The team that wins the lag is awarded the win in{' '}
-                    <strong>Set 1 (5 vs 5)</strong>.
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300">a. Both teams select BYE in position 5 from the lineup dropdown.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">b. Any player facing a BYE is automatically awarded the win.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    c. The team that wins the lag is awarded the win in <strong>Set 1 (5 vs 5)</strong>.
                   </p>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1">
-                  <h4 className="font-bold text-white">
+
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-xs font-bold text-white">
                     3) Team with Only 3 Players
-                  </h4>
-                  <p>a. Enter BYE in positions 4 and 5.</p>
-                  <p>
-                    b. Any player facing a BYE is automatically awarded the win.
-                  </p>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300">a. Select BYE in positions 4 and 5 from the lineup dropdown.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">b. Any player facing a BYE is automatically awarded the win.</p>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1">
-                  <h4 className="font-bold text-white">
+
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-xs font-bold text-white">
                     4) Team of 4 vs Team of 3
-                  </h4>
-                  <p>a. The team of 3 enters BYE in positions 4 and 5.</p>
-                  <p>b. The team of 4 enters BYE in position 5.</p>
-                  <p>
-                    c. Any player facing a BYE is automatically awarded the win.
-                  </p>
-                  <p>
-                    d. The team that wins the lag is awarded the win in{' '}
-                    <strong>Set 1 (5 vs 5)</strong>.
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300">a. The team of 3 selects BYE in positions 4 and 5.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">b. The team of 4 selects BYE in position 5.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">c. Any player facing a BYE is automatically awarded the win.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    d. The team that wins the lag is awarded the win in <strong>Set 1 (5 vs 5)</strong>.
                   </p>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-1 md:col-span-2">
-                  <h4 className="font-bold text-white">
+
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-4 space-y-2 md:col-span-2">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-xs font-bold text-white">
                     5) Team of 3 vs Team of 3
-                  </h4>
-                  <p>
-                    a. Both teams enter BYE in positions 4 and 5 on the
-                    scorecard.
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    a. Both teams select BYE in positions 4 and 5 from the lineup dropdown.
                   </p>
-                  <p>
-                    b. Any player facing a BYE is automatically awarded the win.
-                  </p>
-                  <p>
-                    c. The team that wins the lag is awarded the wins in{' '}
-                    <strong>Set 1 (5 vs 5)</strong> and{' '}
-                    <strong>(4 vs 4)</strong> and the win in{' '}
-                    <strong>Set 3 (5 vs 4)</strong>.
+                  <p className="text-xs sm:text-sm text-slate-300">b. Any player facing a BYE is automatically awarded the win.</p>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    c. The team that wins the lag is awarded the wins in <strong>Set 1 (5 vs 5)</strong> and <strong>(4 vs 4)</strong> and the win in <strong>Set 3 (5 vs 4)</strong>.
                   </p>
                 </div>
               </div>
@@ -800,210 +1067,430 @@ export const DocsAndRulesView: React.FC = () => {
         {/* ================================================================ */}
         {section === 'rules' && (
           <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-3">
-              <h2 className="text-lg sm:text-xl font-black text-white">
-                League Rules
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                By registering a team with the league, you agree to abide by the
-                following rules.
-              </p>
+            {/* Hero Header */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+                    <Scale className="w-3.5 h-3.5" />
+                    <span>League Constitution &amp; Governance</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    League Rules
+                  </h2>
+                  <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                    By registering a team with the league, you agree to abide by the following rules. All regulations are enforced by the Brighton Pool League committee.
+                  </p>
+                </div>
+              </div>
+
+              {/* Highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <HeartHandshake className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Zero Tolerance Policy</div>
+                    <div className="text-xs text-slate-400">Strict adherence to UK Equality Act 2010 standards across all venues.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <UserCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Registered Players</div>
+                    <div className="text-xs text-slate-400">Only registered players are eligible; non-registered players forfeit the match.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Award className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Cup Eligibility</div>
+                    <div className="text-xs text-slate-400">Minimum 4 league matches required to participate in Cup Semi-Finals and Finals.</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-emerald-400">
-                1. Code of Conduct
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> All players are expected to uphold the
-                  values of the Brighton league and to conduct themselves in a
-                  respectful and accepting manner – without any forms of abuse
-                  or discrimination.
-                </li>
-                <li>
-                  <strong>b.</strong> Venues are required to uphold the values
-                  of the Brighton league, with the safety and welfare of
-                  players of paramount consideration.
-                </li>
-                <li>
-                  <strong>c.</strong> In line with the UK Equality Act 2010, the
-                  Brighton league has zero tolerance for discrimination across
-                  any of the protected characteristics:
-                  <ul className="list-disc list-inside pl-4 mt-1 space-y-1">
-                    <li>
-                      <strong>i.</strong> Age, Disability, Gender Reassignment,
-                      Marriage and Civil Partnership, Pregnancy and
-                      Maternity, Race, Religion or Belief, Sex and Sexual
-                      Orientation.
-                    </li>
-                    <li>
-                      <strong>ii.</strong> Discrimination is classed as Direct,
-                      Indirect, Harassment or Victimisation.
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <strong>d.</strong> All reported instances where these
-                  standards have not been met will result in an investigation
-                  by the committee on a case-by-case basis:
-                  <ul className="list-disc list-inside pl-4 mt-1 space-y-1">
-                    <li>
-                      <strong>i.</strong> The league reserves the right to ban
-                      any individual or venue that breaks these rules and may
-                      pass all relevant information to the police for further
-                      investigation.
-                    </li>
-                    <li>
-                      <strong>ii.</strong> Teams and venues that are banned will not
-                      be refunded their team registrations.
-                    </li>
-                  </ul>
-                </li>
-              </ul>
+            {/* 1. Code of Conduct */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  1. Code of Conduct
+                </h3>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    All players are expected to uphold the values of the Brighton league and to conduct themselves in a respectful and accepting manner – without any forms of abuse or discrimination.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Venues are required to uphold the values of the Brighton league, with the safety and welfare of players of paramount consideration.
+                  </div>
+                </div>
+
+                {/* Equality Act Box */}
+                <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 space-y-2.5">
+                  <div className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      c
+                    </span>
+                    <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                      In line with the UK Equality Act 2010, the Brighton league has zero tolerance for discrimination across any of the protected characteristics:
+                    </div>
+                  </div>
+                  <div className="space-y-2 pl-9">
+                    <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/60 text-xs text-slate-300">
+                      <strong className="text-white">i.</strong> Age, Disability, Gender Reassignment, Marriage and Civil Partnership, Pregnancy and Maternity, Race, Religion or Belief, Sex and Sexual Orientation.
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/60 text-xs text-slate-300">
+                      <strong className="text-white">ii.</strong> Discrimination is classed as Direct, Indirect, Harassment or Victimisation.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Disciplinary Action */}
+                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/50 space-y-2.5">
+                  <div className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      d
+                    </span>
+                    <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                      All reported instances where these standards have not been met will result in an investigation by the committee on a case-by-case basis:
+                    </div>
+                  </div>
+                  <div className="space-y-2 pl-9">
+                    <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/60 text-xs text-slate-300">
+                      <strong className="text-white">i.</strong> The league reserves the right to ban any individual or venue that breaks these rules and may pass all relevant information to the police for further investigation.
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/60 text-xs text-slate-300">
+                      <strong className="text-white">ii.</strong> Teams and venues that are banned will not be refunded their team registrations.
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                2. Registered Players
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Only players registered with the league
-                  are eligible to play in matches.
-                </li>
-                <li>
-                  <strong>b.</strong> If a team fields an unregistered player,
-                  their opponent will be awarded the win.
-                </li>
-                <li>
-                  <strong>c.</strong> All captains must register their full
-                  squad before the registration window closes.
-                </li>
-                <li>
-                  <strong>d.</strong> The registration window closes
-                  approximately two weeks before the season starts.
-                </li>
-              </ul>
+            {/* 2. Registered Players */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  2. Registered Players
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Only players registered with the league are eligible to play in matches.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
+                  <span className="w-6 h-6 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                    If a team fields an unregistered player, their opponent will be awarded the win.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    All captains must register their full squad before the registration window closes.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The registration window closes approximately two weeks before the season starts.
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                3. New Signings
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> New players who are not registered with
-                  another team may be signed at any point during the season.
-                </li>
-                <li>
-                  <strong>b.</strong> Captains <strong>must</strong> notify the
-                  league of all new signings.
-                </li>
-                <li>
-                  <strong>c.</strong> New signings must be registered with the
-                  league before playing (see Section 1).
-                </li>
-              </ul>
+            {/* 3. New Signings */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  3. New Signings
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    New players who are not registered with another team may be signed at any point during the season.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Captains <strong>must</strong> notify the league of all new signings.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    New signings must be registered with the league before playing (see Section 1).
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                4. Player Transfers
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Players registered with another team but
-                  who have <strong>not made any appearances</strong> for that
-                  team may be transferred at any time during the season.
-                </li>
-                <li>
-                  <strong>b.</strong> Players who{' '}
-                  <strong>have made at least one appearance</strong> for another
-                  team may only be transferred during the{' '}
-                  <strong>first half of the season</strong>.
-                </li>
-                <li>
-                  <strong>c.</strong> The halfway point of the season is
-                  determined <strong>by date</strong>, not by games played (to
-                  account for postponed matches).
-                </li>
-                <li>
-                  <strong>d.</strong> All player transfers must be registered
-                  with the league before playing (see Section 1).
-                </li>
-              </ul>
+            {/* 4. Player Transfers */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                  <ArrowLeftRight className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  4. Player Transfers
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Players registered with another team but who have <strong>not made any appearances</strong> for that team may be transferred at any time during the season.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Players who <strong>have made at least one appearance</strong> for another team may only be transferred during the <strong>first half of the season</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The halfway point of the season is determined <strong>by date</strong>, not by games played (to account for postponed matches).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    All player transfers must be registered with the league before playing (see Section 1).
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                5. Cup Semi-Finals &amp; Finals
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> Players may only participate in Cup
-                  Semi-Finals or Finals if they have played{' '}
-                  <strong>a minimum of four (4) matches</strong> for that team
-                  during the season.
-                </li>
-                <li>
-                  <strong>b.</strong> Matches played for another team (prior to a
-                  transfer) do <strong>not</strong> count towards the four-match
-                  requirement.
-                </li>
-                <li>
-                  <strong>c.</strong> If a player takes part in a Semi-Final or
-                  Final without meeting the eligibility criteria, their opponent
-                  will be awarded the win.
-                </li>
-              </ul>
+            {/* 5. Cup Semi-Finals & Finals */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                  <Trophy className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  5. Cup Semi-Finals &amp; Finals
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                    Players may only participate in Cup Semi-Finals or Finals if they have played <strong>a minimum of four (4) matches</strong> for that team during the season.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Matches played for another team (prior to a transfer) do <strong>not</strong> count towards the four-match requirement.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
+                  <span className="w-6 h-6 rounded-lg bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                    If a player takes part in a Semi-Final or Final without meeting the eligibility criteria, their opponent will be awarded the win.
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                6. New Teams
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> New teams entering the league will start
-                  in the <strong>lowest division</strong>.
-                </li>
-                <li>
-                  <strong>b.</strong> The only exception is if the league
-                  determines it is in the league’s best interest for the new
-                  team to start in a <strong>higher division</strong>. This will
-                  be decided by the league.
-                </li>
-              </ul>
+            {/* 6. New Teams */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  6. New Teams
+                </h3>
+              </div>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    New teams entering the league will start in the <strong>lowest division</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The only exception is if the league determines it is in the league’s best interest for the new team to start in a <strong>higher division</strong>. This will be decided by the league.
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                7. Teams Folding
-              </h3>
-              <ul className="space-y-1.5 list-none">
-                <li>
-                  <strong>a.</strong> If a team folds in the{' '}
-                  <strong>first half</strong> of the season, all results will be{' '}
-                  <strong>expunged</strong>.
-                </li>
-                <li>
-                  <strong>b.</strong> If a team folds in the{' '}
-                  <strong>second half</strong> of the season, first-half results
-                  will stand and all second-half results will be{' '}
-                  <strong>expunged</strong>.
-                </li>
-                <li>
-                  <strong>c.</strong> Each situation of a team folding will be
-                  reviewed by the league on a <strong>case-by-case basis</strong>
-                  .
-                </li>
-                <li>
-                  <strong>d.</strong> The league may impose{' '}
-                  <strong>player or team bans</strong> and/or{' '}
-                  <strong>relegations</strong> as appropriate.
-                </li>
-              </ul>
+            {/* 7. Teams Folding */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  7. Teams Folding
+                </h3>
+              </div>
+
+              {/* First vs Second Half Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3.5 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20">
+                    First Half Folding
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 pt-1">
+                    <strong>a.</strong> If a team folds in the <strong>first half</strong> of the season, all results will be <strong>expunged</strong>.
+                  </div>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3.5 space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                    Second Half Folding
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 pt-1">
+                    <strong>b.</strong> If a team folds in the <strong>second half</strong> of the season, first-half results will stand and all second-half results will be <strong>expunged</strong>.
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    Each situation of a team folding will be reviewed by the league on a <strong>case-by-case basis</strong>.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The league may impose <strong>player or team bans</strong> and/or <strong>relegations</strong> as appropriate.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 8. Walkovers */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Award className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  8. Walkovers
+                </h3>
+              </div>
+
+              {/* Walkover Score Highlight Banner */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 flex flex-col">
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Non-Offending Team</span>
+                  <span className="text-xl font-black text-white mt-0.5">15–0 Win</span>
+                  <span className="text-xs text-emerald-300 font-medium mt-1">Awarded maximum 7 points (2 win + 5 bonus)</span>
+                </div>
+                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Defaulting Team</span>
+                  <span className="text-xl font-black text-slate-300 mt-0.5">0–15 Frame Score</span>
+                  <span className="text-xs text-slate-400 font-medium mt-1">Awarded 0 points; subject to committee review</span>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    a
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    If a team concedes or is unable to fulfill a fixture, a <strong>walkover</strong> is awarded.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    b
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The non-offending team is awarded a <strong>15–0 win</strong> and maximum league points (<strong>7 points</strong>: 2 points for the match win plus 5 bonus points for winning all 15 frames).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    c
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed pt-0.5">
+                    The winning team captain must notify the <strong>league admin</strong> which of their registered squad players are to be awarded the wins for the <strong>15 individual frames</strong>, ensuring their player statistics and individual averages reflect the walkover correctly.
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    d
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    The defaulting team receives <strong>0 points</strong> and a 0–15 frame score for that match. Repeated walkovers or failure to fulfill fixtures will be referred to the league committee and may result in disciplinary action or team expulsion under Section 7.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1013,124 +1500,260 @@ export const DocsAndRulesView: React.FC = () => {
         {/* ================================================================ */}
         {section === 'cofc' && (
           <div className="space-y-6">
-            <div className="border-b border-slate-800 pb-3">
-              <h2 className="text-lg sm:text-xl font-black text-white">
-                Champion of Champions
-              </h2>
-              <p className="mt-2 text-slate-300">
-                The Champion of Champions event is usually played in November
-                each year and aims to find the top open singles player, the top
-                ladies singles player and the top team from all local pool
-                leagues across the country. Further information can be found on
-                the EPA website{' '}
-                <a
-                  href="https://www.epa.org.uk/cofc/#gsc.tab=0"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-emerald-400 underline font-semibold"
-                >
-                  here
-                </a>
-                .
+            {/* Hero Header */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                    <Crown className="w-3.5 h-3.5" />
+                    <span>National EPA Competition</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    Champion of Champions
+                  </h2>
+                  <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                    The Champion of Champions event is usually played in November each year and aims to find the top open singles player, the top ladies singles player and the top team from all local pool leagues across the country. Further information can be found on the EPA website{' '}
+                    <a
+                      href="https://www.epa.org.uk/cofc/#gsc.tab=0"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-amber-400 underline font-semibold hover:text-amber-300"
+                    >
+                      here
+                    </a>
+                    .
+                  </p>
+                </div>
+
+                <div className="shrink-0">
+                  <a
+                    href="https://www.epa.org.uk/cofc/#gsc.tab=0"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs transition-colors shadow-sm"
+                  >
+                    <span>Official EPA Tournament</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Quick Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800/80">
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Users className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Up to 4 Teams</div>
+                    <div className="text-xs text-slate-400">Can represent Brighton in the team championship.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Medal className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">2 Singles Spots</div>
+                    <div className="text-xs text-slate-400">Allocated to each qualified Brighton team.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Award className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Men’s &amp; Ladies’</div>
+                    <div className="text-xs text-slate-400">Spots cover Open and Ladies' singles categories.</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                  <Calendar className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs font-bold text-white">November Annual</div>
+                    <div className="text-xs text-slate-400">National competition played each November.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 1. Overview */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Crown className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  1. Overview
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    The <strong>Brighton League</strong> can be represented by up to <strong>four (4) teams</strong> in the Champion of Champions.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    Each team representing the Brighton League is allocated <strong>two (2) singles spots</strong>.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    These singles spots are for entry into either the <strong>Men’s Singles</strong> or <strong>Ladies’ Singles</strong> competitions.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    Any team wishing to represent Brighton <strong>must obtain league approval</strong> before submitting their entry form.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Allocation of Singles Spots */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Medal className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  2. Allocation of Singles Spots
+                </h3>
+              </div>
+
+              <p className="text-xs sm:text-sm text-slate-300">
+                The Brighton League will allocate singles spots based on the following <strong>ranking system</strong>:
               </p>
+
+              {/* Ranking Ladder Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                {[
+                  { rank: 1, title: 'Winter Open Singles', season: 'winter' },
+                  { rank: 2, title: 'Winter Ladies Singles', season: 'winter' },
+                  { rank: 3, title: 'Winter Premier League Averages', season: 'winter' },
+                  { rank: 4, title: 'Summer Open Singles', season: 'summer' },
+                  { rank: 5, title: 'Summer Ladies Singles', season: 'summer' },
+                  { rank: 6, title: 'Summer Premier League Averages', season: 'summer' },
+                ].map((item) => (
+                  <div
+                    key={item.rank}
+                    className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 flex items-center justify-between gap-3 hover:border-slate-700/80 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={
+                          'w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center shrink-0 border ' +
+                          (item.rank === 1
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : item.rank === 2
+                            ? 'bg-slate-400/20 text-slate-200 border-slate-400/40'
+                            : item.rank === 3
+                            ? 'bg-amber-700/20 text-amber-500 border-amber-700/40'
+                            : 'bg-slate-800 text-slate-400 border-slate-700')
+                        }
+                      >
+                        #{item.rank}
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white">
+                        {item.title}
+                      </span>
+                    </div>
+                    {item.season === 'summer' ? (
+                      <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    ) : (
+                      <Snowflake className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-emerald-400">
-                1. Overview
-              </h3>
-              <ul className="list-disc list-inside space-y-1.5">
-                <li>
-                  The <strong>Brighton League</strong> can be represented by up
-                  to <strong>four (4) teams</strong> in the Champion of
-                  Champions.
-                </li>
-                <li>
-                  Each team representing the Brighton League is allocated{' '}
-                  <strong>two (2) singles spots</strong>.
-                </li>
-                <li>
-                  These singles spots are for entry into either the{' '}
-                  <strong>Men’s Singles</strong> or{' '}
-                  <strong>Ladies’ Singles</strong> competitions.
-                </li>
-                <li>
-                  Any team wishing to represent Brighton{' '}
-                  <strong>must obtain league approval</strong> before submitting
-                  their entry form.
-                </li>
-              </ul>
+            {/* 3. Declined or Unfilled Spots */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Shuffle className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  3. Declined or Unfilled Spots
+                </h3>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    If a <strong>winner</strong> declines a singles spot, it will be passed down the list in ranking order.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    If the league reaches the <strong>bottom of the list</strong> and has been unable to fill the singles spots, allocation restarts from the <strong>top of the list</strong>, offering spots to <strong>runners-up</strong> or <strong>2nd in the averages</strong>.
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    3
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed pt-0.5">
+                    If runners-up decline a spot and the league again reaches the bottom of the list, allocation restarts from the top and offers the spots to <strong>losing semi-finalists</strong> (starting with the player who finished higher in the <strong>Winter Averages</strong>) or <strong>3rd in the averages</strong>.
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                2. Allocation of Singles Spots
-              </h3>
-              <p>
-                The Brighton League will allocate singles spots based on the
-                following <strong>ranking system</strong>:
-              </p>
-              <ol className="list-decimal list-inside space-y-1 text-white font-semibold pl-2">
-                <li>Winter Open Singles</li>
-                <li>Winter Ladies Singles</li>
-                <li>Winter Premier League Averages</li>
-                <li>Summer Open Singles</li>
-                <li>Summer Ladies Singles</li>
-                <li>Summer Premier League Averages</li>
-              </ol>
-            </div>
+            {/* 4. Additional Spots */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Info className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  4. Additional Spots
+                </h3>
+              </div>
 
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                3. Declined or Unfilled Spots
-              </h3>
-              <ul className="list-disc list-inside space-y-1.5">
-                <li>
-                  If a <strong>winner</strong> declines a singles spot, it will
-                  be passed down the list in ranking order.
-                </li>
-                <li>
-                  If the league reaches the{' '}
-                  <strong>bottom of the list</strong> and has been unable to
-                  fill the singles spots, allocation restarts from the{' '}
-                  <strong>top of the list</strong>, offering spots to{' '}
-                  <strong>runners-up</strong> or{' '}
-                  <strong>2nd in the averages</strong>.
-                </li>
-                <li>
-                  If runners-up decline a spot and the league again reaches the
-                  bottom of the list, allocation restarts from the top and
-                  offers the spots to <strong>losing semi-finalists</strong>{' '}
-                  (starting with the player who finished higher in the{' '}
-                  <strong>Winter Averages</strong>) or{' '}
-                  <strong>3rd in the averages</strong>.
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-2 border-t border-slate-800/80 pt-4">
-              <h3 className="text-base font-bold text-emerald-400">
-                4. Additional Spots
-              </h3>
-              <ul className="list-disc list-inside space-y-1.5">
-                <li>
-                  There is a{' '}
-                  <strong>possibility of a 7th and an 8th singles spot</strong> (if
-                  four teams represent the Brighton League).
-                </li>
-                <li>
-                  These additional allocations are{' '}
-                  <strong>currently under review</strong>, with further
-                  information to be provided at a later date.
-                </li>
-              </ul>
+              <div className="space-y-2.5">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800/50">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    There is a <strong>possibility of a 7th and an 8th singles spot</strong> (if four teams represent the Brighton League).
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <span className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    •
+                  </span>
+                  <div className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    These additional allocations are <strong>currently under review</strong>, with further information to be provided at a later date.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ================================================================ */}
-        {/* 4. COMPETITIONS (content/docs/competitions/*.md)                 */}
-        {/* ================================================================ */}
         {section === 'competitions' && (
           <div className="space-y-6">
             {/* Header intro & overview */}
