@@ -2930,11 +2930,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <div className="space-y-0.5 flex-1 min-w-0 text-left">
                       <div className="text-xs sm:text-sm font-black text-white tracking-wide uppercase flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>
-                          {isKnockout && !playAllFrames
-                            ? 'Match Complete — Review Scorecard'
-                            : 'All 15 Frames Complete — Review Scorecard'}
-                        </span>
+                        <span>Match Complete — Review Scorecard</span>
                       </div>
                       <div className="text-[11px] text-slate-300">
                         Please review the full result scorecard before captains sign off.
