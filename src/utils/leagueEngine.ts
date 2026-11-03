@@ -1173,6 +1173,7 @@ export function getSeasonHalfwayDate(
 
 export interface ExpungedFixtureInfo {
   isExpunged: boolean;
+  isCancelled: boolean;
   reason?: 'rule_7a' | 'rule_7b';
   foldedTeamName?: string;
 }
@@ -1183,12 +1184,19 @@ export interface ExpungedFixtureInfo {
  * - Rule 7b: If a team folds in the second half of the season, first half results will stand,
  *   and all second half results will be expunged.
  * - Rule 7c: Each situation of a team folding will be reviewed on a case-by-case basis.
+ * - Knockout fixtures are cup/tournament competitions, not league fixtures, and are not expunged.
+ * - Unplayed / scheduled fixtures have no results to expunge and are marked as cancelled.
  */
 export function isFixtureExpunged(
   fixture: Fixture,
   teamsById: Record<string, Team>,
   divisionHalfwayDate?: string | null
 ): ExpungedFixtureInfo {
+  // Knockout / cup fixtures are tournament competitions, not league matches
+  if (isKnockoutFixture(fixture)) {
+    return { isExpunged: false, isCancelled: false };
+  }
+
   const homeTeam = teamsById[fixture.homeTeamId];
   const awayTeam = teamsById[fixture.awayTeamId];
 
@@ -1197,11 +1205,25 @@ export function isFixtureExpunged(
   if (awayTeam?.isFolded) foldedTeams.push(awayTeam);
 
   if (foldedTeams.length === 0) {
-    return { isExpunged: false };
+    return { isExpunged: false, isCancelled: false };
   }
 
-  // If any team folded in the first half of the season, Rule 7a applies:
-  // ALL results involving this team are expunged.
+  // Unplayed fixtures (scheduled with no completed frames) have no results to expunge; they are cancelled
+  const hasResult =
+    fixture.status === 'approved' ||
+    fixture.status === 'submitted' ||
+    fixture.frames.some((f) => f.winner !== null);
+
+  if (!hasResult) {
+    return {
+      isExpunged: false,
+      isCancelled: true,
+      foldedTeamName: foldedTeams[0].name,
+    };
+  }
+
+  // For played fixtures: check whether the fold occurred in the first half or second half
+  // If any team folded in the first half of the season, Rule 7a applies: ALL results involving this team are expunged.
   for (const team of foldedTeams) {
     const isFirstHalf =
       !divisionHalfwayDate ||
@@ -1211,6 +1233,7 @@ export function isFixtureExpunged(
     if (isFirstHalf) {
       return {
         isExpunged: true,
+        isCancelled: false,
         reason: 'rule_7a',
         foldedTeamName: team.name,
       };
@@ -1224,11 +1247,12 @@ export function isFixtureExpunged(
     fixture.matchDate &&
     fixture.matchDate <= divisionHalfwayDate
   ) {
-    return { isExpunged: false };
+    return { isExpunged: false, isCancelled: false };
   }
 
   return {
     isExpunged: true,
+    isCancelled: false,
     reason: 'rule_7b',
     foldedTeamName: foldedTeams[0].name,
   };

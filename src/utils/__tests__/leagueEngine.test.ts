@@ -1660,6 +1660,44 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
       const teamsById = { 'team-a': teamA, 'team-b': teamB, 'team-c': teamC };
       const res = isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate);
       expect(res.isExpunged).toBe(false);
+      expect(res.isCancelled).toBe(false);
+    });
+
+    it('does not expunge or cancel knockout cup fixtures when a team folds', () => {
+      const foldedTeamA: Team = {
+        ...teamA,
+        isFolded: true,
+        foldedDate: '2026-10-25',
+      };
+      const teamsById = { 'team-a': foldedTeamA, 'team-b': teamB, 'team-c': teamC };
+      const knockoutFix: Fixture = {
+        ...fix1FirstHalf,
+        id: 'cup-fixture-1',
+        matchType: 'knockout',
+      };
+      const res = isFixtureExpunged(knockoutFix, teamsById, halfwayDate);
+      expect(res.isExpunged).toBe(false);
+      expect(res.isCancelled).toBe(false);
+    });
+
+    it('marks scheduled unplayed fixtures as cancelled rather than expunged', () => {
+      const foldedTeamA: Team = {
+        ...teamA,
+        isFolded: true,
+        foldedDate: '2026-10-25',
+      };
+      const teamsById = { 'team-a': foldedTeamA, 'team-b': teamB, 'team-c': teamC };
+      const scheduledFix = makeFixture({
+        id: 'fix-scheduled',
+        matchDate: '2026-11-20',
+        homeTeamId: 'team-a',
+        awayTeamId: 'team-b',
+        status: 'scheduled',
+      });
+      const res = isFixtureExpunged(scheduledFix, teamsById, halfwayDate);
+      expect(res.isExpunged).toBe(false);
+      expect(res.isCancelled).toBe(true);
+      expect(res.foldedTeamName).toBe('Team A');
     });
 
     it('expunges all results if a team folds in the first half of the season (Rule 7a)', () => {
@@ -1667,23 +1705,25 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
         ...teamA,
         isFolded: true,
         foldedDate: '2026-10-25', // before halfwayDate (2026-11-01)
-        foldedReason: 'Venue closure',
       };
       const teamsById = { 'team-a': foldedTeamA, 'team-b': teamB, 'team-c': teamC };
 
       // Both first-half and second-half matches involving team A must be expunged
       const res1 = isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate);
       expect(res1.isExpunged).toBe(true);
+      expect(res1.isCancelled).toBe(false);
       expect(res1.reason).toBe('rule_7a');
       expect(res1.foldedTeamName).toBe('Team A');
 
       const res2 = isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate);
       expect(res2.isExpunged).toBe(true);
+      expect(res2.isCancelled).toBe(false);
       expect(res2.reason).toBe('rule_7a');
 
       // Unrelated match between active teams stands
       const res3 = isFixtureExpunged(fix3BetweenOthers, teamsById, halfwayDate);
       expect(res3.isExpunged).toBe(false);
+      expect(res3.isCancelled).toBe(false);
 
       // Verify league table under Rule 7a
       const table = computeLeagueTable('Premier League', [foldedTeamA, teamB, teamC], divisionFixtures);
@@ -1724,17 +1764,18 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
         ...teamA,
         isFolded: true,
         foldedDate: '2026-11-20', // after halfwayDate (2026-11-01)
-        foldedReason: 'Player shortages',
       };
       const teamsById = { 'team-a': foldedTeamA, 'team-b': teamB, 'team-c': teamC };
 
       // First-half fixture stands
       const res1 = isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate);
       expect(res1.isExpunged).toBe(false);
+      expect(res1.isCancelled).toBe(false);
 
       // Second-half fixture is expunged
       const res2 = isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate);
       expect(res2.isExpunged).toBe(true);
+      expect(res2.isCancelled).toBe(false);
       expect(res2.reason).toBe('rule_7b');
       expect(res2.foldedTeamName).toBe('Team A');
 
@@ -1767,12 +1808,13 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
         ...teamA,
         isFolded: false,
         foldedDate: undefined,
-        foldedReason: undefined,
       };
       const teamsById = { 'team-a': restoredTeamA, 'team-b': teamB, 'team-c': teamC };
 
       expect(isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate).isExpunged).toBe(false);
+      expect(isFixtureExpunged(fix1FirstHalf, teamsById, halfwayDate).isCancelled).toBe(false);
       expect(isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate).isExpunged).toBe(false);
+      expect(isFixtureExpunged(fix2SecondHalf, teamsById, halfwayDate).isCancelled).toBe(false);
 
       const table = computeLeagueTable('Premier League', [restoredTeamA, teamB, teamC], divisionFixtures);
       const rowA = table.find((r) => r.team.id === 'team-a')!;

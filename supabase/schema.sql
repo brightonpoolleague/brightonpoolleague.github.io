@@ -53,7 +53,6 @@ create table if not exists public.teams (
 alter table public.teams add column if not exists table_number text not null default '';
 alter table public.teams add column if not exists is_folded boolean not null default false;
 alter table public.teams add column if not exists folded_date text;
-alter table public.teams add column if not exists folded_reason text;
 
 -- Drop any legacy fixed division check constraint so Admins can add new divisions freely
 alter table public.teams drop constraint if exists teams_division_check;
@@ -1096,8 +1095,7 @@ create or replace function public.admin_fold_team(
   p_admin_pin text,
   p_team_id text,
   p_is_folded boolean,
-  p_folded_date text default null,
-  p_folded_reason text default null
+  p_folded_date text default null
 )
 returns boolean
 language plpgsql
@@ -1111,8 +1109,7 @@ begin
 
   update public.teams
   set is_folded = p_is_folded,
-      folded_date = case when p_is_folded then coalesce(p_folded_date, to_char(now(), 'YYYY-MM-DD')) else null end,
-      folded_reason = case when p_is_folded then p_folded_reason else null end
+      folded_date = case when p_is_folded then coalesce(p_folded_date, to_char(now(), 'YYYY-MM-DD')) else null end
   where id = p_team_id;
 
   return true;

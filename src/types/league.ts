@@ -42,7 +42,6 @@ export interface Team {
   tableNumber?: string;
   isFolded?: boolean;
   foldedDate?: string; // YYYY-MM-DD
-  foldedReason?: string;
 }
 
 // 'BYE' represents a missing player (No Player / BYE) in position 4 or 5

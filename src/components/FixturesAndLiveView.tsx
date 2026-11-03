@@ -149,15 +149,17 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const myNextMatch = useMemo(() => {
     if (myMatches.length === 0) return null;
 
-    const isExpunged = (f: Fixture) =>
-      isFixtureExpunged(f, teamsById, halfwayDateByDiv[f.division]).isExpunged;
+    const isExcluded = (f: Fixture) => {
+      const info = isFixtureExpunged(f, teamsById, halfwayDateByDiv[f.division]);
+      return info.isExpunged || info.isCancelled;
+    };
 
     // 1. Earliest scheduled or live match on or after today that is not cancelled/expunged
     const upcoming = myMatches.find(
       (f) =>
         f.matchDate >= todayStr &&
         (f.status === 'scheduled' || f.status === 'live') &&
-        !isExpunged(f)
+        !isExcluded(f)
     );
     if (upcoming) return upcoming;
 
@@ -165,7 +167,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     const unplayedPast = myMatches.find(
       (f) =>
         (f.status === 'scheduled' || f.status === 'live') &&
-        !isExpunged(f)
+        !isExcluded(f)
     );
     if (unplayedPast) return unplayedPast;
 
@@ -759,14 +761,17 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       {formatMatchDate(fix.matchDate)}
                     </span>
                   </div>
-                  {expungedInfo.isExpunged ? (
+                  {expungedInfo.isCancelled ? (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-slate-800 text-slate-400 border border-slate-700">
+                      <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />
+                      Cancelled • Folded
+                    </span>
+                  ) : expungedInfo.isExpunged ? (
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-amber-950/80 text-amber-300 border border-amber-600/50">
-                      <AlertTriangle className="w-2.5 h-2.5" />
-                      {fix.status === 'scheduled'
-                        ? 'Cancelled • Folded'
-                        : expungedInfo.reason === 'rule_7a'
-                        ? 'Expunged (Rule 7a)'
-                        : 'Expunged (Rule 7b)'}
+                      <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />
+                      {expungedInfo.reason === 'rule_7a'
+                        ? 'Result Expunged (Rule 7a)'
+                        : 'Result Expunged (Rule 7b)'}
                     </span>
                   ) : (
                     <span
@@ -905,7 +910,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       </button>
                     )}
 
-                    {expungedInfo.isExpunged && fix.status === 'scheduled' ? (
+                    {expungedInfo.isCancelled ? (
                       <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-500 cursor-not-allowed">
                         Match Cancelled
                       </span>

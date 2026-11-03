@@ -85,7 +85,8 @@ describe('FoldTeamModal Component', () => {
     expect(screen.getByText(/Fixtures Impact Preview \(2\)/)).toBeInTheDocument();
     expect(screen.getByText('Home vs Beta Bears')).toBeInTheDocument();
     expect(screen.getByText('Away vs Beta Bears')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Date Picker/i })).toBeInTheDocument();
+    expect(screen.getByText('Cancelled (Unplayed)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open Calendar/i })).toBeInTheDocument();
   });
 
   it('dynamically switches explanation between Rule 7a (First Half) and Rule 7b (Second Half)', () => {

@@ -95,7 +95,6 @@ function mapTeamRow(
     tableNumber: r.table_number ? String(r.table_number) : undefined,
     isFolded: Boolean(r.is_folded),
     foldedDate: r.folded_date ? String(r.folded_date) : undefined,
-    foldedReason: r.folded_reason ? String(r.folded_reason) : undefined,
   };
 }
 
@@ -238,7 +237,7 @@ interface LeagueContextValue {
     newPin: string
   ) => Promise<{ success: boolean; error?: string }>;
   updateTeam: (team: Team) => Promise<void>;
-  foldTeam: (teamId: string, foldDate?: string, reason?: string) => Promise<void>;
+  foldTeam: (teamId: string, foldDate?: string) => Promise<void>;
   unfoldTeam: (teamId: string) => Promise<void>;
   addPlayer: (teamId: string, name: string) => Promise<Player>;
   updatePlayer: (player: Player) => Promise<void>;
@@ -1320,7 +1319,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const foldTeam = useCallback(
-    async (teamId: string, foldDate?: string, reason?: string): Promise<void> => {
+    async (teamId: string, foldDate?: string): Promise<void> => {
       const resolvedDate = foldDate || new Date().toISOString().split('T')[0];
       const nextTeams = allTeams.map((t) =>
         t.id === teamId
@@ -1328,7 +1327,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               ...t,
               isFolded: true,
               foldedDate: resolvedDate,
-              foldedReason: reason?.trim() || undefined,
             }
           : t
       );
@@ -1342,7 +1340,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_team_id: teamId,
           p_is_folded: true,
           p_folded_date: resolvedDate,
-          p_folded_reason: reason?.trim() || null,
         });
       }
     },
@@ -1357,7 +1354,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
               ...t,
               isFolded: false,
               foldedDate: undefined,
-              foldedReason: undefined,
             }
           : t
       );
@@ -1371,7 +1367,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_team_id: teamId,
           p_is_folded: false,
           p_folded_date: null,
-          p_folded_reason: null,
         });
       }
     },

@@ -165,11 +165,11 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
               <button
                 type="button"
                 onClick={handleOpenPicker}
-                aria-label="Calendar Icon"
+                aria-label="Open Calendar"
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-emerald-400 transition"
-                title="Calendar Icon"
+                title="Open Calendar"
               >
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 text-emerald-400" />
               </button>
               <input
                 ref={dateInputRef}
@@ -179,17 +179,8 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                 value={foldDate}
                 onChange={(e) => setFoldDate(e.target.value)}
                 onClick={handleOpenPicker}
-                className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-28 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
+                className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
               />
-              <button
-                type="button"
-                onClick={handleOpenPicker}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-[11px] font-semibold transition flex items-center gap-1 shadow-sm"
-                title="Open date picker calendar"
-              >
-                <Calendar className="w-3 h-3 text-emerald-400" />
-                <span>Date Picker</span>
-              </button>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-1 pt-1 text-[11px]">
               <span className="text-emerald-400 font-semibold truncate">
@@ -238,9 +229,13 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                   const isHome = fix.homeTeamId === team.id;
                   const opponentId = isHome ? fix.awayTeamId : fix.homeTeamId;
                   const opponent = teamsById.get(opponentId);
+                  const hasResult =
+                    fix.status === 'approved' ||
+                    fix.status === 'submitted' ||
+                    fix.frames.some((f) => f.winner !== null);
                   const isMatchFirstHalf =
                     halfwayDate && fix.matchDate && fix.matchDate <= halfwayDate;
-                  const willExpunge = isFirstHalf || !isMatchFirstHalf;
+                  const willExpunge = hasResult && (isFirstHalf || !isMatchFirstHalf);
 
                   return (
                     <div
@@ -258,16 +253,20 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                       </div>
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                          willExpunge
+                          !hasResult
+                            ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                            : willExpunge
                             ? 'bg-amber-950/80 text-amber-300 border border-amber-600/50'
                             : 'bg-emerald-950/80 text-emerald-300 border border-emerald-600/50'
                         }`}
                       >
-                        {willExpunge
+                        {!hasResult
+                          ? 'Cancelled (Unplayed)'
+                          : willExpunge
                           ? isFirstHalf
-                            ? 'Expunged (Rule 7a)'
-                            : 'Expunged (Rule 7b)'
-                          : 'Stands (First Half)'}
+                            ? 'Result Expunged (Rule 7a)'
+                            : 'Result Expunged (Rule 7b)'
+                          : 'Result Stands (First Half)'}
                       </span>
                     </div>
                   );
