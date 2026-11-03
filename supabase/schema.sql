@@ -53,7 +53,6 @@ create table if not exists public.teams (
 alter table public.teams add column if not exists table_number text not null default '';
 alter table public.teams add column if not exists is_folded boolean not null default false;
 alter table public.teams add column if not exists folded_date text;
-alter table public.teams drop column if exists folded_reason;
 
 -- Drop any legacy fixed division check constraint so Admins can add new divisions freely
 alter table public.teams drop constraint if exists teams_division_check;
@@ -1092,7 +1091,6 @@ $$;
 drop function if exists public.admin_delete_team(text, text);
 
 -- 9b. Admin Fold / Unfold Team (League Rule 7)
-drop function if exists public.admin_fold_team(text, text, boolean, text, text);
 create or replace function public.admin_fold_team(
   p_admin_pin text,
   p_team_id text,
