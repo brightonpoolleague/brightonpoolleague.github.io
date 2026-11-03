@@ -2176,26 +2176,9 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             ) : (
               <div className="space-y-2.5">
                 {filteredFixtures.map((fix) => {
-                  const home = teamsById[fix.homeTeamId] ?? {
-                    id: fix.homeTeamId,
-                    seasonId: fix.seasonId,
-                    division: fix.division,
-                    name: `Unknown Team (${fix.homeTeamId})`,
-                    venue: 'Unknown Venue',
-                    address: '',
-                    captainName: 'Unknown',
-                    captainPin: '000000',
-                  };
-                  const away = teamsById[fix.awayTeamId] ?? {
-                    id: fix.awayTeamId,
-                    seasonId: fix.seasonId,
-                    division: fix.division,
-                    name: `Unknown Team (${fix.awayTeamId})`,
-                    venue: 'Unknown Venue',
-                    address: '',
-                    captainName: 'Unknown',
-                    captainPin: '000000',
-                  };
+                  const home = teamsById[fix.homeTeamId];
+                  const away = teamsById[fix.awayTeamId];
+                  if (!home || !away) return null;
                   const score = calculateMatchScore(fix);
                   const timeframe = getMatchTimeframe(
                     fix.matchDate,
