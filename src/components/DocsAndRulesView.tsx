@@ -447,7 +447,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <strong>a.</strong> Both captains open the fixture in the app and log in with their <strong>6-digit Captain PIN</strong> to edit the live scorecard.
                 </li>
                 <li>
-                  <strong>b. Blind Set 1 Lineup Entry:</strong> Each captain selects their 5 players from their squad dropdown for positions <strong>1–5</strong> (their running order in the first set). Selections remain hidden from opponents until both captains tap <strong>Confirm &amp; Lock Set 1 Lineup</strong>, revealing both teams' lineups simultaneously.
+                  <strong>b. Blind Set 1 Lineup Entry:</strong> Each captain selects their 5 players from their squad dropdown for positions <strong>1–5</strong> (their running order in the first set). Selections remain hidden from opponents until both captains tap <strong>Confirm Lineup</strong>, revealing both teams' lineups simultaneously.
                 </li>
                 <li>
                   <strong>c. Lag &amp; Break Determination:</strong> Player 1 from each team lags. Tap the winning side (<strong>Home</strong> or <strong>Away</strong>) on the scorecard. The app automatically assigns the break for all 15 frames across all 3 sets (8 breaks to the lag winner and 7 to their opponent).
@@ -513,10 +513,10 @@ export const DocsAndRulesView: React.FC = () => {
                   <strong>f. Subsequent Sets:</strong> Set 1 player selections automatically cascade into Sets 2 and 3. If no substitutions are made, captains do not need to re-enter names.
                 </li>
                 <li>
-                  <strong>g. Substitutions:</strong> If making changes, tap <strong>Make Substitutions</strong> before the set starts and choose the replacement player from the squad list. The opposing captain will be prompted to approve the change with their PIN before play continues.
+                  <strong>g. Substitutions:</strong> If making changes, tap <strong>Make Subs</strong> before the set starts and choose the replacement player from the squad list. The opposing captain will be prompted to approve the change before play continues.
                 </li>
                 <li>
-                  <strong>h. Recording Frame Results:</strong> After each frame, tap <strong>Home Win</strong> or <strong>Away Win</strong> on the scorecard. The running match score and set totals update live automatically.
+                  <strong>h. Recording Frame Results:</strong> After each frame, tap the player who won the frame on the scorecard. The running match score and set totals update live automatically.
                 </li>
                 <li>
                   <strong>i. Dishes &amp; Reverse Dishes:</strong> If a game is won in a single visit, tap the <strong>Dish</strong> button on that frame:
@@ -558,7 +558,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>e.</strong> To make substitutions in the app, tap{' '}
-                  <strong>Make Substitutions</strong> before the set starts, select the substitute from your squad list and have the opposing captain confirm with their PIN.
+                  <strong>Make Subs</strong> before the set starts, select the substitute from your squad list and have the opposing captain confirm.
                 </li>
               </ul>
             </div>
