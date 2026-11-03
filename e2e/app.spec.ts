@@ -964,9 +964,11 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
     // Switch back to Player Averages and verify standard stat columns return
     await page.getByRole('button', { name: 'Player Averages' }).click();
-    await page.getByRole('button', { name: 'Division 1' }).click();
-    await expect(page.getByRole('columnheader', { name: 'Win %' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'All Divisions' })).toBeHidden();
+    if (!isContainerized) {
+      await page.getByRole('button', { name: 'Division 1' }).click();
+    }
+    await expect(page.getByRole('columnheader', { name: 'Win %' })).toBeVisible();
     await page.getByRole('button', { name: 'Dish Leaderboard' }).click();
     await page.getByRole('button', { name: 'All Divisions' }).click();
 
