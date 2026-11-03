@@ -683,7 +683,7 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
     expect(appsLate.message).toContain('Transfer restricted under Rule 4b');
   });
 
-  it('preserves player individual statistics and attributes results to the team played for', () => {
+  it('combines individual statistics when moving teams within the same division and attributes results to each team', () => {
     const teamA = makeTeam({ id: 'team-a', name: 'The Crown', division: 'Premier League' });
     const teamB = makeTeam({ id: 'team-b', name: 'The Lion', division: 'Premier League' });
 
