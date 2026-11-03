@@ -601,7 +601,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>c.</strong> Once both captains have signed, tap{' '}
-                  <strong>Finish Match</strong> to submit and finalise the match result. League tables
+                  <strong>Finish &amp; Submit Match</strong> to finalise the match result. League tables
                   and player statistics update live automatically with no need to take a photo or
                   post to WhatsApp or social media.
                 </li>
