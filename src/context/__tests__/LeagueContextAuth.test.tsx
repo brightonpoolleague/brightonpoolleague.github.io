@@ -176,4 +176,40 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     const savedSession = JSON.parse(localStorage.getItem('bpl_session_v2') || '{}');
     expect(savedSession.role).toBe('viewer');
   });
+
+  it('updates isRealtimeConnected when WebSocket connects and drops', async () => {
+    let subscriberCallback: ((status: string) => void) | null = null;
+    vi.mocked(supabaseModule.getSupabaseClient).mockReturnValue({
+      from: mockFrom,
+      rpc: mockRpc,
+      channel: vi.fn().mockReturnValue({
+        on: vi.fn().mockReturnThis(),
+        subscribe: vi.fn().mockImplementation((cb) => {
+          subscriberCallback = cb;
+          if (cb) cb('SUBSCRIBED');
+          return { unsubscribe: vi.fn() };
+        }),
+        track: vi.fn().mockResolvedValue(true),
+      }),
+      removeChannel: vi.fn().mockResolvedValue('ok'),
+    } as unknown as ReturnType<typeof supabaseModule.getSupabaseClient>);
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isRealtimeConnected).toBe(true);
+    });
+
+    act(() => {
+      if (subscriberCallback) subscriberCallback('TIMED_OUT');
+    });
+
+    await waitFor(() => {
+      expect(result.current.isRealtimeConnected).toBe(false);
+    });
+  });
 });
