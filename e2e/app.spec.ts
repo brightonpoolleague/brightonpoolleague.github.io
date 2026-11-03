@@ -381,10 +381,51 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       ).toBeHidden();
     }
 
-    // 6. Test Award Walkover (Rule 8) in the Admin Portal on a scheduled fixture
+    // 6. Test Award Walkover (Rule 8) on a dedicated temporary fixture
     await page.getByRole('button', { name: /^Fixtures\b/i }).click();
-    const fixtureSearch = page.getByPlaceholder(/Search by team, venue, table, division or date/i);
-    await fixtureSearch.fill('Week 3');
+    await page.getByRole('button', { name: 'Schedule Fixture' }).click();
+
+    // Configure a Knockout Cup fixture
+    await page
+      .locator('select')
+      .filter({ hasText: 'League Match (15 frames)' })
+      .first()
+      .selectOption('knockout');
+    await page
+      .getByPlaceholder(/e\.g\. Division 1 Cup, Summer Cup/i)
+      .fill('E2E Walkover Cup');
+    await page
+      .getByPlaceholder(/e\.g\. Quarter-Final, Semi-Final/i)
+      .fill('Walkover Final');
+
+    const walkoverHomeSelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select Home Team --' })
+      .first();
+    const wHomeId = await walkoverHomeSelect
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value');
+    await walkoverHomeSelect.selectOption(wHomeId!);
+
+    const walkoverAwaySelect = page
+      .locator('select')
+      .filter({ hasText: '-- Select Away Team --' })
+      .first();
+    const wAwayId = await walkoverAwaySelect
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value');
+    await walkoverAwaySelect.selectOption(wAwayId!);
+
+    await page.getByRole('button', { name: 'Confirm & Schedule' }).click();
+
+    // Search for the newly created Walkover fixture
+    const adminFixtureSearch = page.getByPlaceholder(
+      /Search by team, venue, table, division or date/i
+    );
+    await adminFixtureSearch.fill('E2E Walkover Cup');
+
     const walkoverBtn = page.getByTitle('Award Walkover (Rule 8)').first();
     await expect(walkoverBtn).toBeVisible();
     await walkoverBtn.click();
@@ -419,7 +460,14 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await expect(
       page.getByText('Walkover').first()
     ).toBeVisible();
-    await fixtureSearch.fill('');
+
+    // Clean up temporary fixture
+    await page.getByTitle('Delete Fixture').first().click();
+    await expect(
+      page.getByRole('heading', { name: 'Delete Fixture?' })
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Delete Fixture' }).last().click();
+    await adminFixtureSearch.fill('');
   });
 
   test('filters fixtures by status/division/search and toggles Include Live & Unapproved standings', async ({
