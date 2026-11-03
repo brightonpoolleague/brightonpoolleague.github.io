@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import React from 'react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { MatchScorecardModal } from '../MatchScorecardModal';
 import { Fixture } from '../../types/league';
