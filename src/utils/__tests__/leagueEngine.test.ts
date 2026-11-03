@@ -23,7 +23,10 @@ import {
   isSubsLocked,
   isSubsPendingApproval,
   isSubsUnlockRequested,
+  getPlayerAppearancesForTeam,
+  getSeasonHalfwayDate,
   syncDefaultSubsequentSets,
+  validatePlayerTransfer,
 } from '../leagueEngine';
 import { Fixture, MatchLineups, Player, Team } from '../../types/league';
 
@@ -537,5 +540,246 @@ describe('leagueEngine - Date Helpers & Approval Warnings', () => {
     // Frame 6 is Set 2, Game 1: Home Slot 1 vs Away Slot 3
     const players = getFramePlayers(lineups, frames[5]);
     expect(players).toEqual({ homePlayerId: 'h1', awayPlayerId: 'a3' });
+  });
+});
+
+describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () => {
+  it('determines the halfway point of the season by date (Rule 4c)', () => {
+    const f1 = makeFixture({
+      id: 'fix-1',
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      matchDate: '2026-09-01',
+    });
+    const f2 = makeFixture({
+      id: 'fix-2',
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      matchDate: '2026-10-01',
+    });
+    const f3 = makeFixture({
+      id: 'fix-3',
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      matchDate: '2026-10-31',
+    });
+
+    // Start 2026-09-01, End 2026-10-31 (60 days). Midpoint is 2026-10-01.
+    const result = getSeasonHalfwayDate([f1, f2, f3], '2026-09-20');
+    expect(result.startDate).toBe('2026-09-01');
+    expect(result.endDate).toBe('2026-10-31');
+    expect(result.halfwayDate).toBe('2026-10-01');
+    expect(result.isPastHalfway).toBe(false);
+
+    // On halfway date -> not past halfway (first half)
+    expect(getSeasonHalfwayDate([f1, f2, f3], '2026-10-01').isPastHalfway).toBe(false);
+
+    // After halfway date -> past halfway
+    expect(getSeasonHalfwayDate([f1, f2, f3], '2026-10-02').isPastHalfway).toBe(true);
+
+    // Empty fixtures
+    expect(getSeasonHalfwayDate([])).toEqual({
+      startDate: null,
+      endDate: null,
+      halfwayDate: null,
+      isPastHalfway: false,
+    });
+  });
+
+  it('accurately counts player appearances for a specific team', () => {
+    const lineups1 = createEmptyLineups();
+    lineups1.set1.home = ['p1', 'p2', 'p3', 'p4', 'p5'];
+    lineups1.set1.away = ['a1', 'a2', 'a3', 'a4', 'a5'];
+    const f1 = makeFixture({
+      id: 'app-fix-1',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-b',
+      status: 'approved',
+      lineups: lineups1,
+    });
+
+    const lineups2 = createEmptyLineups();
+    lineups2.set1.home = ['x1', 'x2', 'x3', 'x4', 'x5'];
+    lineups2.set1.away = ['p1', 'y2', 'y3', 'y4', 'y5'];
+    const f2 = makeFixture({
+      id: 'app-fix-2',
+      homeTeamId: 'team-c',
+      awayTeamId: 'team-a',
+      status: 'approved',
+      lineups: lineups2,
+    });
+
+    // Match where player did not appear for team-a
+    const lineups3 = createEmptyLineups();
+    lineups3.set1.home = ['z1', 'z2', 'z3', 'z4', 'z5'];
+    lineups3.set1.away = ['a1', 'a2', 'a3', 'a4', 'a5'];
+    const f3 = makeFixture({
+      id: 'app-fix-3',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-d',
+      status: 'approved',
+      lineups: lineups3,
+    });
+
+    // p1 made 2 appearances for team-a (once home, once away)
+    expect(getPlayerAppearancesForTeam('p1', 'team-a', [f1, f2, f3])).toBe(2);
+    // p1 made 0 appearances for team-b
+    expect(getPlayerAppearancesForTeam('p1', 'team-b', [f1, f2, f3])).toBe(0);
+    // Unregistered player made 0 appearances
+    expect(getPlayerAppearancesForTeam('ghost', 'team-a', [f1, f2, f3])).toBe(0);
+  });
+
+  it('enforces transfer rules 4a and 4b based on appearances and season date', () => {
+    const teamA = makeTeam({ id: 'team-a', name: 'The Crown' });
+    const teamB = makeTeam({ id: 'team-b', name: 'The Lion' });
+    const pWithApps = makePlayer({ id: 'p-apps', teamId: 'team-a', name: 'Dave Miller' });
+    const pZeroApps = makePlayer({ id: 'p-zero', teamId: 'team-a', name: 'New Signee' });
+
+    const lineups = createEmptyLineups();
+    lineups.set1.home = ['p-apps', 'h2', 'h3', 'h4', 'h5'];
+    lineups.set1.away = ['a1', 'a2', 'a3', 'a4', 'a5'];
+
+    const fEarly = makeFixture({
+      id: 'fix-early',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+      matchDate: '2026-09-01',
+      status: 'approved',
+      lineups,
+    });
+    const fLate = makeFixture({
+      id: 'fix-late',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+      matchDate: '2026-11-30',
+      status: 'scheduled',
+    });
+
+    const fixtures = [fEarly, fLate];
+    // Start 2026-09-01, End 2026-11-30. Midpoint is approx 2026-10-16.
+
+    // 1. Same team transfer -> rejected
+    const sameTeam = validatePlayerTransfer(pWithApps, teamA, teamA, fixtures);
+    expect(sameTeam.allowed).toBe(false);
+
+    // 2. Rule 4a: Player with 0 appearances can transfer at ANY time (even in second half of season)
+    const zeroAppsLate = validatePlayerTransfer(pZeroApps, teamA, teamB, fixtures, '2026-11-20');
+    expect(zeroAppsLate.allowed).toBe(true);
+    expect(zeroAppsLate.rule).toBe('4a');
+    expect(zeroAppsLate.appearances).toBe(0);
+
+    // 3. Rule 4b: Player with >= 1 appearance can transfer during the first half of the season
+    const appsEarly = validatePlayerTransfer(pWithApps, teamA, teamB, fixtures, '2026-09-15');
+    expect(appsEarly.allowed).toBe(true);
+    expect(appsEarly.rule).toBe('4b');
+    expect(appsEarly.appearances).toBe(1);
+
+    // 4. Rule 4b: Player with >= 1 appearance is BLOCKED after the halfway date
+    const appsLate = validatePlayerTransfer(pWithApps, teamA, teamB, fixtures, '2026-11-01');
+    expect(appsLate.allowed).toBe(false);
+    expect(appsLate.rule).toBe('4b');
+    expect(appsLate.appearances).toBe(1);
+    expect(appsLate.isPastHalfway).toBe(true);
+    expect(appsLate.message).toContain('Transfer restricted under Rule 4b');
+  });
+
+  it('preserves player individual statistics and attributes results to the team played for', () => {
+    const teamA = makeTeam({ id: 'team-a', name: 'The Crown', division: 'Premier League' });
+    const teamB = makeTeam({ id: 'team-b', name: 'The Lion', division: 'Premier League' });
+
+    // Dave played for Team A initially, then transferred to Team B
+    const dave = makePlayer({ id: 'dave', teamId: 'team-b', name: 'Dave Miller' });
+    const charlie = makePlayer({ id: 'charlie', teamId: 'team-c', name: 'Charlie Opponent' });
+    const teamC = makeTeam({ id: 'team-c', name: 'Castle Lagers', division: 'Premier League' });
+
+    // Fixture 1: Dave played 3 frames for Team A, winning all 3 with 1 dish
+    const lineups1 = createEmptyLineups();
+    lineups1.set1.home = ['dave', 'h2', 'h3', 'h4', 'h5'];
+    lineups1.set1.away = ['charlie', 'a2', 'a3', 'a4', 'a5'];
+    lineups1.set2.home = ['dave', 'h2', 'h3', 'h4', 'h5'];
+    lineups1.set2.away = ['a3', 'a4', 'a5', 'a2', 'charlie'];
+    lineups1.set3.home = ['dave', 'h2', 'h3', 'h4', 'h5'];
+    lineups1.set3.away = ['a4', 'charlie', 'a2', 'a5', 'a3'];
+
+    const frames1 = createEmptyFrames().map((f, idx) => {
+      if (idx === 0) return { ...f, winner: 'home' as const, dish: true }; // Dave vs Charlie (Set 1)
+      if (idx === 5) return { ...f, winner: 'home' as const, dish: false }; // Dave vs Charlie (Set 2)
+      if (idx === 10) return { ...f, winner: 'home' as const, dish: false }; // Dave vs Charlie (Set 3)
+      return { ...f, winner: 'away' as const };
+    });
+
+    const f1 = makeFixture({
+      id: 'fix-1',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+      division: 'Premier League',
+      status: 'approved',
+      lineups: lineups1,
+      frames: frames1,
+    });
+
+    // Fixture 2: Dave now plays for Team B, plays 2 frames, winning 1 and losing 1
+    const lineups2 = createEmptyLineups();
+    lineups2.set1.home = ['dave', 'b2', 'b3', 'b4', 'b5'];
+    lineups2.set1.away = ['charlie', 'a2', 'a3', 'a4', 'a5'];
+    lineups2.set2.home = ['dave', 'b2', 'b3', 'b4', 'b5'];
+    lineups2.set2.away = ['a3', 'a4', 'a5', 'a2', 'charlie'];
+
+    const frames2 = createEmptyFrames().map((f, idx) => {
+      if (idx === 0) return { ...f, winner: 'home' as const }; // Dave win
+      if (idx === 5) return { ...f, winner: 'away' as const }; // Dave loss
+      return { ...f, winner: 'away' as const };
+    });
+
+    const f2 = makeFixture({
+      id: 'fix-2',
+      homeTeamId: 'team-b',
+      awayTeamId: 'team-c',
+      division: 'Premier League',
+      status: 'approved',
+      lineups: lineups2,
+      frames: frames2,
+    });
+
+    const { averagesTable, dishTable } = computePlayerStats(
+      'Premier League',
+      [teamA, teamB, teamC],
+      [dave, charlie],
+      [f1, f2]
+    );
+
+    const daveStats = averagesTable.find((r) => r.player.id === 'dave');
+    expect(daveStats).toBeDefined();
+
+    // 1. Dave's individual stats are preserved across both teams:
+    // 3 wins for Team A + 1 win for Team B = 4 wins
+    // 0 losses for Team A + 1 loss for Team B = 1 loss
+    // Total played = 5 frames, Win % = 80.0%, 1 dish
+    expect(daveStats?.played).toBe(5);
+    expect(daveStats?.won).toBe(4);
+    expect(daveStats?.lost).toBe(1);
+    expect(daveStats?.winPercentage).toBe(80);
+    expect(daveStats?.dishes).toBe(1);
+
+    // 2. Dish leaderboard preserves Dave's dish
+    expect(dishTable.some((r) => r.player.id === 'dave' && r.dishes === 1)).toBe(true);
+
+    // 3. Current team is Team B, and former teams tracks Team A
+    expect(daveStats?.team.id).toBe('team-b');
+    expect(daveStats?.formerTeams?.map((t) => t.id)).toContain('team-a');
+
+    // 4. Rule 5b: Matches played for Team A do NOT count towards the 4-match requirement for Team B
+    // Dave only played 1 match for Team B (f2), so matchesPlayed for Cup eligibility is 1, NOT 2!
+    expect(daveStats?.matchesPlayed).toBe(1);
+
+    // 5. Team A's results remain attributed to Team A in League Table
+    const table = computeLeagueTable('Premier League', [teamA, teamB, teamC], [f1, f2]);
+    const teamARow = table.find((r) => r.team.id === 'team-a');
+    const teamBRow = table.find((r) => r.team.id === 'team-b');
+
+    // Team A won 3 frames in f1 (from Dave's wins), so Team A has 3 framesFor
+    expect(teamARow?.framesFor).toBe(3);
+    // Team B won 1 frame in f2 (from Dave's win), so Team B has 1 frameFor
+    expect(teamBRow?.framesFor).toBe(1);
   });
 });

@@ -339,7 +339,13 @@ export const PlayerStatsView: React.FC = () => {
                           {row.player.name}
                         </div>
                         <div className="text-[11px] text-slate-400">
-                          {row.team.name} •{' '}
+                          {row.team.name}
+                          {row.formerTeams && row.formerTeams.length > 0 && (
+                            <span className="text-slate-500 font-normal">
+                              {' '}(ex-{row.formerTeams.map((t) => t.name).join(', ')})
+                            </span>
+                          )}{' '}
+                          •{' '}
                           <span className="text-emerald-400">
                             {row.division}
                           </span>
@@ -433,7 +439,10 @@ export const PlayerStatsView: React.FC = () => {
         rows={list.map((r, i) => ({
           rank: i + 1,
           primaryText: r.player.name,
-          secondaryText: `${r.team.name} (${r.team.division})`,
+          secondaryText:
+            r.formerTeams && r.formerTeams.length > 0
+              ? `${r.team.name} (ex-${r.formerTeams.map((t) => t.name).join(', ')}) (${r.team.division})`
+              : `${r.team.name} (${r.team.division})`,
           values:
             activeBoard === 'dishes'
               ? [r.dishes]

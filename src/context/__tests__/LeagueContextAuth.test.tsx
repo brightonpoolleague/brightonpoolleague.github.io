@@ -212,4 +212,44 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
       expect(result.current.isRealtimeConnected).toBe(false);
     });
   });
+  it('allows eligible player transfers and rejects transfers violating Rule 4b', async () => {
+    const mockTeams = [
+      { id: 't-1', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Alpha', venue: 'Venue 1', address: 'Addr 1', captainName: 'Cap 1', captainPin: '111111' },
+      { id: 't-2', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Beta', venue: 'Venue 2', address: 'Addr 2', captainName: 'Cap 2', captainPin: '222222' },
+    ];
+    const mockPlayers = [
+      { id: 'p-1', teamId: 't-1', name: 'Player One', active: true },
+    ];
+
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mockTeams));
+    localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(mockPlayers));
+
+    // Mock Supabase order to return offline so local storage is used
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        gte: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        }),
+      }),
+    });
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.players.length).toBeGreaterThan(0);
+    });
+
+    // Player One has 0 appearances for t-1, so Rule 4a permits transfer to t-2
+    await act(async () => {
+      await result.current.transferPlayer('p-1', 't-2');
+    });
+
+    const updatedPlayer = result.current.players.find((p) => p.id === 'p-1');
+    expect(updatedPlayer?.teamId).toBe('t-2');
+  });
 });
