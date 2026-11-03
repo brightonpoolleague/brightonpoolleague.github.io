@@ -782,4 +782,69 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
     // Team B won 1 frame in f2 (from Dave's win), so Team B has 1 frameFor
     expect(teamBRow?.framesFor).toBe(1);
   });
+  it('preserves individual statistics when transferring across divisions (Division 1 to Premier League)', () => {
+    const teamDiv1 = makeTeam({ id: 'team-d1', name: 'Div 1 Rovers', division: 'Division 1' });
+    const teamPrem = makeTeam({ id: 'team-prem', name: 'Premier Stars', division: 'Premier League' });
+    const opponentD1 = makeTeam({ id: 'opp-d1', name: 'Div 1 Opponent', division: 'Division 1' });
+    const opponentPrem = makeTeam({ id: 'opp-prem', name: 'Premier Opponent', division: 'Premier League' });
+
+    // Player Dave transfers from Div 1 Rovers to Premier Stars
+    const dave = makePlayer({ id: 'dave-cross', teamId: 'team-prem', name: 'Dave Cross' });
+    const pD1 = makePlayer({ id: 'p-d1', teamId: 'opp-d1', name: 'Player D1' });
+    const pPrem = makePlayer({ id: 'p-prem', teamId: 'opp-prem', name: 'Player Prem' });
+
+    // Fixture in Division 1 where Dave played for teamDiv1
+    const lineupsD1 = createEmptyLineups();
+    lineupsD1.set1.home = ['dave-cross', 'h2', 'h3', 'h4', 'h5'];
+    lineupsD1.set1.away = ['p-d1', 'a2', 'a3', 'a4', 'a5'];
+    const framesD1 = createEmptyFrames().map((f, idx) => {
+      if (idx === 0) return { ...f, winner: 'home' as const, dish: true };
+      return { ...f, winner: 'away' as const };
+    });
+    const fixD1 = makeFixture({
+      id: 'fix-div1',
+      homeTeamId: 'team-d1',
+      awayTeamId: 'opp-d1',
+      division: 'Division 1',
+      status: 'approved',
+      lineups: lineupsD1,
+      frames: framesD1,
+    });
+
+    // Fixture in Premier League where Dave plays for teamPrem
+    const lineupsPrem = createEmptyLineups();
+    lineupsPrem.set1.home = ['dave-cross', 'b2', 'b3', 'b4', 'b5'];
+    lineupsPrem.set1.away = ['p-prem', 'a2', 'a3', 'a4', 'a5'];
+    const framesPrem = createEmptyFrames().map((f, idx) => {
+      if (idx === 0) return { ...f, winner: 'home' as const };
+      return { ...f, winner: 'away' as const };
+    });
+    const fixPrem = makeFixture({
+      id: 'fix-prem',
+      homeTeamId: 'team-prem',
+      awayTeamId: 'opp-prem',
+      division: 'Premier League',
+      status: 'approved',
+      lineups: lineupsPrem,
+      frames: framesPrem,
+    });
+
+    // In Premier League Player Stats, Dave's individual statistics are preserved
+    const { averagesTable } = computePlayerStats(
+      'Premier League',
+      [teamDiv1, teamPrem, opponentD1, opponentPrem],
+      [dave, pD1, pPrem],
+      [fixD1, fixPrem]
+    );
+
+    const daveStats = averagesTable.find((r) => r.player.id === 'dave-cross');
+    expect(daveStats).toBeDefined();
+    // 1 win from Div 1 + 1 win from Premier League = 2 wins, 2 played, 100% win rate, 1 dish
+    expect(daveStats?.played).toBe(2);
+    expect(daveStats?.won).toBe(2);
+    expect(daveStats?.dishes).toBe(1);
+    expect(daveStats?.formerTeams?.map((t) => t.id)).toContain('team-d1');
+    // Only Premier League match counts towards Cup eligibility for teamPrem
+    expect(daveStats?.matchesPlayed).toBe(1);
+  });
 });
