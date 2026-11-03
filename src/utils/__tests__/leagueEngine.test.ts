@@ -782,13 +782,13 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
     // Team B won 1 frame in f2 (from Dave's win), so Team B has 1 frameFor
     expect(teamBRow?.framesFor).toBe(1);
   });
-  it('preserves individual statistics when transferring across divisions (Division 1 to Premier League)', () => {
+  it('keeps old statistics in the previous division when transferring across divisions', () => {
     const teamDiv1 = makeTeam({ id: 'team-d1', name: 'Div 1 Rovers', division: 'Division 1' });
     const teamPrem = makeTeam({ id: 'team-prem', name: 'Premier Stars', division: 'Premier League' });
     const opponentD1 = makeTeam({ id: 'opp-d1', name: 'Div 1 Opponent', division: 'Division 1' });
     const opponentPrem = makeTeam({ id: 'opp-prem', name: 'Premier Opponent', division: 'Premier League' });
 
-    // Player Dave transfers from Div 1 Rovers to Premier Stars
+    // Player Dave played for Div 1 Rovers, then transferred across divisions to Premier Stars
     const dave = makePlayer({ id: 'dave-cross', teamId: 'team-prem', name: 'Dave Cross' });
     const pD1 = makePlayer({ id: 'p-d1', teamId: 'opp-d1', name: 'Player D1' });
     const pPrem = makePlayer({ id: 'p-prem', teamId: 'opp-prem', name: 'Player Prem' });
@@ -829,22 +829,39 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
       frames: framesPrem,
     });
 
-    // In Premier League Player Stats, Dave's individual statistics are preserved
-    const { averagesTable } = computePlayerStats(
+    // 1. In Premier League Player Stats:
+    // Stats are NOT counted across divisions — only Premier League frames count for Premier Stars
+    const { averagesTable: premAverages, dishTable: premDishes } = computePlayerStats(
       'Premier League',
       [teamDiv1, teamPrem, opponentD1, opponentPrem],
       [dave, pD1, pPrem],
       [fixD1, fixPrem]
     );
 
-    const daveStats = averagesTable.find((r) => r.player.id === 'dave-cross');
-    expect(daveStats).toBeDefined();
-    // 1 win from Div 1 + 1 win from Premier League = 2 wins, 2 played, 100% win rate, 1 dish
-    expect(daveStats?.played).toBe(2);
-    expect(daveStats?.won).toBe(2);
-    expect(daveStats?.dishes).toBe(1);
-    expect(daveStats?.formerTeams?.map((t) => t.id)).toContain('team-d1');
-    // Only Premier League match counts towards Cup eligibility for teamPrem
-    expect(daveStats?.matchesPlayed).toBe(1);
+    const davePremStats = premAverages.find((r) => r.player.id === 'dave-cross');
+    expect(davePremStats).toBeDefined();
+    expect(davePremStats?.played).toBe(1);
+    expect(davePremStats?.won).toBe(1);
+    expect(davePremStats?.dishes).toBe(0); // Dave's dish was in Division 1, not Premier League
+    expect(davePremStats?.team.id).toBe('team-prem');
+    expect(davePremStats?.matchesPlayed).toBe(1);
+    expect(premDishes.some((r) => r.player.id === 'dave-cross')).toBe(false);
+
+    // 2. In Division 1 Player Stats:
+    // Old stats stay in that division under the team they played for (Div 1 Rovers)
+    const { averagesTable: d1Averages, dishTable: d1Dishes } = computePlayerStats(
+      'Division 1',
+      [teamDiv1, teamPrem, opponentD1, opponentPrem],
+      [dave, pD1, pPrem],
+      [fixD1, fixPrem]
+    );
+
+    const daveD1Stats = d1Averages.find((r) => r.player.id === 'dave-cross');
+    expect(daveD1Stats).toBeDefined();
+    expect(daveD1Stats?.played).toBe(1);
+    expect(daveD1Stats?.won).toBe(1);
+    expect(daveD1Stats?.dishes).toBe(1);
+    expect(daveD1Stats?.team.id).toBe('team-d1'); // Attributed to the team he played for in Division 1
+    expect(d1Dishes.some((r) => r.player.id === 'dave-cross' && r.dishes === 1)).toBe(true);
   });
 });

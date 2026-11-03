@@ -744,6 +744,52 @@ export function computePlayerStats(
     playerH2H[player.id] = {};
   });
 
+  // Division-specific fixtures (individual stats are not counted across divisions)
+  const divisionFixtures = fixtures.filter(
+    (f) =>
+      (division === 'ALL' || f.division === division) &&
+      validStatuses.includes(f.status) &&
+      !isKnockoutFixture(f)
+  );
+
+  // If a player previously played in this division before transferring to another division,
+  // their old stats stay in this division under the team they played for.
+  divisionFixtures.forEach((fix) => {
+    const checkParticipant = (pId: string | null | undefined, fixTeamId: string) => {
+      if (!pId || pId === 'BYE') return;
+      if (!statsMap[pId] && playersById[pId]) {
+        const teamPlayedFor = teamsById[fixTeamId];
+        if (teamPlayedFor && (division === 'ALL' || teamPlayedFor.division === division)) {
+          statsMap[pId] = {
+            player: playersById[pId],
+            team: teamPlayedFor,
+            division: teamPlayedFor.division,
+            played: 0,
+            won: 0,
+            lost: 0,
+            winPercentage: 0,
+            dishes: 0,
+            matchesPlayed: 0,
+          };
+          if (!playerMatchIds[pId]) playerMatchIds[pId] = new Set();
+          if (!playerFormerTeams[pId]) playerFormerTeams[pId] = new Map();
+          if (!playerH2H[pId]) playerH2H[pId] = {};
+        }
+      }
+    };
+
+    (['set1', 'set2', 'set3'] as const).forEach((setKey) => {
+      fix.lineups[setKey]?.home.forEach((id) => checkParticipant(id, fix.homeTeamId));
+      fix.lineups[setKey]?.away.forEach((id) => checkParticipant(id, fix.awayTeamId));
+    });
+
+    fix.frames.forEach((frame) => {
+      const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
+      checkParticipant(homePlayerId, fix.homeTeamId);
+      checkParticipant(awayPlayerId, fix.awayTeamId);
+    });
+  });
+
   // Track distinct matches played per player for their team this season (Rules Section 5a/5b).
   // A match is counted if it was played/in-progress and the player participated (in lineup or played frames) for their team.
   const eligibleFixtures = fixtures.filter((f) =>
@@ -804,13 +850,10 @@ export function computePlayerStats(
     });
   });
 
-  // Count frames across all valid league fixtures so transferred players preserve their individual stats,
-  // while results remain attributed to the team they represented in each fixture.
-  const allLeagueFixtures = fixtures.filter(
-    (f) => validStatuses.includes(f.status) && !isKnockoutFixture(f)
-  );
-
-  allLeagueFixtures.forEach((fix) => {
+  // Count frames across division fixtures.
+  // Individual stats are not counted across divisions; old stats stay in that division.
+  // When moving teams within the same division, stats in that division are combined.
+  divisionFixtures.forEach((fix) => {
     fix.frames.forEach((frame) => {
       if (!frame.winner) return;
       const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
