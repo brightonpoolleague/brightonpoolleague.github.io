@@ -513,7 +513,7 @@ export const DocsAndRulesView: React.FC = () => {
                   <strong>f. Subsequent Sets:</strong> Set 1 player selections automatically cascade into Sets 2 and 3. If no substitutions are made, captains do not need to re-enter names.
                 </li>
                 <li>
-                  <strong>g. Substitutions:</strong> If making changes, tap <strong>Make Subs</strong> before the set starts and choose the replacement player from the squad list. The opposing captain will be prompted to approve the change before play continues.
+                  <strong>g. Substitutions:</strong> If making changes, tap <strong>Make Subs</strong> before the set starts, select the replacement player from the squad list and tap <strong>Confirm Subs</strong>. The opposing captain will be prompted to approve the change before play continues.
                 </li>
                 <li>
                   <strong>h. Recording Frame Results:</strong> After each frame, tap the player who won the frame on the scorecard. The running match score and set totals update live automatically.
@@ -558,7 +558,7 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>e.</strong> To make substitutions in the app, tap{' '}
-                  <strong>Make Subs</strong> before the set starts, select the substitute from your squad list and have the opposing captain confirm.
+                  <strong>Make Subs</strong> before the set starts, select the substitute from your squad list and tap <strong>Confirm Subs</strong> for the opposing captain to approve.
                 </li>
               </ul>
             </div>
@@ -597,11 +597,11 @@ export const DocsAndRulesView: React.FC = () => {
                 </li>
                 <li>
                   <strong>b.</strong> Both captains must sign off at the bottom of the
-                  scorecard using their Captain PIN.
+                  scorecard by tapping <strong>Sign</strong>.
                 </li>
                 <li>
-                  <strong>c.</strong> Once both captains have signed, either captain
-                  taps <strong>Submit Scorecard</strong> to finalise the match. League tables
+                  <strong>c.</strong> Once both captains have signed, tap{' '}
+                  <strong>Finish Match</strong> to submit and finalise the match result. League tables
                   and player statistics update live automatically with no need to take a photo or
                   post to WhatsApp or social media.
                 </li>
