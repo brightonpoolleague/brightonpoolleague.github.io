@@ -539,7 +539,7 @@ export const DocsAndRulesView: React.FC = () => {
                 <div className="bg-slate-900/80 border border-amber-500/30 rounded-xl p-3 flex flex-col bg-amber-500/5">
                   <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Shot Clock</span>
                   <span className="text-base font-extrabold text-amber-400 mt-0.5">10:30 PM</span>
-                  <span className="text-[11px] text-slate-400 mt-1">If Game 3 not started</span>
+                  <span className="text-[11px] text-slate-400 mt-1">If Set 3, Frame 3 not started</span>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-3 flex flex-col">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Curfew</span>
@@ -583,7 +583,7 @@ export const DocsAndRulesView: React.FC = () => {
                     </div>
                   </div>
                   <a
-                    href="https://www.epa.org.uk/stopclock/epa/index.php"
+                    href="https://www.epa.org.uk/stopclock/"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold whitespace-nowrap transition-colors self-start sm:self-auto shrink-0"
@@ -1507,7 +1507,7 @@ export const DocsAndRulesView: React.FC = () => {
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider">
                     <Crown className="w-3.5 h-3.5" />
-                    <span>National EPA Qualifier</span>
+                    <span>National EPA Competition</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     Champion of Champions
