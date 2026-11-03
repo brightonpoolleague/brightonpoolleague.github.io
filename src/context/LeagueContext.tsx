@@ -38,6 +38,7 @@ import {
   ensureValidFrames,
   ensureValidLineups,
   syncDefaultSubsequentSets,
+  validatePlayerTransfer,
 } from '../utils/leagueEngine';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
@@ -1360,6 +1361,22 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const transferPlayer = useCallback(
     async (playerId: string, toTeamId: string): Promise<void> => {
       const target = allPlayers.find((p) => p.id === playerId);
+      if (!target) return;
+      const currentTeam = allTeams.find((t) => t.id === target.teamId);
+      const targetTeam = allTeams.find((t) => t.id === toTeamId);
+
+      if (currentTeam && targetTeam) {
+        const validation = validatePlayerTransfer(
+          target,
+          currentTeam,
+          targetTeam,
+          allFixtures
+        );
+        if (!validation.allowed) {
+          throw new Error(validation.message);
+        }
+      }
+
       const nextPlayers = allPlayers.map((p) =>
         p.id === playerId ? { ...p, teamId: toTeamId } : p
       );

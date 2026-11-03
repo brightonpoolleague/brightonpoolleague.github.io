@@ -142,4 +142,5 @@ export interface PlayerStatsRow {
   winPercentage: number;
   dishes: number;
   matchesPlayed: number;
+  formerTeams?: Team[];
 }

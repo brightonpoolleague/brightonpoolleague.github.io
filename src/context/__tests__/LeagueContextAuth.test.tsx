@@ -212,4 +212,117 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
       expect(result.current.isRealtimeConnected).toBe(false);
     });
   });
+  it('allows eligible player transfers and rejects transfers violating Rule 4b', async () => {
+    const mockTeams = [
+      { id: 't-1', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Alpha', venue: 'Venue 1', address: 'Addr 1', captainName: 'Cap 1', captainPin: '111111' },
+      { id: 't-2', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Beta', venue: 'Venue 2', address: 'Addr 2', captainName: 'Cap 2', captainPin: '222222' },
+    ];
+    const mockPlayers = [
+      { id: 'p-1', teamId: 't-1', name: 'Player One', active: true },
+    ];
+
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mockTeams));
+    localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(mockPlayers));
+
+    // Mock Supabase order to return offline so local storage is used
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        gte: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        }),
+      }),
+    });
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.players.length).toBeGreaterThan(0);
+    });
+
+    // Player One has 0 appearances for t-1, so Rule 4a permits transfer to t-2
+    await act(async () => {
+      await result.current.transferPlayer('p-1', 't-2');
+    });
+
+    const updatedPlayer = result.current.players.find((p) => p.id === 'p-1');
+    expect(updatedPlayer?.teamId).toBe('t-2');
+  });
+  it('throws an error when transferring a player with appearances past the halfway date (Rule 4b)', async () => {
+    const mockTeams = [
+      { id: 't-1', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Alpha', venue: 'Venue 1', address: 'Addr 1', captainName: 'Cap 1', captainPin: '111111' },
+      { id: 't-2', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Beta', venue: 'Venue 2', address: 'Addr 2', captainName: 'Cap 2', captainPin: '222222' },
+    ];
+    const mockPlayers = [
+      { id: 'p-vet', teamId: 't-1', name: 'Veteran Player', active: true },
+    ];
+    const mockFixtures = [
+      {
+        id: 'f-old-1',
+        seasonId: 'winter-2026-27',
+        matchDate: '2020-01-01',
+        homeTeamId: 't-1',
+        awayTeamId: 't-2',
+        status: 'approved',
+        lineups: {
+          set1: { home: ['p-vet', 'h2', 'h3', 'h4', 'h5'], away: ['a1', 'a2', 'a3', 'a4', 'a5'] },
+          set2: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+          set3: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+        },
+        frames: [],
+      },
+      {
+        id: 'f-old-2',
+        seasonId: 'winter-2026-27',
+        matchDate: '2020-02-01',
+        homeTeamId: 't-1',
+        awayTeamId: 't-2',
+        status: 'scheduled',
+        lineups: {
+          set1: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+          set2: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+          set3: { home: [null, null, null, null, null], away: [null, null, null, null, null] },
+        },
+        frames: [],
+      },
+    ];
+
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mockTeams));
+    localStorage.setItem(STORAGE_KEYS.PLAYERS, JSON.stringify(mockPlayers));
+    localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify(mockFixtures));
+
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        gte: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Cloud offline' } }),
+        }),
+      }),
+    });
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.players.length).toBeGreaterThan(0);
+    });
+
+    // p-vet made an appearance in 2020 and today is well past the halfway date (midpoint Jan 16, 2020)
+    await expect(
+      act(async () => {
+        await result.current.transferPlayer('p-vet', 't-2');
+      })
+    ).rejects.toThrow(/Transfer restricted under Rule 4b/);
+
+    // Player remains on t-1
+    const p = result.current.players.find((pl) => pl.id === 'p-vet');
+    expect(p?.teamId).toBe('t-1');
+  });
 });

@@ -321,6 +321,30 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await page.getByRole('button', { name: 'Transfer Player' }).click();
     await expect(page.getByText('Ronnie O-Renamed')).toBeHidden();
 
+    // 3d. Verify Rule 4b restriction: Trying to transfer a player with appearances in the second half of the season
+    const playerWithAppsChip = page
+      .locator('div.inline-flex')
+      .filter({ hasText: /\(\d+ apps?\)/ })
+      .first();
+    const restrictedTransferSelect = playerWithAppsChip.getByTitle(
+      'Transfer player to another team'
+    );
+    const restrictedTargetOption = await restrictedTransferSelect
+      .locator('option')
+      .nth(1)
+      .getAttribute('value');
+    await restrictedTransferSelect.selectOption(restrictedTargetOption!);
+    await expect(
+      page.getByRole('heading', { name: /Transfer Restricted \(Rule 4b\)/i })
+    ).toBeVisible();
+    await expect(
+      page.getByText(/cannot be transferred .* under League Rule 4b/i)
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Understood' }).click();
+    await expect(
+      page.getByRole('heading', { name: /Transfer Restricted \(Rule 4b\)/i })
+    ).toBeHidden();
+
     // 4. Switch to Scorecards sub-tab and test Incomplete Scorecard warning dialog
     await page
       .getByRole('button', { name: /Scorecards/i })

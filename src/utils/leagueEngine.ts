@@ -701,16 +701,9 @@ export function computePlayerStats(
     teamsById[t.id] = t;
   });
 
-  const validStatuses = includeLiveAndSubmitted
+  const validStatuses: Fixture['status'][] = includeLiveAndSubmitted
     ? ['live', 'submitted', 'approved']
     : ['approved'];
-
-  const filteredFixtures = fixtures.filter(
-    (f) =>
-      (division === 'ALL' || f.division === division) &&
-      validStatuses.includes(f.status) &&
-      !isKnockoutFixture(f)
-  );
 
   // Compute team rankings per division for tie-breaker 8b.iv.2
   const teamRankById: Record<string, number> = {};
@@ -726,11 +719,13 @@ export function computePlayerStats(
   const statsMap: Record<string, PlayerStatsRow> = {};
   const playerH2H: Record<string, Record<string, number>> = {};
   const playerMatchIds: Record<string, Set<string>> = {};
+  const playerFormerTeams: Record<string, Map<string, Team>> = {};
   const playersById: Record<string, Player> = {};
 
   players.forEach((player) => {
     playersById[player.id] = player;
     playerMatchIds[player.id] = new Set();
+    playerFormerTeams[player.id] = new Map();
     const team = teamsById[player.teamId];
     if (!team) return;
     if (division !== 'ALL' && team.division !== division) return;
@@ -747,6 +742,52 @@ export function computePlayerStats(
       matchesPlayed: 0,
     };
     playerH2H[player.id] = {};
+  });
+
+  // Division-specific fixtures (individual stats are not counted across divisions)
+  const divisionFixtures = fixtures.filter(
+    (f) =>
+      (division === 'ALL' || f.division === division) &&
+      validStatuses.includes(f.status) &&
+      !isKnockoutFixture(f)
+  );
+
+  // If a player previously played in this division before transferring to another division,
+  // their old stats stay in this division under the team they played for.
+  divisionFixtures.forEach((fix) => {
+    const checkParticipant = (pId: string | null | undefined, fixTeamId: string) => {
+      if (!pId || pId === 'BYE') return;
+      if (!statsMap[pId] && playersById[pId]) {
+        const teamPlayedFor = teamsById[fixTeamId];
+        if (teamPlayedFor && (division === 'ALL' || teamPlayedFor.division === division)) {
+          statsMap[pId] = {
+            player: playersById[pId],
+            team: teamPlayedFor,
+            division: teamPlayedFor.division,
+            played: 0,
+            won: 0,
+            lost: 0,
+            winPercentage: 0,
+            dishes: 0,
+            matchesPlayed: 0,
+          };
+          if (!playerMatchIds[pId]) playerMatchIds[pId] = new Set();
+          if (!playerFormerTeams[pId]) playerFormerTeams[pId] = new Map();
+          if (!playerH2H[pId]) playerH2H[pId] = {};
+        }
+      }
+    };
+
+    (['set1', 'set2', 'set3'] as const).forEach((setKey) => {
+      fix.lineups[setKey]?.home.forEach((id) => checkParticipant(id, fix.homeTeamId));
+      fix.lineups[setKey]?.away.forEach((id) => checkParticipant(id, fix.awayTeamId));
+    });
+
+    fix.frames.forEach((frame) => {
+      const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
+      checkParticipant(homePlayerId, fix.homeTeamId);
+      checkParticipant(awayPlayerId, fix.awayTeamId);
+    });
   });
 
   // Track distinct matches played per player for their team this season (Rules Section 5a/5b).
@@ -782,20 +823,37 @@ export function computePlayerStats(
 
     homeParticipants.forEach((pId) => {
       const p = playersById[pId];
-      if (p && p.teamId === fix.homeTeamId) {
-        playerMatchIds[pId]?.add(fix.id);
+      if (p) {
+        if (p.teamId === fix.homeTeamId) {
+          playerMatchIds[pId]?.add(fix.id);
+        } else {
+          const formerTeam = teamsById[fix.homeTeamId];
+          if (formerTeam) {
+            playerFormerTeams[pId]?.set(formerTeam.id, formerTeam);
+          }
+        }
       }
     });
 
     awayParticipants.forEach((pId) => {
       const p = playersById[pId];
-      if (p && p.teamId === fix.awayTeamId) {
-        playerMatchIds[pId]?.add(fix.id);
+      if (p) {
+        if (p.teamId === fix.awayTeamId) {
+          playerMatchIds[pId]?.add(fix.id);
+        } else {
+          const formerTeam = teamsById[fix.awayTeamId];
+          if (formerTeam) {
+            playerFormerTeams[pId]?.set(formerTeam.id, formerTeam);
+          }
+        }
       }
     });
   });
 
-  filteredFixtures.forEach((fix) => {
+  // Count frames across division fixtures.
+  // Individual stats are not counted across divisions; old stats stay in that division.
+  // When moving teams within the same division, stats in that division are combined.
+  divisionFixtures.forEach((fix) => {
     fix.frames.forEach((frame) => {
       if (!frame.winner) return;
       const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
@@ -841,6 +899,7 @@ export function computePlayerStats(
     ...row,
     winPercentage: row.played > 0 ? (row.won / row.played) * 100 : 0,
     matchesPlayed: playerMatchIds[row.player.id]?.size ?? 0,
+    formerTeams: Array.from(playerFormerTeams[row.player.id]?.values() ?? []),
   }));
 
   const averagesComparator = (a: PlayerStatsRow, b: PlayerStatsRow): number => {
@@ -1007,5 +1066,195 @@ export function getScorecardApprovalWarnings(fixture: Fixture): string[] {
   }
 
   return warnings;
+}
+
+/**
+ * Determines season start, end and halfway dates according to Rule 4c:
+ * "The halfway point of the season is determined by date, not by games played (to account for postponed matches)."
+ */
+export function getSeasonHalfwayDate(
+  fixtures: Fixture[],
+  referenceDate?: string
+): {
+  startDate: string | null;
+  endDate: string | null;
+  halfwayDate: string | null;
+  isPastHalfway: boolean;
+} {
+  const leagueFixtures = fixtures.filter(
+    (f) => !isKnockoutFixture(f) && f.matchDate && /^\d{4}-\d{2}-\d{2}$/.test(f.matchDate)
+  );
+
+  const targetFixtures = leagueFixtures.length > 0
+    ? leagueFixtures
+    : fixtures.filter((f) => f.matchDate && /^\d{4}-\d{2}-\d{2}$/.test(f.matchDate));
+
+  if (targetFixtures.length === 0) {
+    return {
+      startDate: null,
+      endDate: null,
+      halfwayDate: null,
+      isPastHalfway: false,
+    };
+  }
+
+  const sortedDates = targetFixtures.map((f) => f.matchDate).sort();
+  const startDate = sortedDates[0];
+  const endDate = sortedDates[sortedDates.length - 1];
+
+  const startTime = new Date(`${startDate}T12:00:00Z`).getTime();
+  const endTime = new Date(`${endDate}T12:00:00Z`).getTime();
+  const midTime = startTime + (endTime - startTime) / 2;
+  const halfwayDate = new Date(midTime).toISOString().split('T')[0];
+
+  const today = referenceDate || new Date().toISOString().split('T')[0];
+  const isPastHalfway = today > halfwayDate;
+
+  return {
+    startDate,
+    endDate,
+    halfwayDate,
+    isPastHalfway,
+  };
+}
+
+/**
+ * Counts the number of matches where a player made an appearance for a specific team.
+ * An appearance is counted if the player was named in any set lineup or played in any frame
+ * for that team in a started or completed fixture.
+ */
+export function getPlayerAppearancesForTeam(
+  playerId: string,
+  teamId: string,
+  fixtures: Fixture[],
+  includeLiveAndSubmitted = true
+): number {
+  const validStatuses: Fixture['status'][] = includeLiveAndSubmitted
+    ? ['live', 'submitted', 'approved']
+    : ['approved'];
+
+  let appearances = 0;
+
+  fixtures.forEach((fix) => {
+    const hasStarted =
+      validStatuses.includes(fix.status) ||
+      fix.frames.some((f) => Boolean(f.winner));
+    if (!hasStarted) return;
+
+    const isHome = fix.homeTeamId === teamId;
+    const isAway = fix.awayTeamId === teamId;
+    if (!isHome && !isAway) return;
+
+    const side = isHome ? 'home' : 'away';
+    let participated = false;
+
+    // Check lineups
+    (['set1', 'set2', 'set3'] as const).forEach((setKey) => {
+      const slotList = fix.lineups[setKey]?.[side];
+      if (slotList && slotList.includes(playerId)) {
+        participated = true;
+      }
+    });
+
+    // Check frames
+    if (!participated) {
+      fix.frames.forEach((frame) => {
+        const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
+        const playerInFrame = isHome ? homePlayerId : awayPlayerId;
+        if (playerInFrame === playerId) {
+          participated = true;
+        }
+      });
+    }
+
+    if (participated) {
+      appearances++;
+    }
+  });
+
+  return appearances;
+}
+
+export interface TransferValidationResult {
+  allowed: boolean;
+  rule: '4a' | '4b';
+  appearances: number;
+  halfwayDate: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  isPastHalfway: boolean;
+  message: string;
+}
+
+/**
+ * Validates whether a player transfer is allowed under League Transfer Rules 4a, 4b and 4c:
+ * - Rule 4a: Players who have not made any appearances for a team may be transferred at any time.
+ * - Rule 4b: Players who have made at least one appearance may only be transferred during the first half of the season.
+ * - Rule 4c: The halfway point of the season is determined by date, not by games played.
+ */
+export function validatePlayerTransfer(
+  player: Player,
+  currentTeam: Team,
+  targetTeam: Team,
+  fixtures: Fixture[],
+  referenceDate?: string
+): TransferValidationResult {
+  if (currentTeam.id === targetTeam.id) {
+    return {
+      allowed: false,
+      rule: '4a',
+      appearances: 0,
+      halfwayDate: null,
+      startDate: null,
+      endDate: null,
+      isPastHalfway: false,
+      message: 'Player is already registered with this team.',
+    };
+  }
+
+  const appearances = getPlayerAppearancesForTeam(player.id, currentTeam.id, fixtures);
+  const { startDate, endDate, halfwayDate, isPastHalfway } = getSeasonHalfwayDate(
+    fixtures,
+    referenceDate
+  );
+
+  // Rule 4a: 0 appearances -> permitted at any time
+  if (appearances === 0) {
+    return {
+      allowed: true,
+      rule: '4a',
+      appearances: 0,
+      halfwayDate,
+      startDate,
+      endDate,
+      isPastHalfway,
+      message: `Eligible under Rule 4a: ${player.name} has made 0 appearances for ${currentTeam.name} and can be transferred at any time.`,
+    };
+  }
+
+  // Rule 4b: >= 1 appearance -> only permitted during first half of season
+  if (isPastHalfway) {
+    return {
+      allowed: false,
+      rule: '4b',
+      appearances,
+      halfwayDate,
+      startDate,
+      endDate,
+      isPastHalfway: true,
+      message: `Transfer restricted under Rule 4b: ${player.name} has made ${appearances} appearance${appearances === 1 ? '' : 's'} for ${currentTeam.name}, and the season has passed its halfway point by date (${halfwayDate ?? 'N/A'}). Under Rule 4b, players with appearances may only be transferred during the first half of the season.`,
+    };
+  }
+
+  return {
+    allowed: true,
+    rule: '4b',
+    appearances,
+    halfwayDate,
+    startDate,
+    endDate,
+    isPastHalfway: false,
+    message: `Eligible under Rule 4b: ${player.name} has made ${appearances} appearance${appearances === 1 ? '' : 's'} for ${currentTeam.name}; transfer is within the first half of the season (halfway date: ${halfwayDate ?? 'N/A'}).`,
+  };
 }
 

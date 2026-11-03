@@ -38,8 +38,10 @@ import {
   calculateMatchScore,
   formatMatchDate,
   getMatchTimeframe,
+  getPlayerAppearancesForTeam,
   getScorecardApprovalWarnings,
   isKnockoutFixture,
+  validatePlayerTransfer,
 } from '../utils/leagueEngine';
 
 interface AdminPortalViewProps {
@@ -1306,6 +1308,21 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               <span className="font-medium text-slate-200">
                                 {player.name}
                               </span>
+                              {(() => {
+                                const appearances = getPlayerAppearancesForTeam(
+                                  player.id,
+                                  team.id,
+                                  fixtures
+                                );
+                                return appearances > 0 ? (
+                                  <span
+                                    className="text-[10px] text-slate-400 font-semibold"
+                                    title={`${appearances} appearance${appearances === 1 ? '' : 's'} for ${team.name}`}
+                                  >
+                                    ({appearances} app{appearances === 1 ? '' : 's'})
+                                  </span>
+                                ) : null;
+                              })()}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1326,9 +1343,81 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                       (t) => t.id === targetId
                                     );
                                     if (targetTeam && targetId !== team.id) {
+                                      const validation = validatePlayerTransfer(
+                                        player,
+                                        team,
+                                        targetTeam,
+                                        fixtures
+                                      );
+
+                                      if (!validation.allowed) {
+                                        setConfirmDialog({
+                                          title: 'Transfer Restricted (Rule 4b)',
+                                          message: (
+                                            <div className="space-y-3 text-xs text-slate-300">
+                                              <p className="text-sm font-semibold text-rose-400">
+                                                &ldquo;{player.name}&rdquo; cannot be transferred from &ldquo;{team.name}&rdquo; to &ldquo;{targetTeam.name}&rdquo; under League Rule 4b.
+                                              </p>
+                                              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-400">Appearances for {team.name}:</span>
+                                                  <span className="font-bold text-white">{validation.appearances}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-400">Season Halfway Date:</span>
+                                                  <span className="font-bold text-amber-400">
+                                                    {validation.halfwayDate ? formatMatchDate(validation.halfwayDate) : 'Not scheduled'}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                              <p className="text-slate-400 leading-relaxed">
+                                                <strong>Rule 4b:</strong> Players who have made at least one appearance for another team may only be transferred during the <strong>first half of the season</strong>.
+                                              </p>
+                                              <p className="text-slate-400 leading-relaxed">
+                                                <strong>Rule 4c:</strong> The halfway point of the season is determined <strong>by date</strong>, not by games played.
+                                              </p>
+                                              <p className="text-slate-400 leading-relaxed">
+                                                Under Rule 4a, only players with <strong>0 appearances</strong> may be transferred at any time during the season.
+                                              </p>
+                                            </div>
+                                          ),
+                                          confirmLabel: 'Understood',
+                                          variant: 'danger',
+                                          onConfirm: () => {},
+                                        });
+                                        return;
+                                      }
+
                                       setConfirmDialog({
                                         title: `Transfer Player: ${player.name}?`,
-                                        message: `Move "${player.name}" from "${team.name}" to "${targetTeam.name}"?`,
+                                        message: (
+                                          <div className="space-y-3 text-xs text-slate-300">
+                                            <p className="text-sm text-white">
+                                              Move &ldquo;<strong>{player.name}</strong>&rdquo; from &ldquo;<strong>{team.name}</strong>&rdquo; to &ldquo;<strong>{targetTeam.name}</strong>&rdquo;?
+                                            </p>
+                                            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                                              <div className="flex justify-between">
+                                                <span className="text-slate-400">Transfer Eligibility:</span>
+                                                <span className="font-bold text-emerald-400">
+                                                  {validation.rule === '4a'
+                                                    ? 'Eligible under Rule 4a (0 appearances)'
+                                                    : `Eligible under Rule 4b (${validation.appearances} appearance${validation.appearances === 1 ? '' : 's'}, first half of season)`}
+                                                </span>
+                                              </div>
+                                              {validation.halfwayDate && (
+                                                <div className="flex justify-between">
+                                                  <span className="text-slate-400">Season Halfway Date:</span>
+                                                  <span className="font-semibold text-slate-300">
+                                                    {formatMatchDate(validation.halfwayDate)}
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] leading-relaxed">
+                                              <strong>Note on Statistics Attribution:</strong> All past match results for {team.name} remain attributed to {team.name}. {player.name}&rsquo;s individual player statistics (frames won, lost and dishes) will be fully preserved. Under Rule 5b, past matches do not count towards Cup finals eligibility for {targetTeam.name}.
+                                            </div>
+                                          </div>
+                                        ),
                                         confirmLabel: 'Transfer Player',
                                         variant: 'warning',
                                         onConfirm: () =>
