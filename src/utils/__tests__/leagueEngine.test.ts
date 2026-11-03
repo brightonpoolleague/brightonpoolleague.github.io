@@ -1314,4 +1314,258 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
     expect(synced.walkover?.awardedTo).toBe('home');
     expect(synced.walkover?.defaultingTeamId).toBe('team-away');
   });
+
+  it('accurately calculates player stats when walkover includes substitutes and returning players', () => {
+    const homeTeam = makeTeam({ id: 'team-home', name: 'The Crown', division: 'Premier League' });
+    const awayTeam = makeTeam({ id: 'team-away', name: 'The Lion', division: 'Premier League' });
+
+    const fixture = makeFixture({
+      id: 'fix-wo-subs',
+      homeTeamId: 'team-home',
+      awayTeamId: 'team-away',
+      division: 'Premier League',
+      status: 'scheduled',
+    });
+
+    const h1 = makePlayer({ id: 'h1', teamId: 'team-home', name: 'Harry One' });
+    const h2 = makePlayer({ id: 'h2', teamId: 'team-home', name: 'Harry Two' });
+    const h3 = makePlayer({ id: 'h3', teamId: 'team-home', name: 'Harry Three' });
+    const h4 = makePlayer({ id: 'h4', teamId: 'team-home', name: 'Harry Four' });
+    const h5 = makePlayer({ id: 'h5', teamId: 'team-home', name: 'Harry Five' });
+    const hSub = makePlayer({ id: 'h-sub', teamId: 'team-home', name: 'Harry Sub' });
+    const a1 = makePlayer({ id: 'a1', teamId: 'team-away', name: 'Andy Defaulter' });
+
+    // Set 1: h1..h5
+    // Set 2: h-sub replaces h1 in slot 1
+    // Set 3: h1 returns to slot 1
+    const winningPlayerIds = [
+      h1.id, h2.id, h3.id, h4.id, h5.id,
+      hSub.id, h2.id, h3.id, h4.id, h5.id,
+      h1.id, h2.id, h3.id, h4.id, h5.id,
+    ];
+
+    const walkoverFix = awardWalkoverToFixture(fixture, 'home', winningPlayerIds, 'Walkover with sub');
+
+    const { averagesTable } = computePlayerStats(
+      'Premier League',
+      [homeTeam, awayTeam],
+      [h1, h2, h3, h4, h5, hSub, a1],
+      [walkoverFix]
+    );
+
+    // h1 played in Set 1 and Set 3 (2 frames, 2 wins, 1 match)
+    const h1Stats = averagesTable.find((r) => r.player.id === 'h1')!;
+    expect(h1Stats).toBeDefined();
+    expect(h1Stats.played).toBe(2);
+    expect(h1Stats.won).toBe(2);
+    expect(h1Stats.lost).toBe(0);
+    expect(h1Stats.winPercentage).toBe(100);
+    expect(h1Stats.matchesPlayed).toBe(1);
+
+    // hSub played in Set 2 only (1 frame, 1 win, 1 match)
+    const hSubStats = averagesTable.find((r) => r.player.id === 'h-sub')!;
+    expect(hSubStats).toBeDefined();
+    expect(hSubStats.played).toBe(1);
+    expect(hSubStats.won).toBe(1);
+    expect(hSubStats.lost).toBe(0);
+    expect(hSubStats.winPercentage).toBe(100);
+    expect(hSubStats.matchesPlayed).toBe(1);
+
+    // h2..h5 played in all 3 sets (3 frames each)
+    [h2, h3, h4, h5].forEach((p) => {
+      const pStats = averagesTable.find((r) => r.player.id === p.id)!;
+      expect(pStats).toBeDefined();
+      expect(pStats.played).toBe(3);
+      expect(pStats.won).toBe(3);
+      expect(pStats.lost).toBe(0);
+      expect(pStats.winPercentage).toBe(100);
+      expect(pStats.matchesPlayed).toBe(1);
+    });
+
+    // Defaulting players receive 0 appearances and 0 losses
+    expect(averagesTable.find((r) => r.player.id === 'a1')).toBeUndefined();
+  });
+
+  it('integrates walkovers seamlessly into cumulative league tables across multiple match weeks', () => {
+    const teamA = makeTeam({ id: 'team-a', name: 'Alpha Hawks', division: 'Premier League' });
+    const teamB = makeTeam({ id: 'team-b', name: 'Beta Bears', division: 'Premier League' });
+    const teamC = makeTeam({ id: 'team-c', name: 'Charlie Crows', division: 'Premier League' });
+    const teamD = makeTeam({ id: 'team-d', name: 'Delta Dogs', division: 'Premier League' });
+
+    const allTeams = [teamA, teamB, teamC, teamD];
+
+    // Week 1: Regular Match - Team A beats Team B 8-7 (Team A gets 4 pts: 2 win + 2 bonus; Team B gets 2 pts: 2 bonus)
+    const w1Frames = createEmptyFrames().map((f, i) => ({
+      ...f,
+      winner: (i < 8 ? 'home' : 'away') as 'home' | 'away',
+      dish: false,
+    }));
+    const fixW1 = makeFixture({
+      id: 'fix-w1-a-b',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-b',
+      division: 'Premier League',
+      status: 'approved',
+      frames: w1Frames,
+      matchDate: '2026-10-12',
+    });
+
+    // Week 2 Match 1: Walkover - Team A awarded 15-0 walkover against Team C (Team A gets 7 pts; Team C gets 0 pts)
+    const schedFixW2 = makeFixture({
+      id: 'fix-w2-a-c',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+      division: 'Premier League',
+      status: 'scheduled',
+      matchDate: '2026-10-19',
+    });
+    const fixW2Walkover = awardWalkoverToFixture(
+      schedFixW2,
+      'home',
+      ['p1', 'p2', 'p3', 'p4', 'p5', 'p1', 'p2', 'p3', 'p4', 'p5', 'p1', 'p2', 'p3', 'p4', 'p5'],
+      'Team C defaulted'
+    );
+
+    // Week 2 Match 2: Regular Match - Team B beats Team D 10-5 (Team B gets 5 pts: 2 win + 3 bonus; Team D gets 1 pt: 1 bonus)
+    const w2FramesBD = createEmptyFrames().map((f, i) => ({
+      ...f,
+      winner: (i < 10 ? 'home' : 'away') as 'home' | 'away',
+      dish: false,
+    }));
+    const fixW2BD = makeFixture({
+      id: 'fix-w2-b-d',
+      homeTeamId: 'team-b',
+      awayTeamId: 'team-d',
+      division: 'Premier League',
+      status: 'approved',
+      frames: w2FramesBD,
+      matchDate: '2026-10-19',
+    });
+
+    const table = computeLeagueTable('Premier League', allTeams, [fixW1, fixW2Walkover, fixW2BD]);
+
+    // Table should have all 4 teams ranked:
+    // 1st: Team A: Played 2, Won 2, Lost 0, Points 11 (4 + 7), Frames For 23 (8 + 15), Frames Against 7 (7 + 0), Diff +16
+    const rowA = table[0];
+    expect(rowA.team.id).toBe('team-a');
+    expect(rowA.played).toBe(2);
+    expect(rowA.won).toBe(2);
+    expect(rowA.lost).toBe(0);
+    expect(rowA.points).toBe(11);
+    expect(rowA.framesFor).toBe(23);
+    expect(rowA.framesAgainst).toBe(7);
+    expect(rowA.frameDiff).toBe(16);
+    expect(rowA.form).toEqual(['W', 'W']);
+
+    // 2nd: Team B: Played 2, Won 1, Lost 1, Points 7 (2 + 5), Frames For 17 (7 + 10), Frames Against 13 (8 + 5), Diff +4
+    const rowB = table[1];
+    expect(rowB.team.id).toBe('team-b');
+    expect(rowB.played).toBe(2);
+    expect(rowB.won).toBe(1);
+    expect(rowB.lost).toBe(1);
+    expect(rowB.points).toBe(7);
+    expect(rowB.framesFor).toBe(17);
+    expect(rowB.framesAgainst).toBe(13);
+    expect(rowB.frameDiff).toBe(4);
+    expect(rowB.form).toEqual(['L', 'W']);
+
+    // 3rd: Team D: Played 1, Won 0, Lost 1, Points 1, Frames For 5, Frames Against 10, Diff -5
+    const rowD = table[2];
+    expect(rowD.team.id).toBe('team-d');
+    expect(rowD.played).toBe(1);
+    expect(rowD.won).toBe(0);
+    expect(rowD.lost).toBe(1);
+    expect(rowD.points).toBe(1);
+    expect(rowD.framesFor).toBe(5);
+    expect(rowD.framesAgainst).toBe(10);
+    expect(rowD.frameDiff).toBe(-5);
+    expect(rowD.form).toEqual(['L']);
+
+    // 4th: Team C: Played 1, Won 0, Lost 1 (via walkover), Points 0, Frames For 0, Frames Against 15, Diff -15
+    const rowC = table[3];
+    expect(rowC.team.id).toBe('team-c');
+    expect(rowC.played).toBe(1);
+    expect(rowC.won).toBe(0);
+    expect(rowC.lost).toBe(1);
+    expect(rowC.points).toBe(0);
+    expect(rowC.framesFor).toBe(0);
+    expect(rowC.framesAgainst).toBe(15);
+    expect(rowC.frameDiff).toBe(-15);
+    expect(rowC.form).toEqual(['L']);
+  });
+
+  it('accumulates individual player averages across regular and walkover fixtures combined', () => {
+    const teamA = makeTeam({ id: 'team-a', name: 'Alpha Hawks', division: 'Premier League' });
+    const teamB = makeTeam({ id: 'team-b', name: 'Beta Bears', division: 'Premier League' });
+    const teamC = makeTeam({ id: 'team-c', name: 'Charlie Crows', division: 'Premier League' });
+
+    const p1 = makePlayer({ id: 'p1', teamId: 'team-a', name: 'Paul Premier' });
+    const allPlayers = [p1];
+
+    // Fixture 1: Regular Match where p1 plays in frames 1, 6 and 11, winning 2 and losing 1
+    const lineups1 = createEmptyLineups();
+    lineups1.set1.home = [p1.id, 'p2', 'p3', 'p4', 'p5'];
+    lineups1.set2.home = [p1.id, 'p2', 'p3', 'p4', 'p5'];
+    lineups1.set3.home = [p1.id, 'p2', 'p3', 'p4', 'p5'];
+
+    const frames1 = createEmptyFrames().map((f) => {
+      // p1 plays frame 1 (homeSlot 1, set 1), frame 6 (set 2, slot 1), frame 11 (set 3, slot 1)
+      if (f.frameNumber === 1) return { ...f, winner: 'home' as const, dish: true };
+      if (f.frameNumber === 6) return { ...f, winner: 'home' as const, dish: false };
+      if (f.frameNumber === 11) return { ...f, winner: 'away' as const, dish: false };
+      return { ...f, winner: 'home' as const, dish: false };
+    });
+
+    const fix1 = makeFixture({
+      id: 'fix-1-reg',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-b',
+      division: 'Premier League',
+      status: 'approved',
+      lineups: lineups1,
+      frames: frames1,
+      matchDate: '2026-10-12',
+    });
+
+    // Fixture 2: Walkover Match where p1 is assigned 3 frames (winning all 3)
+    const schedFix2 = makeFixture({
+      id: 'fix-2-wo',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+      division: 'Premier League',
+      status: 'scheduled',
+      matchDate: '2026-10-19',
+    });
+    const fix2Walkover = awardWalkoverToFixture(
+      schedFix2,
+      'home',
+      [p1.id, 'p2', 'p3', 'p4', 'p5', p1.id, 'p2', 'p3', 'p4', 'p5', p1.id, 'p2', 'p3', 'p4', 'p5'],
+      'Walkover'
+    );
+
+    const { averagesTable, dishTable } = computePlayerStats(
+      'Premier League',
+      [teamA, teamB, teamC],
+      allPlayers,
+      [fix1, fix2Walkover]
+    );
+
+    const p1Stats = averagesTable.find((r) => r.player.id === 'p1')!;
+    expect(p1Stats).toBeDefined();
+
+    // Regular match: 3 played (2 won, 1 lost, 1 dish)
+    // Walkover: 3 played (3 won, 0 lost, 0 dish)
+    // Combined totals: 6 played, 5 won, 1 lost, 1 dish, 2 matches played, 83.33% win rate
+    expect(p1Stats.played).toBe(6);
+    expect(p1Stats.won).toBe(5);
+    expect(p1Stats.lost).toBe(1);
+    expect(p1Stats.dishes).toBe(1);
+    expect(p1Stats.matchesPlayed).toBe(2);
+    expect(p1Stats.winPercentage).toBeCloseTo(83.33, 1);
+
+    // Verify dish table reflects the single dish from the regular match (walkovers award 0 dishes)
+    const dishEntry = dishTable.find((r) => r.player.id === 'p1')!;
+    expect(dishEntry).toBeDefined();
+    expect(dishEntry.dishes).toBe(1);
+  });
 });
