@@ -924,7 +924,14 @@ describe('leagueEngine - Player Transfer Rules (Rules 4a, 4b, 4c and 5b)', () =>
       frames: frames2,
     });
 
-    // Baseline: Table before transfer
+    // Baseline: Table & Player Stats before transfer
+    const { averagesTable: statsBefore } = computePlayerStats('Premier League', allTeams, [dave, playerC, playerD], [f1, f2]);
+    const daveStatsBefore = statsBefore.find((r) => r.player.id === 'dave')!;
+    expect(daveStatsBefore.played).toBe(3);
+    expect(daveStatsBefore.won).toBe(2);
+    expect(daveStatsBefore.lost).toBe(1);
+    expect(daveStatsBefore.team.id).toBe('team-a');
+
     const tableBefore = computeLeagueTable('Premier League', allTeams, [f1, f2]);
     const rowABefore = tableBefore.find((r) => r.team.id === 'team-a')!;
     const rowBBefore = tableBefore.find((r) => r.team.id === 'team-b')!;
