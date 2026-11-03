@@ -233,8 +233,8 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
         const statusStr = (f.status ?? '').toLowerCase();
         const isKnockout = isKnockoutFixture(f);
-        const knockoutTitle = f.competitionName || f.cupName || '';
-        const knockoutRound = f.round || f.cupRound || '';
+        const knockoutTitle = f.competitionName || '';
+        const knockoutRound = f.round || '';
         const knockoutStr = `${isKnockout ? 'knockout cup plate' : 'league'} ${knockoutTitle} ${knockoutRound}`.toLowerCase();
 
         const matches =
@@ -483,13 +483,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                   <span className="font-bold text-amber-400 flex items-center gap-1 truncate">
                     <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     {myNextMatch.competitionName ||
-                      myNextMatch.cupName ||
                       (myNextMatch.division
                         ? `${myNextMatch.division} Knockout`
                         : 'Knockout')}
-                    {myNextMatch.round || myNextMatch.cupRound
-                      ? ` (${myNextMatch.round || myNextMatch.cupRound})`
-                      : ''}
+                    {myNextMatch.round ? ` (${myNextMatch.round})` : ''}
                   </span>
                 ) : (
                   <span className="font-bold text-emerald-400 shrink-0">
@@ -743,13 +740,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       <span className="font-bold text-amber-400 flex items-center gap-1">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
                         {fix.competitionName ||
-                          fix.cupName ||
                           (fix.division
                             ? `${fix.division} Knockout`
                             : 'Knockout')}
-                        {fix.round || fix.cupRound
-                          ? ` (${fix.round || fix.cupRound})`
-                          : ''}
+                        {fix.round ? ` (${fix.round})` : ''}
                       </span>
                     ) : (
                       <span className="font-bold text-emerald-400">

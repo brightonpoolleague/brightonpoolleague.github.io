@@ -531,9 +531,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
   const knockoutTitle =
     fixture.competitionName ||
-    fixture.cupName ||
     (fixture.division ? `${fixture.division} Cup` : 'Knockout Cup');
-  const knockoutRound = fixture.round || fixture.cupRound;
+  const knockoutRound = fixture.round;
   const knockoutDisplay = knockoutRound
     ? `${knockoutTitle} (${knockoutRound})`
     : knockoutTitle;

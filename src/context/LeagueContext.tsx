@@ -109,16 +109,8 @@ function mapPlayerRow(r: Record<string, unknown>): Player {
 
 function mapFixtureRow(r: Record<string, unknown>): Fixture {
   const matchType = (r.match_type as Fixture['matchType']) ?? 'league';
-  const compName = r.competition_name
-    ? String(r.competition_name)
-    : r.cup_name
-    ? String(r.cup_name)
-    : undefined;
-  const roundName = r.round
-    ? String(r.round)
-    : r.cup_round
-    ? String(r.cup_round)
-    : undefined;
+  const compName = r.competition_name ? String(r.competition_name) : undefined;
+  const roundName = r.round ? String(r.round) : undefined;
 
   return {
     id: String(r.id),
@@ -133,8 +125,6 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     round: roundName,
     playAllFrames: Boolean(r.play_all_frames ?? (r.knockout_format === 'play_all_15')),
     knockoutFormat: (r.knockout_format as Fixture['knockoutFormat']) ?? (r.play_all_frames ? 'play_all_15' : 'first_to_8'),
-    cupName: compName,
-    cupRound: roundName,
     status: r.status as Fixture['status'],
     lagWinner: (r.lag_winner as 'home' | 'away' | null) ?? null,
     homeSet1Locked: Boolean(r.home_set1_locked),
@@ -253,8 +243,6 @@ interface LeagueContextValue {
     round?: string;
     playAllFrames?: boolean;
     knockoutFormat?: KnockoutFormat;
-    cupName?: string;
-    cupRound?: string;
   }) => Promise<Fixture>;
   deleteFixture: (fixtureId: string) => Promise<void>;
   updateFixtureDetails: (updated: Fixture) => Promise<void>;
@@ -1475,12 +1463,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       round?: string;
       playAllFrames?: boolean;
       knockoutFormat?: KnockoutFormat;
-      cupName?: string;
-      cupRound?: string;
     }): Promise<Fixture> => {
       const matchType = data.matchType ?? 'league';
-      const compName = data.competitionName || data.cupName;
-      const roundName = data.round || data.cupRound;
+      const compName = data.competitionName;
+      const roundName = data.round;
       const koFormat = data.knockoutFormat ?? (data.playAllFrames ? 'play_all_15' : 'first_to_8');
       const playAll = Boolean(data.playAllFrames || koFormat === 'play_all_15');
       const fixtureDiv = data.division || (matchType === 'knockout' ? 'Knockout' : 'Division 1');
@@ -1498,8 +1484,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         round: roundName,
         playAllFrames: matchType === 'knockout' ? playAll : false,
         knockoutFormat: matchType === 'knockout' ? koFormat : undefined,
-        cupName: compName,
-        cupRound: roundName,
         status: 'scheduled',
         lagWinner: null,
         homeSet1Locked: false,
@@ -1533,8 +1517,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_round: newFixture.round ?? null,
           p_play_all_frames: Boolean(newFixture.playAllFrames),
           p_knockout_format: newFixture.knockoutFormat ?? 'first_to_8',
-          p_cup_name: newFixture.cupName ?? null,
-          p_cup_round: newFixture.cupRound ?? null,
         });
       }
       return newFixture;
@@ -1590,8 +1572,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_round: stamped.round ?? null,
           p_play_all_frames: Boolean(stamped.playAllFrames),
           p_knockout_format: stamped.knockoutFormat ?? 'first_to_8',
-          p_cup_name: stamped.cupName ?? null,
-          p_cup_round: stamped.cupRound ?? null,
         });
       }
     },

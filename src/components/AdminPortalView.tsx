@@ -147,8 +147,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     homeTeamId: string;
     awayTeamId: string;
     matchType: MatchType;
-    cupName?: string;
-    cupRound?: string;
+    competitionName?: string;
+    round?: string;
     knockoutFormat?: KnockoutFormat;
   } | null>(null);
 
@@ -160,8 +160,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     homeTeamId: string;
     awayTeamId: string;
     matchType: MatchType;
-    cupName: string;
-    cupRound: string;
+    competitionName: string;
+    round: string;
     knockoutFormat: KnockoutFormat;
   }>({
     division: 'Division 1',
@@ -169,8 +169,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     homeTeamId: '',
     awayTeamId: '',
     matchType: 'league',
-    cupName: '',
-    cupRound: '',
+    competitionName: '',
+    round: '',
     knockoutFormat: 'first_to_8',
   });
 
@@ -406,8 +406,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       homeTeamId: fix.homeTeamId,
       awayTeamId: fix.awayTeamId,
       matchType: fix.matchType ?? 'league',
-      cupName: fix.competitionName || fix.cupName || '',
-      cupRound: fix.round || fix.cupRound || '',
+      competitionName: fix.competitionName || '',
+      round: fix.round || '',
       knockoutFormat:
         fix.knockoutFormat ??
         (fix.playAllFrames ? 'play_all_15' : 'first_to_8'),
@@ -425,10 +425,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     }
     const isKnockout = fixtureDraft.matchType === 'knockout';
     const compName = isKnockout
-      ? fixtureDraft.cupName?.trim() || 'Knockout'
+      ? fixtureDraft.competitionName?.trim() || 'Knockout'
       : undefined;
     const roundName = isKnockout
-      ? fixtureDraft.cupRound?.trim() || 'Round 1'
+      ? fixtureDraft.round?.trim() || 'Round 1'
       : undefined;
     const koFormat = isKnockout
       ? fixtureDraft.knockoutFormat || 'first_to_8'
@@ -447,8 +447,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       matchType: fixtureDraft.matchType ?? 'league',
       competitionName: compName,
       round: roundName,
-      cupName: compName,
-      cupRound: roundName,
       knockoutFormat: koFormat,
       playAllFrames: playAll,
     });
@@ -466,10 +464,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     }
     const isKnockout = newFixtureDraft.matchType === 'knockout';
     const compName = isKnockout
-      ? newFixtureDraft.cupName.trim() || 'Knockout'
+      ? newFixtureDraft.competitionName.trim() || 'Knockout'
       : undefined;
     const roundName = isKnockout
-      ? newFixtureDraft.cupRound.trim() || 'Round 1'
+      ? newFixtureDraft.round.trim() || 'Round 1'
       : undefined;
     const koFormat = isKnockout
       ? newFixtureDraft.knockoutFormat || 'first_to_8'
@@ -487,8 +485,6 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       matchType: newFixtureDraft.matchType,
       competitionName: compName,
       round: roundName,
-      cupName: compName,
-      cupRound: roundName,
       knockoutFormat: koFormat,
       playAllFrames: playAll,
     });
@@ -499,8 +495,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
       homeTeamId: '',
       awayTeamId: '',
       matchType: newFixtureDraft.matchType,
-      cupName: '',
-      cupRound: '',
+      competitionName: '',
+      round: '',
       knockoutFormat: 'first_to_8',
     });
   };
@@ -654,7 +650,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
         const weekStr = `week ${f.weekNumber} wk ${f.weekNumber} w${f.weekNumber}`;
         const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
         const statusStr = (f.status ?? '').toLowerCase();
-        const knockoutStr = `${isKnockoutFixture(f) ? 'knockout cup plate' : 'league'} ${f.competitionName ?? ''} ${f.cupName ?? ''} ${f.round ?? ''} ${f.cupRound ?? ''}`.toLowerCase();
+        const knockoutStr = `${isKnockoutFixture(f) ? 'knockout cup plate' : 'league'} ${f.competitionName ?? ''} ${f.round ?? ''}`.toLowerCase();
 
         const matches =
           homeName.includes(q) ||
@@ -1977,11 +1973,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       <input
                         type="text"
                         placeholder="e.g. Division 1 Cup, Summer Cup, Summer Plate"
-                        value={newFixtureDraft.cupName}
+                        value={newFixtureDraft.competitionName}
                         onChange={(e) =>
                           setNewFixtureDraft({
                             ...newFixtureDraft,
-                            cupName: e.target.value,
+                            competitionName: e.target.value,
                           })
                         }
                         className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
@@ -1994,11 +1990,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                       <input
                         type="text"
                         placeholder="e.g. Quarter-Final, Semi-Final, Final"
-                        value={newFixtureDraft.cupRound}
+                        value={newFixtureDraft.round}
                         onChange={(e) =>
                           setNewFixtureDraft({
                             ...newFixtureDraft,
-                            cupRound: e.target.value,
+                            round: e.target.value,
                           })
                         }
                         className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
@@ -2282,13 +2278,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               <span className="text-amber-400 font-bold inline-flex items-center gap-1">
                                 <Trophy className="w-3.5 h-3.5 text-amber-400" />
                                 {fix.competitionName ||
-                                  fix.cupName ||
                                   (fix.division
                                     ? `${fix.division} Knockout`
                                     : 'Knockout')}
-                                {fix.round || fix.cupRound
-                                  ? ` (${fix.round || fix.cupRound})`
-                                  : ''}
+                                {fix.round ? ` (${fix.round})` : ''}
                               </span>
                             ) : (
                               <span className="text-emerald-400 font-bold">
@@ -2478,11 +2471,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   <input
                                     type="text"
                                     placeholder="e.g. Division 1 Cup, Summer Cup"
-                                    value={fixtureDraft.cupName || ''}
+                                    value={fixtureDraft.competitionName || ''}
                                     onChange={(e) =>
                                       setFixtureDraft({
                                         ...fixtureDraft,
-                                        cupName: e.target.value,
+                                        competitionName: e.target.value,
                                       })
                                     }
                                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
@@ -2495,11 +2488,11 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                   <input
                                     type="text"
                                     placeholder="e.g. Quarter-Final, Semi-Final, Final"
-                                    value={fixtureDraft.cupRound || ''}
+                                    value={fixtureDraft.round || ''}
                                     onChange={(e) =>
                                       setFixtureDraft({
                                         ...fixtureDraft,
-                                        cupRound: e.target.value,
+                                        round: e.target.value,
                                       })
                                     }
                                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"
@@ -2732,7 +2725,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               const division = (f.division ?? '').toLowerCase();
               const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
               const statusStr = (f.status ?? '').toLowerCase();
-              const knockoutStr = `${isKnockoutFixture(f) ? 'knockout' : ''} ${f.competitionName ?? ''} ${f.cupName ?? ''} ${f.round ?? ''} ${f.cupRound ?? ''}`.toLowerCase();
+              const knockoutStr = `${isKnockoutFixture(f) ? 'knockout' : ''} ${f.competitionName ?? ''} ${f.round ?? ''}`.toLowerCase();
               const teamPlayers = players.filter(
                 (p) => p.teamId === f.homeTeamId || p.teamId === f.awayTeamId
               );
@@ -3192,13 +3185,10 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                                 <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                                 <span>
                                   {fix.competitionName ||
-                                    fix.cupName ||
                                     (fix.division
                                       ? `${fix.division} Knockout`
                                       : 'Knockout')}
-                                  {fix.round || fix.cupRound
-                                    ? ` (${fix.round || fix.cupRound})`
-                                    : ''}
+                                  {fix.round ? ` (${fix.round})` : ''}
                                 </span>
                               </span>
                             ) : (

@@ -73,7 +73,6 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
   const isKnockout = isKnockoutFixture(fixture);
   const competitionTitle =
     fixture.competitionName ||
-    fixture.cupName ||
     (isKnockout ? 'Knockout Cup' : fixture.division);
 
   const bothSet1Locked = fixture.homeSet1Locked && fixture.awaySet1Locked;
