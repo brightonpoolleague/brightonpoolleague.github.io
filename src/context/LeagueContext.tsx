@@ -152,7 +152,7 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
 
 // Preserves locally-known Set 1 lineups on a captain's own browser while the server masks
 // public.fixtures.lineups.set1 with [null,null,null,null,null] prior to both sides locking Set 1.
-function mergeBlindSet1Lineups(
+export function mergeBlindSet1Lineups(
   existing: Fixture | undefined,
   incoming: Fixture
 ): Fixture {
@@ -160,15 +160,25 @@ function mergeBlindSet1Lineups(
   if (incoming.homeSet1Locked && incoming.awaySet1Locked) {
     return incoming;
   }
+  // If neither side is locked on the server, blind secrecy masking is not active on the server.
+  // Genuine resets or unlocked fixtures must not resurrect stale local lineups.
+  if (!incoming.homeSet1Locked && !incoming.awaySet1Locked) {
+    return incoming;
+  }
+
   const incHomeS1 = incoming.lineups.set1.home;
   const incAwayS1 = incoming.lineups.set1.away;
   const exHomeS1 = existing.lineups.set1.home;
   const exAwayS1 = existing.lineups.set1.away;
 
   const keepHome =
-    incHomeS1.every((s) => s === null) && exHomeS1.some((s) => s !== null);
+    (Boolean(incoming.homeSet1Locked) || Boolean(existing.homeSet1Locked)) &&
+    incHomeS1.every((s) => s === null) &&
+    exHomeS1.some((s) => s !== null);
   const keepAway =
-    incAwayS1.every((s) => s === null) && exAwayS1.some((s) => s !== null);
+    (Boolean(incoming.awaySet1Locked) || Boolean(existing.awaySet1Locked)) &&
+    incAwayS1.every((s) => s === null) &&
+    exAwayS1.some((s) => s !== null);
 
   if (!keepHome && !keepAway) return incoming;
 
