@@ -339,8 +339,13 @@ export const LeagueTableView: React.FC = () => {
                           <span className={isMyTeam ? 'text-emerald-200 font-black' : ''}>
                             {row.team.name}
                           </span>
-                          {pos === 1 && (
+                          {pos === 1 && !row.team.isFolded && (
                             <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          )}
+                          {row.team.isFolded && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-600/50">
+                              Folded
+                            </span>
                           )}
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
@@ -436,6 +441,11 @@ export const LeagueTableView: React.FC = () => {
           Frame Difference (FF - FA) → 3) Head-to-Head Record (Points, then Frame
           Diff) → 4) Record against the highest-placed team in the division.
         </p>
+        {rows.some((r) => r.team.isFolded) && (
+          <p className="text-amber-400/90 font-medium">
+            • <strong>Folded Teams (Rule 7):</strong> Results for folded teams are expunged in accordance with League Rule 7 (Rule 7a: first-half fold results expunged; Rule 7b: first-half results stand, second-half results expunged). Folded teams are ranked at the bottom of the table.
+          </p>
+        )}
       </div>
       {/* Export Table Image Modal */}
       <ExportTableModal

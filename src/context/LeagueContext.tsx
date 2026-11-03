@@ -93,6 +93,8 @@ function mapTeamRow(
     captainName: String(r.captain_name ?? ''),
     captainPin: existingPin.includes('•') ? '' : existingPin,
     tableNumber: r.table_number ? String(r.table_number) : undefined,
+    isFolded: Boolean(r.is_folded),
+    foldedDate: r.folded_date ? String(r.folded_date) : undefined,
   };
 }
 
@@ -107,16 +109,8 @@ function mapPlayerRow(r: Record<string, unknown>): Player {
 
 function mapFixtureRow(r: Record<string, unknown>): Fixture {
   const matchType = (r.match_type as Fixture['matchType']) ?? 'league';
-  const compName = r.competition_name
-    ? String(r.competition_name)
-    : r.cup_name
-    ? String(r.cup_name)
-    : undefined;
-  const roundName = r.round
-    ? String(r.round)
-    : r.cup_round
-    ? String(r.cup_round)
-    : undefined;
+  const compName = r.competition_name ? String(r.competition_name) : undefined;
+  const roundName = r.round ? String(r.round) : undefined;
 
   return {
     id: String(r.id),
@@ -131,8 +125,6 @@ function mapFixtureRow(r: Record<string, unknown>): Fixture {
     round: roundName,
     playAllFrames: Boolean(r.play_all_frames ?? (r.knockout_format === 'play_all_15')),
     knockoutFormat: (r.knockout_format as Fixture['knockoutFormat']) ?? (r.play_all_frames ? 'play_all_15' : 'first_to_8'),
-    cupName: compName,
-    cupRound: roundName,
     status: r.status as Fixture['status'],
     lagWinner: (r.lag_winner as 'home' | 'away' | null) ?? null,
     homeSet1Locked: Boolean(r.home_set1_locked),
@@ -235,6 +227,8 @@ interface LeagueContextValue {
     newPin: string
   ) => Promise<{ success: boolean; error?: string }>;
   updateTeam: (team: Team) => Promise<void>;
+  foldTeam: (teamId: string, foldDate?: string) => Promise<void>;
+  unfoldTeam: (teamId: string) => Promise<void>;
   addPlayer: (teamId: string, name: string) => Promise<Player>;
   updatePlayer: (player: Player) => Promise<void>;
   transferPlayer: (playerId: string, toTeamId: string) => Promise<void>;
@@ -249,8 +243,6 @@ interface LeagueContextValue {
     round?: string;
     playAllFrames?: boolean;
     knockoutFormat?: KnockoutFormat;
-    cupName?: string;
-    cupRound?: string;
   }) => Promise<Fixture>;
   deleteFixture: (fixtureId: string) => Promise<void>;
   updateFixtureDetails: (updated: Fixture) => Promise<void>;
@@ -1314,6 +1306,61 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
+  const foldTeam = useCallback(
+    async (teamId: string, foldDate?: string): Promise<void> => {
+      const resolvedDate = foldDate || new Date().toISOString().split('T')[0];
+      const nextTeams = allTeams.map((t) =>
+        t.id === teamId
+          ? {
+              ...t,
+              isFolded: true,
+              foldedDate: resolvedDate,
+            }
+          : t
+      );
+      setAllTeams(nextTeams);
+      persistLocal(nextTeams, allPlayers, allFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_fold_team', {
+          p_admin_pin: adminPin,
+          p_team_id: teamId,
+          p_is_folded: true,
+          p_folded_date: resolvedDate,
+        });
+      }
+    },
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+  );
+
+  const unfoldTeam = useCallback(
+    async (teamId: string): Promise<void> => {
+      const nextTeams = allTeams.map((t) =>
+        t.id === teamId
+          ? {
+              ...t,
+              isFolded: false,
+              foldedDate: undefined,
+            }
+          : t
+      );
+      setAllTeams(nextTeams);
+      persistLocal(nextTeams, allPlayers, allFixtures);
+
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        await supabase.rpc('admin_fold_team', {
+          p_admin_pin: adminPin,
+          p_team_id: teamId,
+          p_is_folded: false,
+          p_folded_date: null,
+        });
+      }
+    },
+    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+  );
+
   const addPlayer = useCallback(
     async (teamId: string, name: string): Promise<Player> => {
       const newPlayer: Player = {
@@ -1416,12 +1463,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       round?: string;
       playAllFrames?: boolean;
       knockoutFormat?: KnockoutFormat;
-      cupName?: string;
-      cupRound?: string;
     }): Promise<Fixture> => {
       const matchType = data.matchType ?? 'league';
-      const compName = data.competitionName || data.cupName;
-      const roundName = data.round || data.cupRound;
+      const compName = data.competitionName;
+      const roundName = data.round;
       const koFormat = data.knockoutFormat ?? (data.playAllFrames ? 'play_all_15' : 'first_to_8');
       const playAll = Boolean(data.playAllFrames || koFormat === 'play_all_15');
       const fixtureDiv = data.division || (matchType === 'knockout' ? 'Knockout' : 'Division 1');
@@ -1439,8 +1484,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         round: roundName,
         playAllFrames: matchType === 'knockout' ? playAll : false,
         knockoutFormat: matchType === 'knockout' ? koFormat : undefined,
-        cupName: compName,
-        cupRound: roundName,
         status: 'scheduled',
         lagWinner: null,
         homeSet1Locked: false,
@@ -1474,8 +1517,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_round: newFixture.round ?? null,
           p_play_all_frames: Boolean(newFixture.playAllFrames),
           p_knockout_format: newFixture.knockoutFormat ?? 'first_to_8',
-          p_cup_name: newFixture.cupName ?? null,
-          p_cup_round: newFixture.cupRound ?? null,
         });
       }
       return newFixture;
@@ -1531,8 +1572,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_round: stamped.round ?? null,
           p_play_all_frames: Boolean(stamped.playAllFrames),
           p_knockout_format: stamped.knockoutFormat ?? 'first_to_8',
-          p_cup_name: stamped.cupName ?? null,
-          p_cup_round: stamped.cupRound ?? null,
         });
       }
     },
@@ -1895,6 +1934,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         fixture.status !== 'approved' &&
         fixture.status !== 'submitted'
       ) {
+        const home = allTeams.find((t) => t.id === fixture.homeTeamId);
+        const away = allTeams.find((t) => t.id === fixture.awayTeamId);
+        if (home?.isFolded || away?.isFolded) {
+          return false;
+        }
         return (
           session.teamId === fixture.homeTeamId ||
           session.teamId === fixture.awayTeamId
@@ -1902,7 +1946,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return false;
     },
-    [session]
+    [session, allTeams]
   );
 
   return (
@@ -1926,6 +1970,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         loginAsAdminWithPin,
         updateTeamPin,
         updateTeam,
+        foldTeam,
+        unfoldTeam,
         addPlayer,
         updatePlayer,
         transferPlayer,

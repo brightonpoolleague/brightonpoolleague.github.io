@@ -569,6 +569,92 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     await adminFixtureSearch.fill('');
   });
 
+  test('folds a team under Rule 7 in Admin Portal, expunges results in league tables & fixtures, and restores team', async ({
+    page,
+    request,
+  }) => {
+    try {
+      await page.goto('/');
+
+      // 1. Log in as League Admin ('000000')
+      await page.getByRole('button', { name: 'Login' }).click();
+      await page.getByRole('button', { name: 'League Admin' }).click();
+      await page.getByPlaceholder('Enter League Admin PIN').fill('000000');
+      await page.getByRole('button', { name: 'Log In' }).click();
+
+      await expect(
+        page.getByText('League Admin Control Panel')
+      ).toBeVisible();
+
+      // 2. Locate a team in Teams & PINs tab and click Fold Team
+      const teamSearch = page.getByPlaceholder(/Search by team, venue, table, captain, player or street/i);
+      await teamSearch.fill('King & Queen A');
+      await expect(page.getByRole('heading', { name: 'King & Queen A' })).toBeVisible();
+
+      const foldBtn = page.getByRole('button', { name: /Fold Team/i }).first();
+      await expect(foldBtn).toBeVisible();
+      await foldBtn.click();
+
+      // 3. Verify Fold Team Modal contents and dynamic Rule 7 preview
+      await expect(page.getByRole('heading', { name: /Fold King & Queen A/i })).toBeVisible();
+      await expect(page.getByText(/League Rule 7 • Fold Team/i)).toBeVisible();
+      await expect(page.getByText(/Fixtures Impact Preview/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: /Open Calendar/i })).toBeVisible();
+
+      const confirmFoldBtn = page.getByRole('button', { name: /Confirm Fold & Expunge/i });
+      await confirmFoldBtn.click();
+
+      // 4. Verify team card now reflects Folded status
+      await expect(page.getByText(/Folded \(Rule 7\)/i).first()).toBeVisible();
+      await expect(page.getByText(/Team Folded • Results Expunged \(Rule 7\)/i).first()).toBeVisible();
+      await expect(page.getByRole('button', { name: /Restore/i }).first()).toBeVisible();
+
+      // 5. Navigate to League Table view and verify Folded badge and footnote
+      await page.getByRole('button', { name: 'League Table' }).click();
+      await expect(page.getByRole('heading', { name: /League Tables/i })).toBeVisible();
+      if (!isContainerized) {
+        await page.getByRole('button', { name: /Division 1/i }).click();
+      }
+      await expect(page.getByText('Folded', { exact: true }).first()).toBeVisible();
+      await expect(page.getByText(/Folded Teams \(Rule 7\):/i)).toBeVisible();
+
+      // 6. Navigate to Fixtures view and verify cancelled / expunged match badge
+      await page.getByRole('button', { name: /Live & Fixtures/i }).click();
+      const fixtureSearch = page.getByPlaceholder(/Search by team, venue, table, division or date/i);
+      await fixtureSearch.fill('King & Queen A');
+      await expect(page.getByText(/Cancelled • (Team )?Folded|Expunged \(Rule 7[ab]\)/i).first()).toBeVisible();
+
+      // 7. Return to Admin Portal and Restore the team (Rule 7c review)
+      await page.getByRole('button', { name: 'League Admin' }).click();
+      await teamSearch.fill('King & Queen A');
+      const restoreBtn = page.getByRole('button', { name: /Restore/i }).first();
+      await restoreBtn.click();
+
+      await expect(page.getByRole('heading', { name: /Restore Team\?/i })).toBeVisible();
+      await page.getByRole('button', { name: 'Restore Team' }).last().click();
+
+      // 8. Confirm team is restored to active status
+      await expect(page.getByRole('button', { name: /Fold Team/i }).first()).toBeVisible();
+      await expect(page.getByText(/Team Folded • Results Expunged/i)).toBeHidden();
+    } finally {
+      if (isContainerized) {
+        await request
+          .post(`${SUPABASE_URL}/rest/v1/rpc/admin_fold_team`, {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            data: {
+              p_admin_pin: '000000',
+              p_team_id: 't-prem-1',
+              p_is_folded: false,
+            },
+          })
+          .catch(() => {});
+      }
+    }
+  });
+
   test('filters fixtures by status/division/search and toggles Include Live & Unapproved standings', async ({
     page,
   }) => {

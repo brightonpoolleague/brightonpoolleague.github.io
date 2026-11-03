@@ -40,6 +40,8 @@ export interface Team {
   captainName: string;
   captainPin: string;
   tableNumber?: string;
+  isFolded?: boolean;
+  foldedDate?: string; // YYYY-MM-DD
 }
 
 // 'BYE' represents a missing player (No Player / BYE) in position 4 or 5
@@ -113,8 +115,6 @@ export interface Fixture {
   round?: string; // e.g. "Preliminary Round", "Quarter-Final", "Semi-Final", "Final"
   playAllFrames?: boolean; // When true, all 15 frames are played (e.g. over 2 legs)
   knockoutFormat?: KnockoutFormat; // 'first_to_8' (default) or 'play_all_15'
-  cupName?: string; // backward-compat alias
-  cupRound?: string; // backward-compat alias
   status: FixtureStatus;
   lagWinner: 'home' | 'away' | null;
   homeSet1Locked: boolean;

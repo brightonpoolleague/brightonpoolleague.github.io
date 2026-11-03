@@ -22,7 +22,9 @@ import {
   calculateMatchScore,
   formatMatchDate,
   getMatchTimeframe,
+  getSeasonHalfwayDate,
   getScorecardApprovalWarnings,
+  isFixtureExpunged,
   isKnockoutFixture,
   isWalkoverFixture,
 } from '../utils/leagueEngine';
@@ -130,28 +132,48 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     return `${y}-${m}-${day}`;
   }, []);
 
+  const halfwayDateByDiv = useMemo(() => {
+    const map: Record<string, string | null> = {};
+    (
+      ['Premier League', 'Division 1', 'Division 2', 'Division 3'] as Division[]
+    ).forEach((div) => {
+      map[div] = getSeasonHalfwayDate(
+        fixtures.filter((f) => f.division === div)
+      ).halfwayDate;
+    });
+    return map;
+  }, [fixtures]);
+
   // "My Next Match":
   // The earliest upcoming fixture that is scheduled or currently live (never submitted or approved).
   const myNextMatch = useMemo(() => {
     if (myMatches.length === 0) return null;
 
-    // 1. Earliest scheduled or live match on or after today
+    const isExcluded = (f: Fixture) => {
+      const info = isFixtureExpunged(f, teamsById, halfwayDateByDiv[f.division]);
+      return info.isExpunged || info.isCancelled;
+    };
+
+    // 1. Earliest scheduled or live match on or after today that is not cancelled/expunged
     const upcoming = myMatches.find(
       (f) =>
         f.matchDate >= todayStr &&
-        (f.status === 'scheduled' || f.status === 'live')
+        (f.status === 'scheduled' || f.status === 'live') &&
+        !isExcluded(f)
     );
     if (upcoming) return upcoming;
 
     // 2. Earliest unplayed / postponed scheduled or live match from earlier dates
     const unplayedPast = myMatches.find(
-      (f) => f.status === 'scheduled' || f.status === 'live'
+      (f) =>
+        (f.status === 'scheduled' || f.status === 'live') &&
+        !isExcluded(f)
     );
     if (unplayedPast) return unplayedPast;
 
     // 3. When all fixtures are submitted or approved, there is no next match
     return null;
-  }, [myMatches, todayStr]);
+  }, [myMatches, todayStr, teamsById, halfwayDateByDiv]);
 
   const uniqueFixtureDates = useMemo(() => {
     const dateSet = new Set<string>();
@@ -211,8 +233,8 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         const dateStr = `${f.matchDate} ${formatMatchDate(f.matchDate)}`.toLowerCase();
         const statusStr = (f.status ?? '').toLowerCase();
         const isKnockout = isKnockoutFixture(f);
-        const knockoutTitle = f.competitionName || f.cupName || '';
-        const knockoutRound = f.round || f.cupRound || '';
+        const knockoutTitle = f.competitionName || '';
+        const knockoutRound = f.round || '';
         const knockoutStr = `${isKnockout ? 'knockout cup plate' : 'league'} ${knockoutTitle} ${knockoutRound}`.toLowerCase();
 
         const matches =
@@ -461,13 +483,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                   <span className="font-bold text-amber-400 flex items-center gap-1 truncate">
                     <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     {myNextMatch.competitionName ||
-                      myNextMatch.cupName ||
                       (myNextMatch.division
                         ? `${myNextMatch.division} Knockout`
                         : 'Knockout')}
-                    {myNextMatch.round || myNextMatch.cupRound
-                      ? ` (${myNextMatch.round || myNextMatch.cupRound})`
-                      : ''}
+                    {myNextMatch.round ? ` (${myNextMatch.round})` : ''}
                   </span>
                 ) : (
                   <span className="font-bold text-emerald-400 shrink-0">
@@ -694,6 +713,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               session.teamId === fix.homeTeamId ||
               session.teamId === fix.awayTeamId;
             const timeframe = getMatchTimeframe(fix.matchDate, fix.status);
+            const expungedInfo = isFixtureExpunged(
+              fix,
+              teamsById,
+              halfwayDateByDiv[fix.division]
+            );
 
             return (
               <div
@@ -716,13 +740,10 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       <span className="font-bold text-amber-400 flex items-center gap-1">
                         <Trophy className="w-3.5 h-3.5 text-amber-400" />
                         {fix.competitionName ||
-                          fix.cupName ||
                           (fix.division
                             ? `${fix.division} Knockout`
                             : 'Knockout')}
-                        {fix.round || fix.cupRound
-                          ? ` (${fix.round || fix.cupRound})`
-                          : ''}
+                        {fix.round ? ` (${fix.round})` : ''}
                       </span>
                     ) : (
                       <span className="font-bold text-emerald-400">
@@ -734,57 +755,71 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       {formatMatchDate(fix.matchDate)}
                     </span>
                   </div>
-                  <span
-                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
-                      fix.status === 'live'
-                        ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
-                        : fix.status === 'submitted'
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : fix.status === 'approved'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : timeframe === 'today'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
-                        : timeframe === 'upcoming'
-                        ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
-                        : 'bg-slate-800 text-slate-400 border border-slate-700'
-                    }`}
-                  >
-                    {fix.status === 'live' ? (
-                      <>
-                        <Radio className="w-2.5 h-2.5" />
-                        {isKnockoutFixture(fix)
-                          ? fix.knockoutFormat === 'play_all_15'
-                            ? `LIVE (${score.completedFrames}/15)`
-                            : 'LIVE (First to 8)'
-                          : `LIVE (${score.completedFrames}/15)`}
-                      </>
-                    ) : fix.status === 'approved' || isWalkoverFixture(fix) ? (
-                      <>
-                        <CheckCircle2 className="w-2.5 h-2.5" />
-                        {isWalkoverFixture(fix) ? 'Walkover' : 'Approved'}
-                      </>
-                    ) : fix.status === 'submitted' ? (
-                      <>
-                        <Clock className="w-2.5 h-2.5" />
-                        Awaiting Approval
-                      </>
-                    ) : timeframe === 'today' ? (
-                      <>
-                        <Calendar className="w-2.5 h-2.5" />
-                        Match Today
-                      </>
-                    ) : timeframe === 'upcoming' ? (
-                      <>
-                        <Clock className="w-2.5 h-2.5" />
-                        Upcoming
-                      </>
-                    ) : (
-                      <>
-                        <History className="w-2.5 h-2.5" />
-                        Overdue
-                      </>
-                    )}
-                  </span>
+                  {expungedInfo.isCancelled ? (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-slate-800 text-slate-400 border border-slate-700">
+                      <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />
+                      Cancelled • Folded
+                    </span>
+                  ) : expungedInfo.isExpunged ? (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-amber-950/80 text-amber-300 border border-amber-600/50">
+                      <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />
+                      {expungedInfo.reason === 'rule_7a'
+                        ? 'Result Expunged (Rule 7a)'
+                        : 'Result Expunged (Rule 7b)'}
+                    </span>
+                  ) : (
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                        fix.status === 'live'
+                          ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
+                          : fix.status === 'submitted'
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                          : fix.status === 'approved'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                          : timeframe === 'today'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
+                          : timeframe === 'upcoming'
+                          ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30'
+                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                      }`}
+                    >
+                      {fix.status === 'live' ? (
+                        <>
+                          <Radio className="w-2.5 h-2.5" />
+                          {isKnockoutFixture(fix)
+                            ? fix.knockoutFormat === 'play_all_15'
+                              ? `LIVE (${score.completedFrames}/15)`
+                              : 'LIVE (First to 8)'
+                            : `LIVE (${score.completedFrames}/15)`}
+                        </>
+                      ) : fix.status === 'approved' || isWalkoverFixture(fix) ? (
+                        <>
+                          <CheckCircle2 className="w-2.5 h-2.5" />
+                          {isWalkoverFixture(fix) ? 'Walkover' : 'Approved'}
+                        </>
+                      ) : fix.status === 'submitted' ? (
+                        <>
+                          <Clock className="w-2.5 h-2.5" />
+                          Awaiting Approval
+                        </>
+                      ) : timeframe === 'today' ? (
+                        <>
+                          <Calendar className="w-2.5 h-2.5" />
+                          Match Today
+                        </>
+                      ) : timeframe === 'upcoming' ? (
+                        <>
+                          <Clock className="w-2.5 h-2.5" />
+                          Upcoming
+                        </>
+                      ) : (
+                        <>
+                          <History className="w-2.5 h-2.5" />
+                          Overdue
+                        </>
+                      )}
+                    </span>
+                  )}
                 </div>
 
                 <div
@@ -869,23 +904,29 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       </button>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => onSelectFixture(fix)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
-                    >
-                      <PlayCircle className="w-3.5 h-3.5" />
-                      {isCaptain && isMyTeamMatch
-                        ? fix.status === 'scheduled'
-                          ? 'Start Match'
-                          : fix.status === 'live'
-                          ? score.isDecided
-                            ? 'Finish Match'
-                            : 'Continue Match'
-                          : 'View Scorecard'
-                        : 'View Scorecard'}
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    {expungedInfo.isCancelled ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-500 cursor-not-allowed">
+                        Match Cancelled
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onSelectFixture(fix)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
+                      >
+                        <PlayCircle className="w-3.5 h-3.5" />
+                        {isCaptain && isMyTeamMatch
+                          ? fix.status === 'scheduled'
+                            ? 'Start Match'
+                            : fix.status === 'live'
+                            ? score.isDecided
+                              ? 'Finish Match'
+                              : 'Continue Match'
+                            : 'View Scorecard'
+                          : 'View Scorecard'}
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

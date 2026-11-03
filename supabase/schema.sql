@@ -51,6 +51,8 @@ create table if not exists public.teams (
 );
 
 alter table public.teams add column if not exists table_number text not null default '';
+alter table public.teams add column if not exists is_folded boolean not null default false;
+alter table public.teams add column if not exists folded_date text;
 
 -- Drop any legacy fixed division check constraint so Admins can add new divisions freely
 alter table public.teams drop constraint if exists teams_division_check;
@@ -109,8 +111,6 @@ alter table public.fixtures add column if not exists competition_name text;
 alter table public.fixtures add column if not exists round text;
 alter table public.fixtures add column if not exists play_all_frames boolean not null default false;
 alter table public.fixtures add column if not exists knockout_format text default 'first_to_8';
-alter table public.fixtures add column if not exists cup_name text;
-alter table public.fixtures add column if not exists cup_round text;
 
 -- Performance Indexes on Foreign Keys and Common Query Filters
 create index if not exists idx_fixtures_season_id on public.fixtures(season_id);
@@ -582,6 +582,15 @@ begin
   -- Ensure the fixture has not already been submitted or approved
   if v_fixture.status in ('submitted', 'approved') then
     raise exception 'Forbidden: Submitted or approved fixtures are locked and can only be edited by the League Admin';
+  end if;
+
+  -- Ensure neither team has folded
+  if exists (
+    select 1 from public.teams
+    where (id = v_fixture.home_team_id or id = v_fixture.away_team_id)
+      and is_folded = true
+  ) then
+    raise exception 'Forbidden: Match involves a folded team and cannot be edited by captains';
   end if;
 
   -- Ensure a Captain cannot set status to 'approved'
@@ -1088,6 +1097,32 @@ $$;
 
 drop function if exists public.admin_delete_team(text, text);
 
+-- 9b. Admin Fold / Unfold Team (League Rule 7)
+create or replace function public.admin_fold_team(
+  p_admin_pin text,
+  p_team_id text,
+  p_is_folded boolean,
+  p_folded_date text default null
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.verify_admin_pin(p_admin_pin) then
+    return false;
+  end if;
+
+  update public.teams
+  set is_folded = p_is_folded,
+      folded_date = case when p_is_folded then coalesce(p_folded_date, to_char(now(), 'YYYY-MM-DD')) else null end
+  where id = p_team_id;
+
+  return true;
+end;
+$$;
+
 -- 10. Admin Upsert Player
 create or replace function public.admin_upsert_player(
   p_admin_pin text,
@@ -1136,9 +1171,7 @@ create or replace function public.admin_upsert_fixture(
   p_competition_name text default null,
   p_round text default null,
   p_play_all_frames boolean default false,
-  p_knockout_format text default 'first_to_8',
-  p_cup_name text default null,
-  p_cup_round text default null
+  p_knockout_format text default 'first_to_8'
 )
 returns boolean
 language plpgsql
@@ -1153,19 +1186,17 @@ begin
   insert into public.fixtures (
     id, season_id, division, match_date, week_number,
     home_team_id, away_team_id, status, lineups, frames,
-    match_type, competition_name, round, play_all_frames, knockout_format, cup_name, cup_round,
+    match_type, competition_name, round, play_all_frames, knockout_format,
     updated_at
   )
   values (
     p_id, p_season_id, p_division, p_match_date, p_week_number,
     p_home_team_id, p_away_team_id, p_status, p_lineups, p_frames,
     coalesce(p_match_type, 'league'),
-    coalesce(p_competition_name, p_cup_name),
-    coalesce(p_round, p_cup_round),
+    p_competition_name,
+    p_round,
     coalesce(p_play_all_frames, false),
     coalesce(p_knockout_format, 'first_to_8'),
-    coalesce(p_cup_name, p_competition_name),
-    coalesce(p_cup_round, p_round),
     now()
   )
   on conflict (id) do update
@@ -1180,8 +1211,6 @@ begin
         round = excluded.round,
         play_all_frames = excluded.play_all_frames,
         knockout_format = excluded.knockout_format,
-        cup_name = excluded.cup_name,
-        cup_round = excluded.cup_round,
         updated_at = now();
 
   return true;
