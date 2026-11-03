@@ -877,7 +877,7 @@ export function computePlayerStats(
   // i. Total number of dishes (including reverse dishes) made over the season
   // ii. If tied, awarded to the player highest in the averages table
   const dishTable = [...allStats]
-    .filter((r) => r.dishes > 0 || r.played > 0)
+    .filter((r) => r.dishes > 0)
     .sort((a, b) => {
       if (b.dishes !== a.dishes) return b.dishes - a.dishes;
       const aAvgRank = avgRankMap[a.player.id] ?? 9999;

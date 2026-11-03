@@ -469,8 +469,11 @@ describe('leagueEngine - Player Stats & Dish Leaderboard (Section 8b & 8c)', () 
     expect(averagesTable[2].player.id).toBe('h2');
     expect(averagesTable[2].won).toBe(3);
 
+    // Only players with 1 or more dishes are included in the dish leaderboard
+    expect(dishTable).toHaveLength(1);
     expect(dishTable[0].player.id).toBe('h1');
     expect(dishTable[0].dishes).toBe(2);
+    expect(dishTable.every((row) => row.dishes > 0)).toBe(true);
   });
 });
 
