@@ -67,6 +67,8 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     saveFixture,
     approveFixture,
     refreshSingleFixture,
+    isCloudConnected,
+    isRealtimeConnected,
     isOnline,
     isSyncing,
     syncError,
@@ -81,6 +83,51 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFirstMount = useRef<boolean>(true);
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    if (isManualRefreshing || !fixture.id) return;
+    setIsManualRefreshing(true);
+    try {
+      await refreshSingleFixture(fixture.id);
+    } finally {
+      setTimeout(() => setIsManualRefreshing(false), 600);
+    }
+  };
+
+  // Fresh cloud fetch on mount and conditional background safety sync when connection is degraded/offline
+  useEffect(() => {
+    if (!fixture.id) return;
+    refreshSingleFixture(fixture.id);
+
+    const interval = setInterval(() => {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
+
+      // Only poll when connection is degraded, offline, or experiencing sync errors
+      const isDegraded =
+        isCloudConnected &&
+        (!isRealtimeConnected || !isOnline || Boolean(syncError));
+
+      if (isDegraded) {
+        refreshSingleFixture(fixture.id);
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [
+    fixture.id,
+    isCloudConnected,
+    isRealtimeConnected,
+    isOnline,
+    syncError,
+    refreshSingleFixture,
+  ]);
+
   const [viewMode, setViewMode] = useState<'mobile' | 'paper'>(() =>
     !isLoggedIn ||
     fixture.status === 'submitted' ||
@@ -1765,8 +1812,24 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
           <button
             type="button"
+            onClick={handleManualRefresh}
+            disabled={isManualRefreshing}
+            aria-label="Refresh scorecard"
+            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 hover:text-white transition disabled:opacity-75 cursor-pointer shrink-0"
+            title="Refresh scorecard"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${
+                isManualRefreshing ? 'animate-spin text-emerald-400' : ''
+              }`}
+            />
+          </button>
+
+          <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+            aria-label="Close"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 hover:text-white transition cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>

@@ -28,6 +28,8 @@ describe('supabase client configuration & sandbox protection', () => {
 
     const client = getSupabaseClient();
     expect(client).not.toBeNull();
+    expect(client?.realtime.heartbeatIntervalMs).toBe(5000);
+    expect(client?.realtime.timeout).toBe(7000);
   });
 
   it('clears stored config when saveSupabaseConfig is called with empty strings', () => {
