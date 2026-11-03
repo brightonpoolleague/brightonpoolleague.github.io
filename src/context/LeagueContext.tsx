@@ -193,6 +193,8 @@ function mergeBlindSet1Lineups(
   }
   return {
     ...incoming,
+    homeSet1Locked: keepHome ? existing.homeSet1Locked : incoming.homeSet1Locked,
+    awaySet1Locked: keepAway ? existing.awaySet1Locked : incoming.awaySet1Locked,
     lineups: mergedLineups,
   };
 }
