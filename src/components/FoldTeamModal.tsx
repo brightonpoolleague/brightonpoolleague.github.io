@@ -116,11 +116,11 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-3.5 my-auto max-h-[90vh] flex flex-col"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-3.5 my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col min-w-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -192,16 +192,16 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
         {/* Fold Form */}
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 space-y-3">
           {/* Date Picker Input */}
-          <div className="shrink-0">
-            <label htmlFor="fold-date-input" className="block text-xs font-bold text-slate-300 mb-1">
+          <div className="shrink-0 space-y-1.5">
+            <label htmlFor="fold-date-input" className="block text-xs font-bold text-slate-300">
               Date Team Folded / Withdrew
             </label>
-            <div className="relative">
+            <div className="relative min-w-0 max-w-full">
               <button
                 type="button"
                 onClick={handleOpenPicker}
                 aria-label="Open Calendar"
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-emerald-400 transition"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-emerald-400 transition z-10"
                 title="Open Calendar"
               >
                 <Calendar className="w-4 h-4 text-emerald-400" />
@@ -214,18 +214,19 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                 value={foldDate}
                 onChange={(e) => setFoldDate(e.target.value)}
                 onClick={handleOpenPicker}
-                className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
+                className="w-full max-w-full min-w-0 block bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm box-border"
               />
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-1 pt-1 text-[11px]">
-              <span className="text-emerald-400 font-semibold truncate">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 pt-0.5 text-[11px]">
+              <span className="text-emerald-400 font-semibold truncate min-w-0">
                 Selected: {formatMatchDate(foldDate)}
               </span>
-              <div className="flex items-center gap-1 text-[10px]">
+              <div className="flex items-center gap-1.5 text-[10px] shrink-0">
+                <span className="text-slate-500 sm:hidden">Quick pick:</span>
                 <button
                   type="button"
                   onClick={() => setFoldDate(todayStr)}
-                  className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                  className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 transition whitespace-nowrap"
                 >
                   Today
                 </button>
@@ -233,7 +234,7 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setFoldDate(halfwayDate)}
-                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                    className="px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 transition whitespace-nowrap"
                     title={`Set date to division halfway date (${formatMatchDate(halfwayDate)})`}
                   >
                     Halfway Date
