@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
-  Award,
   Calendar,
   CheckCircle2,
   ChevronDown,
@@ -25,7 +24,6 @@ import {
   getMatchTimeframe,
   getScorecardApprovalWarnings,
   isKnockoutFixture,
-  isWalkoverFixture,
 } from '../utils/leagueEngine';
 
 interface FixturesAndLiveViewProps {
@@ -737,9 +735,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                   </div>
                   <span
                     className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
-                      isWalkoverFixture(fix)
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                        : fix.status === 'live'
+                      fix.status === 'live'
                         ? 'bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse'
                         : fix.status === 'submitted'
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
@@ -752,13 +748,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                         : 'bg-slate-800 text-slate-400 border border-slate-700'
                     }`}
                   >
-                    {isWalkoverFixture(fix) ? (
-                      <>
-                        <Award className="w-2.5 h-2.5" />
-                        Walkover
-                      </>
-                    ) : 
-                    fix.status === 'live' ? (
+                    {fix.status === 'live' ? (
                       <>
                         <Radio className="w-2.5 h-2.5" />
                         {isKnockoutFixture(fix)
@@ -815,7 +805,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
                   <div className="flex flex-col items-center justify-center px-1 shrink-0">
                     {score.completedFrames > 0 || fix.status !== 'scheduled' ? (
-                      <>
                       <div className="flex items-center gap-1 sm:gap-1.5 font-black text-base sm:text-lg text-white tabular-nums">
                         <span
                           className={
@@ -837,12 +826,6 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                           {score.awayFrames}
                         </span>
                       </div>
-                      {isWalkoverFixture(fix) && (
-                        <span className="text-[9px] font-bold text-amber-400 uppercase tracking-wider mt-0.5">
-                          Walkover
-                        </span>
-                      )}
-                      </>
                     ) : (
                       <span className="text-xs font-bold text-slate-400 px-1.5 sm:px-2 py-1 rounded bg-slate-900 border border-slate-800 shrink-0">
                         20:00

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
-  Award,
   Camera,
   CheckCircle2,
   ChevronLeft,
@@ -33,7 +32,6 @@ import {
   ensureValidLineups,
   formatMatchDate,
   getEligiblePlayersForSlot,
-  getFixtureWalkover,
   getFrameBreaker,
   getFramePlayers,
   getScorecardApprovalWarnings,
@@ -44,10 +42,8 @@ import {
   isSubsLocked,
   isSubsUnlockRequested,
   isSubsPendingApproval,
-  isWalkoverFixture,
   syncDefaultSubsequentSets,
 } from '../utils/leagueEngine';
-import { AwardWalkoverModal } from './AwardWalkoverModal';
 import { useLeague } from '../context/LeagueContext';
 import { ExportScorecardModal } from './ExportScorecardModal';
 
@@ -88,7 +84,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const isFirstMount = useRef<boolean>(true);
   const [activeSet, setActiveSet] = useState<1 | 2 | 3>(1);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [showWalkoverModal, setShowWalkoverModal] = useState<boolean>(false);
 
   const handleManualRefresh = async () => {
     if (isManualRefreshing || !fixture.id) return;
@@ -261,8 +256,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const homeTeam = teams.find((t) => t.id === fixture.homeTeamId);
   const awayTeam = teams.find((t) => t.id === fixture.awayTeamId);
   if (!homeTeam || !awayTeam) return null;
-
-  const teamsById = useMemo(() => Object.fromEntries(teams.map((t) => [t.id, t])), [teams]);
 
   const homeSquad = players.filter((p) => p.teamId === homeTeam.id && p.active);
   const awaySquad = players.filter((p) => p.teamId === awayTeam.id && p.active);
@@ -1886,30 +1879,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </button>
           </div>
 
-          {canManageLeague && (
-            <button
-              type="button"
-              onClick={() => setShowWalkoverModal(true)}
-              aria-label="Award Walkover (Rule 8)"
-              className="p-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 active:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition cursor-pointer shrink-0"
-              title="Award Walkover (Rule 8)"
-            >
-              <Award className="w-4 h-4 text-amber-400" />
-            </button>
-          )}
-
-          {canManageLeague && (
-            <button
-              type="button"
-              onClick={() => setShowWalkoverModal(true)}
-              aria-label="Award Walkover"
-              className="p-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 active:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition cursor-pointer shrink-0"
-              title="Award Walkover (Rule 8)"
-            >
-              <Award className="w-4 h-4 text-amber-400" />
-            </button>
-          )}
-
           <button
             type="button"
             onClick={handleManualRefresh}
@@ -2057,36 +2026,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* Walkover Notice Banner (Rule 8) */}
-          {isWalkoverFixture(fixture) && (() => {
-            const wo = getFixtureWalkover(fixture);
-            if (!wo) return null;
-            const woWinner = wo.awardedTo === 'home' ? homeTeam : awayTeam;
-            const woDefault = wo.awardedTo === 'home' ? awayTeam : homeTeam;
-            return (
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
-                <Award className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-amber-400 text-sm">
-                      Walkover Awarded (League Rule 8)
-                    </span>
-                    <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                      {isKnockout ? 'Match Win' : '15–0 Win • 7 Points'}
-                    </span>
-                  </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    Awarded to <strong>{woWinner.name}</strong>. Conceding / defaulting team: <strong>{woDefault.name}</strong> (0 points, 0–15 score).
-                    {wo.reason && (
-                      <span className="block text-slate-400 italic mt-0.5">
-                        Reason: &ldquo;{wo.reason}&rdquo;
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            );
-          })()}
           {(!isOnline || syncError) && (
             <div className="bg-amber-500/15 border border-amber-500/40 rounded-xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-200">
               <div className="flex items-center gap-2">
@@ -3342,21 +3281,6 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Award Walkover Modal */}
-      {showWalkoverModal && (
-        <AwardWalkoverModal
-          fixture={fixture}
-          isOpen={showWalkoverModal}
-          onClose={() => setShowWalkoverModal(false)}
-          onConfirmWalkover={async (updated) => {
-            await saveFixture(updated);
-            setShowWalkoverModal(false);
-          }}
-          teamsById={teamsById}
-          players={players}
-        />
       )}
 
       {/* Export Result Scorecard Modal */}
