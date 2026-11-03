@@ -75,18 +75,22 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
 
     const computeFitScale = () => {
       if (!containerRef.current || !cardRef.current) return;
-      const cWidth = containerRef.current.clientWidth;
-      const cHeight = containerRef.current.clientHeight;
+      const container = containerRef.current;
+      const cWidth = container.clientWidth;
+      const cHeight = container.clientHeight;
       const unscaledHeight = cardRef.current.offsetHeight || 750;
       setCardHeight(unscaledHeight);
 
-      // Safe margin: 16px on mobile, 32px on desktop
-      const padX = window.innerWidth < 640 ? 16 : 32;
-      const availWidth = Math.max(100, cWidth - padX);
-      const scaleX = Math.min(1, availWidth / 800);
+      const style = window.getComputedStyle(container);
+      const padLeft = parseFloat(style.paddingLeft || '0');
+      const padRight = parseFloat(style.paddingRight || '0');
+      const padTop = parseFloat(style.paddingTop || '0');
+      const padBottom = parseFloat(style.paddingBottom || '0');
 
-      const padY = window.innerWidth < 640 ? 16 : 32;
-      const availHeight = Math.max(100, cHeight - padY);
+      const availWidth = Math.max(100, cWidth - padLeft - padRight);
+      const availHeight = Math.max(100, cHeight - padTop - padBottom);
+
+      const scaleX = Math.min(1, availWidth / 800);
       const scaleY = availHeight / unscaledHeight;
 
       // On desktop, if the card naturally fits available height comfortably (scaleY >= 0.75), fit to screen.
@@ -297,16 +301,16 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
               height: cardHeight ? `${cardHeight * fitScale}px` : 'auto',
               maxWidth: '100%',
             }}
-            className="relative transition-all duration-150 shrink-0 my-auto"
+            className="relative transition-all duration-150 shrink-0 mx-auto my-auto"
           >
             <div
               style={{
-                transform: `scale(${fitScale})`,
-                transformOrigin: 'top left',
+                transform: `translateX(-50%) scale(${fitScale})`,
+                transformOrigin: 'top center',
                 width: '800px',
                 position: 'absolute',
                 top: 0,
-                left: 0,
+                left: '50%',
               }}
               className="rounded-xl overflow-hidden shadow-2xl border border-slate-800"
             >

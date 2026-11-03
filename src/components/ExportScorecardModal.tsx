@@ -89,16 +89,20 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
 
     const computeFitScale = () => {
       if (!containerRef.current || !cardRef.current) return;
-      const cWidth = containerRef.current.clientWidth;
-      const cHeight = containerRef.current.clientHeight;
+      const container = containerRef.current;
+      const cWidth = container.clientWidth;
+      const cHeight = container.clientHeight;
       const unscaledHeight = cardRef.current.offsetHeight || 850;
       setCardHeight(unscaledHeight);
 
-      const padX = window.innerWidth < 640 ? 16 : 32;
-      const padY = window.innerWidth < 640 ? 16 : 32;
+      const style = window.getComputedStyle(container);
+      const padLeft = parseFloat(style.paddingLeft || '0');
+      const padRight = parseFloat(style.paddingRight || '0');
+      const padTop = parseFloat(style.paddingTop || '0');
+      const padBottom = parseFloat(style.paddingBottom || '0');
 
-      const availWidth = Math.max(100, cWidth - padX);
-      const availHeight = Math.max(100, cHeight - padY);
+      const availWidth = Math.max(100, cWidth - padLeft - padRight);
+      const availHeight = Math.max(100, cHeight - padTop - padBottom);
 
       const scaleX = availWidth / 840;
       const scaleY = availHeight / unscaledHeight;
@@ -289,16 +293,16 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
               maxWidth: '100%',
               maxHeight: '100%',
             }}
-            className="relative transition-all duration-150 shrink-0"
+            className="relative transition-all duration-150 shrink-0 mx-auto"
           >
             <div
               style={{
-                transform: `scale(${fitScale})`,
-                transformOrigin: 'top left',
+                transform: `translateX(-50%) scale(${fitScale})`,
+                transformOrigin: 'top center',
                 width: '840px',
                 position: 'absolute',
                 top: 0,
-                left: 0,
+                left: '50%',
               }}
               className="rounded-xl overflow-hidden shadow-2xl border border-slate-800"
             >
