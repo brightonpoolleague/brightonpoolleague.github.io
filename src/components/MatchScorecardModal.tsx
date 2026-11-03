@@ -2987,6 +2987,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     onClick={() => setViewMode('mobile')}
                     className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white text-xs font-semibold transition shadow-sm cursor-pointer"
                   >
+                    <ChevronLeft className="w-3.5 h-3.5 text-slate-400" />
                     <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Return to Live Scoring</span>
                   </button>
