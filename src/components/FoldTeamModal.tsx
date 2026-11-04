@@ -116,11 +116,11 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain"
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 py-10 sm:p-6 sm:py-12 overflow-y-auto overscroll-contain"
       onClick={onClose}
     >
       <div
-        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-3.5 my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] flex flex-col min-w-0 overflow-hidden"
+        className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-3.5 my-auto max-h-[calc(100dvh-5.5rem)] sm:max-h-[90vh] flex flex-col min-w-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -214,7 +214,7 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                 value={foldDate}
                 onChange={(e) => setFoldDate(e.target.value)}
                 onClick={handleOpenPicker}
-                className="w-full max-w-full min-w-0 block bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm box-border"
+                className="w-full max-w-full min-w-0 block bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-base sm:text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm box-border"
               />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 pt-0.5 text-[11px]">

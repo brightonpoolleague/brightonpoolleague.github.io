@@ -15,6 +15,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker
       .register('./sw.js')
       .then((registration) => {
+        // Proactively check for an updated worker immediately
+        registration.update().catch(() => {});
+
         registration.onupdatefound = () => {
           const installingWorker = registration.installing;
           if (installingWorker) {
@@ -23,7 +26,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
                 installingWorker.state === 'installed' &&
                 navigator.serviceWorker.controller
               ) {
-                console.log('New content available; please refresh.');
+                // If a new worker has been installed, reload to activate it immediately
+                window.location.reload();
               }
             };
           }
@@ -32,5 +36,14 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       .catch((err) => {
         console.warn('PWA ServiceWorker registration failed:', err);
       });
+
+    // When the controlling service worker changes, reload the page
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   });
 }
