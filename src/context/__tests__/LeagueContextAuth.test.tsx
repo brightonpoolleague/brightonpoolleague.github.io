@@ -336,7 +336,7 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
         id: 'fix-scheduled-1',
         seasonId: 'winter-2026-27',
         division: 'Premier League',
-        matchDate: '2026-11-20',
+        matchDate: '2026-11-01',
         homeTeamId: 't-1',
         awayTeamId: 't-2',
         status: 'scheduled',
@@ -389,5 +389,79 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
       result.current.setRoleSession('admin', undefined, 'League Admin', '000000');
     });
     expect(result.current.canEditFixture(activeFixture)).toBe(true);
+  });
+  it('disallows captains from editing scorecards before the date of the match, while allowing on the day and after', async () => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const mockTeams = [
+      { id: 't-1', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Alpha', venue: 'Venue 1', address: 'Addr 1', captainName: 'Cap 1', captainPin: '111111' },
+      { id: 't-2', seasonId: 'winter-2026-27', division: 'Premier League', name: 'Team Beta', venue: 'Venue 2', address: 'Addr 2', captainName: 'Cap 2', captainPin: '222222' },
+    ];
+
+    const upcomingFixture: Fixture = {
+      id: 'fix-future',
+      seasonId: 'winter-2026-27',
+      division: 'Premier League',
+      matchDate: '2099-12-31',
+      homeTeamId: 't-1',
+      awayTeamId: 't-2',
+      status: 'scheduled',
+      frames: [],
+      lineups: { set1: { home: [null, null, null, null, null], away: [null, null, null, null, null] }, set2: { home: [null, null, null, null, null], away: [null, null, null, null, null] }, set3: { home: [null, null, null, null, null], away: [null, null, null, null, null] } },
+      lagWinner: null,
+      homeSet1Locked: false,
+      awaySet1Locked: false,
+      homeCaptainSigned: false,
+      awayCaptainSigned: false,
+      updatedAt: '2026-10-01T00:00:00Z',
+    };
+
+    const todayFixture: Fixture = {
+      ...upcomingFixture,
+      id: 'fix-today',
+      matchDate: todayStr,
+    };
+
+    const pastFixture: Fixture = {
+      ...upcomingFixture,
+      id: 'fix-past',
+      matchDate: '2020-01-01',
+    };
+
+    localStorage.setItem(STORAGE_KEYS.TEAMS, JSON.stringify(mockTeams));
+    localStorage.setItem(STORAGE_KEYS.FIXTURES, JSON.stringify([upcomingFixture, todayFixture, pastFixture]));
+
+    const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.teams.length).toBeGreaterThan(0);
+    });
+
+    // 1. Captain logged in
+    act(() => {
+      result.current.setRoleSession('captain', 't-1', 'Captain One', '111111');
+    });
+
+    // Future match is NOT editable by the captain
+    expect(result.current.canEditFixture(upcomingFixture)).toBe(false);
+
+    // Today's match IS editable
+    expect(result.current.canEditFixture(todayFixture)).toBe(true);
+
+    // Past match IS editable (after is fine)
+    expect(result.current.canEditFixture(pastFixture)).toBe(true);
+
+    // 2. Admin can edit any fixture including future ones
+    act(() => {
+      result.current.setRoleSession('admin', undefined, 'League Admin', '000000');
+    });
+    expect(result.current.canEditFixture(upcomingFixture)).toBe(true);
+    expect(result.current.canEditFixture(todayFixture)).toBe(true);
+    expect(result.current.canEditFixture(pastFixture)).toBe(true);
   });
 });
