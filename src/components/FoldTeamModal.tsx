@@ -214,7 +214,7 @@ export const FoldTeamModal: React.FC<FoldTeamModalProps> = ({
                 value={foldDate}
                 onChange={(e) => setFoldDate(e.target.value)}
                 onClick={handleOpenPicker}
-                className="w-full max-w-full min-w-0 block bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-base sm:text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm box-border appearance-none"
+                className="w-full max-w-full min-w-0 block bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-emerald-500 rounded-xl pl-9 pr-3 py-2 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm box-border appearance-none"
               />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 pt-0.5 text-[11px]">

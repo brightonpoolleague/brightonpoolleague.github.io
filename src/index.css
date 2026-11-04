@@ -31,4 +31,6 @@ input[type="date"]::-webkit-date-and-time-value {
   min-height: 1.4em;
   padding: 0;
   margin: 0;
+  font-size: inherit;
+  font-family: inherit;
 }
