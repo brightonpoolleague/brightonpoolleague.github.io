@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
@@ -114,15 +114,30 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
   const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
   const myTeam = isCaptain && session.teamId ? teamsById[session.teamId] : null;
 
+  const isUnplayedFoldedFixture = useCallback(
+    (f: Fixture): boolean => {
+      const home = teamsById[f.homeTeamId];
+      const away = teamsById[f.awayTeamId];
+      if (!home?.isFolded && !away?.isFolded) return false;
+      const hasResult =
+        f.status === 'approved' ||
+        f.status === 'submitted' ||
+        f.frames.some((frame) => frame.winner !== null);
+      return !hasResult;
+    },
+    [teamsById]
+  );
+
   const myMatches = useMemo(() => {
     if (!isCaptain || !session.teamId) return [];
     return fixtures
       .filter(
         (f) =>
-          f.homeTeamId === session.teamId || f.awayTeamId === session.teamId
+          (f.homeTeamId === session.teamId || f.awayTeamId === session.teamId) &&
+          !isUnplayedFoldedFixture(f)
       )
       .sort((a, b) => a.matchDate.localeCompare(b.matchDate));
-  }, [fixtures, isCaptain, session.teamId]);
+  }, [fixtures, isCaptain, session.teamId, isUnplayedFoldedFixture]);
 
   const todayStr = useMemo(() => {
     const d = new Date();
@@ -179,6 +194,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
     const dateSet = new Set<string>();
     for (const f of fixtures) {
       if (!f.matchDate) continue;
+      if (isUnplayedFoldedFixture(f)) continue;
       if (selectedDivision === 'KNOCKOUT') {
         if (!isKnockoutFixture(f)) continue;
       } else if (selectedDivision !== 'ALL') {
@@ -189,10 +205,13 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
       dateSet.add(f.matchDate);
     }
     return Array.from(dateSet).sort((a, b) => a.localeCompare(b));
-  }, [fixtures, selectedDivision]);
+  }, [fixtures, selectedDivision, isUnplayedFoldedFixture]);
 
   const filtered = fixtures
     .filter((f) => {
+      if (isUnplayedFoldedFixture(f)) {
+        return false;
+      }
       if (selectedDivision === 'KNOCKOUT') {
         if (!isKnockoutFixture(f)) return false;
       } else if (selectedDivision !== 'ALL') {
@@ -260,9 +279,11 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
       return a.matchDate.localeCompare(b.matchDate);
     });
 
-  const liveCount = fixtures.filter((f) => f.status === 'live').length;
+  const liveCount = fixtures.filter(
+    (f) => f.status === 'live' && !isUnplayedFoldedFixture(f)
+  ).length;
   const pendingApprovalCount = fixtures.filter(
-    (f) => f.status === 'submitted'
+    (f) => f.status === 'submitted' && !isUnplayedFoldedFixture(f)
   ).length;
 
   const showSpotlight = Boolean(
