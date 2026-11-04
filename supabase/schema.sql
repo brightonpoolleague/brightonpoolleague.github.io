@@ -497,7 +497,6 @@ $$;
 -- 5. League Admin PIN Management
 -- Note: The League Admin PIN cannot be updated via website RPCs. It is managed strictly
 -- in the Supabase Dashboard by the database owner to prevent any unauthorized takeover.
-drop function if exists public.set_admin_pin(text, text);
 
 -- 6. Captain Scorecard Save (Strictly restricted to the Captain's own team & unapproved/unsubmitted matches)
 -- Uses row-level locking (FOR UPDATE) and side-aware JSON merging so two captains on separate
@@ -1031,10 +1030,7 @@ begin
 end;
 $$;
 
--- 8. Drop legacy Season / Team / Player deletion RPCs (no longer used by the web portal)
-drop function if exists public.admin_upsert_season(text, text, text, boolean, jsonb);
-
--- 9. Admin Upsert Team (+ optional Team PIN & Table Number)
+-- 8. Admin Upsert Team (+ optional Team PIN & Table Number)
 create or replace function public.admin_upsert_team(
   p_admin_pin text,
   p_id text,
@@ -1095,9 +1091,7 @@ begin
 end;
 $$;
 
-drop function if exists public.admin_delete_team(text, text);
-
--- 9b. Admin Fold / Unfold Team (League Rule 7)
+-- 9. Admin Fold / Unfold Team (League Rule 7)
 create or replace function public.admin_fold_team(
   p_admin_pin text,
   p_team_id text,
@@ -1152,9 +1146,7 @@ begin
 end;
 $$;
 
-drop function if exists public.admin_delete_player(text, text);
-
--- 13. Admin Create / Upsert Scheduled Fixture (Supports both League & Knockout Cup matches)
+-- 11. Admin Create / Upsert Scheduled Fixture (Supports both League & Knockout Cup matches)
 create or replace function public.admin_upsert_fixture(
   p_admin_pin text,
   p_id text,
@@ -1217,7 +1209,7 @@ begin
 end;
 $$;
 
--- 14. Admin Delete Fixture
+-- 12. Admin Delete Fixture
 create or replace function public.admin_delete_fixture(
   p_admin_pin text,
   p_fixture_id text
@@ -1237,7 +1229,7 @@ begin
 end;
 $$;
 
--- 15. System & Database Health Stats (Public Non-Sensitive)
+-- 13. System & Database Health Stats (Public Non-Sensitive)
 create or replace function public.get_system_status()
 returns json
 language plpgsql
