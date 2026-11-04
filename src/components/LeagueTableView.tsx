@@ -273,13 +273,13 @@ export const LeagueTableView: React.FC = () => {
                     L
                   </th>
                   <th
-                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center hidden sm:table-cell"
+                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center"
                     title="Frames Won"
                   >
                     FF
                   </th>
                   <th
-                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center hidden sm:table-cell"
+                    className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center"
                     title="Frames Lost"
                   >
                     FA
@@ -369,10 +369,10 @@ export const LeagueTableView: React.FC = () => {
                       <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-400">
                         {row.lost}
                       </td>
-                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-300 hidden sm:table-cell">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-300">
                         {row.framesFor}
                       </td>
-                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-400 hidden sm:table-cell">
+                      <td className="py-2.5 px-1.5 sm:py-3 sm:px-2.5 text-center tabular-nums text-slate-400">
                         {row.framesAgainst}
                       </td>
                       <td
