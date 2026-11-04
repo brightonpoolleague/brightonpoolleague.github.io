@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
+  Calendar,
   Camera,
   CheckCircle2,
   ChevronLeft,
@@ -32,6 +33,7 @@ import {
   ensureValidFrames,
   ensureValidLineups,
   formatMatchDate,
+  getMatchTimeframe,
   getEligiblePlayersForSlot,
   getFrameBreaker,
   getFramePlayers,
@@ -315,20 +317,24 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const prevSignedByBothRef = useRef<boolean>(isSignedByBoth);
   const isMatchLockedBySignature = !canManageLeague && isSignedByAny;
 
+  const isUpcoming = getMatchTimeframe(fixture.matchDate, fixture.status) === 'upcoming';
+
   const canSignHome =
     canManageLeague ||
-    (session.role === 'captain' &&
+    (editable &&
+      session.role === 'captain' &&
       session.teamId === fixture.homeTeamId &&
       fixture.status !== 'submitted' &&
       fixture.status !== 'approved');
   const canSignAway =
     canManageLeague ||
-    (session.role === 'captain' &&
+    (editable &&
+      session.role === 'captain' &&
       session.teamId === fixture.awayTeamId &&
       fixture.status !== 'submitted' &&
       fixture.status !== 'approved');
   const canEditSide = (side: 'home' | 'away'): boolean => {
-    if (isMatchLockedBySignature) return false;
+    if (!editable || isMatchLockedBySignature) return false;
     return side === 'home' ? canSignHome : canSignAway;
   };
 
@@ -1966,6 +1972,16 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
             {expungedInfo.foldedTeamName || 'A team in this match'} folded in the{' '}
             {expungedInfo.reason === 'rule_7a' ? 'first' : 'second'} half of the season.
             This match result does not count towards the league table or player averages.
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Fixture Alert for Captains */}
+      {!expungedInfo.isCancelled && isUpcoming && session.role === 'captain' && (
+        <div className="bg-slate-900 border-b border-slate-700 px-3 sm:px-6 py-2.5 text-xs text-slate-300 flex items-center gap-2 shrink-0">
+          <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div>
+            <strong className="text-white">Scorecard Locked:</strong> Scores cannot be entered before the date of the match ({formatMatchDate(fixture.matchDate)}). Score entry opens on match day and afterwards.
           </div>
         </div>
       )}

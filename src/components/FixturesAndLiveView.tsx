@@ -475,6 +475,9 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
         if (!home || !away) return null;
         const nextTimeframe = getMatchTimeframe(myNextMatch.matchDate, myNextMatch.status);
 
+        const isNextUpcoming = nextTimeframe === 'upcoming' && myNextMatch.status === 'scheduled';
+        const canOpenSpotlight = !isNextUpcoming;
+
         return (
           <div className="bg-slate-900 border-2 border-emerald-500/70 shadow-lg shadow-emerald-950/30 rounded-2xl p-3 sm:p-4 flex flex-col justify-between gap-3 transition">
             <div className="flex items-center justify-between gap-2 text-xs">
@@ -532,8 +535,8 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
             </div>
 
             <div
-              onClick={() => onSelectFixture(myNextMatch)}
-              className="cursor-pointer bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 hover:border-slate-700 transition"
+              {...(canOpenSpotlight ? { onClick: () => onSelectFixture(myNextMatch) } : {})}
+              className={`${canOpenSpotlight ? 'cursor-pointer hover:border-slate-700' : ''} bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 transition`}
             >
               <div className="text-left min-w-0 pr-1 sm:pr-2">
                 <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
@@ -602,19 +605,21 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => onSelectFixture(myNextMatch)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
-                >
-                  <PlayCircle className="w-3.5 h-3.5" />
-                  {myNextMatch.status === 'live'
-                    ? nextScore.isDecided
-                      ? 'Finish Match'
-                      : 'Continue Match'
-                    : 'Start Match'}
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                {canOpenSpotlight && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectFixture(myNextMatch)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white"
+                  >
+                    <PlayCircle className="w-3.5 h-3.5" />
+                    {myNextMatch.status === 'live'
+                      ? nextScore.isDecided
+                        ? 'Finish Match'
+                        : 'Continue Match'
+                      : 'Start Match'}
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -718,6 +723,8 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
               teamsById,
               halfwayDateByDiv[fix.division]
             );
+            const isScheduledUpcoming = timeframe === 'upcoming' && fix.status === 'scheduled';
+            const canOpenScorecard = !expungedInfo.isCancelled && !isScheduledUpcoming;
 
             return (
               <div
@@ -823,8 +830,8 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                 </div>
 
                 <div
-                  onClick={() => onSelectFixture(fix)}
-                  className="cursor-pointer bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 hover:border-slate-700 transition"
+                  {...(canOpenScorecard ? { onClick: () => onSelectFixture(fix) } : {})}
+                  className={`${canOpenScorecard ? 'cursor-pointer hover:border-slate-700' : ''} bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 sm:p-3.5 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-2 transition`}
                 >
                   <div className="text-left min-w-0 pr-1 sm:pr-2">
                     <div className="font-bold text-xs sm:text-base text-white line-clamp-2 leading-snug">
@@ -908,7 +915,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                       <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-500 cursor-not-allowed">
                         Match Cancelled
                       </span>
-                    ) : (
+                    ) : canOpenScorecard ? (
                       <button
                         type="button"
                         onClick={() => onSelectFixture(fix)}
@@ -926,7 +933,7 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
                           : 'View Scorecard'}
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>

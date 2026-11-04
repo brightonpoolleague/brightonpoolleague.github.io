@@ -40,6 +40,7 @@ import {
   ensureValidLineups,
   syncDefaultSubsequentSets,
   validatePlayerTransfer,
+  getMatchTimeframe,
 } from '../utils/leagueEngine';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
@@ -1733,6 +1734,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       rawUpdated: Fixture,
       editedSide?: 'home' | 'away' | 'frames'
     ): Promise<void> => {
+      if (
+        session.role === 'captain' &&
+        rawUpdated.matchDate &&
+        getMatchTimeframe(rawUpdated.matchDate) === 'upcoming'
+      ) {
+        console.warn('Captains cannot save fixtures before the match date.');
+        return;
+      }
       const fixtureId = rawUpdated.id;
       inFlightFixtureSavesRef.current.set(
         fixtureId,
@@ -1937,6 +1946,9 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         const home = allTeams.find((t) => t.id === fixture.homeTeamId);
         const away = allTeams.find((t) => t.id === fixture.awayTeamId);
         if (home?.isFolded || away?.isFolded) {
+          return false;
+        }
+        if (fixture.matchDate && getMatchTimeframe(fixture.matchDate) === 'upcoming') {
           return false;
         }
         return (
