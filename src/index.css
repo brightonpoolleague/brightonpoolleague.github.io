@@ -16,4 +16,19 @@ body {
   min-height: 100%;
 }
 
+/* Prevent iOS Safari / WebKit native date input horizontal overflow */
+input[type="date"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
 
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.4em;
+  padding: 0;
+  margin: 0;
+}

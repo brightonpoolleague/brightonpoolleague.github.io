@@ -206,8 +206,8 @@ export const AwardWalkoverModal: React.FC<AwardWalkoverModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 py-10 sm:p-6 sm:py-12 bg-slate-950/80 backdrop-blur-sm overflow-y-auto overscroll-contain">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[calc(100dvh-5.5rem)] sm:max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 py-8 sm:p-6 sm:py-12 bg-slate-950/80 backdrop-blur-sm overflow-y-auto overscroll-contain">
+      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 max-h-[72vh] sm:max-h-[80vh] overflow-y-auto my-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
           <div className="flex items-center gap-2.5">

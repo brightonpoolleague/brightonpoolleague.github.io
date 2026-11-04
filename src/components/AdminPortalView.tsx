@@ -2017,7 +2017,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                   <label className="block text-[11px] text-slate-400 mb-1">
                     Match Date
                   </label>
-                  <div className="relative min-w-0 max-w-full">
+                  <div className="relative min-w-0 max-w-full overflow-hidden rounded-lg">
                     <input
                       type="date"
                       value={newFixtureDraft.matchDate}
@@ -2032,7 +2032,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           e.currentTarget.showPicker?.();
                         } catch {}
                       }}
-                      className="w-full max-w-full min-w-0 block box-border bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm"
+                      className="w-full max-w-full min-w-0 block box-border bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 rounded-lg pl-8 pr-2.5 py-1.5 text-base sm:text-xs text-white [color-scheme:dark] cursor-pointer transition shadow-sm appearance-none"
                     />
                     <Calendar className="w-3.5 h-3.5 text-emerald-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
