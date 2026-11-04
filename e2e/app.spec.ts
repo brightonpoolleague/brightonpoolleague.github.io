@@ -601,6 +601,12 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       await expect(page.getByText(/Fixtures Impact Preview/i)).toBeVisible();
       await expect(page.getByRole('button', { name: /Open Calendar/i })).toBeVisible();
 
+      // Fold on or before the halfway date so Rule 7a expunges results
+      const halfwayDateBtn = page.getByRole('button', { name: /Halfway Date/i });
+      if (await halfwayDateBtn.isVisible()) {
+        await halfwayDateBtn.click();
+      }
+
       const confirmFoldBtn = page.getByRole('button', { name: /Confirm Fold & Expunge/i });
       await confirmFoldBtn.click();
 
@@ -622,7 +628,8 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       await page.getByRole('button', { name: /Live & Fixtures/i }).click();
       const fixtureSearch = page.getByPlaceholder(/Search by team, venue, table, division or date/i);
       await fixtureSearch.fill('King & Queen A');
-      await expect(page.getByText(/Cancelled • (Team )?Folded|Expunged \(Rule 7[ab]\)/i).first()).toBeVisible();
+      await expect(page.getByText(/Result Expunged \(Rule 7[ab]\)/i).first()).toBeVisible();
+      await expect(page.getByText(/Cancelled • (Team )?Folded/i)).toBeHidden();
 
       // 7. Return to Admin Portal and Restore the team (Rule 7c review)
       await page.getByRole('button', { name: 'League Admin' }).click();
