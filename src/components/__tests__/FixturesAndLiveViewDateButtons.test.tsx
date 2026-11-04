@@ -148,4 +148,78 @@ describe('FixturesAndLiveView Date-based Scorecard Button Visibility', () => {
     const startButtons = screen.getAllByRole('button', { name: /Start Match/i });
     expect(startButtons.length).toBeGreaterThanOrEqual(1);
   });
+  it('does not display cancelled / unplayed fixtures for folded teams, but displays played expunged fixtures', () => {
+    const foldedTeamB: Team = {
+      ...teamB,
+      isFolded: true,
+      foldedDate: '2026-10-15',
+    };
+
+    // 1. Unplayed fixture involving folded team B
+    const unplayedFoldedFixture: Fixture = {
+      ...futureFixture,
+      id: 'fix-unplayed-folded',
+      matchDate: '2026-11-25',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-b',
+      status: 'scheduled',
+      frames: createEmptyFrames(),
+    };
+
+    // 2. Played fixture involving folded team B with results
+    const playedFoldedFixture: Fixture = {
+      ...pastFixture,
+      id: 'fix-played-folded',
+      matchDate: '2026-10-01',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-b',
+      status: 'approved',
+      frames: createEmptyFrames().map((f, idx) => (idx === 0 ? { ...f, winner: 'home' } : f)),
+    };
+
+    // 3. Normal active fixture
+    const activeFixture: Fixture = {
+      ...todayFixture,
+      id: 'fix-active-today',
+      homeTeamId: 'team-a',
+      awayTeamId: 'team-c',
+    };
+
+    const teamC: Team = {
+      id: 'team-c',
+      seasonId: 'winter-2026-27',
+      division: 'Premier League',
+      name: 'Gamma Gulls',
+      venue: 'Gull Point',
+      address: '30 Pier Road',
+      captainName: 'Charlie',
+      captainPin: '333333',
+    };
+
+    mockUseLeague.mockReturnValue({
+      seasonName: 'Winter 2026/27',
+      divisions: ['Premier League'],
+      teams: [teamA, foldedTeamB, teamC],
+      fixtures: [unplayedFoldedFixture, playedFoldedFixture, activeFixture],
+      session: { role: 'viewer' },
+      isCaptain: false,
+      canManageLeague: false,
+      approveFixture: vi.fn(),
+    });
+
+    const onSelectFixture = vi.fn();
+    render(<FixturesAndLiveView onSelectFixture={onSelectFixture} />);
+
+    // Active fixture is visible
+    expect(screen.getByText('Gamma Gulls')).toBeInTheDocument();
+
+    // Played fixture with expunged result is visible
+    expect(screen.getByText(/Result Expunged/i)).toBeInTheDocument();
+
+    // Unplayed cancelled fixture date button does not appear in unique dates
+    expect(screen.queryByText(/25 Nov/i)).not.toBeInTheDocument();
+
+    // The unplayed fixture card with "Cancelled • Folded" is NOT rendered
+    expect(screen.queryByText(/Cancelled • Folded/i)).not.toBeInTheDocument();
+  });
 });
