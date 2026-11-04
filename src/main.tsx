@@ -9,41 +9,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>
 );
 
-// Register PWA service worker in production
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./sw.js')
-      .then((registration) => {
-        // Proactively check for an updated worker immediately
-        registration.update().catch(() => {});
-
-        registration.onupdatefound = () => {
-          const installingWorker = registration.installing;
-          if (installingWorker) {
-            installingWorker.onstatechange = () => {
-              if (
-                installingWorker.state === 'installed' &&
-                navigator.serviceWorker.controller
-              ) {
-                // If a new worker has been installed, reload to activate it immediately
-                window.location.reload();
-              }
-            };
-          }
-        };
-      })
-      .catch((err) => {
-        console.warn('PWA ServiceWorker registration failed:', err);
-      });
-
-    // When the controlling service worker changes, reload the page
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
+// Automatically clean up legacy service workers and caches
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister();
+    }
+  });
+  if ('caches' in window) {
+    caches.keys().then((keys) => {
+      for (const key of keys) {
+        caches.delete(key);
       }
     });
-  });
+  }
 }
