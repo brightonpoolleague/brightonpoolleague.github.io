@@ -1016,6 +1016,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     // 1. Open Export Modal on League Table view and verify sponsor branding
     await page.getByRole('button', { name: 'League Table' }).click();
     await expect(page.getByText('KS Print').first()).toBeVisible();
+    await expect(page.locator('a[href="https://www.ks-print.co.uk/"]').first()).toBeVisible();
     await page.getByRole('button', { name: 'Export' }).click();
     await expect(
       page.getByRole('button', { name: /Download PNG/i })

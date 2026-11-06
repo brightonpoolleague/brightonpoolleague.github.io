@@ -359,23 +359,45 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                     <span>As of {generatedDateStr}</span>
                   </div>
 
-                  {sponsor && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 shadow-sm mt-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Sponsored by
-                      </span>
-                      <div className="w-4 h-4 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
-                        <img
-                          src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
-                          alt={sponsor.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
+                  {sponsor &&
+                    (sponsor.url ? (
+                      <a
+                        href={sponsor.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 shadow-sm mt-1 transition cursor-pointer"
+                      >
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Sponsored by
+                        </span>
+                        <div className="w-4 h-4 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
+                            alt={sponsor.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <span className="font-black text-white text-[11px]">
+                          {sponsor.name}
+                        </span>
+                      </a>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 shadow-sm mt-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Sponsored by
+                        </span>
+                        <div className="w-4 h-4 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
+                            alt={sponsor.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <span className="font-black text-white text-[11px]">
+                          {sponsor.name}
+                        </span>
                       </div>
-                      <span className="font-black text-white text-[11px]">
-                        {sponsor.name}
-                      </span>
-                    </div>
-                  )}
+                    ))}
                 </div>
 
                 {/* Graphic Card Table */}
@@ -479,23 +501,45 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                     </span>
                   </div>
 
-                  {sponsor && (
-                    <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        Proudly sponsored by
-                      </span>
-                      <div className="w-5 h-5 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
-                        <img
-                          src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
-                          alt={sponsor.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
+                  {sponsor &&
+                    (sponsor.url ? (
+                      <a
+                        href={sponsor.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                      >
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Proudly sponsored by
+                        </span>
+                        <div className="w-5 h-5 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
+                            alt={sponsor.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <span className="font-black text-white text-xs">
+                          {sponsor.name}
+                        </span>
+                      </a>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Proudly sponsored by
+                        </span>
+                        <div className="w-5 h-5 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
+                            alt={sponsor.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <span className="font-black text-white text-xs">
+                          {sponsor.name}
+                        </span>
                       </div>
-                      <span className="font-black text-white text-xs">
-                        {sponsor.name}
-                      </span>
-                    </div>
-                  )}
+                    ))}
                 </div>
               </div>
             </div>

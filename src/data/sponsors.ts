@@ -14,6 +14,7 @@ export const LEAGUE_SPONSORS: Sponsor[] = [
     logo: 'sponsors/ks-print.png',
     role: 'Official League Sponsor',
     tagline: 'Proud sponsor of the Brighton & Hove Pool League',
+    url: 'https://www.ks-print.co.uk/',
   },
 ];
 

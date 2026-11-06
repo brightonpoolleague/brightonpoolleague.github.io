@@ -36,7 +36,7 @@ describe('Sponsor Components', () => {
   });
 
   describe('SponsorBanner', () => {
-    it('renders official sponsor banner with role, name, tagline and logo', () => {
+    it('renders official sponsor banner with role, name, tagline and logo and links to sponsor website', () => {
       render(<SponsorBanner sponsor={customSponsor} />);
 
       expect(screen.getByText('Headline Sponsor')).toBeInTheDocument();
@@ -45,19 +45,33 @@ describe('Sponsor Components', () => {
       const img = screen.getByAltText('Custom Cue Sports');
       expect(img).toBeInTheDocument();
       expect(img.getAttribute('src')).toContain('sponsors/custom.png');
-      expect(screen.getByRole('link', { name: /Visit Sponsor/i })).toHaveAttribute(
-        'href',
-        'https://example.com'
-      );
+      const link = screen.getByRole('link', { name: /Visit Custom Cue Sports website/i });
+      expect(link).toHaveAttribute('href', 'https://example.com');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
-    it('renders default primary sponsor banner without broken links when url is omitted', () => {
+    it('renders default primary sponsor banner linking to KS Print website', () => {
       render(<SponsorBanner />);
 
       expect(screen.getByText(PRIMARY_SPONSOR.name)).toBeInTheDocument();
       expect(screen.getByText(PRIMARY_SPONSOR.role!)).toBeInTheDocument();
       expect(screen.getByText(PRIMARY_SPONSOR.tagline!)).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: /Visit Sponsor/i })).not.toBeInTheDocument();
+      const link = screen.getByRole('link', { name: new RegExp(`Visit ${PRIMARY_SPONSOR.name} website`, 'i') });
+      expect(link).toHaveAttribute('href', 'https://www.ks-print.co.uk/');
+    });
+
+    it('renders sponsor banner cleanly without link when url is omitted', () => {
+      const sponsorWithoutUrl: Sponsor = {
+        id: 'no-url',
+        name: 'Community Supporter',
+        logo: 'sponsors/no-url.png',
+      };
+      render(<SponsorBanner sponsor={sponsorWithoutUrl} />);
+
+      expect(screen.getByText('Community Supporter')).toBeInTheDocument();
+      expect(screen.queryByRole('link')).not.toBeInTheDocument();
+      expect(screen.queryByText('Visit Sponsor')).not.toBeInTheDocument();
     });
   });
 });
