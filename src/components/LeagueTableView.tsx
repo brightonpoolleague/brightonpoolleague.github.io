@@ -104,15 +104,11 @@ export const LeagueTableView: React.FC = () => {
   return (
     <div className="space-y-5">
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-                <Trophy className="w-3.5 h-3.5" />
-                {seasonName} Standings
-              </div>
-              <span className="text-slate-700 hidden sm:inline">•</span>
-              <SponsorBadge sponsor={PRIMARY_SPONSOR} />
+            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <Trophy className="w-3.5 h-3.5" />
+              {seasonName} Standings
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
               League Tables
@@ -120,6 +116,7 @@ export const LeagueTableView: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            <SponsorBadge sponsor={PRIMARY_SPONSOR} />
             <button
               type="button"
               onClick={() => setShowExportModal(true)}

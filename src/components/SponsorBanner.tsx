@@ -17,13 +17,13 @@ export const SponsorBadge: React.FC<SponsorComponentProps> = ({
 
   const content = (
     <div
-      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-950/80 border border-slate-800 text-xs shadow-sm group-hover:border-slate-700 group-hover:bg-slate-900/90 transition ${className}`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-850 border border-slate-800 text-xs shadow-sm group-hover:border-slate-700 transition ${className}`}
       title={`${sponsor.role || 'Sponsored by'} ${sponsor.name}`}
     >
       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
         Sponsored by
       </span>
-      <div className="w-5 h-5 rounded bg-white p-0.5 flex items-center justify-center shrink-0 shadow-xs">
+      <div className="w-5 h-5 rounded-md bg-white p-0.5 flex items-center justify-center shrink-0 shadow-xs">
         <img
           src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
           alt={sponsor.name}
