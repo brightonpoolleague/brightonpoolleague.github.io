@@ -224,6 +224,10 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     year: 'numeric',
   });
 
+  const sponsorDisplayUrl = sponsor?.url
+    ? sponsor.url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    : null;
+
   return (
     <div
       className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 py-6 sm:py-8 overscroll-none touch-manipulation select-none"
@@ -380,6 +384,14 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                         <span className="font-black text-white text-[11px]">
                           {sponsor.name}
                         </span>
+                        {sponsorDisplayUrl && (
+                          <>
+                            <span className="text-slate-600">•</span>
+                            <span className="font-bold text-emerald-400 text-[11px]">
+                              {sponsorDisplayUrl}
+                            </span>
+                          </>
+                        )}
                       </a>
                     ) : (
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 shadow-sm mt-1">
@@ -396,6 +408,14 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                         <span className="font-black text-white text-[11px]">
                           {sponsor.name}
                         </span>
+                        {sponsorDisplayUrl && (
+                          <>
+                            <span className="text-slate-600">•</span>
+                            <span className="font-bold text-emerald-400 text-[11px]">
+                              {sponsorDisplayUrl}
+                            </span>
+                          </>
+                        )}
                       </div>
                     ))}
                 </div>
@@ -522,6 +542,14 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                         <span className="font-black text-white text-xs">
                           {sponsor.name}
                         </span>
+                        {sponsorDisplayUrl && (
+                          <>
+                            <span className="text-slate-600">•</span>
+                            <span className="font-bold text-emerald-400 text-xs">
+                              {sponsorDisplayUrl}
+                            </span>
+                          </>
+                        )}
                       </a>
                     ) : (
                       <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg">
@@ -538,6 +566,14 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                         <span className="font-black text-white text-xs">
                           {sponsor.name}
                         </span>
+                        {sponsorDisplayUrl && (
+                          <>
+                            <span className="text-slate-600">•</span>
+                            <span className="font-bold text-emerald-400 text-xs">
+                              {sponsorDisplayUrl}
+                            </span>
+                          </>
+                        )}
                       </div>
                     ))}
                 </div>

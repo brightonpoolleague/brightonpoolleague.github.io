@@ -1022,6 +1022,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       page.getByRole('button', { name: /Download PNG/i })
     ).toBeVisible();
     await expect(page.getByText('Proudly sponsored by')).toBeVisible();
+    await expect(page.getByText('www.ks-print.co.uk').first()).toBeVisible();
     // Close ExportTableModal via top-right X button
     await page
       .locator('div.fixed.inset-0')

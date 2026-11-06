@@ -66,6 +66,7 @@ describe('ExportTableModal Component', () => {
     sponsorLogos.forEach((logo) => {
       expect(logo.getAttribute('src')).toContain(PRIMARY_SPONSOR.logo);
     });
+    expect(screen.getAllByText('www.ks-print.co.uk').length).toBeGreaterThanOrEqual(2);
   });
 
   it('omits sponsor branding when sponsor is null', () => {
