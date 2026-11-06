@@ -1013,12 +1013,14 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
   }) => {
     await page.goto('/');
 
-    // 1. Open Export Modal on League Table view
+    // 1. Open Export Modal on League Table view and verify sponsor branding
     await page.getByRole('button', { name: 'League Table' }).click();
+    await expect(page.getByText('KS Print').first()).toBeVisible();
     await page.getByRole('button', { name: 'Export' }).click();
     await expect(
       page.getByRole('button', { name: /Download PNG/i })
     ).toBeVisible();
+    await expect(page.getByText('Proudly sponsored by')).toBeVisible();
     // Close ExportTableModal via top-right X button
     await page
       .locator('div.fixed.inset-0')
@@ -1028,6 +1030,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
     // 2. Navigate to Player Stats and switch between Player Averages and Dish Leaderboard
     await page.getByRole('button', { name: 'Player Stats' }).click();
+    await expect(page.getByText('KS Print').first()).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'All Divisions' })
     ).toBeHidden();

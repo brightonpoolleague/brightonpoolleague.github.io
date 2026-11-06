@@ -8,6 +8,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { toPng, toBlob } from 'html-to-image';
+import { Sponsor, PRIMARY_SPONSOR } from '../data/sponsors';
 
 export interface ExportTableColumn {
   header: string;
@@ -34,6 +35,7 @@ interface ExportTableModalProps {
   columns: ExportTableColumn[];
   rows: ExportTableRow[];
   fileBaseName: string;
+  sponsor?: Sponsor | null;
 }
 
 export const ExportTableModal: React.FC<ExportTableModalProps> = ({
@@ -47,6 +49,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
   columns,
   rows,
   fileBaseName,
+  sponsor = PRIMARY_SPONSOR,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -355,6 +358,24 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                     <span className="text-slate-600">•</span>
                     <span>As of {generatedDateStr}</span>
                   </div>
+
+                  {sponsor && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 shadow-sm mt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Sponsored by
+                      </span>
+                      <div className="w-4 h-4 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+                        <img
+                          src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
+                          alt={sponsor.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                      <span className="font-black text-white text-[11px]">
+                        {sponsor.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Graphic Card Table */}
@@ -446,15 +467,35 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                   </table>
                 </div>
 
-                {/* Graphic Card Footer - Centered */}
-                <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 pt-3 border-t border-slate-800">
-                  <span className="font-semibold text-slate-400">
-                    Brighton &amp; Hove Pool League
-                  </span>
-                  <span className="text-slate-600">•</span>
-                  <span className="font-semibold text-emerald-400">
-                    brightonpoolleague.com
-                  </span>
+                {/* Graphic Card Footer */}
+                <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 pt-3 border-t border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-400">
+                      Brighton &amp; Hove Pool League
+                    </span>
+                    <span className="text-slate-600">•</span>
+                    <span className="font-semibold text-emerald-400">
+                      brightonpoolleague.com
+                    </span>
+                  </div>
+
+                  {sponsor && (
+                    <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Proudly sponsored by
+                      </span>
+                      <div className="w-5 h-5 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+                        <img
+                          src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
+                          alt={sponsor.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                      <span className="font-black text-white text-xs">
+                        {sponsor.name}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

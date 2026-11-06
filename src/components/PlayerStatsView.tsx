@@ -10,6 +10,8 @@ import { Division } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 import { computePlayerStats } from '../utils/leagueEngine';
 import { ExportTableModal } from './ExportTableModal';
+import { SponsorBadge, SponsorBanner } from './SponsorBanner';
+import { PRIMARY_SPONSOR } from '../data/sponsors';
 
 export const PlayerStatsView: React.FC = () => {
   const { seasonName, divisions, teams, players, fixtures, session } = useLeague();
@@ -118,9 +120,13 @@ export const PlayerStatsView: React.FC = () => {
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-              <BarChart3 className="w-3.5 h-3.5" />
-              {seasonName} Individual Leaderboards
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
+                <BarChart3 className="w-3.5 h-3.5" />
+                {seasonName} Individual Leaderboards
+              </div>
+              <span className="text-slate-700 hidden sm:inline">•</span>
+              <SponsorBadge sponsor={PRIMARY_SPONSOR} />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
               {activeBoard === 'averages'
@@ -398,6 +404,9 @@ export const PlayerStatsView: React.FC = () => {
           </div>
         )}
       </div>
+      {/* Sponsor Banner */}
+      <SponsorBanner sponsor={PRIMARY_SPONSOR} />
+
       {/* Export Table Image Modal */}
       <ExportTableModal
         isOpen={showExportModal}
@@ -455,6 +464,7 @@ export const PlayerStatsView: React.FC = () => {
                 ],
         }))}
         fileBaseName={`${seasonName}-${effectiveDivision}-${activeBoard}`}
+        sponsor={PRIMARY_SPONSOR}
       />
     </div>
   );

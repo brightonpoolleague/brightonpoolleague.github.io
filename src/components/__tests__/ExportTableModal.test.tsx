@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ExportTableModal } from '../ExportTableModal';
+import { PRIMARY_SPONSOR } from '../../data/sponsors';
 import * as htmlToImage from 'html-to-image';
 
 vi.mock('html-to-image', () => ({
@@ -53,6 +54,26 @@ describe('ExportTableModal Component', () => {
     expect(screen.getByText('The Eagle (Division 1)')).toBeInTheDocument();
     expect(screen.getByText('Jane Smith')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Download PNG/i })).toBeInTheDocument();
+  });
+
+  it('renders sponsor logo and name in graphic card header and footer by default', () => {
+    render(<ExportTableModal {...defaultProps} />);
+
+    expect(screen.getByText('Sponsored by')).toBeInTheDocument();
+    expect(screen.getByText('Proudly sponsored by')).toBeInTheDocument();
+    const sponsorLogos = screen.getAllByAltText(PRIMARY_SPONSOR.name);
+    expect(sponsorLogos.length).toBeGreaterThanOrEqual(2);
+    sponsorLogos.forEach((logo) => {
+      expect(logo.getAttribute('src')).toContain(PRIMARY_SPONSOR.logo);
+    });
+  });
+
+  it('omits sponsor branding when sponsor is null', () => {
+    render(<ExportTableModal {...defaultProps} sponsor={null} />);
+
+    expect(screen.queryByText('Sponsored by')).not.toBeInTheDocument();
+    expect(screen.queryByText('Proudly sponsored by')).not.toBeInTheDocument();
+    expect(screen.queryByAltText(PRIMARY_SPONSOR.name)).not.toBeInTheDocument();
   });
 
   it('does not render anything when isOpen is false', () => {
