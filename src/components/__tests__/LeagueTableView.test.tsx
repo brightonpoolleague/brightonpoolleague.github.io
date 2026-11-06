@@ -3,13 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { LeagueTableView } from '../LeagueTableView';
 import { Fixture, Team } from '../../types/league';
 import { createEmptyFrames, createEmptyLineups } from '../../utils/leagueEngine';
+import { PRIMARY_SPONSOR } from '../../data/sponsors';
 
 const mockUseLeague = vi.fn();
 vi.mock('../../context/LeagueContext', () => ({
   useLeague: () => mockUseLeague(),
 }));
 
-describe('LeagueTableView Responsive Columns', () => {
+describe('LeagueTableView', () => {
   const teamA: Team = {
     id: 'team-a',
     seasonId: 'winter-2026-27',
@@ -127,5 +128,23 @@ describe('LeagueTableView Responsive Columns', () => {
     expect(bearsFfCell.className).not.toContain('sm:table-cell');
     expect(bearsFaCell.className).not.toContain('hidden');
     expect(bearsFaCell.className).not.toContain('sm:table-cell');
+  });
+
+  it('renders sponsor badge in the header and sponsor banner at the bottom', () => {
+    mockUseLeague.mockReturnValue({
+      seasonName: 'Winter 2026/27',
+      divisions: ['Premier League'],
+      teams: [teamA, teamB],
+      fixtures: [fixture1],
+      session: { role: 'spectator', authenticated: false },
+    });
+
+    render(<LeagueTableView />);
+
+    expect(screen.getByText('Sponsored by')).toBeInTheDocument();
+    expect(screen.getByText(PRIMARY_SPONSOR.role!)).toBeInTheDocument();
+    expect(screen.getByText(PRIMARY_SPONSOR.tagline!)).toBeInTheDocument();
+    const sponsorLogos = screen.getAllByAltText(PRIMARY_SPONSOR.name);
+    expect(sponsorLogos.length).toBeGreaterThanOrEqual(2);
   });
 });
