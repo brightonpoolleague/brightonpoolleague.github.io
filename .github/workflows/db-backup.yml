@@ -1,9 +1,9 @@
-name: Weekly Supabase Database Backup
+name: Daily Supabase Database Backup
 
 on:
   schedule:
-    # Runs every Tuesday at 03:00 UTC (100% automated weekly backup after Monday match night)
-    - cron: '0 3 * * 2'
+    # Runs daily at 03:00 UTC (100% automated daily database snapshot)
+    - cron: '0 3 * * *'
   workflow_dispatch:
     # Allows manual trigger anytime from the GitHub Actions tab
 
@@ -26,7 +26,7 @@ jobs:
 
       - name: Get current date stamp
         id: date
-        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date +'%Y-%m-%d_%H%M')" >> $GITHUB_OUTPUT
 
       - name: Export Supabase database snapshot
         env:
@@ -41,4 +41,5 @@ jobs:
           name: supabase-backup-${{ steps.date.outputs.date }}
           path: backups/
           retention-days: 90
+          overwrite: true
           if-no-files-found: error
