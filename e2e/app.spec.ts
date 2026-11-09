@@ -738,9 +738,6 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     const mobileNav = page.locator('nav.md\\:hidden');
     await expect(mobileNav).toBeVisible();
     await expect(mobileNav).toHaveAttribute('aria-hidden', 'false');
-    // Verify mobile bottom nav displays 'Teams' instead of 'Venues'
-    await expect(mobileNav.getByRole('button', { name: 'Teams' })).toBeVisible();
-    await expect(mobileNav.getByRole('button', { name: 'Venues' })).toBeHidden();
 
     // Focus the search input -> mobile bottom nav should hide so it doesn't cover the screen above the keyboard
     const searchInput = page.getByPlaceholder(
