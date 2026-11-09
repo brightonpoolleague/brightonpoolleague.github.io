@@ -464,4 +464,114 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     expect(result.current.canEditFixture(todayFixture)).toBe(true);
     expect(result.current.canEditFixture(pastFixture)).toBe(true);
   });
+
+  it('keeps admin logged in after loginAsAdminWithPin when window focus catchUp or admin actions run', async () => {
+    const realAdminPin = '987654';
+
+    mockRpc.mockImplementation((rpcName: string, args?: Record<string, unknown>) => {
+      if (rpcName === 'verify_admin_pin') {
+        return Promise.resolve({
+          data: args?.p_pin === realAdminPin,
+          error: null,
+        });
+      }
+      if (rpcName === 'get_all_team_pins') {
+        return Promise.resolve({
+          data: args?.p_admin_pin === realAdminPin ? [{ team_id: 'team-1', captain_pin: '111111' }] : [],
+          error: null,
+        });
+      }
+      if (rpcName === 'admin_upsert_team' || rpcName === 'admin_save_fixture') {
+        return Promise.resolve({
+          data: args?.p_admin_pin === realAdminPin,
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: true, error: null });
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    // Initially spectator
+    expect(result.current.session.role).toBe('viewer');
+
+    // Log in as Admin with real PIN (different from DEFAULT_ADMIN_PIN '000000')
+    let loginRes: { success: boolean; error?: string } = { success: false };
+    await act(async () => {
+      loginRes = await result.current.loginAsAdminWithPin(realAdminPin);
+    });
+    expect(loginRes.success).toBe(true);
+    expect(result.current.session.role).toBe('admin');
+    expect(result.current.adminPin).toBe(realAdminPin);
+
+    // Simulate >3s passing and window focus firing catchUp() inside the mount effect
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 5000);
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+    });
+
+    // Admin must NOT be logged out by a stale closure adminPin ('000000')
+    expect(result.current.session.role).toBe('admin');
+    expect(mockRpc).toHaveBeenCalledWith('verify_admin_pin', {
+      p_pin: realAdminPin,
+    });
+    expect(mockRpc).not.toHaveBeenCalledWith('verify_admin_pin', {
+      p_pin: '000000',
+    });
+
+    // Perform an admin action (updateTeam & saveFixture) and ensure it uses realAdminPin and stays logged in
+    await act(async () => {
+      await result.current.updateTeam({
+        id: 'team-1',
+        seasonId: 'winter-2026-27',
+        division: 'Premier League',
+        name: 'The Crown',
+        venue: 'Crown Inn',
+        address: '1 High St',
+        captainName: 'John',
+        captainPin: '111111',
+      });
+    });
+
+    expect(result.current.session.role).toBe('admin');
+    expect(mockRpc).toHaveBeenCalledWith(
+      'admin_upsert_team',
+      expect.objectContaining({ p_admin_pin: realAdminPin })
+    );
+
+    vi.restoreAllMocks();
+  });
+
+  it('automatically logs out admin to spectator if the admin PIN is invalidated on the server', async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.SESSION,
+      JSON.stringify({
+        role: 'admin',
+        name: 'League Admin',
+        pin: '111222',
+      })
+    );
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify('111222'));
+
+    mockRpc.mockImplementation((rpcName: string) => {
+      if (rpcName === 'verify_admin_pin') {
+        return Promise.resolve({ data: false, error: null });
+      }
+      return Promise.resolve({ data: [], error: null });
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.session.role).toBe('viewer');
+    });
+  });
 });
