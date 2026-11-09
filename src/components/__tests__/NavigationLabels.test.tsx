@@ -9,7 +9,7 @@ vi.mock('../../context/LeagueContext', () => ({
 }));
 
 describe('Navigation Labels', () => {
-  it('renders "Teams & Venues" in desktop navigation and "Teams" in mobile bottom navigation', () => {
+  it('renders all standard navigation items with full labels on desktop and concise labels on mobile', () => {
     mockUseLeague.mockReturnValue({
       seasonName: 'Winter 2026/27',
       fixtures: [],
@@ -27,15 +27,77 @@ describe('Navigation Labels', () => {
 
     const { container } = render(<App />);
 
-    // Desktop nav: contains "Teams & Venues"
+    // Desktop nav labels
     const desktopNav = container.querySelector('nav.hidden.md\\:flex');
     expect(desktopNav).toBeInTheDocument();
-    expect(desktopNav?.textContent).toContain('Teams & Venues');
+    const desktopLabels = Array.from(desktopNav!.querySelectorAll('button span')).map(
+      (el) => el.textContent?.trim()
+    );
+    expect(desktopLabels).toEqual([
+      'Live & Fixtures',
+      'League Table',
+      'Player Stats',
+      'Teams & Venues',
+      'Info',
+    ]);
 
-    // Mobile nav: contains "Teams" and does not contain "Venues" as a standalone label
+    // Mobile bottom nav short labels
     const mobileNav = container.querySelector('nav.md\\:hidden');
     expect(mobileNav).toBeInTheDocument();
-    expect(mobileNav?.textContent).toContain('Teams');
-    expect(mobileNav?.textContent).not.toContain('Venues');
+    const mobileLabels = Array.from(mobileNav!.querySelectorAll('button span')).map(
+      (el) => el.textContent?.trim()
+    );
+    expect(mobileLabels).toEqual([
+      'Live',
+      'Table',
+      'Stats',
+      'Teams',
+      'Info',
+    ]);
+  });
+
+  it('includes admin navigation item on both desktop and mobile when session is admin', () => {
+    mockUseLeague.mockReturnValue({
+      seasonName: 'Winter 2026/27',
+      fixtures: [],
+      teams: [],
+      players: [],
+      divisions: ['Premier League'],
+      session: { role: 'admin', name: 'League Admin' },
+      setRoleSession: vi.fn(),
+      isOnline: true,
+      isRealtimeConnected: true,
+      pendingMutationsCount: 0,
+      syncError: null,
+      refreshData: vi.fn(),
+    });
+
+    const { container } = render(<App />);
+
+    const desktopNav = container.querySelector('nav.hidden.md\\:flex');
+    const desktopLabels = Array.from(desktopNav!.querySelectorAll('button span')).map(
+      (el) => el.textContent?.trim()
+    );
+    expect(desktopLabels).toEqual([
+      'Live & Fixtures',
+      'League Table',
+      'Player Stats',
+      'Teams & Venues',
+      'Info',
+      'League Admin',
+    ]);
+
+    const mobileNav = container.querySelector('nav.md\\:hidden');
+    const mobileLabels = Array.from(mobileNav!.querySelectorAll('button span')).map(
+      (el) => el.textContent?.trim()
+    );
+    expect(mobileLabels).toEqual([
+      'Live',
+      'Table',
+      'Stats',
+      'Teams',
+      'Info',
+      'Admin',
+    ]);
   });
 });
