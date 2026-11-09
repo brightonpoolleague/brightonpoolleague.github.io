@@ -280,9 +280,31 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const [seasons, setSeasons] = useState<Season[]>(() =>
     loadFromStorage(STORAGE_KEYS.SEASONS, INITIAL_SEASONS)
   );
-  const [adminPin, setAdminPin] = useState<string>(() =>
-    loadFromStorage(STORAGE_KEYS.ADMIN_PIN, DEFAULT_ADMIN_PIN)
-  );
+  const [session, setSession] = useState<UserSession>(() => {
+    const raw = loadFromStorage<UserSession>(STORAGE_KEYS.SESSION, {
+      role: 'viewer',
+      name: 'General Spectator',
+    });
+    if (raw.role === 'captain' && raw.name && raw.name.endsWith(' Captain')) {
+      return { ...raw, name: raw.name.replace(/ Captain$/i, '') };
+    }
+    return raw;
+  });
+  const [adminPin, setAdminPin] = useState<string>(() => {
+    const stored = loadFromStorage(
+      STORAGE_KEYS.ADMIN_PIN,
+      isCloudConnected ? '' : DEFAULT_ADMIN_PIN
+    );
+    if (stored) return stored;
+    const rawSession = loadFromStorage<UserSession | null>(
+      STORAGE_KEYS.SESSION,
+      null
+    );
+    if (rawSession?.role === 'admin' && rawSession.pin) {
+      return rawSession.pin;
+    }
+    return isCloudConnected ? '' : DEFAULT_ADMIN_PIN;
+  });
   const [allTeams, setAllTeams] = useState<Team[]>(() =>
     loadFromStorage(
       STORAGE_KEYS.TEAMS,
@@ -321,16 +343,6 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       };
     });
   });
-  const [session, setSession] = useState<UserSession>(() => {
-    const raw = loadFromStorage<UserSession>(STORAGE_KEYS.SESSION, {
-      role: 'viewer',
-      name: 'General Spectator',
-    });
-    if (raw.role === 'captain' && raw.name && raw.name.endsWith(' Captain')) {
-      return { ...raw, name: raw.name.replace(/ Captain$/i, '') };
-    }
-    return raw;
-  });
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
@@ -349,6 +361,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   > | null>(null);
   const sessionRef = useRef(session);
   sessionRef.current = session;
+  const adminPinRef = useRef(adminPin);
+  adminPinRef.current = adminPin;
 
   useEffect(() => {
     sessionRef.current = session;
@@ -440,6 +454,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const getActiveAdminPin = useCallback((): string => {
+    return sessionRef.current.pin || adminPinRef.current || '';
+  }, []);
+
   const refreshFromCloud = useCallback(
     async (options?: { silent?: boolean }) => {
       const supabase = getSupabaseClient();
@@ -469,11 +487,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
-      // If logged in as Admin, fetch protected team PINs via server-side RPC (requires League Admin PIN)
+      // If logged in as Admin, verify that the Admin PIN is still valid and fetch protected team PINs
       const pinMap: Record<string, string> = {};
-      if (currentSession.role === 'admin' && adminPin) {
+      const activeAdminPin = getActiveAdminPin();
+      if (currentSession.role === 'admin' && activeAdminPin) {
+        const { data: isAdminValid, error: adminVError } = await supabase.rpc('verify_admin_pin', {
+          p_pin: activeAdminPin,
+        });
+        if (!adminVError && isAdminValid === false) {
+          setRoleSession('viewer');
+          return;
+        }
         const pinsRes = await supabase.rpc('get_all_team_pins', {
-          p_admin_pin: adminPin,
+          p_admin_pin: activeAdminPin,
         });
         if (!pinsRes.error && Array.isArray(pinsRes.data)) {
           pinsRes.data.forEach(
@@ -550,7 +576,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsSyncing(false);
       }
     }
-  }, [session.role, adminPin]);
+  }, [getActiveAdminPin]);
 
   // Lightweight catch-up: fetch only fixtures changed since the last sync (usually a handful of
   // rows) instead of re-downloading the whole season. Falls back to a full refresh if we have
@@ -674,17 +700,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
             },
             () => {}
           );
-      } else if (current.role === 'admin' && adminPin) {
-        supabase
-          .rpc('verify_admin_pin', { p_pin: adminPin })
-          .then(
-            ({ data: isValid, error: vError }) => {
-              if (!vError && isValid === false) {
-                setRoleSession('viewer');
-              }
-            },
-            () => {}
-          );
+      } else if (current.role === 'admin') {
+        const activeAdminPin = current.pin || adminPinRef.current;
+        if (activeAdminPin) {
+          supabase
+            .rpc('verify_admin_pin', { p_pin: activeAdminPin })
+            .then(
+              ({ data: isValid, error: vError }) => {
+                if (!vError && isValid === false) {
+                  setRoleSession('viewer');
+                }
+              },
+              () => {}
+            );
+        }
       }
     };
 
@@ -1042,13 +1071,21 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const next: UserSession = { role, teamId, name, pin };
       sessionRef.current = next;
       setSession(next);
+      if (role === 'admin' && pin) {
+        adminPinRef.current = pin;
+        setAdminPin(pin);
+      }
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(next));
+        if (role === 'admin' && pin) {
+          localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify(pin));
+        }
         if (role === 'viewer') {
           setPendingFixtureSync(null);
           setSyncError(null);
           if (isCloudConnected) {
             localStorage.removeItem(STORAGE_KEYS.ADMIN_PIN);
+            adminPinRef.current = '';
             setAdminPin('');
             setAllTeams((prev) => {
               const scrubbed = prev.map((t) => ({ ...t, captainPin: '' }));
@@ -1175,6 +1212,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           return { success: false, error: error.message };
         }
         if (data === true) {
+          adminPinRef.current = cleanPin;
           setAdminPin(cleanPin);
           localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify(cleanPin));
           setRoleSession('admin', undefined, undefined, cleanPin);
@@ -1203,17 +1241,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Offline / local fallback
+      const activeAdminPin = getActiveAdminPin();
       if (
-        adminPin.trim() === cleanPin ||
+        activeAdminPin.trim() === cleanPin ||
         cleanPin === DEFAULT_ADMIN_PIN ||
         cleanPin === '00000000'
       ) {
+        adminPinRef.current = cleanPin;
+        setAdminPin(cleanPin);
         setRoleSession('admin', undefined, undefined, cleanPin);
         return { success: true };
       }
       return { success: false, error: 'Incorrect League Admin PIN.' };
     },
-    [adminPin, setRoleSession]
+    [getActiveAdminPin, setRoleSession]
   );
 
   const updateTeamPin = useCallback(
@@ -1224,9 +1265,10 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const clean = newPin.trim();
       if (!clean) return { success: false, error: 'PIN cannot be empty.' };
 
+      const activeAdminPin = getActiveAdminPin();
       // Enforce unique PINs: cannot match admin PIN
       if (
-        (adminPin && clean === adminPin.trim()) ||
+        (activeAdminPin && clean === activeAdminPin.trim()) ||
         clean === DEFAULT_ADMIN_PIN ||
         clean === '00000000'
       ) {
@@ -1260,7 +1302,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const supabase = getSupabaseClient();
       if (supabase) {
         const { data, error } = await supabase.rpc('set_team_pin', {
-          p_admin_pin: adminPin,
+          p_admin_pin: activeAdminPin,
           p_team_id: teamId,
           p_new_pin: clean,
         });
@@ -1268,6 +1310,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           return { success: false, error: error.message };
         }
         if (data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
           return {
             success: false,
             error: 'Unauthorized: Invalid League Admin PIN.',
@@ -1277,7 +1321,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { success: true };
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const updateTeam = useCallback(
@@ -1290,8 +1334,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_upsert_team', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_upsert_team', {
+          p_admin_pin: getActiveAdminPin(),
           p_id: updatedTeam.id,
           p_season_id: updatedTeam.seasonId,
           p_division: updatedTeam.division,
@@ -1302,9 +1346,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_captain_pin: null,
           p_table_number: updatedTeam.tableNumber ?? null,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const foldTeam = useCallback(
@@ -1324,15 +1372,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_fold_team', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_fold_team', {
+          p_admin_pin: getActiveAdminPin(),
           p_team_id: teamId,
           p_is_folded: true,
           p_folded_date: resolvedDate,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const unfoldTeam = useCallback(
@@ -1351,15 +1403,19 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_fold_team', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_fold_team', {
+          p_admin_pin: getActiveAdminPin(),
           p_team_id: teamId,
           p_is_folded: false,
           p_folded_date: null,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const addPlayer = useCallback(
@@ -1376,17 +1432,21 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_upsert_player', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_upsert_player', {
+          p_admin_pin: getActiveAdminPin(),
           p_id: newPlayer.id,
           p_team_id: newPlayer.teamId,
           p_name: newPlayer.name,
           p_active: true,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
       return newPlayer;
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const updatePlayer = useCallback(
@@ -1401,16 +1461,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_upsert_player', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_upsert_player', {
+          p_admin_pin: getActiveAdminPin(),
           p_id: updatedPlayer.id,
           p_team_id: updatedPlayer.teamId,
           p_name: cleanName,
           p_active: updatedPlayer.active,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const transferPlayer = useCallback(
@@ -1440,16 +1504,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase && target) {
-        await supabase.rpc('admin_upsert_player', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_upsert_player', {
+          p_admin_pin: getActiveAdminPin(),
           p_id: playerId,
           p_team_id: toTeamId,
           p_name: target.name,
           p_active: target.active,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const addFixture = useCallback(
@@ -1501,8 +1569,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_upsert_fixture', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_upsert_fixture', {
+          p_admin_pin: getActiveAdminPin(),
           p_id: newFixture.id,
           p_season_id: newFixture.seasonId,
           p_division: newFixture.division,
@@ -1519,10 +1587,14 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_play_all_frames: Boolean(newFixture.playAllFrames),
           p_knockout_format: newFixture.knockoutFormat ?? 'first_to_8',
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
       return newFixture;
     },
-    [adminPin, seasonId, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, seasonId, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const deleteFixture = useCallback(
@@ -1533,13 +1605,17 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_delete_fixture', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_delete_fixture', {
+          p_admin_pin: getActiveAdminPin(),
           p_fixture_id: fixtureId,
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const updateFixtureDetails = useCallback(
@@ -1556,8 +1632,8 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const supabase = getSupabaseClient();
       if (supabase) {
-        await supabase.rpc('admin_upsert_fixture', {
-          p_admin_pin: adminPin,
+        const res = await supabase.rpc('admin_upsert_fixture', {
+          p_admin_pin: getActiveAdminPin(),
           p_id: stamped.id,
           p_season_id: stamped.seasonId,
           p_division: stamped.division,
@@ -1574,9 +1650,13 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           p_play_all_frames: Boolean(stamped.playAllFrames),
           p_knockout_format: stamped.knockoutFormat ?? 'first_to_8',
         });
+        if (res?.data === false) {
+          setRoleSession('viewer');
+          refreshFromCloudRef.current({ silent: true }).catch(() => {});
+        }
       }
     },
-    [adminPin, allTeams, allPlayers, allFixtures, persistLocal]
+    [getActiveAdminPin, setRoleSession, allTeams, allPlayers, allFixtures, persistLocal]
   );
 
   const pushFixtureToSupabase = useCallback(
@@ -1587,10 +1667,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       const supabase = getSupabaseClient();
       if (!supabase) return true;
 
+      const currentSession = sessionRef.current;
       try {
-        if (session.role === 'admin') {
+        if (currentSession.role === 'admin') {
           const { data: adminOk, error } = await supabase.rpc('admin_save_fixture', {
-            p_admin_pin: adminPin,
+            p_admin_pin: getActiveAdminPin(),
             p_fixture_id: updated.id,
             p_status: updated.status,
             p_lag_winner: updated.lagWinner,
@@ -1610,15 +1691,15 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
           }
           if (error) throw error;
           return true;
-        } else if (session.role === 'captain' && session.teamId) {
+        } else if (currentSession.role === 'captain' && currentSession.teamId) {
           let pushStatus = updated.status;
           if (pushStatus === 'submitted' && (!updated.homeCaptainSigned || !updated.awayCaptainSigned)) {
             pushStatus = 'live';
           }
           const baseArgs = {
             p_fixture_id: updated.id,
-            p_team_id: session.teamId,
-            p_pin: session.pin ?? '',
+            p_team_id: currentSession.teamId,
+            p_pin: currentSession.pin ?? '',
             p_status: pushStatus,
             p_lag_winner: updated.lagWinner,
             p_home_set1_locked: updated.homeSet1Locked,
@@ -1666,7 +1747,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         return false;
       }
     },
-    [session, adminPin]
+    [getActiveAdminPin, setRoleSession]
   );
 
   const retryPendingSync = useCallback(async (): Promise<void> => {
@@ -1735,7 +1816,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       editedSide?: 'home' | 'away' | 'frames'
     ): Promise<void> => {
       if (
-        session.role === 'captain' &&
+        sessionRef.current.role === 'captain' &&
         rawUpdated.matchDate &&
         getMatchTimeframe(rawUpdated.matchDate) === 'upcoming'
       ) {
