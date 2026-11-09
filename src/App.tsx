@@ -5,10 +5,10 @@ import {
   Calendar,
   KeyRound,
   LogOut,
-  MapPin,
   Radio,
   Shield,
   Trophy,
+  Users,
 } from 'lucide-react';
 import { LeagueProvider, useLeague } from './context/LeagueContext';
 import { FixturesAndLiveView } from './components/FixturesAndLiveView';
@@ -165,8 +165,8 @@ const MainShell: React.FC = () => {
     {
       id: 'teams',
       label: 'Teams & Venues',
-      shortLabel: 'Venues',
-      icon: MapPin,
+      shortLabel: 'Teams',
+      icon: Users,
     },
     {
       id: 'rules',
