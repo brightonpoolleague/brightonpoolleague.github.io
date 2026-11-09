@@ -17,6 +17,7 @@ import {
   Layers,
   LayoutGrid,
   List,
+  Mail,
   MapPin,
   Medal,
   MessageSquare,
@@ -51,7 +52,7 @@ type HonourSubTab =
 export const DocsAndRulesView: React.FC = () => {
   const { seasonName } = useLeague();
   const [section, setSection] = useState<
-    'competitions' | 'honours' | 'format' | 'rules' | 'cofc'
+    'competitions' | 'honours' | 'format' | 'rules' | 'cofc' | 'contact'
   >('competitions');
   const [honourTab, setHonourTab] = useState<HonourSubTab>('league');
   const [compFilter, setCompFilter] = useState<
@@ -291,6 +292,7 @@ export const DocsAndRulesView: React.FC = () => {
               { id: 'format', label: 'League Format', icon: FileText },
               { id: 'rules', label: 'League Rules', icon: Scale },
               { id: 'cofc', label: 'Champion of Champions', icon: Crown },
+              { id: 'contact', label: 'Contact', icon: Mail },
             ] as const
           ).map((item) => {
             const Icon = item.icon;
@@ -317,6 +319,125 @@ export const DocsAndRulesView: React.FC = () => {
         {/* ================================================================ */}
         {/* 1. LEAGUE FORMAT (content/docs/league-format.md)                 */}
         {/* ================================================================ */}
+        {section === 'contact' && (
+          <div className="space-y-6">
+            {/* Hero Header */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="relative z-10 space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Get in Touch</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Contact &amp; League Committee
+                </h2>
+                <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                  Have a question about fixtures, rules, registrations or competitions? Reach out to the Brighton Pool League via email, join our official Facebook group or contact a member of the committee below.
+                </p>
+              </div>
+            </div>
+
+            {/* Contact Channels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <a
+                href="mailto:brightonpoolleague@gmail.com"
+                className="group bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 rounded-2xl p-5 sm:p-6 flex items-start justify-between gap-4 transition-all"
+              >
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                      League Email
+                    </div>
+                    <div className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-300 transition-colors break-all">
+                      brightonpoolleague@gmail.com
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      For general enquiries, team registrations and league correspondence.
+                    </p>
+                  </div>
+                </div>
+                <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 shrink-0 mt-1 transition-colors" />
+              </a>
+
+              <a
+                href="https://www.facebook.com/groups/191430377584870/"
+                target="_blank"
+                rel="noreferrer"
+                className="group bg-slate-950/70 border border-slate-800/80 hover:border-sky-500/40 rounded-2xl p-5 sm:p-6 flex items-start justify-between gap-4 transition-all"
+              >
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 shrink-0">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-sky-400">
+                      Facebook Community
+                    </div>
+                    <div className="text-sm sm:text-base font-bold text-white group-hover:text-sky-300 transition-colors">
+                      Brighton Pool League Facebook Group
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      Announcements, knockout draws, match updates and community discussion.
+                    </p>
+                  </div>
+                </div>
+                <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-sky-400 shrink-0 mt-1 transition-colors" />
+              </a>
+            </div>
+
+            {/* Committee Members */}
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    League Committee
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    The committee responsible for running and supporting the Brighton Pool League
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { name: 'Phil Rogers', role: 'Chairman' },
+                  { name: 'Cliona Saunders-Cooney', role: 'Vice Chair' },
+                  { name: 'Amanda Minty', role: 'Ladies Representative' },
+                  { name: 'Jacob King', role: 'Student Representative' },
+                  { name: 'Pete Hazell', role: 'IT Support' },
+                ].map((member) => (
+                  <div
+                    key={member.name}
+                    className="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4 flex items-center gap-3.5 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black text-xs shrink-0">
+                      {member.name
+                        .split(' ')
+                        .map((part) => part[0])
+                        .join('')}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-bold text-white truncate">
+                        {member.name}
+                      </div>
+                      <div className="text-xs font-medium text-emerald-400">
+                        {member.role}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {section === 'format' && (
           <div className="space-y-6">
             {/* Hero Header */}
@@ -1558,7 +1679,7 @@ export const DocsAndRulesView: React.FC = () => {
                 <div className="flex items-start gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
                   <Award className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
                   <div>
-                    <div className="text-xs font-bold text-white">Men’s &amp; Ladies’</div>
+                    <div className="text-xs font-bold text-white">Open &amp; Ladies’</div>
                     <div className="text-xs text-slate-400">Spots cover Open and Ladies' singles categories.</div>
                   </div>
                 </div>
@@ -1607,7 +1728,7 @@ export const DocsAndRulesView: React.FC = () => {
                     •
                   </span>
                   <div className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    These singles spots are for entry into either the <strong>Men’s Singles</strong> or <strong>Ladies’ Singles</strong> competitions.
+                    These singles spots are for entry into either the <strong>Open Singles</strong> or <strong>Ladies’ Singles</strong> competitions.
                   </div>
                 </div>
 
