@@ -45,6 +45,8 @@ import {
   isKnockoutFixture,
   isWalkoverFixture,
   validatePlayerTransfer,
+  findDuplicatePlayer,
+  normalizePlayerName,
 } from '../utils/leagueEngine';
 import { AwardWalkoverModal } from './AwardWalkoverModal';
 import { FoldTeamModal } from './FoldTeamModal';
@@ -254,17 +256,110 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
     if (!raw) return;
     const names = raw
       .split(',')
-      .map((n) => n.trim())
+      .map((n) => n.trim().replace(/\s+/g, ' '))
       .filter(Boolean);
+
+    const seenInBatch = new Set<string>();
+    const validNames: string[] = [];
+    const rejectedNames: string[] = [];
+    const duplicateDetails: {
+      inputName: string;
+      existingPlayer: Player;
+      existingTeamName: string;
+      sameTeam: boolean;
+    }[] = [];
+
     for (const name of names) {
+      const normalized = normalizePlayerName(name);
+      if (seenInBatch.has(normalized)) {
+        continue;
+      }
+      seenInBatch.add(normalized);
+
+      const existing = findDuplicatePlayer(name, players);
+      if (existing) {
+        const existingTeam = teams.find((t) => t.id === existing.teamId);
+        duplicateDetails.push({
+          inputName: name,
+          existingPlayer: existing,
+          existingTeamName: existingTeam?.name || 'another team',
+          sameTeam: existing.teamId === teamId,
+        });
+        rejectedNames.push(name);
+      } else {
+        validNames.push(name);
+      }
+    }
+
+    for (const name of validNames) {
       await addPlayer(teamId, name);
     }
-    setNewPlayerByTeam((prev) => ({ ...prev, [teamId]: '' }));
+
+    setNewPlayerByTeam((prev) => ({
+      ...prev,
+      [teamId]: rejectedNames.join(', '),
+    }));
+
+    if (duplicateDetails.length > 0) {
+      setConfirmDialog({
+        title: 'Player Already Signed On',
+        message: (
+          <div className="space-y-3 text-xs text-slate-300">
+            <p className="text-sm font-semibold text-rose-400">
+              {duplicateDetails.length === 1
+                ? `“${duplicateDetails[0].existingPlayer.name}” is already signed on to ${duplicateDetails[0].existingTeamName}.`
+                : 'The following players are already signed on in the league:'}
+            </p>
+            {duplicateDetails.length > 1 && (
+              <ul className="list-disc pl-4 space-y-1 text-slate-200 font-medium">
+                {duplicateDetails.map((d, i) => (
+                  <li key={i}>
+                    <strong>{d.existingPlayer.name}</strong> — signed on to{' '}
+                    <span className="text-amber-300">{d.existingTeamName}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-slate-400 leading-relaxed">
+              {duplicateDetails.some((d) => !d.sameTeam)
+                ? 'A player cannot be registered to more than one team. If they are moving teams, please use the Transfer dropdown next to their name on their current team card.'
+                : 'This player is already registered in this team’s squad.'}
+            </p>
+          </div>
+        ),
+        confirmLabel: 'Understood',
+        variant: 'danger',
+        onConfirm: () => {},
+      });
+      return;
+    }
   };
 
   const handleSavePlayerName = async (player: Player) => {
-    const trimmed = editingPlayerName.trim();
+    const trimmed = editingPlayerName.trim().replace(/\s+/g, ' ');
     if (!trimmed) return;
+    const existing = findDuplicatePlayer(trimmed, players, player.id);
+    if (existing) {
+      const existingTeam = teams.find((t) => t.id === existing.teamId);
+      const existingTeamName = existingTeam?.name || 'another team';
+      setConfirmDialog({
+        title: 'Player Already Signed On',
+        message: (
+          <div className="space-y-3 text-xs text-slate-300">
+            <p className="text-sm font-semibold text-rose-400">
+              “{existing.name}” is already signed on to {existingTeamName}.
+            </p>
+            <p className="text-slate-400 leading-relaxed">
+              A player cannot be registered more than once in the league.
+            </p>
+          </div>
+        ),
+        confirmLabel: 'Understood',
+        variant: 'danger',
+        onConfirm: () => {},
+      });
+      return;
+    }
     await updatePlayer({ ...player, name: trimmed });
     setEditingPlayerId(null);
     setEditingPlayerName('');
@@ -1558,6 +1653,41 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                           Add Player
                         </button>
                       </div>
+                      {(() => {
+                        const rawInput = (newPlayerByTeam[team.id] || '').trim();
+                        if (!rawInput) return null;
+                        const inputNames = rawInput
+                          .split(',')
+                          .map((n) => n.trim().replace(/\s+/g, ' '))
+                          .filter(Boolean);
+                        const conflicts = inputNames
+                          .map((n) => {
+                            const existing = findDuplicatePlayer(n, players);
+                            if (!existing) return null;
+                            const existingTeam = teams.find((t) => t.id === existing.teamId);
+                            return {
+                              name: existing.name,
+                              teamName: existingTeam?.name || 'another team',
+                              sameTeam: existing.teamId === team.id,
+                            };
+                          })
+                          .filter((item): item is { name: string; teamName: string; sameTeam: boolean } => Boolean(item));
+                        if (conflicts.length === 0) return null;
+                        return (
+                          <div className="flex items-start gap-2 rounded-xl bg-rose-500/10 border border-rose-500/30 px-3 py-2 text-[11px] text-rose-300">
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                            <div>
+                              {conflicts.map((item, i) => (
+                                <div key={i}>
+                                  <strong>{item.name}</strong> is already signed on to{' '}
+                                  <strong>{item.teamName}</strong>
+                                  {item.sameTeam ? '.' : ' (use Transfer to move teams).'}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 );

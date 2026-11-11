@@ -546,6 +546,83 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     vi.restoreAllMocks();
   });
 
+  it('prevents admins from adding or renaming players who are already signed on to the same team or another team', async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.TEAMS,
+      JSON.stringify([
+        {
+          id: 'team-1',
+          seasonId: 'winter-2026-27',
+          division: 'Premier League',
+          name: 'Castle Lagers',
+          venue: 'The Castle',
+          address: '1 High St',
+          captainName: 'John',
+          captainPin: '111111',
+        },
+        {
+          id: 'team-2',
+          seasonId: 'winter-2026-27',
+          division: 'Premier League',
+          name: 'Romans B',
+          venue: 'The Romans',
+          address: '2 High St',
+          captainName: 'Jane',
+          captainPin: '222222',
+        },
+      ])
+    );
+    localStorage.setItem(
+      STORAGE_KEYS.PLAYERS,
+      JSON.stringify([
+        {
+          id: 'p-1',
+          teamId: 'team-1',
+          name: 'John Smith',
+          active: true,
+        },
+        {
+          id: 'p-2',
+          teamId: 'team-2',
+          name: 'Jane Doe',
+          active: true,
+        },
+      ])
+    );
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    // Rejects adding a player already signed on to the same team (case-insensitive & whitespace normalised)
+    await expect(
+      result.current.addPlayer('team-1', '  john   smith ')
+    ).rejects.toThrow(/already signed on to Castle Lagers/i);
+
+    // Rejects adding a player already signed on to another team
+    await expect(
+      result.current.addPlayer('team-2', 'John Smith')
+    ).rejects.toThrow(/already signed on to Castle Lagers/i);
+
+    // Rejects renaming an existing player to a name already signed on to another team
+    await expect(
+      result.current.updatePlayer({
+        id: 'p-2',
+        teamId: 'team-2',
+        name: 'John Smith',
+        active: true,
+      })
+    ).rejects.toThrow(/already signed on to Castle Lagers/i);
+
+    // Allows adding a brand new player
+    await act(async () => {
+      const added = await result.current.addPlayer('team-1', 'Alex Turner');
+      expect(added.name).toBe('Alex Turner');
+    });
+  });
+
   it('automatically logs out admin to spectator if the admin PIN is invalidated on the server', async () => {
     localStorage.setItem(
       STORAGE_KEYS.SESSION,

@@ -1135,6 +1135,15 @@ begin
     return false;
   end if;
 
+  if p_active and exists (
+    select 1 from public.players pl
+    where pl.id <> p_id
+      and pl.active = true
+      and lower(regexp_replace(trim(pl.name), '\s+', ' ', 'g')) = lower(regexp_replace(trim(p_name), '\s+', ' ', 'g'))
+  ) then
+    raise exception 'Player "%" is already signed on to a team in the league.', trim(p_name);
+  end if;
+
   insert into public.players (id, team_id, name, active)
   values (p_id, p_team_id, trim(p_name), p_active)
   on conflict (id) do update
