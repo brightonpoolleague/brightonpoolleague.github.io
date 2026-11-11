@@ -40,6 +40,7 @@ import {
   ensureValidLineups,
   syncDefaultSubsequentSets,
   validatePlayerTransfer,
+  findDuplicatePlayer,
   getMatchTimeframe,
 } from '../utils/leagueEngine';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
@@ -1420,6 +1421,20 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addPlayer = useCallback(
     async (teamId: string, name: string): Promise<Player> => {
+      const cleanName = name.trim().replace(/\s+/g, ' ');
+      const existing = findDuplicatePlayer(cleanName, allPlayers);
+      if (existing) {
+        const existingTeam = allTeams.find((t) => t.id === existing.teamId);
+        const existingTeamName = existingTeam?.name || 'another team';
+        if (existing.teamId === teamId) {
+          throw new Error(
+            `"${existing.name}" is already signed on to ${existingTeamName}.`
+          );
+        }
+        throw new Error(
+          `"${existing.name}" is already signed on to ${existingTeamName}. Use the transfer option if they are moving teams.`
+        );
+      }
       const newPlayer: Player = {
         id: `player-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         teamId,
@@ -1451,6 +1466,18 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updatePlayer = useCallback(
     async (updatedPlayer: Player): Promise<void> => {
+      const existing = findDuplicatePlayer(
+        updatedPlayer.name,
+        allPlayers,
+        updatedPlayer.id
+      );
+      if (existing) {
+        const existingTeam = allTeams.find((t) => t.id === existing.teamId);
+        const existingTeamName = existingTeam?.name || 'another team';
+        throw new Error(
+          `"${existing.name}" is already signed on to ${existingTeamName}.`
+        );
+      }
       const cleanName = updatedPlayer.name.trim();
       if (!cleanName) return;
       const nextPlayers = allPlayers.map((p) =>

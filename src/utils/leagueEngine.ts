@@ -1315,6 +1315,31 @@ export function getPlayerAppearancesForTeam(
   return appearances;
 }
 
+/**
+ * Normalises a player name for duplicate checks (trims, collapses internal whitespace and lowercases).
+ */
+export function normalizePlayerName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/**
+ * Finds an active player whose normalised name matches the given name.
+ */
+export function findDuplicatePlayer(
+  name: string,
+  players: Player[],
+  excludePlayerId?: string
+): Player | undefined {
+  const normalized = normalizePlayerName(name);
+  if (!normalized) return undefined;
+  return players.find(
+    (p) =>
+      p.active &&
+      p.id !== excludePlayerId &&
+      normalizePlayerName(p.name) === normalized
+  );
+}
+
 export interface TransferValidationResult {
   allowed: boolean;
   rule: '4a' | '4b';
