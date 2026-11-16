@@ -299,15 +299,6 @@ export function getEligiblePlayersForSlot(
         }
       }
 
-      if (setNumber === 3 && lineups.set1?.[side]) {
-        const set1SlotIdx = lineups.set1[side].findIndex((id) => id === player.id);
-        if (set1SlotIdx !== -1 && set1SlotIdx !== slotIndex) {
-          return {
-            player,
-            disabledReason: `Played in slot ${set1SlotIdx + 1} in Set 1 (cannot change order)`,
-          };
-        }
-      }
 
       return { player };
     });
@@ -1535,12 +1526,6 @@ export function awardWalkoverToFixture(
     if (prevSet2Idx !== -1 && prevSet2Idx !== i) {
       throw new Error(
         `Player in Set 3 slot ${i + 1} played in slot ${prevSet2Idx + 1} in Set 2 and cannot change positions.`
-      );
-    }
-    const prevSet1Idx = winningSet1.indexOf(p);
-    if (prevSet1Idx !== -1 && prevSet1Idx !== i) {
-      throw new Error(
-        `Player in Set 3 slot ${i + 1} played in slot ${prevSet1Idx + 1} in Set 1 and cannot change positions.`
       );
     }
   }

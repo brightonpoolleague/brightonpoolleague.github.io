@@ -242,6 +242,38 @@ describe('leagueEngine - Lineup Eligibility & Substitutions (Rule 5)', () => {
     );
   });
 
+  it('allows a player subbed out after Set 1 to be subbed back into Set 3 in any position, while blocking Set 2 players from changing position in Set 3', () => {
+    const lineups: MatchLineups = {
+      set1: {
+        home: ['p1', 'p2', 'p3', 'p4', 'p5'],
+        away: [null, null, null, null, null],
+      },
+      set2: {
+        // p2 was subbed out in Set 2 for p6
+        home: ['p1', 'p6', 'p3', 'p4', 'p5'],
+        away: [null, null, null, null, null],
+      },
+      set3: {
+        home: ['p1', 'p6', 'p3', 'p4', 'p5'],
+        away: [null, null, null, null, null],
+      },
+    };
+
+    // In Set 3, checking slot index 3 (Position 4):
+    const set3Slot4Options = getEligiblePlayersForSlot(roster, lineups, 3, 'home', 3);
+
+    // p2 played in Slot 2 in Set 1, came out in Set 2 -> allowed to return in Set 3 in Position 4 (or any position)
+    expect(set3Slot4Options.find((o) => o.player.id === 'p2')?.disabledReason).toBeUndefined();
+
+    // p1 played in Slot 1 in Set 2 -> cannot move to Position 4 in Set 3
+    // If p1 was taken out of Slot 1 in Set 3, p1 still played in Slot 1 in Set 2 -> cannot move to Position 4 in Set 3
+    lineups.set3.home = [null, 'p6', 'p3', 'p4', 'p5'];
+    const set3Slot4AfterSub = getEligiblePlayersForSlot(roster, lineups, 3, 'home', 3);
+    expect(set3Slot4AfterSub.find((o) => o.player.id === 'p1')?.disabledReason).toContain(
+      'Played in slot 1 in Set 2'
+    );
+  });
+
   it('tracks substitutions and lock/approval states across sets', () => {
     const lineups = createEmptyLineups();
     lineups.set1.home = ['p1', 'p2', 'p3', 'p4', 'p5'];
@@ -1289,7 +1321,7 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
       awardWalkoverToFixture(schedFix, 'home', invalidSet2)
     ).toThrow(/cannot change positions/i);
 
-    // Set 3 has p1 in slot 2 (p1 played in slot 1 in Set 1)
+    // Set 3 has p1 in slot 2 (p1 played in slot 1 in Set 2)
     const invalidSet3 = [
       'p1', 'p2', 'p3', 'p4', 'p5',
       'p1', 'p2', 'p3', 'p4', 'p5',
@@ -1299,6 +1331,17 @@ describe('leagueEngine - Walkovers (Rule 8)', () => {
     expect(() =>
       awardWalkoverToFixture(schedFix, 'home', invalidSet3)
     ).toThrow(/cannot change positions/i);
+
+    // However, if p1 was subbed out in Set 2 (replaced by p6), p1 CAN return in Set 3 in a different position (e.g. slot 2)
+    const validSet3ReturnDifferentPos = [
+      'p1', 'p2', 'p3', 'p4', 'p5',
+      'p6', 'p2', 'p3', 'p4', 'p5',
+      'p6', 'p1', 'p3', 'p4', 'p5',
+    ];
+
+    expect(() =>
+      awardWalkoverToFixture(schedFix, 'home', validSet3ReturnDifferentPos)
+    ).not.toThrow();
   });
 
   it('syncDefaultSubsequentSets preserves the walkover property', () => {
