@@ -325,13 +325,13 @@ describe('AwardWalkoverModal Component', () => {
     expect(h1InSet3Slot1).toBeDefined();
     expect(h1InSet3Slot1).not.toBeDisabled();
 
-    // But in Set 3, check Slot 2 (Frame 12, allSelects[11]):
-    // h1 cannot be put into Slot 2 in Set 3 because h1 played in Slot 1 in Set 1
+    // And in Set 3, check Slot 2 (Frame 12, allSelects[11]):
+    // h1 IS allowed to be put into Slot 2 in Set 3 because h1 came out in Set 2
     const set3Slot2Options = allSelects[11].querySelectorAll('option');
     const h1InSet3Slot2 = Array.from(set3Slot2Options).find((opt) => opt.value === 'h1');
     expect(h1InSet3Slot2).toBeDefined();
-    expect(h1InSet3Slot2).toBeDisabled();
-    expect(h1InSet3Slot2?.textContent).toContain('cannot change order');
+    expect(h1InSet3Slot2).not.toBeDisabled();
+
 
     // Now select h1 back into Slot 1 in Set 3
     fireEvent.change(allSelects[10], { target: { value: 'h1' } });
