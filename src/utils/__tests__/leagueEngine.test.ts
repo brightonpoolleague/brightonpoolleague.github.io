@@ -435,6 +435,64 @@ describe('leagueEngine - League Table & Tiebreakers (Section 8a)', () => {
 });
 
 describe('leagueEngine - Player Stats & Dish Leaderboard (Section 8b & 8c)', () => {
+  it('orders players on 0 wins (0%) by fewer frames lost so 0/1 ranks above 0/3', () => {
+    const t1 = makeTeam({ id: 't1', name: 'Sharks' });
+    const t2 = makeTeam({ id: 't2', name: 'Jets' });
+    const players: Player[] = [
+      makePlayer({ id: 'h1', teamId: 't1', name: 'Alice (3-0)' }),
+      makePlayer({ id: 'h2', teamId: 't1', name: 'Bob (0-3)' }),
+      makePlayer({ id: 'a1', teamId: 't2', name: 'Frank (3-0)' }),
+      makePlayer({ id: 'a2', teamId: 't2', name: 'Grace (0-1)' }),
+    ];
+
+    const lineups = createEmptyLineups();
+    lineups.set1.home = ['h1', 'h2', null, null, null];
+    lineups.set2.home = ['h1', 'h2', null, null, null];
+    lineups.set3.home = ['h1', 'h2', null, null, null];
+    lineups.set1.away = ['a2', 'a1', null, null, null];
+    lineups.set2.away = ['a1', 'a1', 'a1', 'a1', 'a1'];
+    lineups.set3.away = ['a1', 'a1', 'a1', 'a1', 'a1'];
+
+    const frames = createEmptyFrames().map((f) => {
+      if (f.frameNumber === 1) {
+        // h1 beats a2 (Grace is 0-1)
+        return { ...f, winner: 'home' as const };
+      }
+      if (f.homeSlot === 1) {
+        return { ...f, winner: 'home' as const };
+      }
+      if (f.homeSlot === 2) {
+        // Bob loses all 3 of his frames (Bob is 0-3)
+        return { ...f, winner: 'away' as const };
+      }
+      return f;
+    });
+
+    const fix = makeFixture({
+      id: 'f-zero',
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      status: 'approved',
+      lineups,
+      frames,
+    });
+
+    const { averagesTable } = computePlayerStats(
+      'Premier League',
+      [t1, t2],
+      players,
+      [fix]
+    );
+
+    const graceIdx = averagesTable.findIndex((r) => r.player.id === 'a2');
+    const bobIdx = averagesTable.findIndex((r) => r.player.id === 'h2');
+    expect(averagesTable[graceIdx].played).toBe(1);
+    expect(averagesTable[graceIdx].won).toBe(0);
+    expect(averagesTable[bobIdx].played).toBe(3);
+    expect(averagesTable[bobIdx].won).toBe(0);
+    expect(graceIdx).toBeLessThan(bobIdx);
+  });
+
   it('computes player averages, win percentage, dishes, and tie-breakers accurately', () => {
     const t1 = makeTeam({ id: 't1', name: 'Sharks' });
     const t2 = makeTeam({ id: 't2', name: 'Jets' });

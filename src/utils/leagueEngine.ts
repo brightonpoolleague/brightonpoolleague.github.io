@@ -953,6 +953,8 @@ export function computePlayerStats(
     if (Math.abs(b.winPercentage - a.winPercentage) > 0.0001) {
       return b.winPercentage - a.winPercentage;
     }
+    // Fewer frames lost (orders 0-win players by fewer losses, e.g. 0/1 above 0/3)
+    if (a.lost !== b.lost) return a.lost - b.lost;
     // iii. Total number of dishes made
     if (b.dishes !== a.dishes) return b.dishes - a.dishes;
     // iv.1. Head-to-head record
