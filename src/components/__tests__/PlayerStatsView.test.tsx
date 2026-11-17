@@ -157,7 +157,7 @@ describe('PlayerStatsView Sponsor Branding & Player Stats Modal', () => {
     expect(within(dialog).queryByText('No Dish')).not.toBeInTheDocument();
 
     // Filter pills work inside the modal
-    fireEvent.click(within(dialog).getByRole('button', { name: /Dishes \(1\)/i }));
+    fireEvent.click(within(dialog).getByRole('button', { name: /Dishes\s*1/i }));
     expect(within(dialog).getAllByText('vs Steve Davis')).toHaveLength(1);
     expect(within(dialog).queryByText('No Dish')).not.toBeInTheDocument();
 

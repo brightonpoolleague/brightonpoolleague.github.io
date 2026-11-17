@@ -174,23 +174,32 @@ export const PlayerStatsDetailModal: React.FC<PlayerStatsDetailModalProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
             {(
               [
-                { id: 'all', label: `All Frames (${frames.length})` },
-                { id: 'won', label: `Won (${statsRow.won})` },
-                { id: 'lost', label: `Lost (${statsRow.lost})` },
-                { id: 'dishes', label: `Dishes (${statsRow.dishes})` },
+                { id: 'all', label: 'All Frames', count: frames.length },
+                { id: 'won', label: 'Won', count: statsRow.won },
+                { id: 'lost', label: 'Lost', count: statsRow.lost },
+                { id: 'dishes', label: 'Dishes', count: statsRow.dishes },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 ${
                   filter === tab.id
                     ? 'bg-emerald-600 text-white shadow'
                     : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    filter === tab.id
+                      ? 'bg-emerald-800 text-emerald-100'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}
+                >
+                  {tab.count}
+                </span>
               </button>
             ))}
           </div>
