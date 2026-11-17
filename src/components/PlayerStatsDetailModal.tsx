@@ -126,45 +126,45 @@ export const PlayerStatsDetailModal: React.FC<PlayerStatsDetailModalProps> = ({
         </div>
 
         {/* Summary Stat Cards */}
-        <div className="p-4 sm:p-5 border-b border-slate-800/80 space-y-3 bg-slate-900/60">
-          <div className="grid grid-cols-5 gap-2">
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="p-3.5 sm:p-5 border-b border-slate-800/80 space-y-3 bg-slate-900/60">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl px-1.5 py-2 sm:p-2.5 text-center min-w-0">
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
                 Played
               </div>
-              <div className="text-base sm:text-lg font-black text-white tabular-nums mt-0.5">
+              <div className="text-xs sm:text-lg font-black text-white tabular-nums mt-0.5">
                 {statsRow.played}
               </div>
             </div>
-            <div className="bg-slate-950/80 border border-emerald-500/20 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+            <div className="bg-slate-950/80 border border-emerald-500/20 rounded-xl px-1.5 py-2 sm:p-2.5 text-center min-w-0">
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-400 truncate">
                 Won
               </div>
-              <div className="text-base sm:text-lg font-black text-emerald-400 tabular-nums mt-0.5">
+              <div className="text-xs sm:text-lg font-black text-emerald-400 tabular-nums mt-0.5">
                 {statsRow.won}
               </div>
             </div>
-            <div className="bg-slate-950/80 border border-rose-500/20 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-rose-400">
+            <div className="bg-slate-950/80 border border-rose-500/20 rounded-xl px-1.5 py-2 sm:p-2.5 text-center min-w-0">
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-rose-400 truncate">
                 Lost
               </div>
-              <div className="text-base sm:text-lg font-black text-rose-300 tabular-nums mt-0.5">
+              <div className="text-xs sm:text-lg font-black text-rose-300 tabular-nums mt-0.5">
                 {statsRow.lost}
               </div>
             </div>
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl px-1 py-2 sm:p-2.5 text-center min-w-0">
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
                 Win %
               </div>
-              <div className="text-base sm:text-lg font-black text-white tabular-nums mt-0.5">
+              <div className="text-xs sm:text-lg font-black text-white tabular-nums mt-0.5 whitespace-nowrap">
                 {statsRow.winPercentage.toFixed(1)}%
               </div>
             </div>
-            <div className="bg-slate-950/80 border border-amber-500/20 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+            <div className="bg-slate-950/80 border border-amber-500/20 rounded-xl px-1.5 py-2 sm:p-2.5 text-center min-w-0">
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-400 truncate">
                 Dishes
               </div>
-              <div className="text-base sm:text-lg font-black text-amber-300 tabular-nums mt-0.5">
+              <div className="text-xs sm:text-lg font-black text-amber-300 tabular-nums mt-0.5">
                 {statsRow.dishes}
               </div>
             </div>
@@ -240,23 +240,15 @@ export const PlayerStatsDetailModal: React.FC<PlayerStatsDetailModalProps> = ({
                   </div>
                 </div>
 
-                {/* Dish Indicator */}
-                <div className="shrink-0 flex items-center gap-1.5">
-                  {item.dish ? (
+                {/* Dish Indicator (only shown when frame was a dish) */}
+                {item.dish && (
+                  <div className="shrink-0 flex items-center gap-1.5">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
                       <Sparkles className="w-3 h-3 text-amber-400" />
                       <span>Dish</span>
                     </span>
-                  ) : item.opponentDish ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-semibold">
-                      <span>Opp. Dish</span>
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-slate-500 font-medium px-2 py-0.5">
-                      No Dish
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             ))
           )}
