@@ -206,49 +206,45 @@ export const PlayerStatsDetailModal: React.FC<PlayerStatsDetailModalProps> = ({
             filteredFrames.map((item, idx) => (
               <div
                 key={`${item.fixtureId}-${item.frameNumber}-${idx}`}
-                className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 transition"
+                className="bg-slate-950/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-3 sm:p-3.5 flex items-center gap-3 transition"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className={`w-12 py-1 rounded-lg font-black text-[11px] text-center uppercase tracking-wider shrink-0 border ${
-                      item.result === 'win'
-                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                        : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                    }`}
-                  >
-                    {item.result === 'win' ? 'Won' : 'Lost'}
-                  </span>
+                <span
+                  className={`w-12 py-1 rounded-lg font-black text-[11px] text-center uppercase tracking-wider shrink-0 border ${
+                    item.result === 'win'
+                      ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                      : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                  }`}
+                >
+                  {item.result === 'win' ? 'Won' : 'Lost'}
+                </span>
 
-                  <div className="min-w-0">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="text-xs sm:text-sm font-bold text-white truncate">
                       vs {item.opponentName}
                     </div>
-                    <div className="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap mt-0.5">
-                      <span className="text-slate-300 font-medium">
-                        {item.opponentTeamName}
+                    {item.dish && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold shrink-0">
+                        <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                        <span>Dish</span>
                       </span>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-500" />
-                        {formatMatchDate(item.matchDate)}
-                      </span>
-                      <span>•</span>
-                      <span>
-                        Set {item.setNumber}, Frame #{item.frameNumber}
-                      </span>
-                    </div>
+                    )}
                   </div>
-                </div>
-
-                {/* Dish Indicator (only shown when frame was a dish) */}
-                {item.dish && (
-                  <div className="shrink-0 flex items-center gap-1.5">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-bold">
-                      <Sparkles className="w-3 h-3 text-amber-400" />
-                      <span>Dish</span>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                    <span className="text-slate-300 font-medium truncate">
+                      {item.opponentTeamName}
+                    </span>
+                    <span className="shrink-0">•</span>
+                    <span className="inline-flex items-center gap-1 shrink-0">
+                      <Calendar className="w-3 h-3 text-slate-500" />
+                      {formatMatchDate(item.matchDate)}
+                    </span>
+                    <span className="shrink-0">•</span>
+                    <span className="shrink-0">
+                      Set {item.setNumber}, Frame #{item.frameNumber}
                     </span>
                   </div>
-                )}
+                </div>
               </div>
             ))
           )}
