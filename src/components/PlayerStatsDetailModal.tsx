@@ -230,17 +230,16 @@ export const PlayerStatsDetailModal: React.FC<PlayerStatsDetailModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
-                    <span className="text-slate-300 font-medium truncate">
-                      {item.opponentTeamName}
-                    </span>
-                    <span className="shrink-0">•</span>
-                    <span className="inline-flex items-center gap-1 shrink-0">
-                      <Calendar className="w-3 h-3 text-slate-500" />
+                  <div className="text-xs text-slate-300 font-medium truncate mt-0.5">
+                    {item.opponentTeamName}
+                  </div>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-500 shrink-0" />
                       {formatMatchDate(item.matchDate)}
                     </span>
-                    <span className="shrink-0">•</span>
-                    <span className="shrink-0">
+                    <span>•</span>
+                    <span>
                       Set {item.setNumber}, Frame #{item.frameNumber}
                     </span>
                   </div>
