@@ -992,6 +992,133 @@ export function computePlayerStats(
   return { averagesTable, dishTable };
 }
 
+export interface PlayerFrameHistoryItem {
+  fixtureId: string;
+  matchDate: string;
+  weekNumber?: number;
+  division: Division;
+  status: Fixture['status'];
+  playerSide: 'home' | 'away';
+  playerTeamName: string;
+  opponentTeamName: string;
+  setNumber: 1 | 2 | 3;
+  gameInSet: 1 | 2 | 3 | 4 | 5;
+  frameNumber: number;
+  opponentId: SlotPlayerId;
+  opponentName: string;
+  result: 'win' | 'loss';
+  dish: boolean;
+  opponentDish: boolean;
+  isWalkover: boolean;
+}
+
+/**
+ * Returns the chronological frame-by-frame history for a player in the given division
+ * (or across all divisions when division === 'ALL').
+ */
+export function getPlayerFrameHistory(
+  playerId: string,
+  division: Division | 'ALL',
+  teams: Team[],
+  players: Player[],
+  fixtures: Fixture[],
+  includeLiveAndSubmitted = true
+): PlayerFrameHistoryItem[] {
+  const teamsById: Record<string, Team> = {};
+  teams.forEach((t) => {
+    teamsById[t.id] = t;
+  });
+
+  const playersById: Record<string, Player> = {};
+  players.forEach((p) => {
+    playersById[p.id] = p;
+  });
+
+  const validStatuses: Fixture['status'][] = includeLiveAndSubmitted
+    ? ['live', 'submitted', 'approved']
+    : ['approved'];
+
+  const halfwayDateByDiv: Record<string, string | null> = {};
+  (
+    ['Premier League', 'Division 1', 'Division 2', 'Division 3'] as Division[]
+  ).forEach((div) => {
+    halfwayDateByDiv[div] = getSeasonHalfwayDate(
+      fixtures.filter((f) => f.division === div)
+    ).halfwayDate;
+  });
+
+  const isExpungedMatch = (f: Fixture) => {
+    const divHalfway = f.division ? halfwayDateByDiv[f.division] : null;
+    return isFixtureExpunged(f, teamsById, divHalfway).isExpunged;
+  };
+
+  const divisionFixtures = fixtures
+    .filter(
+      (f) =>
+        (division === 'ALL' || f.division === division) &&
+        validStatuses.includes(f.status) &&
+        !isKnockoutFixture(f) &&
+        !isExpungedMatch(f)
+    )
+    .sort((a, b) => a.matchDate.localeCompare(b.matchDate));
+
+  const history: PlayerFrameHistoryItem[] = [];
+
+  divisionFixtures.forEach((fix) => {
+    const homeTeam = teamsById[fix.homeTeamId];
+    const awayTeam = teamsById[fix.awayTeamId];
+    const walkover = isWalkoverFixture(fix);
+
+    fix.frames.forEach((frame) => {
+      if (!frame.winner) return;
+      const { homePlayerId, awayPlayerId } = getFramePlayers(fix.lineups, frame);
+      if (homePlayerId !== playerId && awayPlayerId !== playerId) return;
+
+      const isHome = homePlayerId === playerId;
+      const opponentId = isHome ? awayPlayerId : homePlayerId;
+      const wonFrame =
+        (isHome && frame.winner === 'home') ||
+        (!isHome && frame.winner === 'away');
+
+      let opponentName = 'Unassigned';
+      if (walkover && opponentId === 'BYE') {
+        opponentName = 'BYE (Walkover)';
+      } else if (opponentId === 'BYE') {
+        opponentName = 'BYE';
+      } else if (opponentId && playersById[opponentId]) {
+        opponentName = playersById[opponentId].name;
+      }
+
+      history.push({
+        fixtureId: fix.id,
+        matchDate: fix.matchDate,
+        weekNumber: fix.weekNumber,
+        division: fix.division,
+        status: fix.status,
+        playerSide: isHome ? 'home' : 'away',
+        playerTeamName: isHome
+          ? homeTeam?.name || 'Home Team'
+          : awayTeam?.name || 'Away Team',
+        opponentTeamName: isHome
+          ? awayTeam?.name || 'Away Team'
+          : homeTeam?.name || 'Home Team',
+        setNumber: frame.setNumber,
+        gameInSet: frame.gameInSet,
+        frameNumber: frame.frameNumber,
+        opponentId,
+        opponentName,
+        result: wonFrame ? 'win' : 'loss',
+        dish: Boolean(wonFrame && frame.dish),
+        opponentDish: Boolean(!wonFrame && frame.dish),
+        isWalkover: walkover,
+      });
+    });
+  });
+
+  return history;
+}
+
+
 const MONTH_NAMES = [
   'January',
   'February',
