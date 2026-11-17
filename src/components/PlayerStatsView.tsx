@@ -6,9 +6,10 @@ import {
   Sparkles,
   Trophy,
 } from 'lucide-react';
-import { Division } from '../types/league';
+import { Division, PlayerStatsRow } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
-import { computePlayerStats } from '../utils/leagueEngine';
+import { computePlayerStats, getPlayerFrameHistory } from '../utils/leagueEngine';
+import { PlayerStatsDetailModal } from './PlayerStatsDetailModal';
 import { ExportTableModal } from './ExportTableModal';
 import { SponsorBadge, SponsorBanner } from './SponsorBanner';
 import { PRIMARY_SPONSOR } from '../data/sponsors';
@@ -85,6 +86,10 @@ export const PlayerStatsView: React.FC = () => {
   }, [divisions, selectedDivision]);
 
   const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedPlayerModal, setSelectedPlayerModal] = useState<{
+    row: PlayerStatsRow;
+    rank: number;
+  } | null>(null);
 
   // Player averages are strictly per division (never across All Divisions)
   const defaultDiv = myTeamDivision && divisions.includes(myTeamDivision)
@@ -339,7 +344,15 @@ export const PlayerStatsView: React.FC = () => {
                       </td>
                       <td className="py-3 px-3">
                         <div className="font-bold text-white">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedPlayerModal({ row, rank: pos })
+                          }
+                          className="font-bold text-white hover:text-emerald-400 hover:underline transition text-left cursor-pointer"
+                        >
                           {row.player.name}
+                        </button>
                         </div>
                         <div className="text-[11px] text-slate-400">
                           {row.team.name}
@@ -402,7 +415,28 @@ export const PlayerStatsView: React.FC = () => {
         )}
       </div>
       {/* Sponsor Banner */}
+      {/* Sponsor Banner */}
       <SponsorBanner sponsor={PRIMARY_SPONSOR} />
+
+      {/* Player Detail Stats Modal */}
+      <PlayerStatsDetailModal
+        isOpen={Boolean(selectedPlayerModal)}
+        onClose={() => setSelectedPlayerModal(null)}
+        statsRow={selectedPlayerModal?.row ?? null}
+        rank={selectedPlayerModal?.rank}
+        frames={
+          selectedPlayerModal
+            ? getPlayerFrameHistory(
+                selectedPlayerModal.row.player.id,
+                effectiveDivision,
+                teams,
+                players,
+                fixtures,
+                includeLive
+              )
+            : []
+        }
+      />
 
       {/* Export Table Image Modal */}
       <ExportTableModal
