@@ -161,8 +161,12 @@ describe('PlayerStatsView Sponsor Branding & Player Stats Modal', () => {
     expect(within(dialog).getAllByText('vs Steve Davis')).toHaveLength(1);
     expect(within(dialog).queryByText('No Dish')).not.toBeInTheDocument();
 
-    // Close modal
+    // Close modal and open Steve Davis (who lost Frame 1 when Jimmy White dished) to verify Dish still shows on lost frames
     fireEvent.click(within(dialog).getByRole('button', { name: /Close player stats modal/i }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Steve Davis' }));
+    const steveDialog = screen.getByRole('dialog');
+    expect(within(steveDialog).getByText('Dish')).toBeInTheDocument();
   });
 });
