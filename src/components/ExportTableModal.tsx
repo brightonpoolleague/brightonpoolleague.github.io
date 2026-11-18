@@ -151,7 +151,11 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     try {
       const options = {
         pixelRatio: 3,
-        backgroundColor: '#020617', // slate-950
+        backgroundColor:
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('light')
+            ? '#f1f5f9'
+            : '#020617', // matches slate-950 in active theme
         cacheBust: true,
         style: {
           margin: '0',
@@ -181,7 +185,11 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     try {
       const blob = await toBlob(cardRef.current, {
         pixelRatio: 3,
-        backgroundColor: '#020617',
+        backgroundColor:
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('light')
+            ? '#f1f5f9'
+            : '#020617',
         cacheBust: true,
         style: {
           margin: '0',
@@ -331,7 +339,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                   MozOsxFontSmoothing: 'grayscale',
                   textRendering: 'optimizeLegibility',
                 }}
-                className="force-dark bg-slate-950 text-slate-100 p-7 space-y-5"
+                className="bg-slate-950 text-slate-100 p-7 space-y-5"
               >
                 {/* Graphic Card Header - Centered */}
                 <div className="flex flex-col items-center text-center border-b border-slate-800 pb-5 space-y-2">

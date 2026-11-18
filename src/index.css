@@ -42,7 +42,7 @@ input[type="date"]::-webkit-date-and-time-value {
 /* ============================================================================
    LIGHT MODE THEME (toggled via html.light)
    Remaps the dark slate palette & pastel accents to crisp high-contrast light
-   surfaces while preserving solid-accent buttons and dark PNG export cards.
+   surfaces while preserving solid-accent buttons and dark modal scrims.
    ============================================================================ */
 html.light {
   color-scheme: light;
@@ -157,55 +157,4 @@ html.light .fixed.inset-0[class*="bg-slate-950"] {
 /* Slightly crisper card borders in light mode */
 html.light .border-slate-800 {
   border-color: #cbd5e1;
-}
-
-/* Keep exported PNG graphics (scorecards & tables) in their signature dark branding */
-html.light .force-dark {
-  color-scheme: dark;
-  --color-slate-950: #020617;
-  --color-slate-900: #0f172a;
-  --color-slate-800: #1e293b;
-  --color-slate-700: #334155;
-  --color-slate-600: #475569;
-  --color-slate-500: #64748b;
-  --color-slate-400: #94a3b8;
-  --color-slate-300: #cbd5e1;
-  --color-slate-200: #e2e8f0;
-  --color-slate-100: #f1f5f9;
-  --color-slate-50: #f8fafc;
-
-  --color-emerald-200: #a7f3d0;
-  --color-emerald-300: #6ee7b7;
-  --color-emerald-400: #34d399;
-  --color-emerald-900: #064e3b;
-  --color-emerald-950: #022c22;
-
-  --color-amber-200: #fde68a;
-  --color-amber-300: #fcd34d;
-  --color-amber-400: #fbbf24;
-
-  --color-rose-200: #fecdd3;
-  --color-rose-300: #fda4af;
-  --color-rose-400: #fb7185;
-
-  --color-red-200: #fecaca;
-  --color-red-300: #fca5a5;
-  --color-red-400: #f87171;
-
-  --color-sky-200: #bae6fd;
-  --color-sky-300: #7dd3fc;
-  --color-sky-400: #38bdf8;
-}
-
-html.light .force-dark .text-white {
-  color: #ffffff;
-}
-
-html.light .force-dark .border-slate-800 {
-  border-color: #1e293b;
-}
-
-html.light .force-dark .bg-amber-500.text-slate-950,
-html.light .force-dark .bg-emerald-500.text-slate-950 {
-  color: #020617;
 }
