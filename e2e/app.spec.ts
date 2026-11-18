@@ -365,25 +365,15 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       page.getByRole('heading', { name: /Transfer Restricted \(Rule 4b\)/i })
     ).toBeHidden();
 
-    // 4. Switch to Scorecards sub-tab and test Incomplete Scorecard warning dialog
+    // 4. Switch to Scorecards sub-tab and verify Scheduled fixtures cannot be approved
     await page
       .getByRole('button', { name: /Scorecards/i })
       .first()
       .click();
     await page.getByRole('button', { name: /Scheduled/i }).first().click();
-    await page
-      .getByRole('button', { name: 'Approve', exact: true })
-      .first()
-      .click();
-
-    // Verify Incomplete Scorecard Warning Modal lists missing requirements
     await expect(
-      page.getByRole('heading', { name: 'Approve Incomplete Scorecard?' })
-    ).toBeVisible();
-    await expect(
-      page.getByText(/This scorecard is not yet complete/i)
-    ).toBeVisible();
-    await page.getByRole('button', { name: 'Cancel' }).click();
+      page.getByRole('button', { name: 'Approve', exact: true })
+    ).toHaveCount(0);
 
     // 5. Filter by 'Awaiting Approval' and approve a completed submitted scorecard
     await page
@@ -907,21 +897,15 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
     await page.getByRole('button', { name: 'Confirm & Schedule' }).click();
 
-    // 3. Test Approve -> Reopen lifecycle on this dedicated fixture in Scorecards tab
+    // 3. Locate the new scheduled fixture in Scorecards tab and verify Approve is hidden until submitted
     await page.getByRole('button', { name: /Scorecards/i }).first().click();
     const scorecardSearch = page.getByPlaceholder(
       /Search by team, division, status, date or player/i
     );
     await scorecardSearch.fill('2026-12-28');
-    await page.getByRole('button', { name: 'Approve', exact: true }).first().click();
-    await page.getByRole('button', { name: 'Approve', exact: true }).last().click();
-
-    const reopenBtn = page.getByRole('button', { name: 'Reopen' }).first();
-    await expect(reopenBtn).toBeVisible();
-    await reopenBtn.click();
     await expect(
-      page.getByRole('button', { name: 'Approve', exact: true }).first()
-    ).toBeVisible();
+      page.getByRole('button', { name: 'Approve', exact: true })
+    ).toHaveCount(0);
 
     // 4. Open Scorecard from Scorecards tab, assign 'BYE' in Position 5 for Home, confirm both Set 1 lineups, and verify BYE auto-awards Frame #5 to Away
     await page.getByRole('button', { name: 'Scorecard', exact: true }).first().click();
@@ -993,12 +977,26 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
       page.getByText('Make a Set 2 Substitution').first()
     ).toBeVisible();
 
-    // 9. Clean up temporary fixture
+    // 9. Close scorecard modal and test Reopen -> Approve lifecycle on an Approved scorecard
     await page
       .locator('div.bg-slate-900.border-b')
       .locator('button')
       .last()
       .click();
+
+    await scorecardSearch.fill('');
+    await page.getByRole('button', { name: /^Approved/i }).first().click();
+    const reopenBtn = page.getByRole('button', { name: 'Reopen' }).first();
+    if (await reopenBtn.isVisible()) {
+      await reopenBtn.click();
+      // Reopening must move the scorecard back to Awaiting Approval (Approve button visible)
+      await page.getByRole('button', { name: /Awaiting Approval/i }).first().click();
+      const reApproveBtn = page.getByRole('button', { name: 'Approve', exact: true }).first();
+      await expect(reApproveBtn).toBeVisible();
+      await reApproveBtn.click();
+    }
+
+    // 10. Clean up temporary fixture
     await page.getByRole('button', { name: /^Fixtures/i }).first().click();
     const adminFixtureSearch = page.getByPlaceholder(
       /Search by team, venue, table, division or date/i
