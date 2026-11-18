@@ -292,7 +292,7 @@ const MainShell: React.FC = () => {
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-slate-600" />
+                <Moon className="w-4 h-4 text-slate-200" />
               )}
             </button>
           {isLoggedIn ? (
