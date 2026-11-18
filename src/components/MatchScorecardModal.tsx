@@ -3164,9 +3164,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <span>Approved by league admin</span>
                   </div>
                   <div className="text-[11px] text-slate-300">
-                    {canManageLeague
-                      ? 'Official match result confirmed. Reopen from League Admin to make changes.'
-                      : 'Official match result confirmed.'}
+                    Official match result confirmed.
                   </div>
                 </div>
               </div>
