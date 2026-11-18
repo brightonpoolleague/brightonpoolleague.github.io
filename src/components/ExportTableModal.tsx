@@ -151,7 +151,11 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     try {
       const options = {
         pixelRatio: 3,
-        backgroundColor: '#020617', // slate-950
+        backgroundColor:
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('light')
+            ? '#f1f5f9'
+            : '#020617', // matches slate-950 in active theme
         cacheBust: true,
         style: {
           margin: '0',
@@ -181,7 +185,11 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
     try {
       const blob = await toBlob(cardRef.current, {
         pixelRatio: 3,
-        backgroundColor: '#020617',
+        backgroundColor:
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('light')
+            ? '#f1f5f9'
+            : '#020617',
         cacheBust: true,
         style: {
           margin: '0',

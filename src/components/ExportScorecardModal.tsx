@@ -152,7 +152,11 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
     try {
       const dataUrl = await toPng(cardRef.current, {
         pixelRatio: 3,
-        backgroundColor: '#020617',
+        backgroundColor:
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('light')
+            ? '#f1f5f9'
+            : '#020617',
         cacheBust: true,
         style: { margin: '0', transform: 'none' },
       });
@@ -177,7 +181,11 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
     try {
       const blob = await toBlob(cardRef.current, {
         pixelRatio: 3,
-        backgroundColor: '#020617',
+        backgroundColor:
+          typeof document !== 'undefined' &&
+          document.documentElement.classList.contains('light')
+            ? '#f1f5f9'
+            : '#020617',
         cacheBust: true,
         style: { margin: '0', transform: 'none' },
       });

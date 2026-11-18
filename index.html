@@ -14,6 +14,19 @@
     <meta name="apple-mobile-web-app-title" content="Brighton Pool League" />
     <meta name="application-name" content="Brighton Pool League" />
     <title>City of Brighton &amp; Hove Pool League</title>
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('bpl_theme');
+          if (saved === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#f8fafc');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
     <div id="root"></div>

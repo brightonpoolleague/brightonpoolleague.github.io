@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import App from '../../App';
 
@@ -99,5 +99,42 @@ describe('Navigation Labels', () => {
       'Info',
       'Admin',
     ]);
+  });
+
+  it('toggles between dark mode and light mode and persists preference in localStorage', () => {
+    localStorage.removeItem('bpl_theme');
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+
+    mockUseLeague.mockReturnValue({
+      seasonName: 'Winter 2026/27',
+      fixtures: [],
+      teams: [],
+      players: [],
+      divisions: ['Premier League'],
+      session: { role: 'viewer', name: 'Spectator' },
+      setRoleSession: vi.fn(),
+      isOnline: true,
+      isRealtimeConnected: true,
+      pendingMutationsCount: 0,
+      syncError: null,
+      refreshData: vi.fn(),
+    });
+
+    render(<App />);
+
+    const toLightBtn = screen.getByRole('button', { name: /Switch to light mode/i });
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+
+    fireEvent.click(toLightBtn);
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(localStorage.getItem('bpl_theme')).toBe('light');
+
+    const toDarkBtn = screen.getByRole('button', { name: /Switch to dark mode/i });
+    fireEvent.click(toDarkBtn);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.classList.contains('light')).toBe(false);
+    expect(localStorage.getItem('bpl_theme')).toBe('dark');
   });
 });
