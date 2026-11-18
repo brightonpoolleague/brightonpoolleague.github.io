@@ -193,6 +193,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
   } | null>(null);
 
   const handleApproveFixture = (fix: Fixture) => {
+    if (fix.status !== 'submitted') return;
     const warnings = getScorecardApprovalWarnings(fix);
     if (warnings.length > 0) {
       setConfirmDialog({
@@ -3393,7 +3394,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                             <span>Scorecard</span>
                           </button>
 
-                          {fix.status !== 'approved' ? (
+                          {fix.status === 'submitted' && (
                             <button
                               type="button"
                               onClick={() => handleApproveFixture(fix)}
@@ -3402,7 +3403,8 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               Approve
                             </button>
-                          ) : (
+                          )}
+                          {fix.status === 'approved' && (
                             <button
                               type="button"
                               onClick={() => reopenFixture(fix.id)}

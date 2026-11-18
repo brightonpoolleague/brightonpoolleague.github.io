@@ -1881,7 +1881,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
         nextStatus = 'approved';
         homeSigned = true;
         awaySigned = true;
-      } else if (nextStatus === 'submitted') {
+      } else if (nextStatus === 'submitted' && sessionRef.current.role !== 'admin') {
         // Prevent stale submission from overwriting an unsigned state from the other captain
         const existing = allFixtures.find((f) => f.id === rawUpdated.id);
         if (existing) {
@@ -1996,7 +1996,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const approveFixture = useCallback(
     async (fixtureId: string): Promise<void> => {
       const target = allFixtures.find((f) => f.id === fixtureId);
-      if (!target) return;
+      if (!target || target.status !== 'submitted') return;
       const now = new Date().toISOString();
       await saveFixture({
         ...target,
@@ -2015,10 +2015,11 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
       delete nextLineups.walkover;
       await saveFixture({
         ...target,
-        status: 'live',
+        status: 'submitted',
         approvedAt: undefined,
-        homeCaptainSigned: false,
-        awayCaptainSigned: false,
+        submittedAt: target.submittedAt ?? new Date().toISOString(),
+        homeCaptainSigned: true,
+        awayCaptainSigned: true,
         walkover: undefined,
         lineups: nextLineups,
       });
@@ -2045,7 +2046,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const canEditFixture = useCallback(
     (fixture: Fixture): boolean => {
-      if (session.role === 'admin') return true;
+      if (session.role === 'admin') return fixture.status !== 'approved';
       if (
         session.role === 'captain' &&
         fixture.status !== 'approved' &&
