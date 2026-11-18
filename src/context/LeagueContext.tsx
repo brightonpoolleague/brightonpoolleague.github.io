@@ -2045,7 +2045,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const canEditFixture = useCallback(
     (fixture: Fixture): boolean => {
-      if (session.role === 'admin') return true;
+      if (session.role === 'admin') return fixture.status !== 'approved';
       if (
         session.role === 'captain' &&
         fixture.status !== 'approved' &&

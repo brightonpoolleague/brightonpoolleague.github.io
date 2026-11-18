@@ -320,14 +320,14 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   const isUpcoming = getMatchTimeframe(fixture.matchDate, fixture.status) === 'upcoming';
 
   const canSignHome =
-    canManageLeague ||
+    (canManageLeague && editable) ||
     (editable &&
       session.role === 'captain' &&
       session.teamId === fixture.homeTeamId &&
       fixture.status !== 'submitted' &&
       fixture.status !== 'approved');
   const canSignAway =
-    canManageLeague ||
+    (canManageLeague && editable) ||
     (editable &&
       session.role === 'captain' &&
       session.teamId === fixture.awayTeamId &&
@@ -571,7 +571,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
   };
 
   const handleAdminQuickLockBoth = async () => {
-    if (!canManageLeague) return;
+    if (!canManageLeague || !editable) return;
     const nextLineups = structuredClone(lineups);
     const fillMissing = (side: 'home' | 'away') => {
       const squad = side === 'home' ? homeSquad : awaySquad;
@@ -954,7 +954,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
     setNumber: 2 | 3,
     side: 'home' | 'away'
   ) => {
-    if (!canManageLeague) return;
+    if (!canManageLeague || !editable) return;
     const setKey = `set${setNumber}` as 'set2' | 'set3';
     const nextLineups = structuredClone(fixture.lineups);
     if (nextLineups.subsLocked?.[setKey]) {
@@ -1708,6 +1708,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         : null);
 
     if (
+      !editable ||
       activeSet <= 1 ||
       !bothSet1Locked ||
       !targetSide ||
@@ -1758,6 +1759,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
         : null);
 
     if (
+      !editable ||
       activeSet <= 1 ||
       !bothSet1Locked ||
       !targetSide ||
@@ -2445,7 +2447,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                       )}
                     </span>
                   </div>
-                  {canManageLeague && !bothSet1Locked && (
+                  {canManageLeague && editable && !bothSet1Locked && (
                     <button
                       type="button"
                       onClick={handleAdminQuickLockBoth}
@@ -3162,7 +3164,9 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
                     <span>Approved by league admin</span>
                   </div>
                   <div className="text-[11px] text-slate-300">
-                    Official match result confirmed.
+                    {canManageLeague
+                      ? 'Official match result confirmed. Reopen from League Admin to make changes.'
+                      : 'Official match result confirmed.'}
                   </div>
                 </div>
               </div>

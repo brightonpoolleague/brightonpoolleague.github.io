@@ -623,6 +623,49 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     });
   });
 
+  it('prevents admins from editing approved scorecards until reopened, while allowing scheduled, live and submitted fixtures', async () => {
+    mockRpc.mockResolvedValue({ data: true, error: null });
+    localStorage.setItem(
+      STORAGE_KEYS.SESSION,
+      JSON.stringify({ role: 'admin', name: 'League Admin', pin: '000000' })
+    );
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify('000000'));
+
+    const emptySlots: [null, null, null, null, null] = [null, null, null, null, null];
+    const baseFix = {
+      id: 'fix-1',
+      seasonId: 'winter-2026-27',
+      division: 'Premier League' as const,
+      matchDate: '2026-10-12',
+      weekNumber: 1,
+      homeTeamId: 'team-1',
+      awayTeamId: 'team-2',
+      lagWinner: 'home' as const,
+      homeSet1Locked: true,
+      awaySet1Locked: true,
+      lineups: {
+        set1: { home: emptySlots, away: emptySlots },
+        set2: { home: emptySlots, away: emptySlots },
+        set3: { home: emptySlots, away: emptySlots },
+      },
+      frames: [],
+      homeCaptainSigned: true,
+      awayCaptainSigned: true,
+      updatedAt: '2026-10-12T22:00:00Z',
+    };
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    expect(result.current.canEditFixture({ ...baseFix, status: 'scheduled' })).toBe(true);
+    expect(result.current.canEditFixture({ ...baseFix, status: 'live' })).toBe(true);
+    expect(result.current.canEditFixture({ ...baseFix, status: 'submitted' })).toBe(true);
+    expect(result.current.canEditFixture({ ...baseFix, status: 'approved' })).toBe(false);
+  });
+
   it('automatically logs out admin to spectator if the admin PIN is invalidated on the server', async () => {
     localStorage.setItem(
       STORAGE_KEYS.SESSION,
