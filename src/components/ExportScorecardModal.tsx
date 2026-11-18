@@ -309,7 +309,7 @@ export const ExportScorecardModal: React.FC<ExportScorecardModalProps> = ({
               <div
                 ref={cardRef}
                 style={{ width: '840px', margin: 0 }}
-                className="bg-slate-950 text-slate-100 p-6 space-y-4"
+                className="force-dark bg-slate-950 text-slate-100 p-6 space-y-4"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">

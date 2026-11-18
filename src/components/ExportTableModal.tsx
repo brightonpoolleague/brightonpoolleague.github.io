@@ -331,7 +331,7 @@ export const ExportTableModal: React.FC<ExportTableModalProps> = ({
                   MozOsxFontSmoothing: 'grayscale',
                   textRendering: 'optimizeLegibility',
                 }}
-                className="bg-slate-950 text-slate-100 p-7 space-y-5"
+                className="force-dark bg-slate-950 text-slate-100 p-7 space-y-5"
               >
                 {/* Graphic Card Header - Centered */}
                 <div className="flex flex-col items-center text-center border-b border-slate-800 pb-5 space-y-2">

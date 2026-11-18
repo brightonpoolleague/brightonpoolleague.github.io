@@ -5,6 +5,8 @@ import {
   Calendar,
   KeyRound,
   LogOut,
+  Moon,
+  Sun,
   Radio,
   Shield,
   Trophy,
@@ -48,6 +50,39 @@ const MainShell: React.FC = () => {
     null
   );
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    try {
+      return localStorage.getItem('bpl_theme') === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', theme === 'light' ? '#f8fafc' : '#0f172a');
+    }
+    try {
+      localStorage.setItem('bpl_theme', theme);
+    } catch {
+      // ignore storage errors
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   useEffect(() => {
@@ -241,7 +276,25 @@ const MainShell: React.FC = () => {
             })}
           </nav>
 
-          {/* Login / Logout Controls */}
+          {/* Theme Toggle & Login / Logout Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={
+                theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+              }
+              title={
+                theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+              }
+              className="inline-flex items-center justify-center w-[38px] h-[38px] sm:w-[34px] sm:h-[34px] rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 border border-slate-700 text-slate-300 hover:text-white transition touch-manipulation cursor-pointer select-none active:scale-95 shadow-sm shrink-0"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600" />
+              )}
+            </button>
           {isLoggedIn ? (
             <button
               type="button"
@@ -262,6 +315,7 @@ const MainShell: React.FC = () => {
               <span>Login</span>
             </button>
           )}
+          </div>
         </div>
 
         {/* Active Session Bar (shown underneath on both web & mobile to keep main nav & brand uncompressed) */}
