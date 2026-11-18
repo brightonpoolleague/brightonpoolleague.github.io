@@ -149,9 +149,14 @@ html.light .bg-emerald-500.text-slate-950 {
   color: #ffffff;
 }
 
-/* Subtle dark scrim for modal backdrops in light mode */
-html.light .fixed.inset-0[class*="bg-slate-950"] {
+/* Subtle dark scrim for centred modal backdrops (excludes full-screen overlays like MatchScorecardModal) */
+html.light .fixed.inset-0.items-center[class*="bg-slate-950"] {
   background-color: rgba(15, 23, 42, 0.55);
+}
+
+/* Crisp light canvas for full-screen overlays like the Live Scorecard */
+html.light .fixed.inset-0.flex-col[class*="bg-slate-950"] {
+  background-color: #f1f5f9;
 }
 
 /* Slightly crisper card borders in light mode */
