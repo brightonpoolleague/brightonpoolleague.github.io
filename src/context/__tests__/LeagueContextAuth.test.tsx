@@ -666,6 +666,73 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     expect(result.current.canEditFixture({ ...baseFix, status: 'approved' })).toBe(false);
   });
 
+  it('only allows admins to approve fixtures that are submitted (awaiting approval)', async () => {
+    mockRpc.mockResolvedValue({ data: true, error: null });
+    localStorage.setItem(
+      STORAGE_KEYS.SESSION,
+      JSON.stringify({ role: 'admin', name: 'League Admin', pin: '000000' })
+    );
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify('000000'));
+
+    const emptySlots: [null, null, null, null, null] = [null, null, null, null, null];
+    const mkFix = (id: string, status: 'scheduled' | 'live' | 'submitted') => ({
+      id,
+      seasonId: 'winter-2026-27',
+      division: 'Premier League' as const,
+      matchDate: '2026-10-12',
+      weekNumber: 1,
+      homeTeamId: 'team-1',
+      awayTeamId: 'team-2',
+      status,
+      lagWinner: 'home' as const,
+      homeSet1Locked: true,
+      awaySet1Locked: true,
+      lineups: {
+        set1: { home: emptySlots, away: emptySlots },
+        set2: { home: emptySlots, away: emptySlots },
+        set3: { home: emptySlots, away: emptySlots },
+      },
+      frames: [],
+      homeCaptainSigned: status === 'submitted',
+      awayCaptainSigned: status === 'submitted',
+      updatedAt: '2026-10-12T22:00:00Z',
+    });
+
+    localStorage.setItem(
+      STORAGE_KEYS.FIXTURES,
+      JSON.stringify([
+        mkFix('f-sched', 'scheduled'),
+        mkFix('f-live', 'live'),
+        mkFix('f-sub', 'submitted'),
+      ])
+    );
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await act(async () => {
+      await result.current.approveFixture('f-sched');
+      await result.current.approveFixture('f-live');
+      await result.current.approveFixture('f-sub');
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      'admin_save_fixture',
+      expect.objectContaining({ p_fixture_id: 'f-sub', p_status: 'approved' })
+    );
+    expect(mockRpc).not.toHaveBeenCalledWith(
+      'admin_save_fixture',
+      expect.objectContaining({ p_fixture_id: 'f-sched' })
+    );
+    expect(mockRpc).not.toHaveBeenCalledWith(
+      'admin_save_fixture',
+      expect.objectContaining({ p_fixture_id: 'f-live' })
+    );
+  });
+
   it('automatically logs out admin to spectator if the admin PIN is invalidated on the server', async () => {
     localStorage.setItem(
       STORAGE_KEYS.SESSION,

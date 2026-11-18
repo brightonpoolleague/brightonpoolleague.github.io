@@ -1996,7 +1996,7 @@ export const LeagueProvider: React.FC<{ children: React.ReactNode }> = ({
   const approveFixture = useCallback(
     async (fixtureId: string): Promise<void> => {
       const target = allFixtures.find((f) => f.id === fixtureId);
-      if (!target) return;
+      if (!target || target.status !== 'submitted') return;
       const now = new Date().toISOString();
       await saveFixture({
         ...target,
