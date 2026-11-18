@@ -2158,9 +2158,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
               {((activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner) ||
                 (!showLineupEditor &&
                   (canSignHome || canSignAway) &&
-                  !isSignedByAny &&
-                  fixture.status !== 'submitted' &&
-                  fixture.status !== 'approved' &&
+                  ((!isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved') || (canManageLeague && editable)) &&
                   (activeSet === 1 || bothSet1Locked))) && (
                 <div className="flex items-center justify-end gap-2 text-xs py-0.5">
                   {activeSet === 1 && bothSet1Locked && editable && !isMatchLockedBySignature && fixture.lagWinner && !isChangingLagWinner && (
@@ -2179,9 +2177,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
                   {!showLineupEditor &&
                     (canSignHome || canSignAway) &&
-                    !isSignedByAny &&
-                    fixture.status !== 'submitted' &&
-                    fixture.status !== 'approved' &&
+                    ((!isSignedByAny && fixture.status !== 'submitted' && fixture.status !== 'approved') || (canManageLeague && editable)) &&
                     (activeSet === 1 || bothSet1Locked) &&
                     (() => {
                       const isMySet1Locked =
@@ -2301,7 +2297,7 @@ export const MatchScorecardModal: React.FC<MatchScorecardModalProps> = ({
 
               {/* Blind Set 1 or Set 2/3 Substitutions Editor */}
               {showLineupEditor &&
-                !isSignedByAny &&
+                (!isSignedByAny || (canManageLeague && editable)) &&
                 (canSignHome || canSignAway) &&
                 (activeSet === 1 || bothSet1Locked) &&
                 (() => {

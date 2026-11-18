@@ -733,6 +733,66 @@ describe('LeagueContext Authentication & Auto-Logout', () => {
     );
   });
 
+  it('reopens approved scorecards back to submitted (awaiting approval) instead of live', async () => {
+    mockRpc.mockResolvedValue({ data: true, error: null });
+    localStorage.setItem(
+      STORAGE_KEYS.SESSION,
+      JSON.stringify({ role: 'admin', name: 'League Admin', pin: '000000' })
+    );
+    localStorage.setItem(STORAGE_KEYS.ADMIN_PIN, JSON.stringify('000000'));
+
+    const emptySlots: [null, null, null, null, null] = [null, null, null, null, null];
+    localStorage.setItem(
+      STORAGE_KEYS.FIXTURES,
+      JSON.stringify([
+        {
+          id: 'f-app',
+          seasonId: 'winter-2026-27',
+          division: 'Premier League',
+          matchDate: '2026-10-12',
+          weekNumber: 1,
+          homeTeamId: 'team-1',
+          awayTeamId: 'team-2',
+          status: 'approved',
+          lagWinner: 'home',
+          homeSet1Locked: true,
+          awaySet1Locked: true,
+          lineups: {
+            set1: { home: emptySlots, away: emptySlots },
+            set2: { home: emptySlots, away: emptySlots },
+            set3: { home: emptySlots, away: emptySlots },
+          },
+          frames: [],
+          homeCaptainSigned: true,
+          awayCaptainSigned: true,
+          approvedAt: '2026-10-12T23:00:00Z',
+          updatedAt: '2026-10-12T23:00:00Z',
+        },
+      ])
+    );
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <LeagueProvider>{children}</LeagueProvider>
+    );
+
+    const { result } = renderHook(() => useLeague(), { wrapper });
+
+    await act(async () => {
+      await result.current.reopenFixture('f-app');
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      'admin_save_fixture',
+      expect.objectContaining({
+        p_fixture_id: 'f-app',
+        p_status: 'submitted',
+        p_approved_at: null,
+        p_home_captain_signed: true,
+        p_away_captain_signed: true,
+      })
+    );
+  });
+
   it('automatically logs out admin to spectator if the admin PIN is invalidated on the server', async () => {
     localStorage.setItem(
       STORAGE_KEYS.SESSION,
