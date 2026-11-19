@@ -37,7 +37,7 @@ function isStatusRoute(): boolean {
   );
 }
 
-type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'rules' | 'admin';
+type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'info' | 'admin';
 
 const MainShell: React.FC = () => {
   const {
@@ -189,7 +189,7 @@ const MainShell: React.FC = () => {
   useEffect(() => {
     if (
       currentTab === 'teams' ||
-      currentTab === 'rules' ||
+      currentTab === 'info' ||
       currentTab === 'admin'
     ) {
       updateUrlDeepLink({ tab: currentTab });
@@ -229,7 +229,7 @@ const MainShell: React.FC = () => {
       icon: Users,
     },
     {
-      id: 'rules',
+      id: 'info',
       label: 'Info',
       shortLabel: 'Info',
       icon: Info,
@@ -373,7 +373,7 @@ const MainShell: React.FC = () => {
         {currentTab === 'table' && <LeagueTableView />}
         {currentTab === 'teams' && <TeamsAndVenuesView />}
         {currentTab === 'stats' && <PlayerStatsView />}
-        {currentTab === 'rules' && <DocsAndRulesView />}
+        {currentTab === 'info' && <DocsAndRulesView />}
         {currentTab === 'admin' && (
           <AdminPortalView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}

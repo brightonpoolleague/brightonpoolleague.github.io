@@ -3,7 +3,7 @@ export type DeepLinkTab =
   | 'table'
   | 'teams'
   | 'stats'
-  | 'rules'
+  | 'info'
   | 'admin';
 
 const VALID_TABS: Set<string> = new Set([
@@ -11,7 +11,7 @@ const VALID_TABS: Set<string> = new Set([
   'table',
   'teams',
   'stats',
-  'rules',
+  'info',
   'admin',
 ]);
 

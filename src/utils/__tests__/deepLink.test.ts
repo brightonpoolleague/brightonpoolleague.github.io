@@ -57,6 +57,11 @@ describe('deepLink utility', () => {
       divisionSlug: 'division-2',
     });
 
+    expect(parseUrlDeepLink('?tab=info')).toEqual({
+      tab: 'info',
+      divisionSlug: null,
+    });
+
     expect(parseUrlDeepLink('')).toEqual({
       tab: null,
       divisionSlug: null,
