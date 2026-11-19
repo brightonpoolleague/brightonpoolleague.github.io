@@ -20,7 +20,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
     // 2. Navigate to League Table
     await page.getByRole('button', { name: 'League Table' }).click();
     await expect(
-      page.getByRole('heading', { name: 'League Tables' })
+      page.getByRole('heading', { name: 'League Table' })
     ).toBeVisible();
 
     // 3. Navigate to Player Stats
@@ -607,7 +607,7 @@ test.describe('Brighton & Hove Pool League - Headless Browser E2E Suite', () => 
 
       // 5. Navigate to League Table view and verify Folded badge and footnote
       await page.getByRole('button', { name: 'League Table' }).click();
-      await expect(page.getByRole('heading', { name: /League Tables/i })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /League Table/i })).toBeVisible();
       if (!isContainerized) {
         await page.getByRole('button', { name: /Division 1/i }).click();
       }

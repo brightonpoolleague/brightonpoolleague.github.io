@@ -93,7 +93,7 @@ export const SponsorBanner: React.FC<SponsorComponentProps> = ({
 
       {sponsor.url && (
         <span
-          className="px-3.5 py-1.5 rounded-xl bg-slate-800 group-hover:bg-emerald-600 text-slate-200 group-hover:text-white text-xs font-bold transition shrink-0 inline-flex items-center gap-1.5 shadow-xs"
+          className="print:hidden px-3.5 py-1.5 rounded-xl bg-slate-800 group-hover:bg-emerald-600 text-slate-200 group-hover:text-white text-xs font-bold transition shrink-0 inline-flex items-center gap-1.5 shadow-xs"
         >
           <span>Visit Sponsor</span>
           <svg

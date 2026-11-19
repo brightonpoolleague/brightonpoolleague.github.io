@@ -168,5 +168,11 @@ describe('PlayerStatsView Sponsor Branding & Player Stats Modal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Steve Davis' }));
     const steveDialog = screen.getByRole('dialog');
     expect(within(steveDialog).getByText('Dish')).toBeInTheDocument();
+
+    // Verify Print button calls window.print()
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/i }));
+    expect(printSpy).toHaveBeenCalledTimes(1);
+    printSpy.mockRestore();
   });
 });
