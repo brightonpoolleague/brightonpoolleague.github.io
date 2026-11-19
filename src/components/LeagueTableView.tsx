@@ -111,7 +111,7 @@ export const LeagueTableView: React.FC = () => {
               {seasonName} Standings
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-              <span className="hidden print:inline">{selectedDivision} — </span>League Tables
+              <span className="hidden print:inline">{selectedDivision} — </span>League Table
             </h1>
           </div>
 
