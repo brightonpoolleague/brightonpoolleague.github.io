@@ -92,9 +92,16 @@ export const LeagueTableView: React.FC = () => {
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
 
   const myTeamRowRef = useRef<HTMLTableRowElement | null>(null);
+  const prevTeamIdRef = useRef(session.teamId);
 
   // Auto-switch to captain's division when visiting or switching captain teams
   useEffect(() => {
+    const teamChanged = prevTeamIdRef.current !== session.teamId;
+    prevTeamIdRef.current = session.teamId;
+    if (teamChanged && myTeamDivision && divisions.includes(myTeamDivision)) {
+      setSelectedDivision(myTeamDivision);
+      return;
+    }
     if (
       !hasExplicitUrlDivisionRef.current &&
       !pendingUrlDivisionSlugRef.current &&
