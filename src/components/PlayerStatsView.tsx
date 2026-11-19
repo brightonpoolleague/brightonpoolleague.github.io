@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BarChart3,
   Camera,
@@ -14,11 +14,7 @@ import { PlayerStatsDetailModal } from './PlayerStatsDetailModal';
 import { ExportTableModal } from './ExportTableModal';
 import { SponsorBadge, SponsorBanner } from './SponsorBanner';
 import { PRIMARY_SPONSOR } from '../data/sponsors';
-import {
-  parseUrlDeepLink,
-  resolveDivisionFromSlug,
-  updateUrlDeepLink,
-} from '../utils/deepLink';
+import { getUrlDivision, updateUrlDeepLink } from '../utils/deepLink';
 
 export const PlayerStatsView: React.FC = () => {
   const { seasonName, divisions, teams, players, fixtures, session } = useLeague();
@@ -27,32 +23,13 @@ export const PlayerStatsView: React.FC = () => {
   const myTeam = isCaptain ? teams.find((t) => t.id === session.teamId) : null;
   const myTeamDivision = myTeam?.division;
 
-  const initialDeepLink = useRef(parseUrlDeepLink());
-  const pendingUrlDivisionSlugRef = useRef<string | null>(
-    initialDeepLink.current.tab === 'stats' || initialDeepLink.current.tab === null
-      ? initialDeepLink.current.divisionSlug
-      : null
-  );
-  const hasExplicitUrlDivisionRef = useRef<boolean>(false);
-
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(() => {
-    if (pendingUrlDivisionSlugRef.current) {
-      const resolved = resolveDivisionFromSlug(
-        pendingUrlDivisionSlugRef.current,
-        divisions,
-        { allowAll: true }
-      );
-      if (resolved) {
-        pendingUrlDivisionSlugRef.current = null;
-        hasExplicitUrlDivisionRef.current = true;
-        return resolved;
-      }
-    }
+    const urlDiv = getUrlDivision('stats', divisions);
+    if (urlDiv) return urlDiv;
     if (
-      !hasExplicitUrlDivisionRef.current &&
-      !pendingUrlDivisionSlugRef.current &&
       myTeamDivision &&
-      divisions.includes(myTeamDivision)
+      divisions.includes(myTeamDivision) &&
+      !getUrlDivision('stats', divisions)
     ) {
       return myTeamDivision;
     }
@@ -103,40 +80,18 @@ export const PlayerStatsView: React.FC = () => {
     };
   }, []);
 
-  const prevTeamIdRef = useRef(session.teamId);
-
   // Auto-switch to captain's division when visiting or switching captain teams
   useEffect(() => {
-    const teamChanged = prevTeamIdRef.current !== session.teamId;
-    prevTeamIdRef.current = session.teamId;
-    if (teamChanged && myTeamDivision && divisions.includes(myTeamDivision)) {
-      setSelectedDivision(myTeamDivision);
-      return;
-    }
     if (
-      !hasExplicitUrlDivisionRef.current &&
-      !pendingUrlDivisionSlugRef.current &&
       myTeamDivision &&
-      divisions.includes(myTeamDivision)
+      divisions.includes(myTeamDivision) &&
+      !getUrlDivision('stats', divisions)
     ) {
       setSelectedDivision(myTeamDivision);
     }
   }, [session.teamId, myTeamDivision, divisions]);
 
   useEffect(() => {
-    if (pendingUrlDivisionSlugRef.current && divisions.length > 0) {
-      const resolved = resolveDivisionFromSlug(
-        pendingUrlDivisionSlugRef.current,
-        divisions,
-        { allowAll: true }
-      );
-      if (resolved) {
-        pendingUrlDivisionSlugRef.current = null;
-        hasExplicitUrlDivisionRef.current = true;
-        setSelectedDivision(resolved);
-        return;
-      }
-    }
     if (divisions.length > 0 && selectedDivision !== 'ALL' && !divisions.includes(selectedDivision)) {
       setSelectedDivision(divisions[0]);
     }
@@ -159,9 +114,7 @@ export const PlayerStatsView: React.FC = () => {
       : selectedDivision;
 
   useEffect(() => {
-    if (!pendingUrlDivisionSlugRef.current && effectiveDivision) {
-      updateUrlDeepLink({ tab: 'stats', division: effectiveDivision });
-    }
+    updateUrlDeepLink('stats', effectiveDivision);
   }, [effectiveDivision]);
 
   const { averagesTable, dishTable } = computePlayerStats(

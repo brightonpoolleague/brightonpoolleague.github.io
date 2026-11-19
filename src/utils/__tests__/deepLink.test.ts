@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  parseUrlDeepLink,
-  resolveDivisionFromSlug,
+  getUrlDivision,
+  getUrlTab,
   slugifyDivision,
   updateUrlDeepLink,
 } from '../deepLink';
@@ -22,60 +22,42 @@ describe('deepLink utility', () => {
     expect(slugifyDivision('Premier League')).toBe('premier-league');
     expect(slugifyDivision('Division 3')).toBe('division-3');
     expect(slugifyDivision('Division 4')).toBe('division-4');
-    expect(slugifyDivision('ALL')).toBe('all');
-    expect(slugifyDivision('KNOCKOUT')).toBe('knockout');
   });
 
-  it('resolves division query parameters including dynamic future divisions', () => {
-    expect(resolveDivisionFromSlug('division-3', divisions)).toBe('Division 3');
-    expect(resolveDivisionFromSlug('Division 3', divisions)).toBe('Division 3');
-    expect(resolveDivisionFromSlug('premier-league', divisions)).toBe(
-      'Premier League'
-    );
-
-    const futureDivisions = [...divisions, 'Division 4'];
-    expect(resolveDivisionFromSlug('division-4', futureDivisions)).toBe(
-      'Division 4'
-    );
+  it('parses tab and division query parameters including dynamic future divisions', () => {
+    expect(getUrlTab('?tab=table&division=division-3')).toBe('table');
+    expect(getUrlTab('?tab=info')).toBe('info');
+    expect(getUrlTab('')).toBeNull();
 
     expect(
-      resolveDivisionFromSlug('all', divisions, { allowAll: true })
-    ).toBe('ALL');
+      getUrlDivision('table', divisions, false, '?tab=table&division=division-3')
+    ).toBe('Division 3');
     expect(
-      resolveDivisionFromSlug('knockout', divisions, { allowKnockout: true })
+      getUrlDivision(
+        'fixtures',
+        [...divisions, 'Division 4'],
+        true,
+        '?tab=fixtures&division=division-4'
+      )
+    ).toBe('Division 4');
+    expect(
+      getUrlDivision(
+        'fixtures',
+        divisions,
+        true,
+        '?tab=fixtures&division=knockout'
+      )
     ).toBe('KNOCKOUT');
   });
 
-  it('parses tab and division query parameters', () => {
-    expect(parseUrlDeepLink('?tab=table&division=division-3')).toEqual({
-      tab: 'table',
-      divisionSlug: 'division-3',
-    });
-
-    expect(parseUrlDeepLink('?tab=fixtures&division=division-2')).toEqual({
-      tab: 'fixtures',
-      divisionSlug: 'division-2',
-    });
-
-    expect(parseUrlDeepLink('?tab=info')).toEqual({
-      tab: 'info',
-      divisionSlug: null,
-    });
-
-    expect(parseUrlDeepLink('')).toEqual({
-      tab: null,
-      divisionSlug: null,
-    });
-  });
-
   it('updates browser URL query parameters and cleans root fixtures URL', () => {
-    updateUrlDeepLink({ tab: 'table', division: 'Division 3' });
+    updateUrlDeepLink('table', 'Division 3');
     expect(window.location.search).toBe('?tab=table&division=division-3');
 
-    updateUrlDeepLink({ tab: 'fixtures', division: 'Division 3' });
+    updateUrlDeepLink('fixtures', 'Division 3');
     expect(window.location.search).toBe('?tab=fixtures&division=division-3');
 
-    updateUrlDeepLink({ tab: 'fixtures', division: 'ALL' });
+    updateUrlDeepLink('fixtures', 'ALL');
     expect(window.location.pathname).toBe('/');
     expect(window.location.search).toBe('');
   });

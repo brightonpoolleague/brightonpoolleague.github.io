@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
@@ -28,11 +28,7 @@ import {
   isKnockoutFixture,
   isWalkoverFixture,
 } from '../utils/leagueEngine';
-import {
-  parseUrlDeepLink,
-  resolveDivisionFromSlug,
-  updateUrlDeepLink,
-} from '../utils/deepLink';
+import { getUrlDivision, updateUrlDeepLink } from '../utils/deepLink';
 
 interface FixturesAndLiveViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -62,57 +58,12 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
   const isCaptain = session.role === 'captain' && Boolean(session.teamId);
 
-  const initialDeepLink = useRef(parseUrlDeepLink());
-  const pendingUrlDivisionSlugRef = useRef<string | null>(
-    initialDeepLink.current.tab === 'fixtures' || initialDeepLink.current.tab === null
-      ? initialDeepLink.current.divisionSlug
-      : null
-  );
-
   const [selectedDivision, setSelectedDivision] = useState<
     Division | 'ALL' | 'KNOCKOUT'
-  >(() => {
-    if (pendingUrlDivisionSlugRef.current) {
-      const resolved = resolveDivisionFromSlug(
-        pendingUrlDivisionSlugRef.current,
-        divisions,
-        { allowAll: true, allowKnockout: true }
-      );
-      if (resolved) {
-        pendingUrlDivisionSlugRef.current = null;
-        return resolved as Division | 'ALL' | 'KNOCKOUT';
-      }
-    }
-    return 'ALL';
-  });
+  >(() => getUrlDivision('fixtures', divisions, true) ?? 'ALL');
 
   useEffect(() => {
-    if (pendingUrlDivisionSlugRef.current && divisions.length > 0) {
-      const resolved = resolveDivisionFromSlug(
-        pendingUrlDivisionSlugRef.current,
-        divisions,
-        { allowAll: true, allowKnockout: true }
-      );
-      if (resolved) {
-        pendingUrlDivisionSlugRef.current = null;
-        setSelectedDivision(resolved as Division | 'ALL' | 'KNOCKOUT');
-        return;
-      }
-    }
-    if (
-      divisions.length > 0 &&
-      selectedDivision !== 'ALL' &&
-      selectedDivision !== 'KNOCKOUT' &&
-      !divisions.includes(selectedDivision)
-    ) {
-      setSelectedDivision('ALL');
-    }
-  }, [divisions, selectedDivision]);
-
-  useEffect(() => {
-    if (!pendingUrlDivisionSlugRef.current) {
-      updateUrlDeepLink({ tab: 'fixtures', division: selectedDivision });
-    }
+    updateUrlDeepLink('fixtures', selectedDivision);
   }, [selectedDivision]);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(

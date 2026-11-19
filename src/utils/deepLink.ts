@@ -6,7 +6,7 @@ export type DeepLinkTab =
   | 'info'
   | 'admin';
 
-const VALID_TABS: Set<string> = new Set([
+const VALID_TABS = new Set<string>([
   'fixtures',
   'table',
   'teams',
@@ -15,114 +15,73 @@ const VALID_TABS: Set<string> = new Set([
   'admin',
 ]);
 
-/**
- * Converts a division display name (e.g. "Division 3" or "Premier League")
- * into a URL-friendly slug (e.g. "division-3" or "premier-league").
- */
 export function slugifyDivision(division: string): string {
-  const trimmed = division.trim();
-  if (trimmed.toUpperCase() === 'ALL') return 'all';
-  if (trimmed.toUpperCase() === 'KNOCKOUT') return 'knockout';
-  return trimmed
+  return division
+    .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
 
-/**
- * Resolves a `division` query parameter against the active list of divisions.
- * Dynamically supports any future divisions added to a season.
- */
-export function resolveDivisionFromSlug(
-  slug: string | null | undefined,
+export function getUrlTab(search?: string): DeepLinkTab | null {
+  if (typeof window === 'undefined' && search === undefined) return null;
+  const tab = new URLSearchParams(search ?? window.location.search)
+    .get('tab')
+    ?.trim()
+    .toLowerCase();
+  return tab && VALID_TABS.has(tab) ? (tab as DeepLinkTab) : null;
+}
+
+export function getUrlDivision(
+  expectedTab: DeepLinkTab,
   divisions: string[],
-  options?: { allowAll?: boolean; allowKnockout?: boolean }
+  allowKnockout = false,
+  search?: string
 ): string | null {
-  if (!slug) return null;
-  const raw = slug.trim();
-  if (!raw) return null;
+  if (typeof window === 'undefined' && search === undefined) return null;
+  const params = new URLSearchParams(search ?? window.location.search);
+  const urlTab = getUrlTab(search);
+  if (urlTab && urlTab !== expectedTab) return null;
 
-  const normalized = slugifyDivision(raw);
+  const rawDiv = params.get('division')?.trim();
+  if (!rawDiv) return null;
 
-  if (options?.allowAll && normalized === 'all') {
-    return 'ALL';
-  }
+  const slug = slugifyDivision(rawDiv);
+  if (allowKnockout && slug === 'knockout') return 'KNOCKOUT';
 
-  if (options?.allowKnockout && normalized === 'knockout') {
-    return 'KNOCKOUT';
-  }
-
-  for (const div of divisions) {
-    if (
-      div.toLowerCase() === raw.toLowerCase() ||
-      slugifyDivision(div) === normalized
-    ) {
-      return div;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Reads `tab` and `division` from URL query parameters (`?tab=table&division=division-3`).
- */
-export function parseUrlDeepLink(search?: string): {
-  tab: DeepLinkTab | null;
-  divisionSlug: string | null;
-} {
-  if (typeof window === 'undefined' && search === undefined) {
-    return { tab: null, divisionSlug: null };
-  }
-  const searchParams = new URLSearchParams(
-    search ?? window.location.search
+  return (
+    divisions.find(
+      (d) => d.toLowerCase() === rawDiv.toLowerCase() || slugifyDivision(d) === slug
+    ) ?? null
   );
-  const rawTab = searchParams.get('tab')?.trim().toLowerCase() ?? null;
-  const tab =
-    rawTab && VALID_TABS.has(rawTab) ? (rawTab as DeepLinkTab) : null;
-  const divisionSlug = searchParams.get('division')?.trim() || null;
-
-  return { tab, divisionSlug };
 }
 
-/**
- * Syncs `tab` and `division` query parameters (`?tab=...&division=...`)
- * in the browser address bar via `history.replaceState`.
- */
-export function updateUrlDeepLink(params: {
-  tab: DeepLinkTab;
-  division?: string | null;
-}): void {
+export function updateUrlDeepLink(
+  tab: DeepLinkTab,
+  division?: string | null
+): void {
   if (typeof window === 'undefined') return;
 
-  const { tab, division } = params;
-  const searchParams = new URLSearchParams();
+  const params = new URLSearchParams();
   const divSlug = division ? slugifyDivision(division) : null;
-  const isDefaultFixturesView =
-    tab === 'fixtures' && (!divSlug || divSlug === 'all');
+  const isDefaultHome = tab === 'fixtures' && (!divSlug || divSlug === 'all');
 
-  if (!isDefaultFixturesView) {
-    searchParams.set('tab', tab);
+  if (!isDefaultHome) {
+    params.set('tab', tab);
     if (
       divSlug &&
       (tab === 'table' ||
         tab === 'stats' ||
         (tab === 'fixtures' && divSlug !== 'all'))
     ) {
-      searchParams.set('division', divSlug);
+      params.set('division', divSlug);
     }
   }
 
-  const query = searchParams.toString();
+  const query = params.toString();
   const basePath = window.location.pathname || '/';
   const nextUrl = query ? `${basePath}?${query}` : basePath;
-  const currentUrl = `${window.location.pathname}${window.location.search}`;
-
-  if (currentUrl !== nextUrl) {
-    try {
-      window.history.replaceState(null, '', nextUrl);
-    } catch {
-      // ignore SecurityError in restricted environments
-    }
+  if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+    window.history.replaceState(null, '', nextUrl);
   }
 }
