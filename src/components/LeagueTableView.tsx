@@ -6,6 +6,11 @@ import { computeLeagueTable, getOrdinalSuffix } from '../utils/leagueEngine';
 import { ExportTableModal } from './ExportTableModal';
 import { SponsorBadge, SponsorBanner } from './SponsorBanner';
 import { PRIMARY_SPONSOR } from '../data/sponsors';
+import {
+  parseUrlDeepLink,
+  resolveDivisionFromSlug,
+  updateUrlDeepLink,
+} from '../utils/deepLink';
 
 export const LeagueTableView: React.FC = () => {
   const { seasonName, divisions, teams, fixtures, session } = useLeague();
@@ -14,8 +19,32 @@ export const LeagueTableView: React.FC = () => {
   const myTeam = isCaptain ? teams.find((t) => t.id === session.teamId) : null;
   const myTeamDivision = myTeam?.division;
 
+  const initialDeepLink = useRef(parseUrlDeepLink());
+  const pendingUrlDivisionSlugRef = useRef<string | null>(
+    initialDeepLink.current.tab === 'table' || initialDeepLink.current.tab === null
+      ? initialDeepLink.current.divisionSlug
+      : null
+  );
+  const hasExplicitUrlDivisionRef = useRef<boolean>(false);
+
   const [selectedDivision, setSelectedDivision] = useState<Division>(() => {
-    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+    if (pendingUrlDivisionSlugRef.current) {
+      const resolved = resolveDivisionFromSlug(
+        pendingUrlDivisionSlugRef.current,
+        divisions
+      );
+      if (resolved) {
+        pendingUrlDivisionSlugRef.current = null;
+        hasExplicitUrlDivisionRef.current = true;
+        return resolved;
+      }
+    }
+    if (
+      !hasExplicitUrlDivisionRef.current &&
+      !pendingUrlDivisionSlugRef.current &&
+      myTeamDivision &&
+      divisions.includes(myTeamDivision)
+    ) {
       return myTeamDivision;
     }
     return divisions[0] || 'Premier League';
@@ -66,16 +95,39 @@ export const LeagueTableView: React.FC = () => {
 
   // Auto-switch to captain's division when visiting or switching captain teams
   useEffect(() => {
-    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+    if (
+      !hasExplicitUrlDivisionRef.current &&
+      !pendingUrlDivisionSlugRef.current &&
+      myTeamDivision &&
+      divisions.includes(myTeamDivision)
+    ) {
       setSelectedDivision(myTeamDivision);
     }
   }, [session.teamId, myTeamDivision, divisions]);
 
   useEffect(() => {
+    if (pendingUrlDivisionSlugRef.current && divisions.length > 0) {
+      const resolved = resolveDivisionFromSlug(
+        pendingUrlDivisionSlugRef.current,
+        divisions
+      );
+      if (resolved) {
+        pendingUrlDivisionSlugRef.current = null;
+        hasExplicitUrlDivisionRef.current = true;
+        setSelectedDivision(resolved);
+        return;
+      }
+    }
     if (divisions.length > 0 && !divisions.includes(selectedDivision)) {
       setSelectedDivision(divisions[0]);
     }
   }, [divisions, selectedDivision]);
+
+  useEffect(() => {
+    if (!pendingUrlDivisionSlugRef.current && selectedDivision) {
+      updateUrlDeepLink({ tab: 'table', division: selectedDivision });
+    }
+  }, [selectedDivision]);
 
   const rows = computeLeagueTable(
     selectedDivision,

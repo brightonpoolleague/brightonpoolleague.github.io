@@ -23,6 +23,7 @@ import { MatchScorecardModal } from './components/MatchScorecardModal';
 import { RoleSwitcherModal } from './components/RoleSwitcherModal';
 import { NetworkStatusBanner } from './components/NetworkStatusBanner';
 import { StatusDashboardView } from './components/StatusDashboardView';
+import { parseUrlDeepLink, updateUrlDeepLink } from './utils/deepLink';
 
 function isStatusRoute(): boolean {
   if (typeof window === 'undefined') return false;
@@ -45,7 +46,10 @@ const MainShell: React.FC = () => {
     session,
     setRoleSession,
   } = useLeague();
-  const [activeTab, setActiveTab] = useState<NavTab>('fixtures');
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    const parsed = parseUrlDeepLink();
+    return parsed.tab ?? 'fixtures';
+  });
   const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(
     null
   );
@@ -170,6 +174,27 @@ const MainShell: React.FC = () => {
   const isAdmin = session.role === 'admin';
   const currentTab: NavTab =
     activeTab === 'admin' && !isAdmin ? 'fixtures' : activeTab;
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const parsed = parseUrlDeepLink();
+      if (parsed.tab) {
+        setActiveTab(parsed.tab);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (
+      currentTab === 'teams' ||
+      currentTab === 'rules' ||
+      currentTab === 'admin'
+    ) {
+      updateUrlDeepLink({ tab: currentTab });
+    }
+  }, [currentTab]);
 
   const navItems: {
     id: NavTab;
