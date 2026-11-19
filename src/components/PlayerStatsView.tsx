@@ -122,8 +122,8 @@ export const PlayerStatsView: React.FC = () => {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 print:space-y-0">
+    <div className="space-y-5 print:space-y-2">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 print:py-2.5 print:px-3.5 space-y-4 print:space-y-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="hidden print:flex items-center gap-2.5 mb-1.5">
@@ -140,7 +140,7 @@ export const PlayerStatsView: React.FC = () => {
               <BarChart3 className="w-3.5 h-3.5" />
               {seasonName} Individual Leaderboards
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
+            <h1 className="text-xl sm:text-2xl print:text-lg font-black text-white mt-0.5">
               {activeBoard === 'averages'
                 ? `${effectiveDivision} Player Stats`
                 : `${effectiveDivision === 'ALL' ? 'All Divisions' : effectiveDivision} Dish Leaderboard`}
@@ -356,7 +356,7 @@ export const PlayerStatsView: React.FC = () => {
                     >
                       <td className="py-3 px-3 text-center font-bold">
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
+                          className={`inline-flex items-center justify-center w-6 h-6 print:w-5 print:h-5 rounded-full text-xs print:text-[11px] ${
                             pos === 1
                               ? 'bg-amber-500 text-slate-950 font-black'
                               : pos <= 3

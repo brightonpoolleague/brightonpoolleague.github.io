@@ -64,12 +64,12 @@ export const SponsorBanner: React.FC<SponsorComponentProps> = ({
 
   const cardContent = (
     <div
-      className={`bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md transition group ${
+      className={`bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 print:py-2 print:px-3.5 print:break-inside-avoid flex flex-col sm:flex-row items-center justify-between gap-4 print:gap-2.5 shadow-md transition group ${
         sponsor.url ? 'hover:border-slate-700/80 hover:bg-slate-900/95 cursor-pointer' : ''
       } ${className}`}
     >
       <div className="flex items-center gap-3.5 text-center sm:text-left">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white p-1.5 flex items-center justify-center shrink-0 shadow-md border border-slate-700/40 group-hover:scale-105 transition-transform">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 print:w-9 print:h-9 rounded-2xl print:rounded-xl bg-white p-1.5 print:p-1 flex items-center justify-center shrink-0 shadow-md border border-slate-700/40 group-hover:scale-105 transition-transform">
           <img
             src={`${import.meta.env.BASE_URL}${sponsor.logo.replace(/^\//, '')}`}
             alt={sponsor.name}
@@ -80,7 +80,7 @@ export const SponsorBanner: React.FC<SponsorComponentProps> = ({
           <div className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
             {sponsor.role || 'Official League Sponsor'}
           </div>
-          <h4 className="text-base sm:text-lg font-black text-white leading-tight group-hover:text-emerald-300 transition-colors">
+          <h4 className="text-base sm:text-lg print:text-sm font-black text-white leading-tight group-hover:text-emerald-300 transition-colors">
             {sponsor.name}
           </h4>
           {sponsor.tagline && (
