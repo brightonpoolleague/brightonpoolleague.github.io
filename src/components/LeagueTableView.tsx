@@ -130,7 +130,7 @@ export const LeagueTableView: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowExportModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
+              className="print:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
               title="Export League Table"
             >
               <Camera className="w-3.5 h-3.5 text-emerald-400" />
@@ -141,7 +141,7 @@ export const LeagueTableView: React.FC = () => {
               type="button"
               onClick={toggleIncludeLive}
               aria-pressed={includeLive}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+              className={`print:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
                 includeLive
                   ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/40'
                   : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-400 hover:text-slate-200'
@@ -165,7 +165,7 @@ export const LeagueTableView: React.FC = () => {
         </div>
 
         {/* Division Selector */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="print:hidden flex items-center gap-1.5 overflow-x-auto pb-1">
           {divisions.map((div) => {
             const count = teams.filter((t) => t.division === div).length;
             const isMyDiv = isCaptain && myTeamDivision === div;
@@ -236,7 +236,7 @@ export const LeagueTableView: React.FC = () => {
                 block: 'center',
               });
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 text-xs font-bold border border-emerald-500/40 transition shadow-sm shrink-0"
+            className="print:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 text-xs font-bold border border-emerald-500/40 transition shadow-sm shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Highlight in Table</span>
@@ -246,7 +246,7 @@ export const LeagueTableView: React.FC = () => {
 
       {/* Switch back to Captain's own division notice if viewing other divisions */}
       {isCaptain && myTeam && myTeamDivision && selectedDivision !== myTeamDivision && (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 text-xs shadow-md">
+        <div className="print:hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 text-xs shadow-md">
           <div className="flex items-center gap-2 text-slate-300">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>

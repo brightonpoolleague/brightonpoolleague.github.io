@@ -156,7 +156,7 @@ export const PlayerStatsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowExportModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
+              className="print:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
               title={
                 activeBoard === 'dishes'
                   ? 'Export Dish Leaderboard'
@@ -171,7 +171,7 @@ export const PlayerStatsView: React.FC = () => {
               type="button"
               onClick={toggleIncludeLive}
               aria-pressed={includeLive}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+              className={`print:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
                 includeLive
                   ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/40'
                   : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-400 hover:text-slate-200'
@@ -195,7 +195,7 @@ export const PlayerStatsView: React.FC = () => {
         </div>
 
         {/* Board Switcher (Averages vs Dish Table) + Search */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="print:hidden flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               type="button"
@@ -241,7 +241,7 @@ export const PlayerStatsView: React.FC = () => {
         </div>
 
         {/* Division Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="print:hidden flex items-center gap-1.5 overflow-x-auto pb-1">
           {divisions.map((div) => {
             const isSelected = effectiveDivision === div;
             return (
