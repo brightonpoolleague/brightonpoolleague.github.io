@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   BarChart3,
   Camera,
+  Printer,
   Search,
   Sparkles,
   Trophy,
@@ -138,6 +139,20 @@ export const PlayerStatsView: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-2">
             <SponsorBadge sponsor={PRIMARY_SPONSOR} />
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="print:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
+              title={
+                activeBoard === 'dishes'
+                  ? 'Print Dish Leaderboard'
+                  : 'Print Player Stats'
+              }
+            >
+              <Printer className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Print</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setShowExportModal(true)}

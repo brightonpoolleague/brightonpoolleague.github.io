@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { LeagueTableView } from '../LeagueTableView';
 import { Fixture, Team } from '../../types/league';
@@ -146,5 +146,10 @@ describe('LeagueTableView', () => {
     expect(screen.getByText(PRIMARY_SPONSOR.tagline!)).toBeInTheDocument();
     const sponsorLogos = screen.getAllByAltText(PRIMARY_SPONSOR.name);
     expect(sponsorLogos.length).toBeGreaterThanOrEqual(2);
+
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/i }));
+    expect(printSpy).toHaveBeenCalledTimes(1);
+    printSpy.mockRestore();
   });
 });

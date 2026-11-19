@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Award, Camera, Info, Sparkles, Trophy } from 'lucide-react';
+import { Award, Camera, Info, Printer, Sparkles, Trophy } from 'lucide-react';
 import { Division } from '../types/league';
 import { useLeague } from '../context/LeagueContext';
 import { computeLeagueTable, getOrdinalSuffix } from '../utils/leagueEngine';
@@ -111,12 +111,22 @@ export const LeagueTableView: React.FC = () => {
               {seasonName} Standings
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
-              League Tables
+              <span className="hidden print:inline">{selectedDivision} — </span>League Tables
             </h1>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <SponsorBadge sponsor={PRIMARY_SPONSOR} />
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="print:hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white text-xs font-bold transition shadow-sm"
+              title="Print League Table"
+            >
+              <Printer className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Print</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setShowExportModal(true)}
