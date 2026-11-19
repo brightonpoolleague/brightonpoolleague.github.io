@@ -123,9 +123,19 @@ export const PlayerStatsView: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 print:space-y-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
+            <div className="hidden print:flex items-center gap-2.5 mb-1.5">
+              <img
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                alt="Brighton & Hove Pool League Crest"
+                className="w-8 h-8 object-contain shrink-0"
+              />
+              <span className="text-sm font-black tracking-tight text-white">
+                Brighton &amp; Hove Pool League
+              </span>
+            </div>
             <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
               <BarChart3 className="w-3.5 h-3.5" />
               {seasonName} Individual Leaderboards
