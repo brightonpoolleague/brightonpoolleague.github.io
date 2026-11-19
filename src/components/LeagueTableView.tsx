@@ -102,8 +102,8 @@ export const LeagueTableView: React.FC = () => {
   }, [selectedDivision, myTeamDivision, myTeam?.id]);
 
   return (
-    <div className="space-y-5">
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 print:space-y-0">
+    <div className="space-y-5 print:space-y-2">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 print:py-2.5 print:px-3.5 space-y-4 print:space-y-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="hidden print:flex items-center gap-2.5 mb-1.5">
@@ -120,7 +120,7 @@ export const LeagueTableView: React.FC = () => {
               <Trophy className="w-3.5 h-3.5" />
               {seasonName} Standings
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white mt-0.5">
+            <h1 className="text-xl sm:text-2xl print:text-lg font-black text-white mt-0.5">
               <span className="hidden print:inline">{selectedDivision} — </span>League Table
             </h1>
           </div>
@@ -216,7 +216,7 @@ export const LeagueTableView: React.FC = () => {
 
       {/* Team Captain Spotlight: Standing Banner */}
       {isCaptain && myTeam && myTeamRow && myTeamPos && selectedDivision === myTeamDivision && (
-        <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+        <div className="print:hidden bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border-2 border-emerald-500/50 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xl">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex flex-col items-center justify-center text-emerald-300 shrink-0 shadow-inner">
               <span className="text-[10px] font-bold uppercase leading-none text-emerald-400">Pos</span>
@@ -344,7 +344,7 @@ export const LeagueTableView: React.FC = () => {
                     >
                       <td className="py-2.5 px-2 sm:py-3 sm:px-3 text-center font-bold">
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
+                          className={`inline-flex items-center justify-center w-6 h-6 print:w-5 print:h-5 rounded-full text-xs print:text-[11px] ${
                             isMyTeam
                               ? 'bg-emerald-500 text-slate-950 font-black ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse'
                               : pos === 1
@@ -358,7 +358,7 @@ export const LeagueTableView: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-2.5 px-2 sm:py-3 sm:px-3 min-w-[125px] sm:min-w-0">
-                        <div className="font-bold text-white flex items-center gap-1.5 leading-snug">
+                        <div className="font-bold text-white flex items-center gap-1.5 leading-snug print:leading-tight">
                           <span className={isMyTeam ? 'text-emerald-200 font-black' : ''}>
                             {row.team.name}
                           </span>
@@ -371,7 +371,7 @@ export const LeagueTableView: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 print:mt-0 print:leading-tight">
                           {isMyTeam && (
                             <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-[0_0_8px_rgba(52,211,153,0.3)] animate-pulse shrink-0">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -412,7 +412,7 @@ export const LeagueTableView: React.FC = () => {
                           : row.frameDiff}
                       </td>
                       <td
-                        className={`py-2.5 px-2 sm:py-3 sm:px-3 text-center tabular-nums font-black text-base ${
+                        className={`py-2.5 px-2 sm:py-3 sm:px-3 text-center tabular-nums font-black text-base print:text-sm ${
                           isMyTeam
                             ? 'text-emerald-300 bg-emerald-950/60 font-black'
                             : 'text-white bg-slate-950/40'
@@ -449,7 +449,7 @@ export const LeagueTableView: React.FC = () => {
       </div>
 
       {/* Points & Tie-Break Rules Box */}
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-1.5">
+      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 print:py-2 print:px-3 text-xs print:text-[10px] print:leading-snug text-slate-400 space-y-1.5 print:space-y-0.5 print:break-inside-avoid">
         <div className="font-bold text-slate-200 flex items-center gap-1.5">
           <Info className="w-4 h-4 text-emerald-400" />
           Official League Points &amp; Sorting Rules (Section 2 &amp; Section 8a)

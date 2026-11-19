@@ -169,6 +169,11 @@ html.light .border-slate-800 {
    Ensures clean, ink-friendly white paper output with high-contrast dark text
    and hides top/bottom navigation bars when printing League Tables or Stats.
    ============================================================================ */
+@page {
+  size: A4 portrait;
+  margin: 8mm 10mm;
+}
+
 @media print {
   html,
   body {
@@ -205,5 +210,20 @@ html.light .border-slate-800 {
   header,
   nav {
     display: none !important;
+  }
+
+  main {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  table th {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  table td {
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
   }
 }

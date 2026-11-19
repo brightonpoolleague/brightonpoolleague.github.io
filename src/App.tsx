@@ -222,7 +222,7 @@ const MainShell: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full max-w-full overflow-x-clip bg-slate-950 text-slate-100 flex flex-col pb-24 md:pb-8">
+    <div className="min-h-screen min-h-[100dvh] print:min-h-0 w-full max-w-full overflow-x-clip bg-slate-950 text-slate-100 flex flex-col pb-24 md:pb-8 print:pb-0">
       {/* Top Header */}
       <header className="sticky top-0 z-30 w-full bg-slate-900 border-b border-slate-800 pt-[env(safe-area-inset-top,0px)]">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3">
@@ -339,7 +339,7 @@ const MainShell: React.FC = () => {
       <NetworkStatusBanner />
 
       {/* Main Content Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-24 md:pb-8 min-w-0">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-24 md:pb-8 print:py-0 min-w-0">
         {currentTab === 'fixtures' && (
           <FixturesAndLiveView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}
