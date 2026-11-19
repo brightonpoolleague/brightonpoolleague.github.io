@@ -28,6 +28,7 @@ import {
   isKnockoutFixture,
   isWalkoverFixture,
 } from '../utils/leagueEngine';
+import { getUrlDivision, updateUrlDeepLink } from '../utils/deepLink';
 
 interface FixturesAndLiveViewProps {
   onSelectFixture: (fixture: Fixture) => void;
@@ -59,7 +60,12 @@ export const FixturesAndLiveView: React.FC<FixturesAndLiveViewProps> = ({
 
   const [selectedDivision, setSelectedDivision] = useState<
     Division | 'ALL' | 'KNOCKOUT'
-  >('ALL');
+  >(() => getUrlDivision('fixtures', divisions, true) ?? 'ALL');
+
+  useEffect(() => {
+    updateUrlDeepLink('fixtures', selectedDivision);
+  }, [selectedDivision]);
+
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
     isCaptain ? 'mine' : 'all'
   );

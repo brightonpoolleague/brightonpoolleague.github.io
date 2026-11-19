@@ -14,6 +14,7 @@ import { PlayerStatsDetailModal } from './PlayerStatsDetailModal';
 import { ExportTableModal } from './ExportTableModal';
 import { SponsorBadge, SponsorBanner } from './SponsorBanner';
 import { PRIMARY_SPONSOR } from '../data/sponsors';
+import { getUrlDivision, updateUrlDeepLink } from '../utils/deepLink';
 
 export const PlayerStatsView: React.FC = () => {
   const { seasonName, divisions, teams, players, fixtures, session } = useLeague();
@@ -23,7 +24,13 @@ export const PlayerStatsView: React.FC = () => {
   const myTeamDivision = myTeam?.division;
 
   const [selectedDivision, setSelectedDivision] = useState<Division | 'ALL'>(() => {
-    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+    const urlDiv = getUrlDivision('stats', divisions);
+    if (urlDiv) return urlDiv;
+    if (
+      myTeamDivision &&
+      divisions.includes(myTeamDivision) &&
+      !getUrlDivision('stats', divisions)
+    ) {
       return myTeamDivision;
     }
     return divisions[0] || 'Premier League';
@@ -75,7 +82,11 @@ export const PlayerStatsView: React.FC = () => {
 
   // Auto-switch to captain's division when visiting or switching captain teams
   useEffect(() => {
-    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+    if (
+      myTeamDivision &&
+      divisions.includes(myTeamDivision) &&
+      !getUrlDivision('stats', divisions)
+    ) {
       setSelectedDivision(myTeamDivision);
     }
   }, [session.teamId, myTeamDivision, divisions]);
@@ -101,6 +112,10 @@ export const PlayerStatsView: React.FC = () => {
     activeBoard === 'averages' && selectedDivision === 'ALL'
       ? defaultDiv
       : selectedDivision;
+
+  useEffect(() => {
+    updateUrlDeepLink('stats', effectiveDivision);
+  }, [effectiveDivision]);
 
   const { averagesTable, dishTable } = computePlayerStats(
     effectiveDivision,

@@ -23,6 +23,7 @@ import { MatchScorecardModal } from './components/MatchScorecardModal';
 import { RoleSwitcherModal } from './components/RoleSwitcherModal';
 import { NetworkStatusBanner } from './components/NetworkStatusBanner';
 import { StatusDashboardView } from './components/StatusDashboardView';
+import { getUrlTab, updateUrlDeepLink } from './utils/deepLink';
 
 function isStatusRoute(): boolean {
   if (typeof window === 'undefined') return false;
@@ -36,7 +37,7 @@ function isStatusRoute(): boolean {
   );
 }
 
-type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'rules' | 'admin';
+type NavTab = 'fixtures' | 'table' | 'teams' | 'stats' | 'info' | 'admin';
 
 const MainShell: React.FC = () => {
   const {
@@ -45,7 +46,9 @@ const MainShell: React.FC = () => {
     session,
     setRoleSession,
   } = useLeague();
-  const [activeTab, setActiveTab] = useState<NavTab>('fixtures');
+  const [activeTab, setActiveTab] = useState<NavTab>(
+    () => getUrlTab() ?? 'fixtures'
+  );
   const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(
     null
   );
@@ -171,6 +174,12 @@ const MainShell: React.FC = () => {
   const currentTab: NavTab =
     activeTab === 'admin' && !isAdmin ? 'fixtures' : activeTab;
 
+  useEffect(() => {
+    if (currentTab === 'teams' || currentTab === 'info' || currentTab === 'admin') {
+      updateUrlDeepLink(currentTab);
+    }
+  }, [currentTab]);
+
   const navItems: {
     id: NavTab;
     label: string;
@@ -204,7 +213,7 @@ const MainShell: React.FC = () => {
       icon: Users,
     },
     {
-      id: 'rules',
+      id: 'info',
       label: 'Info',
       shortLabel: 'Info',
       icon: Info,
@@ -348,7 +357,7 @@ const MainShell: React.FC = () => {
         {currentTab === 'table' && <LeagueTableView />}
         {currentTab === 'teams' && <TeamsAndVenuesView />}
         {currentTab === 'stats' && <PlayerStatsView />}
-        {currentTab === 'rules' && <DocsAndRulesView />}
+        {currentTab === 'info' && <DocsAndRulesView />}
         {currentTab === 'admin' && (
           <AdminPortalView
             onSelectFixture={(fix) => setSelectedFixtureId(fix.id)}

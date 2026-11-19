@@ -152,4 +152,34 @@ describe('LeagueTableView', () => {
     expect(printSpy).toHaveBeenCalledTimes(1);
     printSpy.mockRestore();
   });
+
+  it('initialises from query parameters and syncs division changes to the URL', () => {
+    window.history.replaceState(null, '', '/?tab=table&division=division-3');
+
+    const div3Team: Team = {
+      ...teamA,
+      id: 'team-d3',
+      division: 'Division 3',
+      name: 'Gamma Sharks',
+    };
+
+    mockUseLeague.mockReturnValue({
+      seasonName: 'Winter 2026/27',
+      divisions: ['Premier League', 'Division 1', 'Division 2', 'Division 3'],
+      teams: [teamA, div3Team],
+      fixtures: [],
+      session: { role: 'spectator', authenticated: false },
+    });
+
+    render(<LeagueTableView />);
+
+    expect(screen.getByText('Gamma Sharks')).toBeInTheDocument();
+    expect(window.location.search).toBe('?tab=table&division=division-3');
+
+    fireEvent.click(screen.getByRole('button', { name: /Premier League/i }));
+    expect(screen.getByText('Alpha Hawks')).toBeInTheDocument();
+    expect(window.location.search).toBe('?tab=table&division=premier-league');
+
+    window.history.replaceState(null, '', '/');
+  });
 });

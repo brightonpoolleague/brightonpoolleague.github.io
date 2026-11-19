@@ -6,6 +6,7 @@ import { computeLeagueTable, getOrdinalSuffix } from '../utils/leagueEngine';
 import { ExportTableModal } from './ExportTableModal';
 import { SponsorBadge, SponsorBanner } from './SponsorBanner';
 import { PRIMARY_SPONSOR } from '../data/sponsors';
+import { getUrlDivision, updateUrlDeepLink } from '../utils/deepLink';
 
 export const LeagueTableView: React.FC = () => {
   const { seasonName, divisions, teams, fixtures, session } = useLeague();
@@ -15,7 +16,13 @@ export const LeagueTableView: React.FC = () => {
   const myTeamDivision = myTeam?.division;
 
   const [selectedDivision, setSelectedDivision] = useState<Division>(() => {
-    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+    const urlDiv = getUrlDivision('table', divisions);
+    if (urlDiv) return urlDiv;
+    if (
+      myTeamDivision &&
+      divisions.includes(myTeamDivision) &&
+      !getUrlDivision('table', divisions)
+    ) {
       return myTeamDivision;
     }
     return divisions[0] || 'Premier League';
@@ -66,7 +73,11 @@ export const LeagueTableView: React.FC = () => {
 
   // Auto-switch to captain's division when visiting or switching captain teams
   useEffect(() => {
-    if (myTeamDivision && divisions.includes(myTeamDivision)) {
+    if (
+      myTeamDivision &&
+      divisions.includes(myTeamDivision) &&
+      !getUrlDivision('table', divisions)
+    ) {
       setSelectedDivision(myTeamDivision);
     }
   }, [session.teamId, myTeamDivision, divisions]);
@@ -76,6 +87,10 @@ export const LeagueTableView: React.FC = () => {
       setSelectedDivision(divisions[0]);
     }
   }, [divisions, selectedDivision]);
+
+  useEffect(() => {
+    updateUrlDeepLink('table', selectedDivision);
+  }, [selectedDivision]);
 
   const rows = computeLeagueTable(
     selectedDivision,
